@@ -6,6 +6,10 @@
     "homepage": "https://cakephp.org",
     "require": {
         "php": ">=8.1",
+        "ext-intl": "*",
+        "ext-mbstring": "*",
+        "ext-pdo": "*",
+        "ext-pdo_pgsql": "*",
         "cakephp/cakephp": "5.2.*",
         "cakephp/migrations": "^4.0.0",
         "cakephp/plugin-installer": "^2.0",
@@ -40,7 +44,7 @@
             "cakephp/plugin-installer": true,
             "dealerdirect/phpcodesniffer-composer-installer": true
         },
-        "platform-check": true,
+        "platform-check": false,
         "sort-packages": true
     },
     "scripts": {
