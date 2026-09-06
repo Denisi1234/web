@@ -13,4 +13,48 @@
  * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
 
-require 'webroot' . DIRECTORY_SEPARATOR . 'index.php';
+// Fast, reliable static file server for root entrypoint
+$uriPath = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? '';
+$decodedPath = rawurldecode($uriPath);
+
+if ($decodedPath !== '' && $decodedPath !== '/' && !str_contains($decodedPath, '..')) {
+    $staticCandidates = [
+        __DIR__ . '/webroot' . $decodedPath,
+        __DIR__ . $decodedPath,
+    ];
+
+    foreach ($staticCandidates as $candidate) {
+        if (is_file($candidate)) {
+            $ext = strtolower(pathinfo($candidate, PATHINFO_EXTENSION));
+            $mimes = [
+                'css' => 'text/css; charset=UTF-8',
+                'js' => 'application/javascript; charset=UTF-8',
+                'mjs' => 'application/javascript; charset=UTF-8',
+                'json' => 'application/json',
+                'png' => 'image/png',
+                'jpg' => 'image/jpeg',
+                'jpeg' => 'image/jpeg',
+                'gif' => 'image/gif',
+                'svg' => 'image/svg+xml',
+                'webp' => 'image/webp',
+                'ico' => 'image/x-icon',
+                'woff' => 'font/woff',
+                'woff2' => 'font/woff2',
+                'ttf' => 'font/ttf',
+                'eot' => 'application/vnd.ms-fontobject',
+                'otf' => 'font/otf',
+                'pdf' => 'application/pdf',
+                'xml' => 'application/xml',
+                'txt' => 'text/plain; charset=UTF-8',
+            ];
+            $contentType = $mimes[$ext] ?? 'application/octet-stream';
+            header('Content-Type: ' . $contentType);
+            header('Content-Length: ' . filesize($candidate));
+            header('Cache-Control: public, max-age=604800');
+            readfile($candidate);
+            exit;
+        }
+    }
+}
+
+require __DIR__ . DIRECTORY_SEPARATOR . 'webroot' . DIRECTORY_SEPARATOR . 'index.php';

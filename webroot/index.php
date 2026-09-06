@@ -15,16 +15,51 @@
  * @license       MIT License (https://opensource.org/licenses/mit-license.php)
  */
 
-// For built-in server
-if (PHP_SAPI === 'cli-server') {
-    $_SERVER['PHP_SELF'] = '/' . basename(__FILE__);
+// Fast, reliable static file server for production containers & PHP built-in server
+$uriPath = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? '';
+$decodedPath = rawurldecode($uriPath);
 
-    $url = parse_url(urldecode($_SERVER['REQUEST_URI']));
-    $file = __DIR__ . $url['path'];
-    if (!str_contains($url['path'], '..') && str_contains($url['path'], '.') && is_file($file)) {
-        return false;
+if ($decodedPath !== '' && $decodedPath !== '/' && !str_contains($decodedPath, '..')) {
+    $staticCandidates = [
+        __DIR__ . $decodedPath,
+        dirname(__DIR__) . '/webroot' . $decodedPath,
+        dirname(__DIR__) . $decodedPath,
+    ];
+
+    foreach ($staticCandidates as $candidate) {
+        if (is_file($candidate)) {
+            $ext = strtolower(pathinfo($candidate, PATHINFO_EXTENSION));
+            $mimes = [
+                'css' => 'text/css; charset=UTF-8',
+                'js' => 'application/javascript; charset=UTF-8',
+                'mjs' => 'application/javascript; charset=UTF-8',
+                'json' => 'application/json',
+                'png' => 'image/png',
+                'jpg' => 'image/jpeg',
+                'jpeg' => 'image/jpeg',
+                'gif' => 'image/gif',
+                'svg' => 'image/svg+xml',
+                'webp' => 'image/webp',
+                'ico' => 'image/x-icon',
+                'woff' => 'font/woff',
+                'woff2' => 'font/woff2',
+                'ttf' => 'font/ttf',
+                'eot' => 'application/vnd.ms-fontobject',
+                'otf' => 'font/otf',
+                'pdf' => 'application/pdf',
+                'xml' => 'application/xml',
+                'txt' => 'text/plain; charset=UTF-8',
+            ];
+            $contentType = $mimes[$ext] ?? 'application/octet-stream';
+            header('Content-Type: ' . $contentType);
+            header('Content-Length: ' . filesize($candidate));
+            header('Cache-Control: public, max-age=604800');
+            readfile($candidate);
+            exit;
+        }
     }
 }
+
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 use App\Application;
