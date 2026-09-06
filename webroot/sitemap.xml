@@ -2,213 +2,118 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 
-  <!-- Homepage -->
+  <!-- Core Pages -->
   <url>
-    <loc>https://fastnetstays.com/</loc>
-    <lastmod>2026-08-12</lastmod>
+    <loc>https://www.fastnetstays.com/</loc>
     <changefreq>daily</changefreq>
     <priority>1.00</priority>
   </url>
 
-  <!-- Search -->
   <url>
-    <loc>https://fastnetstays.com/search/</loc>
+    <loc>https://www.fastnetstays.com/hotels</loc>
     <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+  </url>
+
+  <url>
+    <loc>https://www.fastnetstays.com/destinations</loc>
+    <changefreq>weekly</changefreq>
     <priority>0.90</priority>
   </url>
 
-  <!-- Bookings -->
+  <!-- Popular Destination Search URLs for Direct Sitelinks Indexing -->
   <url>
-    <loc>https://fastnetstays.com/bookings/</loc>
-    <changefreq>weekly</changefreq>
+    <loc>https://www.fastnetstays.com/hotel-list-01?destination=Zanzibar</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <url>
+    <loc>https://www.fastnetstays.com/hotel-list-01?destination=Dar+es+Salaam</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <url>
+    <loc>https://www.fastnetstays.com/hotel-list-01?destination=Arusha</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <url>
+    <loc>https://www.fastnetstays.com/hotel-list-01?destination=Dodoma</loc>
+    <changefreq>daily</changefreq>
     <priority>0.80</priority>
   </url>
 
-  <!-- Hotels -->
+  <!-- Host & Property Onboarding -->
   <url>
-    <loc>https://fastnetstays.com/hotels/detail</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.80</priority>
-  </url>
-  <url>
-    <loc>https://fastnetstays.com/hotels/review</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.70</priority>
+    <loc>https://www.fastnetstays.com/join-us</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
   </url>
 
-  <!-- Booking Flow -->
   <url>
-    <loc>https://fastnetstays.com/booking/rooms</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://fastnetstays.com/booking/checkout</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.70</priority>
+    <loc>https://www.fastnetstays.com/add-listing</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.80</priority>
   </url>
 
   <!-- Auth -->
   <url>
-    <loc>https://fastnetstays.com/auth/login</loc>
+    <loc>https://www.fastnetstays.com/login</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.80</priority>
-  </url>
-  <url>
-    <loc>https://fastnetstays.com/auth/signup</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.80</priority>
+    <priority>0.70</priority>
   </url>
 
-  <!-- Account -->
   <url>
-    <loc>https://fastnetstays.com/account/profile</loc>
+    <loc>https://www.fastnetstays.com/signup</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.60</priority>
+    <priority>0.70</priority>
   </url>
 
-  <!-- Support -->
+  <!-- Support & Info -->
   <url>
-    <loc>https://fastnetstays.com/support/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.80</priority>
+    <loc>https://www.fastnetstays.com/about-us</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
   </url>
+
   <url>
-    <loc>https://fastnetstays.com/support/faq</loc>
+    <loc>https://www.fastnetstays.com/how-we-work</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.70</priority>
+  </url>
+
+  <url>
+    <loc>https://www.fastnetstays.com/help-center</loc>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
+
   <url>
-    <loc>https://fastnetstays.com/support/contact</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.70</priority>
-  </url>
-  <url>
-    <loc>https://fastnetstays.com/support/manage-trips</loc>
+    <loc>https://www.fastnetstays.com/faq</loc>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
+
   <url>
-    <loc>https://fastnetstays.com/support/safety-center</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.60</priority>
-  </url>
-  <url>
-    <loc>https://fastnetstays.com/support/cancellation</loc>
+    <loc>https://www.fastnetstays.com/contact</loc>
     <changefreq>monthly</changefreq>
     <priority>0.70</priority>
-  </url>
-
-  <!-- About -->
-  <url>
-    <loc>https://fastnetstays.com/about/about-us</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.80</priority>
-  </url>
-  <url>
-    <loc>https://fastnetstays.com/about/careers</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.60</priority>
-  </url>
-  <url>
-    <loc>https://fastnetstays.com/about/corporate-contact</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.60</priority>
-  </url>
-  <url>
-    <loc>https://fastnetstays.com/about/how-we-work</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.60</priority>
-  </url>
-  <url>
-    <loc>https://fastnetstays.com/about/sustainability</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.60</priority>
-  </url>
-
-  <!-- Discover -->
-  <url>
-    <loc>https://fastnetstays.com/discover/deals</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://fastnetstays.com/discover/car-rental</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.65</priority>
-  </url>
-  <url>
-    <loc>https://fastnetstays.com/discover/loyalty-program</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.65</priority>
-  </url>
-  <url>
-    <loc>https://fastnetstays.com/discover/travel-articles</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.70</priority>
-  </url>
-
-  <!-- Partners -->
-  <url>
-    <loc>https://fastnetstays.com/partners/list-property</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>https://fastnetstays.com/partners/extranet-login</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.70</priority>
-  </url>
-  <url>
-    <loc>https://fastnetstays.com/partners/partner-help</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.60</priority>
   </url>
 
   <!-- Legal -->
   <url>
-    <loc>https://fastnetstays.com/legal/privacy</loc>
+    <loc>https://www.fastnetstays.com/privacy-policy</loc>
     <changefreq>monthly</changefreq>
     <priority>0.50</priority>
-  </url>
-  <url>
-    <loc>https://fastnetstays.com/legal/terms</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.50</priority>
-  </url>
-  <url>
-    <loc>https://fastnetstays.com/legal/cookies</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.40</priority>
-  </url>
-  <url>
-    <loc>https://fastnetstays.com/legal/accessibility</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.40</priority>
-  </url>
-  <url>
-    <loc>https://fastnetstays.com/legal/human-rights</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.40</priority>
-  </url>
-  <url>
-    <loc>https://fastnetstays.com/legal/modern-slavery</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.40</priority>
   </url>
 
-  <!-- LLM Specs -->
   <url>
-    <loc>https://fastnetstays.com/llms.txt</loc>
-    <lastmod>2026-08-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.90</priority>
-  </url>
-  <url>
-    <loc>https://fastnetstays.com/llms-full.txt</loc>
-    <lastmod>2026-08-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.90</priority>
+    <loc>https://www.fastnetstays.com/terms-of-service</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.50</priority>
   </url>
 
 </urlset>

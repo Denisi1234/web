@@ -1,11 +1,12 @@
-# Robots.txt file for fastnetstays.com
+# Robots.txt for https://www.fastnetstays.com
 User-agent: *
 Allow: /
 
-# Directories to exclude from indexing (checkout and receipts to protect privacy)
-Disallow: /booking/checkout.html
-Disallow: /booking/receipt.html
-Disallow: /booking/confirmation.html
+# Exclude sensitive user session routes
+Disallow: /api/
+Disallow: /my-booking/
+Disallow: /my-profile
+Disallow: /security
+Disallow: /payment-detail
 
-# Declare Sitemap Location
-Sitemap: https://fastnetstays.com/sitemap.xml
+Sitemap: https://www.fastnetstays.com/sitemap.xml
