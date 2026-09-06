@@ -1,12 +1,47 @@
 # Robots.txt for https://www.fastnetstays.com
+# Optimized for Web Search Engines and AI Search Engines (ChatGPT, Perplexity, Claude, Gemini)
+
 User-agent: *
 Allow: /
 
-# Exclude sensitive user session routes
+# Dedicated AI Search Bot Permissions (GEO - Generative Engine Optimization)
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+# Exclude sensitive session & private routes
 Disallow: /api/
 Disallow: /my-booking/
 Disallow: /my-profile
 Disallow: /security
 Disallow: /payment-detail
 
+# Sitemaps & LLM Context Discovery
 Sitemap: https://www.fastnetstays.com/sitemap.xml
+# LLM Knowledge Graph: https://www.fastnetstays.com/llms.txt

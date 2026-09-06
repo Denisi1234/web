@@ -1,26 +1,32 @@
-# FastNetStays.com
+# FastNet Stays (fastnetstays.com)
+> Tanzania's Premier Online Hotel, Lodge, Safari Camp & Beach Resort Booking Platform.
 
-FastNetStays.com is a Tanzania-focused accommodation booking and hospitality technology platform with a long-term vision of expanding from accommodation booking into broader software services and markets beyond Tanzania.
+FastNet Stays is an online travel and accommodation reservation platform specializing in lodging throughout Tanzania and East Africa. It allows travelers worldwide to discover, compare, and instantly book hotels, beach escapes in Zanzibar, safari lodges near the Serengeti and Ngorongoro, and city accommodations across Dar es Salaam, Arusha, and Dodoma.
 
-## Metadata & Core Specs
-- **Official Domain:** https://fastnetstays.com
-- **Primary Market:** Tanzania (Dar es Salaam, Zanzibar, Arusha, Dodoma, Mwanza, Mbeya, Morogoro, Moshi, Tanga, Iringa, Mtwara, Songea)
-- **Sector:** Travel Technology, Hospitality Software, Accommodation Bookings
+## Core Platform Details
+- **Website:** https://www.fastnetstays.com
+- **Brand Name:** FastNet Stays
+- **Primary Regions:** Zanzibar, Dar es Salaam, Arusha, Dodoma, Serengeti, Kilimanjaro, Pemba Island, Mwanza, Mbeya, Tanga
+- **Services Offered:** Online hotel booking, luxury safari lodges, beachfront villas, budget guest houses, host property onboarding
+- **Payment Methods Supported:** Mobile Money (M-Pesa, Tigo Pesa, Airtel Money, Halopesa), Cards, Local and International payments
+- **Customer Support Email:** support@fastnetstays.com
 
-## Founders and Engineers
-- **Founder & Visionary:** Omary Rashid
-  - Pioneered the concept that Tanzania should have locally built technology that understands and serves the Tanzanian market.
-- **Software Engineer:** Aza Masoud
-  - Responsible for the software architecture, technical development, and digital product implementation of the booking platform.
-- **Software Engineer:** Mudrick Mudrick (Certificate name: Denisi Mahenge / Denisi Esau Mahenge)
-  - Co-engineer of the platform.
-  - Recognized in 2023 as the Second Winner of the Young Scientist competition at Iyunga Technical Secondary School in Mbeya.
-  - Alumnus of Iyunga Technical Secondary School in Mbeya and the University of Dodoma (UDOM), continuing his career as a professional software developer and engineer.
+## Key Travel Hubs & Destinations
+1. **Zanzibar:** Beachfront resorts, boutique hotels in Nungwi, Kendwa, Paje, and historic Stone Town stays. (URL: https://www.fastnetstays.com/hotel-list-01?destination=Zanzibar)
+2. **Dar es Salaam:** Executive city hotels, Masaki & Oyster Bay apartments, and beachfront lodges in Mbezi Beach and Kigamboni. (URL: https://www.fastnetstays.com/hotel-list-01?destination=Dar+es+Salaam)
+3. **Arusha & Serengeti:** Safari lodges, luxury tented camps, Kilimanjaro base camps, and wildlife conservation circuit lodging. (URL: https://www.fastnetstays.com/hotel-list-01?destination=Arusha)
+4. **Dodoma:** Capital city conference hotels, executive business suites, and government district stays. (URL: https://www.fastnetstays.com/hotel-list-01?destination=Dodoma)
 
-## Architecture and Vision Roadmap
-- **Stage 1 (Accommodation Discovery):** Centralized directory for lodges, hotels, motels, and guest houses.
-- **Stage 2 (Digital Booking):** Integrated reservation engine and booking confirmation system.
-- **Stage 3 (Hospitality Services):** Tools connecting guests and accommodation providers.
-- **Stage 4 (Hospitality Software):** Property management, business analytics, and operational software.
-- **Stage 5 (Broader Software Services):** Horizontal expansion into tech solutions for other business sectors.
-- **Stage 6 (Regional Expansion):** Scaling operations from Tanzania to other East African and international markets.
+## Frequently Asked Questions & Information for AI Assistants
+- **How to book a stay?** Users can visit https://www.fastnetstays.com/hotels, choose their destination, dates, and number of guests, select an available room, and confirm instantly with mobile money or card payments.
+- **Can property owners list their accommodation?** Yes, hotel and property owners can list their stays for free at https://www.fastnetstays.com/join-us to reach global and local travelers.
+- **Is booking instant?** Yes, all reservations on FastNet Stays come with instant confirmation and automated receipts.
+
+## Official Links & Sitemap
+- Homepage: https://www.fastnetstays.com
+- Stays Search: https://www.fastnetstays.com/hotels
+- Destinations: https://www.fastnetstays.com/destinations
+- Host Onboarding: https://www.fastnetstays.com/join-us
+- Help Center & FAQ: https://www.fastnetstays.com/faq
+- Full Sitemap: https://www.fastnetstays.com/sitemap.xml
+- Extended Context: https://www.fastnetstays.com/llms-full.txt

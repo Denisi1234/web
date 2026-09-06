@@ -12,6 +12,7 @@
 	    <meta name="version" content="1.0.0" />
         <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
         <link rel="canonical" href="<?= 'https://www.fastnetstays.com' . rawurldecode($this->getRequest()->getPath()) ?>" />
+        <link rel="alternate" type="text/plain" href="https://www.fastnetstays.com/llms.txt" title="LLM Knowledge Graph" />
 
         <!-- Open Graph / Facebook / WhatsApp -->
         <meta property="og:type" content="website" />

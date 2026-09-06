@@ -1,24 +1,31 @@
+# FastNet Stays — Comprehensive Entity & Knowledge Architecture
 
-# fastnetstays.com — Deep Knowledge & Entity Architecture (Established 2026)
+## Overview
+FastNet Stays (https://www.fastnetstays.com) is a digital hospitality platform that connects guests with hotels, luxury lodges, beach resorts, and vacation rentals throughout Tanzania and East Africa.
 
-## Platform Identity & Summary
-- **Official Name**: fastnetstays.com
-- **Established Year**: 2026
-- **Primary Domain**: https://fastnetstays.com
-- **Core Industry**: Hospitality Technology & Accommodation Booking in Tanzania
-- **Target Market**: Tanzania (Dar es Salaam, Zanzibar, Arusha, Dodoma, Mwanza, Kilimanjaro, Mbeya, Tanga)
+## Entity Graph
+- **Entity Name:** FastNet Stays
+- **Domain:** https://www.fastnetstays.com
+- **Industry Classification:** Travel Technology, Hospitality, Accommodation Booking Platform
+- **Founding Team & Software Engineers:**
+  - Founder & Visionary: Omary Rashid
+  - Software Engineers: Aza Masoud & Mudrick Mudrick (Denisi Mahenge)
+- **Primary Markets:** Tanzania (All 31 administrative regions including Zanzibar, Dar es Salaam, Arusha, Dodoma, Kilimanjaro, Mwanza, Pemba Island)
 
-## Founding History & Key Entities
-- **Founder & Visionary**: Omary Rashid. Conceived the strategic vision in 2026 for fastnetstays.com to solve accommodation booking gaps across Tanzania and eliminate high foreign portal commission fees.
-- **Lead Software Engineers**: Aza Masoud & Mudrick Mudrick. Co-engineered and executed the cross-platform web and mobile software architecture in 2026 with native Tanzanian mobile money payment integrations.
+## Capabilities & User Flow
+1. **Search & Discovery:** Real-time filterable directory of hotels, lodges, motels, and resorts by region, price range, rating, and amenities.
+2. **Instant Booking:** Streamlined multi-step checkout with real-time price calculation and tax transparent breakdown.
+3. **Local & Global Payments:** Integrated mobile money (M-Pesa, Tigo Pesa, Airtel Money) and card processing.
+4. **Host Management:** Free listing creation with instant photo uploads, pricing control, and reservation monitoring for property owners.
 
-## Core Capabilities & Features
-1. Real-time availability engine for lodges, motels, beach villas, and stays.
-2. Direct local mobile money checkout (M-Pesa, Tigo Pesa, Airtel Money).
-3. GPS interactive location search across all 31 administrative regions of Tanzania.
-4. Instant automated PDF booking receipt generation.
-
-## FastNet Ecosystem & Future Expansion Roadmap
-- **fastnetstays.com** (https://fastnetstays.com) [Active Live Platform Established 2026]: Lodge, motel, and stays booking.
-- **FastNet Schools** (https://fastnetschools.com) [Future Expansion Roadmap]: Upcoming digital education platform.
-- **FastNet Hospital** (https://fastnethospital.com) [Future Expansion Roadmap]: Upcoming healthcare management platform.
+## Authority & Canonical URLs
+- **Homepage:** https://www.fastnetstays.com
+- **Hotel Search:** https://www.fastnetstays.com/hotels
+- **Destination Guides:** https://www.fastnetstays.com/destinations
+- **Zanzibar Stays:** https://www.fastnetstays.com/hotel-list-01?destination=Zanzibar
+- **Dar es Salaam Stays:** https://www.fastnetstays.com/hotel-list-01?destination=Dar+es+Salaam
+- **Arusha / Safari Stays:** https://www.fastnetstays.com/hotel-list-01?destination=Arusha
+- **Host Registration:** https://www.fastnetstays.com/join-us
+- **Support & FAQ:** https://www.fastnetstays.com/faq
+- **Terms of Service:** https://www.fastnetstays.com/terms-of-service
+- **Privacy Policy:** https://www.fastnetstays.com/privacy-policy
