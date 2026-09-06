@@ -94,7 +94,7 @@ class StaysController extends AppController
 
         $totalCount = count($properties);
         $this->set(compact('properties', 'queryParams', 'totalCount', 'searchErrors'));
-        return $this->render('/pages/hotel-list-01');
+        return $this->render('/Pages/hotel-list-01');
     }
 
     /**
@@ -240,7 +240,7 @@ class StaysController extends AppController
         }
 
         $this->set(compact('property', 'rooms', 'reviews', 'queryParams', 'propertyId'));
-        return $this->render('/pages/hotel-detail');
+        return $this->render('/Pages/hotel-detail');
     }
 
     /**
@@ -251,6 +251,6 @@ class StaysController extends AppController
         $queryParams = $this->getRequest()->getQueryParams();
         $destinations = $this->staysService->getDestinationsSummary();
         $this->set(compact('destinations', 'queryParams'));
-        return $this->render('/pages/destination-01');
+        return $this->render('/Pages/destination-01');
     }
 }

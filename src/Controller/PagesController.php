@@ -83,7 +83,7 @@ class PagesController extends AppController
         $destinationsSummary = $this->staysService->getDestinationsSummary($featuredResorts);
 
         $this->set(compact('featuredResorts', 'destinationsSummary'));
-        return $this->render('/pages/index');
+        return $this->render('/Pages/index');
     }
 
     // ── Stays Forwarders (Backward Compatibility) ──────────────────────────
@@ -103,10 +103,10 @@ class PagesController extends AppController
     }
 
     // ── Host Onboarding ───────────────────────────────────────────────────
-    public function joinUs() { return $this->render('/pages/join-us'); }
-    public function addListing() { return $this->render('/pages/add-listing'); }
-    public function addListingStep02() { return $this->render('/pages/add-listing-step-02'); }
-    public function addListingStep03() { return $this->render('/pages/add-listing-step-03'); }
+    public function joinUs() { return $this->render('/Pages/join-us'); }
+    public function addListing() { return $this->render('/Pages/add-listing'); }
+    public function addListingStep02() { return $this->render('/Pages/add-listing-step-02'); }
+    public function addListingStep03() { return $this->render('/Pages/add-listing-step-03'); }
 
     // ── Bookings Forwarders (Backward Compatibility) ───────────────────────
     public function bookingPage()
@@ -194,7 +194,7 @@ class PagesController extends AppController
             }
         }
 
-        return $this->render('/pages/login');
+        return $this->render('/Pages/login');
     }
 
     public function signup()
@@ -204,22 +204,22 @@ class PagesController extends AppController
             $this->Flash->success(__('Account created successfully! Welcome to fastnetstays.com.'));
             return $this->redirect('/login');
         }
-        return $this->render('/pages/signup');
+        return $this->render('/Pages/signup');
     }
 
-    public function forgotPassword() { return $this->render('/pages/forgot-password'); }
-    public function twoFactorAuth() { return $this->render('/pages/two-factor-auth'); }
-    public function resetPassword() { return $this->render('/pages/reset-password'); }
+    public function forgotPassword() { return $this->render('/Pages/forgot-password'); }
+    public function twoFactorAuth() { return $this->render('/Pages/two-factor-auth'); }
+    public function resetPassword() { return $this->render('/Pages/reset-password'); }
 
     // ── Static & Support Pages ────────────────────────────────────────────
-    public function aboutUs() { return $this->render('/pages/about-us'); }
-    public function howWeWork() { return $this->render('/pages/how-we-work'); }
-    public function helpCenter() { return $this->render('/pages/help-center'); }
-    public function faq() { return $this->render('/pages/faq'); }
-    public function notFound() { return $this->render('/pages/404'); }
-    public function privacyPolicy() { return $this->render('/pages/privacy-policy'); }
-    public function termsOfService() { return $this->render('/pages/terms-of-service'); }
-    public function contactV1() { return $this->render('/pages/contact-v1'); }
+    public function aboutUs() { return $this->render('/Pages/about-us'); }
+    public function howWeWork() { return $this->render('/Pages/how-we-work'); }
+    public function helpCenter() { return $this->render('/Pages/help-center'); }
+    public function faq() { return $this->render('/Pages/faq'); }
+    public function notFound() { return $this->render('/Pages/404'); }
+    public function privacyPolicy() { return $this->render('/Pages/privacy-policy'); }
+    public function termsOfService() { return $this->render('/Pages/terms-of-service'); }
+    public function contactV1() { return $this->render('/Pages/contact-v1'); }
 
     // ── Universal API Proxy (localhost & production) ─────────────────────
     public function apiProxy(string ...$path): Response

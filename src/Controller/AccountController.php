@@ -27,7 +27,7 @@ class AccountController extends AppController
     {
         $userProfile = $this->authService->getPersonalDetails();
         $this->set(compact('userProfile'));
-        return $this->render('/pages/menu');
+        return $this->render('/Pages/menu');
     }
 
     public function myProfile()
@@ -44,7 +44,7 @@ class AccountController extends AppController
         }
 
         $this->set(compact('userProfile'));
-        return $this->render('/pages/my-profile');
+        return $this->render('/Pages/my-profile');
     }
 
     public function accountSecurity()
@@ -65,7 +65,7 @@ class AccountController extends AppController
         }
 
         $this->set(compact('userProfile'));
-        return $this->render('/pages/account-security');
+        return $this->render('/Pages/account-security');
     }
 
     public function myBooking()
@@ -86,7 +86,7 @@ class AccountController extends AppController
 
         $userBookings = $bookings;
         $this->set(compact('userProfile', 'bookings', 'userBookings'));
-        return $this->render('/pages/my-booking');
+        return $this->render('/Pages/my-booking');
     }
 
     public function cancelBooking(): Response
@@ -131,7 +131,7 @@ class AccountController extends AppController
     {
         $userProfile = $this->authService->getPersonalDetails();
         $this->set(compact('userProfile'));
-        return $this->render('/pages/payment-detail');
+        return $this->render('/Pages/payment-detail');
     }
 
     public function myWishlists()
@@ -145,14 +145,14 @@ class AccountController extends AppController
         }
 
         $this->set(compact('userProfile', 'wishlists'));
-        return $this->render('/pages/my-wishlists');
+        return $this->render('/Pages/my-wishlists');
     }
 
     public function recentlyViewed()
     {
         $userProfile = $this->authService->getPersonalDetails();
         $this->set(compact('userProfile'));
-        return $this->render('/pages/recently-viewed');
+        return $this->render('/Pages/recently-viewed');
     }
 
     public function searchPreferences()
@@ -164,7 +164,7 @@ class AccountController extends AppController
         }
 
         $this->set(compact('userProfile'));
-        return $this->render('/pages/search-preferences');
+        return $this->render('/Pages/search-preferences');
     }
 
     public function notifications()
@@ -176,14 +176,14 @@ class AccountController extends AppController
         }
 
         $this->set(compact('userProfile'));
-        return $this->render('/pages/notifications');
+        return $this->render('/Pages/notifications');
     }
 
     public function languageAndCurrency()
     {
         $userProfile = $this->authService->getPersonalDetails();
         $this->set(compact('userProfile'));
-        return $this->render('/pages/language-and-currency');
+        return $this->render('/Pages/language-and-currency');
     }
 
     public function settings()

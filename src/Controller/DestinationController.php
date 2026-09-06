@@ -74,6 +74,6 @@ class DestinationController extends AppController
         }
 
         $this->set(compact('article', 'trips'));
-        $this->render('/pages/destination-detail');
+        $this->render('/Pages/destination-detail');
     }
 }

@@ -109,7 +109,7 @@ class BookingsController extends AppController
         }
 
         $this->set(compact('property', 'room', 'calculation', 'queryParams', 'quote', 'quoteError'));
-        return $this->render('/pages/booking-page');
+        return $this->render('/Pages/booking-page');
     }
 
     /**
@@ -219,7 +219,7 @@ class BookingsController extends AppController
             throw new NotFoundException(__('Payment session not found.'));
         }
         $this->set(compact('paymentId', 'pending'));
-        return $this->render('/pages/booking-payment');
+        return $this->render('/Pages/booking-payment');
     }
 
     public function paymentStatus(): Response
@@ -252,7 +252,7 @@ class BookingsController extends AppController
     {
         $queryParams = $this->getRequest()->getQueryParams();
         $this->set(compact('queryParams'));
-        return $this->render('/pages/bookingpage-03');
+        return $this->render('/Pages/bookingpage-03');
     }
 
     /**
@@ -308,6 +308,6 @@ class BookingsController extends AppController
         }
 
         $this->set(compact('queryParams', 'property'));
-        return $this->render('/pages/bookingpage-success');
+        return $this->render('/Pages/bookingpage-success');
     }
 }
