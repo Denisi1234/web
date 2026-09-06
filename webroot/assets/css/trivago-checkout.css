@@ -1,0 +1,598 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+ * fastnetstays.com - Trivago Book & Go Checkout Stylesheet
+ * Pixel-perfect match to Trivago Book & Go Reference Screenshot
+ * ══════════════════════════════════════════════════════════════════════════════ */
+
+/* Background & Body */
+.trivago-checkout-body {
+    background-color: #f8fafc;
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #0f172a;
+}
+
+/* Minimal Focused Checkout Header */
+.trivago-checkout-navbar {
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    height: 64px;
+    display: flex;
+    align-items: center;
+}
+.trivago-checkout-brand {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none !important;
+}
+.trivago-checkout-logo-main {
+    font-size: 22px;
+    font-weight: 850;
+    letter-spacing: -0.5px;
+    line-height: 1;
+}
+.trivago-checkout-logo-main .c-red { color: #ea580c; }
+.trivago-checkout-logo-main .c-blue { color: #0284c7; }
+.trivago-checkout-logo-main .c-orange { color: #f59e0b; }
+.trivago-checkout-bookgo {
+    font-size: 19px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.3px;
+    line-height: 1;
+    margin-left: 2px;
+}
+
+/* Stepper Bar */
+.trivago-checkout-stepper-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+    padding: 16px 0 24px;
+}
+.trivago-stepper-back-btn {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    text-decoration: none !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.trivago-stepper-back-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+.trivago-stepper-track {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    max-width: 520px;
+    gap: 8px;
+}
+.trivago-step-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.trivago-step-item.completed {
+    color: #008009;
+}
+.trivago-step-item.active {
+    color: #0f172a;
+    font-weight: 750;
+}
+.trivago-step-item.upcoming {
+    color: #94a3b8;
+}
+.trivago-step-circle {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+}
+.trivago-step-item.completed .trivago-step-circle {
+    background-color: #008009;
+    color: #ffffff;
+}
+.trivago-step-item.active .trivago-step-circle {
+    background-color: #008009;
+    color: #ffffff;
+}
+.trivago-step-item.upcoming .trivago-step-circle {
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    color: #94a3b8;
+}
+.trivago-step-line {
+    flex-grow: 1;
+    height: 1px;
+    background-color: #cbd5e1;
+}
+.trivago-step-line.completed {
+    background-color: #008009;
+}
+
+/* Form Cards */
+.trivago-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 22px 24px;
+    margin-bottom: 18px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+.trivago-card-title {
+    font-size: 17px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.trivago-card-subtitle {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 16px;
+}
+.trivago-card-section-label {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 16px 0 12px;
+}
+
+/* Inputs & Form Controls */
+.trivago-field {
+    margin-bottom: 12px;
+}
+.trivago-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 5px;
+    display: block;
+}
+.trivago-input,
+.trivago-select {
+    width: 100%;
+    height: 44px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 0 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #0f172a;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.trivago-input:focus,
+.trivago-select:focus {
+    border-color: #0284c7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+}
+.trivago-input::placeholder {
+    color: #94a3b8;
+    font-weight: 400;
+}
+.trivago-input-with-icon {
+    position: relative;
+}
+.trivago-input-icon-right {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Accordion Box */
+.trivago-accordion-header {
+    cursor: pointer;
+    user-select: none;
+}
+.trivago-accordion-content {
+    display: none;
+    margin-top: 14px;
+}
+.trivago-accordion-content.show {
+    display: block;
+}
+
+/* Policies List */
+.trivago-policy-row {
+    padding: 12px 0;
+}
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/* Confirm & Pay Button */
+.trivago-confirm-pay-btn {
+    background-color: #008009;
+    color: #ffffff !important;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    width: 100%;
+    height: 50px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+    box-shadow: 0 2px 4px rgba(0, 128, 9, 0.2);
+}
+.trivago-confirm-pay-btn:hover {
+    background-color: #006607;
+}
+.trivago-confirm-pay-btn:active {
+    transform: translateY(1px);
+}
+
+/* Right Column: Sticky Booking Summary Sidebar */
+.trivago-sidebar-sticky {
+    position: sticky;
+    top: 20px;
+}
+.trivago-trust-banner {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #ffffff;
+    padding: 11px 14px;
+    font-size: 11.5px;
+    color: #475569;
+    line-height: 1.45;
+    margin-bottom: 14px;
+}
+
+/* Booking Details Card */
+.trivago-summary-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+.trivago-summary-img {
+    width: 100%;
+    height: 145px;
+    border-radius: 8px;
+    object-fit: cover;
+    margin: 12px 0;
+}
+.trivago-blue-alert {
+    background-color: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 6px;
+    padding: 9px 12px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #1e40af;
+    margin: 14px 0;
+    display: flex;
+    align-items: center;
+}
+
+/* Price Breakdown */
+.trivago-price-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    font-size: 13.5px;
+    color: #1e293b;
+    margin-bottom: 10px;
+}
+.trivago-total-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-top: 14px;
+}
+.trivago-total-label {
+    font-size: 18px;
+    font-weight: 800;
+    color: #008009;
+}
+.trivago-total-amount {
+    font-size: 22px;
+    font-weight: 850;
+    color: #008009;
+}
+
+/* ── Clean Horizontal Mobile Money Strip ────────────────────────────────────── */
+.momo-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 3px;
+    gap: 4px;
+    margin: 12px 0 16px 0;
+}
+.momo-strip-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 8px 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+    user-select: none;
+    margin: 0;
+    min-height: 40px;
+}
+.momo-strip-item:hover {
+    background: rgba(255, 255, 255, 0.7);
+}
+.momo-strip-item.active {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.momo-strip-radio {
+    display: none;
+}
+.momo-strip-logo {
+    height: 18px;
+    max-width: 38px;
+    object-fit: contain;
+    display: block;
+}
+.momo-strip-name {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #475569;
+    white-space: nowrap;
+}
+.momo-strip-item.active .momo-strip-name {
+    color: #0f172a;
+    font-weight: 700;
+}
+.momo-phone-prefix {
+    height: 44px;
+    font-size: 13px;
+}
+
+/* ── Mobile Summary Card (Shown only on < 992px) ───────────────────────────── */
+.trivago-mobile-summary {
+    display: block;
+}
+.trivago-mobile-summary-thumb {
+    width: 68px;
+    height: 68px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.trivago-mobile-details {
+    animation: fadeIn 0.2s ease-in-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * Comprehensive Mobile & Tablet Responsiveness
+ * ══════════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 991px) {
+    .trivago-checkout-body {
+        padding-top: 10px;
+    }
+    .trivago-checkout-stepper-track {
+        max-width: 100%;
+    }
+    .trivago-sidebar-sticky {
+        position: static;
+    }
+    .trivago-card {
+        padding: 18px 16px;
+        margin-bottom: 14px;
+    }
+}
+
+@media (max-width: 767px) {
+    /* Prevent iOS Safari auto-zoom on form focus by ensuring font-size >= 16px */
+    .trivago-input,
+    .trivago-select {
+        font-size: 16px;
+        height: 46px;
+    }
+    .momo-phone-prefix {
+        height: 46px;
+        font-size: 14px;
+    }
+
+    .trivago-checkout-navbar {
+        height: 56px;
+    }
+    .trivago-checkout-logo-main {
+        font-size: 19px;
+    }
+    .trivago-checkout-bookgo {
+        font-size: 16px;
+    }
+
+    .trivago-checkout-stepper-row {
+        padding: 10px 0 16px;
+        gap: 10px;
+    }
+    .trivago-stepper-back-btn {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+    .trivago-step-item {
+        font-size: 12px;
+        gap: 5px;
+    }
+    .trivago-step-circle {
+        width: 20px;
+        height: 20px;
+        font-size: 10px;
+    }
+
+    .trivago-card {
+        padding: 16px 14px;
+        border-radius: 8px;
+    }
+    .trivago-card-title {
+        font-size: 16px;
+    }
+    .trivago-card-subtitle {
+        font-size: 12.5px;
+        margin-bottom: 14px;
+    }
+
+    .trivago-confirm-pay-btn {
+        height: 52px;
+        font-size: 16px;
+        border-radius: 8px;
+    }
+}
+
+@media (max-width: 575px) {
+    .trivago-checkout-stepper-row {
+        gap: 6px;
+    }
+    .trivago-stepper-track {
+        gap: 4px;
+    }
+    .trivago-step-item {
+        font-size: 11px;
+        gap: 4px;
+    }
+    .trivago-step-circle {
+        width: 18px;
+        height: 18px;
+        font-size: 9.5px;
+    }
+
+    /* Mobile Money Strip: 2x2 Grid for effortless tapping on mobile phones */
+    .momo-strip {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+        padding: 5px;
+    }
+    .momo-strip-item {
+        min-height: 44px;
+        padding: 8px 10px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+    }
+    .momo-strip-item.active {
+        background: #f0fdf4;
+        border-color: #008009;
+        box-shadow: 0 1px 3px rgba(0, 128, 9, 0.15);
+    }
+    .momo-strip-item.active .momo-strip-name {
+        color: #008009;
+        font-weight: 700;
+    }
+    .momo-strip-logo {
+        height: 19px;
+    }
+    .momo-strip-name {
+        font-size: 12px;
+    }
+
+    .trivago-card {
+        padding: 14px 12px;
+    }
+}
+
+@media (max-width: 375px) {
+    .trivago-checkout-logo-main {
+        font-size: 17px;
+    }
+    .trivago-checkout-bookgo {
+        font-size: 14.5px;
+    }
+    .trivago-step-item span:not(.trivago-step-circle) {
+        font-size: 10px;
+    }
+    .momo-strip-name {
+        font-size: 11.5px;
+    }
+    .trivago-card {
+        padding: 12px 10px;
+    }
+}
+
+/* Final checkout mobile pass. */
+.trivago-summary-image-empty {
+    align-items: center;
+    background: #f1f5f9;
+    color: #64748b;
+    display: flex;
+    justify-content: center;
+}
+@media (max-width: 767px) {
+    .trivago-checkout-body > .container { padding-left: 16px; padding-right: 16px; }
+    .trivago-checkout-stepper-row { align-items: stretch; display: grid; grid-template-columns: auto 1fr; padding: 12px 0 16px; }
+    .trivago-stepper-track { min-width: 0; }
+    .trivago-step-item { min-width: 0; }
+    .trivago-step-item span { overflow: hidden; text-overflow: ellipsis; }
+    .trivago-mobile-summary .trivago-card { padding: 14px; }
+    .trivago-mobile-summary-thumb { height: 64px; width: 64px; }
+    .trivago-card { margin-bottom: 12px; }
+    .trivago-card .row { --bs-gutter-y: 10px; }
+    .trivago-label { margin-bottom: 6px; }
+    .momo-strip { margin-top: 10px; margin-bottom: 14px; }
+    .trivago-confirm-pay-btn { position: relative; z-index: 1; }
+    .trivago-checkout-navbar .container { padding-left: 16px; padding-right: 16px; width: 100%; }
+    .trivago-checkout-brand { max-width: 100%; min-width: 0; }
+    .trivago-checkout-logo-main, .trivago-checkout-bookgo { white-space: nowrap; }
+    .trivago-checkout-stepper-row { column-gap: 8px; }
+    .trivago-stepper-back-btn { align-self: center; min-height: 38px; }
+    .trivago-stepper-track { justify-content: space-between; width: 100%; }
+    .trivago-step-line { min-width: 10px; }
+    .trivago-card, .trivago-summary-card, .trivago-trust-banner { box-sizing: border-box; width: 100%; }
+    .trivago-card-title { line-height: 1.3; }
+    .trivago-card-subtitle { line-height: 1.45; }
+    .trivago-card .input-group { display: flex; flex-wrap: nowrap; width: 100%; }
+    .trivago-card .input-group .trivago-select { flex: 0 0 92px; min-width: 92px; padding-left: 7px; padding-right: 7px; }
+    .trivago-card .input-group .trivago-input { flex: 1 1 auto; min-width: 0; }
+    .momo-phone-prefix { flex: 0 0 auto; }
+    #mobile_payment_phone { min-width: 0; }
+    .trivago-mobile-details { overflow-wrap: anywhere; }
+    .trivago-confirm-pay-btn { padding-left: 12px; padding-right: 12px; }
+}
+
+@media (max-width: 375px) {
+    .trivago-checkout-body > .container { padding-left: 12px; padding-right: 12px; }
+    .trivago-checkout-stepper-row { grid-template-columns: 1fr; row-gap: 10px; }
+    .trivago-stepper-back-btn { justify-self: start; }
+    .trivago-stepper-track { min-height: 24px; }
+    .trivago-step-item { font-size: 10.5px; }
+    .trivago-step-line { min-width: 6px; }
+    .trivago-card { padding-left: 12px; padding-right: 12px; }
+    .momo-strip-item { gap: 5px; padding-left: 6px; padding-right: 6px; }
+    .momo-strip-logo { max-width: 32px; }
+}

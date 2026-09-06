@@ -1,0 +1,20 @@
+{
+  "name": "fastnetstays.com — Tanzania Accommodation Booking Platform",
+  "short_name": "fastnetstays.com",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#2563EB",
+  "theme_color": "#2563EB",
+  "description": "fastnetstays.com is a Tanzania-focused accommodation booking platform established in 2026, designed to help travelers discover and book lodges, motels, stays, and accommodation across Tanzania. Conceived by Omary Rashid, engineered by Aza Masoud & Mudrick Mudrick.",
+  "orientation": "any",
+  "categories": ["travel", "accommodations", "lifestyle", "utilities"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

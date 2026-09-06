@@ -1,0 +1,565 @@
+<?php
+$this->assign('title', 'My Profile');
+?>
+
+<!-- Include Navbar -->
+<?= $this->element('navbar') ?>
+
+<!-- templates/element/Listing/User-Dashboard/dashboard-menu.php -->
+<?= $this->element('Listing/User-Dashboard/dashboard-menu'); ?>
+
+<!-- Profile Page -->
+<section class="pt-5 gray-simple position-relative">
+	<div class="container">
+
+		<div class="row align-items-center justify-content-center">
+			<?= $this->element('Listing/User-Dashboard/navigation'); ?>
+		</div>
+
+		<div class="row align-items-start justify-content-between gx-xl-4">
+
+			<!-- ── Left Sidebar Card ─────────────────────────────────────── -->
+			<div class="col-xl-4 col-lg-4 col-md-12">
+				<div class="card rounded-2 me-xl-5 mb-4">
+					<div class="card-top bg-primary position-relative">
+						<div class="position-absolute end-0 top-0 mt-4 me-3">
+							<a href="javascript:void(0);" onclick="logoutUser()"
+							   class="square--40 circle bg-light-dark text-light" title="Sign Out">
+								<i class="fa-solid fa-right-from-bracket"></i>
+							</a>
+						</div>
+						<div class="py-5 px-3">
+							<div class="crd-thumbimg text-center">
+								<div class="p-2 d-flex align-items-center justify-content-center brd">
+									<div id="profile-avatar-circle"
+										 class="d-flex align-items-center justify-content-center rounded-circle bg-white text-primary fw-bold"
+										 style="width:120px;height:120px;font-size:42px;border:3px solid rgba(255,255,255,0.4);">
+										?
+									</div>
+								</div>
+							</div>
+							<div class="crd-capser text-center mt-2">
+								<h5 class="mb-0 text-light fw-semibold" id="sidebar-user-name">Loading...</h5>
+								<span class="text-light opacity-75 fw-medium text-md" id="sidebar-user-email"></span>
+							</div>
+						</div>
+					</div>
+
+					<div class="card-middle px-4 py-4">
+						<div class="crdapproval-groups">
+
+							<div class="crdapproval-single d-flex align-items-center justify-content-start mb-4">
+								<div class="crdapproval-item">
+									<div class="square--50 circle bg-light-primary text-primary">
+										<i class="fa-solid fa-envelope-circle-check fs-5"></i>
+									</div>
+								</div>
+								<div class="crdapproval-caps ps-2">
+									<div class="d-flippo">
+										<p class="fw-semibold text-dark lh-2 mb-0">Email</p>
+										<span id="sidebar-email-badge" class="badge bg-warning text-dark">Not Verified</span>
+									</div>
+									<div class="d-flippo">
+										<p class="text-md text-muted lh-1 mb-0 text-truncate" id="sidebar-email-display" style="max-width:160px;">—</p>
+									</div>
+								</div>
+							</div>
+
+							<div class="crdapproval-single d-flex align-items-center justify-content-start mb-4">
+								<div class="crdapproval-item">
+									<div class="square--50 circle bg-light-primary text-primary">
+										<i class="fa-solid fa-phone-volume fs-5"></i>
+									</div>
+								</div>
+								<div class="crdapproval-caps ps-2">
+									<div class="d-flippo">
+										<p class="fw-semibold text-dark lh-2 mb-0">Mobile</p>
+									</div>
+									<div class="d-flippo">
+										<p class="text-md text-muted lh-1 mb-0" id="sidebar-phone-display">—</p>
+									</div>
+								</div>
+							</div>
+
+							<div class="crdapproval-single d-flex align-items-center justify-content-start">
+								<div class="crdapproval-item">
+									<div class="square--50 circle bg-light-primary text-primary">
+										<i class="fa-solid fa-file-invoice fs-5"></i>
+									</div>
+								</div>
+								<div class="crdapproval-caps ps-2">
+									<div class="d-flippo">
+										<p class="fw-semibold text-dark lh-2 mb-0">Profile Status</p>
+									</div>
+									<div class="d-flippo">
+										<span class="badge bg-success" id="sidebar-status-badge">Active</span>
+									</div>
+								</div>
+							</div>
+
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- ── Right Content Column ──────────────────────────────────── -->
+			<div class="col-xl-8 col-lg-8 col-md-12">
+
+				<!-- Personal Information Form -->
+				<div class="card mb-4">
+					<div class="card-header">
+						<h4><i class="fa-solid fa-file-invoice me-2"></i>Personal Information</h4>
+					</div>
+					<div class="card-body">
+						<div id="profile-alert" class="mb-3" style="display:none;"></div>
+						<form id="profile-form">
+							<div class="row align-items-center justify-content-start">
+
+								<div class="col-xl-12 col-lg-12 col-md-12 mb-4">
+									<div class="d-flex align-items-center gap-3">
+										<label class="position-relative mb-0" for="uploadfile-1" title="Change photo">
+											<span class="avatar avatar-xl">
+												<img id="uploadfile-1-preview"
+													 class="avatar-img rounded-circle border border-white border-3 shadow"
+													 src="<?= $this->Url->build('/assets/img/team-1.jpg'); ?>"
+													 alt="" style="width:80px;height:80px;object-fit:cover;">
+											</span>
+										</label>
+										<label class="btn btn-sm btn-light-primary px-4 fw-medium mb-0" for="uploadfile-1">
+											Change Photo
+										</label>
+										<input id="uploadfile-1" class="form-control d-none" type="file" accept="image/*">
+									</div>
+								</div>
+
+								<div class="col-xl-6 col-lg-6 col-md-6">
+									<div class="form-group">
+										<label class="form-label">First Name</label>
+										<input type="text" id="profile-first-name" class="form-control" placeholder="First name">
+									</div>
+								</div>
+
+								<div class="col-xl-6 col-lg-6 col-md-6">
+									<div class="form-group">
+										<label class="form-label">Last Name</label>
+										<input type="text" id="profile-last-name" class="form-control" placeholder="Last name">
+									</div>
+								</div>
+
+								<div class="col-xl-6 col-lg-6 col-md-6">
+									<div class="form-group">
+										<label class="form-label">Email Address <small class="text-muted">(read-only)</small></label>
+										<input type="email" id="profile-email" class="form-control bg-light" readonly>
+									</div>
+								</div>
+
+								<div class="col-xl-6 col-lg-6 col-md-6">
+									<div class="form-group">
+										<label class="form-label">Mobile</label>
+										<input type="text" id="profile-phone" class="form-control" placeholder="+255 700 000 000">
+									</div>
+								</div>
+
+								<div class="col-xl-6 col-lg-6 col-md-6">
+									<div class="form-group">
+										<label class="form-label">Date of Birth</label>
+										<input type="date" id="profile-dob" class="form-control">
+									</div>
+								</div>
+
+								<div class="col-xl-6 col-lg-6 col-md-6">
+									<div class="form-group">
+										<label class="form-label">Gender</label>
+										<select id="profile-gender" class="form-control">
+											<option value="">Select gender</option>
+											<option value="male">Male</option>
+											<option value="female">Female</option>
+											<option value="other">Other</option>
+											<option value="prefer_not_to_say">Prefer not to say</option>
+										</select>
+									</div>
+								</div>
+
+								<div class="col-xl-12 col-lg-12 col-md-12">
+									<div class="form-group">
+										<label class="form-label">About Me</label>
+										<textarea id="profile-about" class="form-control ht-120" placeholder="Tell us a bit about yourself..."></textarea>
+									</div>
+								</div>
+
+								<div class="col-xl-12 col-lg-12 col-md-12 mt-2">
+									<div class="text-end">
+										<button type="submit" id="profile-save-btn" class="btn btn-md btn-primary mb-0">
+											<span id="profile-save-text">Save Changes</span>
+											<span id="profile-save-spinner" class="spinner-border spinner-border-sm ms-2 d-none"></span>
+										</button>
+									</div>
+								</div>
+
+							</div>
+						</form>
+					</div>
+				</div>
+
+				<!-- Update Email Form -->
+				<div class="card mb-4">
+					<div class="card-header">
+						<h4><i class="fa-solid fa-envelope-circle-check me-2"></i>Update Your Email</h4>
+					</div>
+					<div class="card-body">
+						<div id="email-alert" class="mb-3" style="display:none;"></div>
+						<form id="email-form">
+							<div class="row">
+								<div class="col-xl-12 col-lg-12 col-md-12">
+									<div class="form-group">
+										<label class="form-label">New Email Address</label>
+										<input type="email" id="new-email" class="form-control" placeholder="Enter your new email address" required>
+									</div>
+								</div>
+								<div class="col-xl-12 col-lg-12 col-md-12 mt-2">
+									<div class="text-end">
+										<button type="submit" id="email-save-btn" class="btn btn-md btn-primary mb-0">
+											<span id="email-save-text">Update Email</span>
+											<span id="email-save-spinner" class="spinner-border spinner-border-sm ms-2 d-none"></span>
+										</button>
+									</div>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+
+				<!-- Change Password Form -->
+				<div class="card">
+					<div class="card-header">
+						<h4><i class="fa-solid fa-lock me-2"></i>Change Password</h4>
+					</div>
+					<div class="card-body">
+						<div id="password-alert" class="mb-3" style="display:none;"></div>
+						<form id="password-form">
+							<div class="row">
+
+								<div class="col-xl-12 col-lg-12 col-md-12">
+									<div class="form-group position-relative">
+										<label class="form-label">Current Password</label>
+										<input type="password" id="current-password" class="form-control pe-5" placeholder="••••••••" required>
+										<span class="position-absolute end-0 me-3 cursor-pointer text-slate-500"
+											  style="top:38px;" onclick="togglePasswordVisibility('current-password', this)">
+											<i class="fa-solid fa-eye fs-6"></i>
+										</span>
+									</div>
+								</div>
+
+								<div class="col-xl-12 col-lg-12 col-md-12">
+									<div class="form-group position-relative">
+										<label class="form-label">New Password</label>
+										<input type="password" id="new-password" class="form-control pe-5" placeholder="••••••••" required>
+										<span class="position-absolute end-0 me-3 cursor-pointer text-slate-500"
+											  style="top:38px;" onclick="togglePasswordVisibility('new-password', this)">
+											<i class="fa-solid fa-eye fs-6"></i>
+										</span>
+									</div>
+								</div>
+
+								<div class="col-xl-12 col-lg-12 col-md-12">
+									<div class="form-group position-relative">
+										<label class="form-label">Confirm New Password</label>
+										<input type="password" id="confirm-password" class="form-control pe-5" placeholder="••••••••" required>
+										<span class="position-absolute end-0 me-3 cursor-pointer text-slate-500"
+											  style="top:38px;" onclick="togglePasswordVisibility('confirm-password', this)">
+											<i class="fa-solid fa-eye fs-6"></i>
+										</span>
+									</div>
+								</div>
+
+								<div class="col-xl-12 col-lg-12 col-md-12 mt-2">
+									<div class="text-end">
+										<button type="submit" id="password-save-btn" class="btn btn-md btn-primary mb-0">
+											<span id="password-save-text">Change Password</span>
+											<span id="password-save-spinner" class="spinner-border spinner-border-sm ms-2 d-none"></span>
+										</button>
+									</div>
+								</div>
+
+							</div>
+						</form>
+					</div>
+				</div>
+
+			</div><!-- /right column -->
+
+		</div>
+	</div>
+</section>
+
+<!-- Footer elements -->
+<?= $this->element('Home/index/newsletter'); ?>
+<?= $this->element('Home/index/log-in'); ?>
+<?= $this->element('Home/index/countries'); ?>
+<?= $this->element('Listing/User-Dashboard/verify-email'); ?>
+<?= $this->element('Listing/User-Dashboard/verify-mobile'); ?>
+<?= $this->element('Listing/User-Dashboard/verification'); ?>
+<?= $this->element('Listing/User-Dashboard/success-modal'); ?>
+<?= $this->element('footer', ['skin' => 'skin-dark-footer']) ?>
+
+<?php $this->start('script'); ?>
+<script>
+// ── Auth Guard (runs before DOMContentLoaded) ────────────────────────────────
+(function() {
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '<?= $this->Url->build('/login'); ?>?redirect=<?= urlencode($this->Url->build('/my-profile')); ?>';
+    }
+})();
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function apiUrl(path) {
+    return (typeof window.API_URL === 'function') ? window.API_URL(path) : 'http://127.0.0.1:8000' + path;
+}
+
+function authHeaders() {
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+    return {
+        'Authorization': 'Bearer ' + (token || ''),
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    };
+}
+
+function showAlert(id, msg, success = false) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.display = 'block';
+    el.innerHTML = `<div class="alert alert-${success ? 'success' : 'danger'} py-2 mb-0">${msg}</div>`;
+    setTimeout(() => { el.style.display = 'none'; }, 6000);
+}
+
+function setBtnLoading(btnId, textId, spinnerId, loading, label) {
+    const btn = document.getElementById(btnId);
+    const txt = document.getElementById(textId);
+    const spin = document.getElementById(spinnerId);
+    if (!btn) return;
+    btn.disabled = loading;
+    if (txt)  txt.textContent = loading ? 'Saving...' : label;
+    if (spin) spin.classList.toggle('d-none', !loading);
+}
+
+// ── Populate page with user data ─────────────────────────────────────────────
+function populatePage(user) {
+    const fullName = user.name
+        || ((user.first_name || '') + ' ' + (user.last_name || '')).trim()
+        || (user.email ? user.email.split('@')[0] : 'Traveler');
+    const initial = (fullName[0] || '?').toUpperCase();
+
+    // Sidebar
+    const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    setTxt('sidebar-user-name',     fullName);
+    setTxt('sidebar-user-email',    user.email || '');
+    setTxt('sidebar-email-display', user.email || '—');
+    setTxt('sidebar-phone-display', user.phone || user.phone_number || '—');
+
+    const avatarCircle = document.getElementById('profile-avatar-circle');
+    if (avatarCircle) avatarCircle.textContent = initial;
+
+    const badge = document.getElementById('sidebar-email-badge');
+    if (badge) {
+        const verified = user.email_verified_at || user.email_verified;
+        badge.className = verified ? 'badge bg-success' : 'badge bg-warning text-dark';
+        badge.textContent = verified ? 'Verified' : 'Not Verified';
+    }
+
+    // Form fields
+    const nameParts = fullName.split(' ');
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+    setVal('profile-first-name', user.first_name || nameParts[0] || '');
+    setVal('profile-last-name',  user.last_name  || nameParts.slice(1).join(' ') || '');
+    setVal('profile-email',      user.email || '');
+    setVal('profile-phone',      user.phone || user.phone_number || '');
+    setVal('profile-dob',        user.date_of_birth || user.dob || '');
+    setVal('profile-about',      user.bio || user.about || '');
+
+    const genderSel = document.getElementById('profile-gender');
+    if (genderSel && user.gender) genderSel.value = user.gender.toLowerCase();
+
+    if (user.avatar) {
+        const preview = document.getElementById('uploadfile-1-preview');
+        if (preview) preview.src = user.avatar;
+    }
+}
+
+// ── Load user from API ───────────────────────────────────────────────────────
+async function loadUserData() {
+    // Instant render from localStorage (no flicker)
+    const stored = localStorage.getItem('user');
+    if (stored) {
+        try { populatePage(JSON.parse(stored)); } catch(e) {}
+    }
+
+    // Then fetch fresh from API
+    try {
+        const res = await fetch(apiUrl('/api/user'), { headers: authHeaders() });
+
+        if (res.status === 401) {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '<?= $this->Url->build('/login'); ?>';
+            return;
+        }
+        if (res.ok) {
+            const data = await res.json();
+            const u = data.user || data.data || data;
+            if (u && (u.id || u.email)) {
+                localStorage.setItem('user', JSON.stringify(u));
+                populatePage(u);
+            }
+        }
+    } catch(e) { /* Backend unreachable — localStorage data is shown */ }
+}
+
+// ── Photo preview ────────────────────────────────────────────────────────────
+document.getElementById('uploadfile-1')?.addEventListener('change', function() {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        const preview = document.getElementById('uploadfile-1-preview');
+        if (preview) preview.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+});
+
+// ── Personal Info Form ───────────────────────────────────────────────────────
+document.getElementById('profile-form')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    setBtnLoading('profile-save-btn', 'profile-save-text', 'profile-save-spinner', true, 'Save Changes');
+
+    const firstName = document.getElementById('profile-first-name').value.trim();
+    const lastName  = document.getElementById('profile-last-name').value.trim();
+    const payload = {
+        first_name:    firstName,
+        last_name:     lastName,
+        name:          (firstName + ' ' + lastName).trim(),
+        phone:         document.getElementById('profile-phone').value.trim(),
+        date_of_birth: document.getElementById('profile-dob').value,
+        gender:        document.getElementById('profile-gender').value,
+        bio:           document.getElementById('profile-about').value.trim(),
+    };
+
+    try {
+        const res = await fetch(apiUrl('/api/user/update'), {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            try {
+                const stored = localStorage.getItem('user');
+                const u = stored ? { ...JSON.parse(stored), ...payload } : payload;
+                localStorage.setItem('user', JSON.stringify(u));
+                populatePage(u);
+            } catch(er) {}
+            showAlert('profile-alert', data.message || 'Profile updated successfully!', true);
+        } else {
+            const msg = data.message || (data.errors ? Object.values(data.errors).flat().join('<br>') : 'Update failed. Please try again.');
+            showAlert('profile-alert', msg);
+        }
+    } catch(err) {
+        showAlert('profile-alert', 'Unable to reach the server. Please check your connection.');
+    } finally {
+        setBtnLoading('profile-save-btn', 'profile-save-text', 'profile-save-spinner', false, 'Save Changes');
+    }
+});
+
+// ── Update Email Form ────────────────────────────────────────────────────────
+document.getElementById('email-form')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const newEmail = document.getElementById('new-email').value.trim();
+    if (!newEmail) { showAlert('email-alert', 'Please enter a new email address.'); return; }
+
+    setBtnLoading('email-save-btn', 'email-save-text', 'email-save-spinner', true, 'Update Email');
+
+    try {
+        const res = await fetch(apiUrl('/api/user/update-email'), {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({ email: newEmail })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            try {
+                const stored = localStorage.getItem('user');
+                if (stored) {
+                    const u = { ...JSON.parse(stored), email: newEmail };
+                    localStorage.setItem('user', JSON.stringify(u));
+                    populatePage(u);
+                }
+            } catch(er) {}
+            document.getElementById('new-email').value = '';
+            showAlert('email-alert', data.message || 'Email updated! Please check your inbox to verify.', true);
+        } else {
+            const msg = data.message || (data.errors ? Object.values(data.errors).flat().join('<br>') : 'Email update failed.');
+            showAlert('email-alert', msg);
+        }
+    } catch(err) {
+        showAlert('email-alert', 'Unable to reach the server. Please check your connection.');
+    } finally {
+        setBtnLoading('email-save-btn', 'email-save-text', 'email-save-spinner', false, 'Update Email');
+    }
+});
+
+// ── Change Password Form ─────────────────────────────────────────────────────
+document.getElementById('password-form')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const currentPw = document.getElementById('current-password').value;
+    const newPw     = document.getElementById('new-password').value;
+    const confirmPw = document.getElementById('confirm-password').value;
+
+    if (newPw !== confirmPw) { showAlert('password-alert', 'New password and confirmation do not match.'); return; }
+    if (newPw.length < 8)   { showAlert('password-alert', 'Password must be at least 8 characters.'); return; }
+
+    setBtnLoading('password-save-btn', 'password-save-text', 'password-save-spinner', true, 'Change Password');
+
+    try {
+        const res = await fetch(apiUrl('/api/user/change-password'), {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({
+                current_password:          currentPw,
+                new_password:              newPw,
+                new_password_confirmation: confirmPw
+            })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value     = '';
+            document.getElementById('confirm-password').value = '';
+            showAlert('password-alert', data.message || 'Password changed successfully!', true);
+        } else {
+            const msg = data.message || (data.errors ? Object.values(data.errors).flat().join('<br>') : 'Password change failed.');
+            showAlert('password-alert', msg);
+        }
+    } catch(err) {
+        showAlert('password-alert', 'Unable to reach the server. Please check your connection.');
+    } finally {
+        setBtnLoading('password-save-btn', 'password-save-text', 'password-save-spinner', false, 'Change Password');
+    }
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', loadUserData);
+
+function moveToNext(currentInput) {
+    if (currentInput.value.length === 1) {
+        const next = currentInput.nextElementSibling;
+        if (next) next.focus();
+    }
+}
+</script>
+<?php $this->end(); ?>

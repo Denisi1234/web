@@ -1,0 +1,502 @@
+/*
+ * ============================================================
+ * HERO SECTION SEARCH — hero-search.css
+ * ============================================================
+ * EXCLUSIVE to the Home Page Hero Section (#hero-search-form).
+ * Do NOT import or load this stylesheet on any other page.
+ * ============================================================
+ */
+
+/* ── Search Section Tabs Bar ── */
+.hs-tabs-bar {
+    display: flex;
+    align-items: flex-end;
+    gap: 0;
+    padding: 0 4px;
+    border-bottom: 2px solid rgba(255,255,255,0.25);
+    margin-bottom: 0;
+    flex-wrap: wrap;
+}
+.hs-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 20px 10px;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.78);
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+}
+.hs-tab:hover {
+    color: #ffffff;
+    background: rgba(255,255,255,0.08);
+    border-radius: 8px 8px 0 0;
+}
+.hs-tab.hs-tab--active {
+    color: #ffffff;
+    border-bottom-color: #ffffff;
+    background: rgba(255,255,255,0.10);
+    border-radius: 8px 8px 0 0;
+}
+
+/* ── Search Card ── */
+.hs-search-card {
+    background: #ffffff;
+    border-radius: 0 12px 12px 12px;
+    padding: 18px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
+    width: 100%;
+}
+
+/* ── Fields Row ── */
+.hs-fields-row {
+    display: flex;
+    align-items: stretch;
+    border: 2px solid #d1d5db;
+    border-radius: 8px;
+    overflow: visible;
+    background: #fff;
+    flex-wrap: nowrap;
+}
+.hs-field {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 10px 16px;
+    cursor: pointer;
+    position: relative;
+    min-height: 68px;
+    border-right: 1px solid #e5e7eb;
+    transition: background 0.12s;
+    background: transparent;
+    flex: 1;
+}
+.hs-field:last-child { border-right: none; }
+.hs-field:hover { background: #f8fafc; }
+.hs-field:focus-within {
+    background: #f0f9ff;
+    outline: 2px solid #1877f2;
+    outline-offset: -2px;
+    border-radius: 6px;
+    z-index: 2;
+}
+.hs-field--dest   { flex: 2;   min-width: 220px; }
+.hs-field--date   { flex: 1.1; min-width: 140px; }
+.hs-field--guests { flex: 1.3; min-width: 170px; }
+
+.hs-field-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #374151;
+    line-height: 1.2;
+    margin-bottom: 3px;
+    white-space: nowrap;
+}
+.hs-field-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.hs-field-value input[type="text"],
+.hs-field-value input[type="search"] {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    color: #1e293b !important;
+    background: transparent !important;
+    width: 100%;
+    padding: 0 !important;
+    line-height: 1.3;
+}
+.hs-field-value input::placeholder { color: #9ca3af !important; font-weight: 400 !important; }
+.hs-field-divider {
+    width: 0;
+    align-self: center;
+    height: 44px;
+    border-left: 1px solid #e5e7eb;
+    flex-shrink: 0;
+}
+
+/* ── Destination Autocomplete ── */
+.hs-suggestions-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: -2px;
+    width: 440px;
+    max-width: 96vw;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    box-shadow: 0 16px 44px rgba(0,0,0,0.14), 0 4px 12px rgba(0,0,0,0.06);
+    z-index: 10000;
+    overflow: hidden;
+    display: none;
+    animation: hsFadeIn 0.12s ease;
+}
+.hs-suggestions-dropdown.open { display: block; }
+@keyframes hsFadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.hs-suggestion-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 16px;
+    cursor: pointer;
+    transition: background 0.1s;
+    border-bottom: 1px solid #f1f5f9;
+}
+.hs-suggestion-item:last-child { border-bottom: none; }
+.hs-suggestion-item:hover, .hs-suggestion-item.hs-active { background: #f8fafc; }
+.hs-suggestion-icon { width: 36px; height: 36px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #475569; }
+.hs-suggestion-name { font-size: 14.5px; font-weight: 600; color: #0f172a; line-height: 1.3; }
+.hs-suggestion-sub  { font-size: 12px; color: #64748b; line-height: 1.2; margin-top: 1px; }
+.hs-suggestion-badge { margin-left: auto; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #f1f5f9; color: #64748b; white-space: nowrap; flex-shrink: 0; }
+.hs-suggestion-badge--city       { background: #fff7ed; color: #ea580c; }
+.hs-suggestion-badge--island     { background: #eff6ff; color: #2563eb; }
+.hs-suggestion-badge--attraction { background: #f0fdf4; color: #16a34a; }
+.hs-suggestion-badge--airport    { background: #f0f9ff; color: #0284c7; }
+.hs-suggestion-badge--property   { background: #fffbeb; color: #b45309; }
+.hs-no-results { display: flex; align-items: center; gap: 10px; padding: 20px 18px; color: #94a3b8; font-size: 14px; }
+
+/* ════════════════════════════════════════════════════════════════
+   BOOKING.COM STYLE CALENDAR MODAL — Hero Section Only
+   ════════════════════════════════════════════════════════════════ */
+#hs-date-modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    background: rgba(0,0,0,0.25);
+    backdrop-filter: blur(1px);
+}
+#hs-date-modal-backdrop.open { display: block; }
+
+#hs-date-modal {
+    display: none;
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.08);
+    width: 700px;
+    max-width: 96vw;
+    overflow: hidden;
+    animation: hsFadeIn 0.15s ease;
+}
+#hs-date-modal.open { display: block; }
+
+/* Calendar type tabs — Calendar / I'm flexible */
+.hs-cal-type-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    border-bottom: 1px solid #e2e8f0;
+    background: #fff;
+    padding: 0 24px;
+}
+.hs-cal-type-tab {
+    padding: 14px 28px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #6b7280;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.15s, border-color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+.hs-cal-type-tab:hover { color: #1e293b; }
+.hs-cal-type-tab.active {
+    color: #1877f2;
+    border-bottom-color: #1877f2;
+    font-weight: 700;
+}
+
+/* Two-month calendar grid */
+.hs-cal-months-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    padding: 20px 24px 16px;
+}
+@media (max-width: 600px) {
+    .hs-cal-months-grid { grid-template-columns: 1fr; }
+    #hs-date-modal { width: calc(100vw - 16px); left: 8px; transform: none; }
+}
+
+/* Month block */
+.hs-cal-month { padding: 0 8px; }
+.hs-cal-month + .hs-cal-month { border-left: 1px solid #e2e8f0; padding-left: 20px; }
+
+/* Month header with nav arrows */
+.hs-cal-month-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+.hs-cal-nav-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1877f2;
+    font-size: 16px;
+    transition: background 0.12s;
+    -webkit-tap-highlight-color: transparent;
+}
+.hs-cal-nav-btn:hover { background: #eff6ff; }
+.hs-cal-nav-btn.hs-invisible { visibility: hidden; pointer-events: none; }
+.hs-cal-month-title { font-size: 17px; font-weight: 700; color: #0f172a; }
+
+/* Day-of-week headers */
+.hs-cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    margin-bottom: 6px;
+}
+.hs-cal-weekday {
+    text-align: center;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #6b7280;
+    padding: 4px 0;
+}
+
+/* Day cells grid */
+.hs-cal-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    row-gap: 2px;
+}
+.hs-cal-day {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1e293b;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.1s;
+}
+.hs-cal-day:hover:not(.hs-cal-day--past):not(.hs-cal-day--empty) .hs-cal-day-inner {
+    background: #e8f0fe;
+    color: #1877f2;
+}
+/* Inner circle / highlight */
+.hs-cal-day-inner {
+    position: relative;
+    z-index: 1;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.1s, color 0.1s;
+}
+
+/* Range background strip (full-width row) */
+.hs-cal-day--in-range::before {
+    content: '';
+    position: absolute;
+    top: 1px; bottom: 1px;
+    left: 0; right: 0;
+    background: #dbeafe;
+    z-index: 0;
+}
+/* Start of range — strip starts at center */
+.hs-cal-day--range-start::before {
+    left: 50%;
+    border-radius: 0;
+}
+/* End of range — strip ends at center */
+.hs-cal-day--range-end::before {
+    right: 50%;
+    border-radius: 0;
+}
+
+/* Selected start circle */
+.hs-cal-day--range-start .hs-cal-day-inner,
+.hs-cal-day--single .hs-cal-day-inner {
+    background: #1877f2;
+    color: #ffffff;
+    font-weight: 700;
+}
+/* Selected end circle */
+.hs-cal-day--range-end .hs-cal-day-inner {
+    background: #1877f2;
+    color: #ffffff;
+    font-weight: 700;
+}
+/* Today — outline circle */
+.hs-cal-day--today:not(.hs-cal-day--range-start):not(.hs-cal-day--range-end):not(.hs-cal-day--single) .hs-cal-day-inner {
+    border: 2px solid #1877f2;
+    color: #1877f2;
+    font-weight: 700;
+}
+/* Past / disabled */
+.hs-cal-day--past {
+    color: #c4c6d3;
+    cursor: not-allowed;
+}
+.hs-cal-day--past .hs-cal-day-inner { background: transparent; }
+.hs-cal-day--empty { cursor: default; pointer-events: none; }
+
+/* "I'm flexible" placeholder */
+.hs-flexible-panel {
+    padding: 40px 24px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 15px;
+    display: none;
+}
+.hs-flexible-panel.active { display: block; }
+
+/* Calendar bottom action bar */
+.hs-cal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px 18px;
+    border-top: 1px solid #e2e8f0;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.hs-cal-selected-info {
+    font-size: 13.5px;
+    color: #6b7280;
+    font-weight: 500;
+}
+.hs-cal-selected-info strong { color: #0f172a; }
+.hs-cal-footer-actions { display: flex; align-items: center; gap: 10px; }
+.hs-cal-clear-btn {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1877f2;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: background 0.12s;
+    -webkit-tap-highlight-color: transparent;
+}
+.hs-cal-clear-btn:hover { background: #eff6ff; }
+.hs-cal-apply-btn {
+    background: #1877f2;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+.hs-cal-apply-btn:hover { background: #1664d4; }
+
+/* ── Guests Dropdown ── */
+.hs-guests-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 300px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    box-shadow: 0 16px 44px rgba(0,0,0,0.14), 0 4px 12px rgba(0,0,0,0.06);
+    z-index: 9999;
+    padding: 16px;
+    display: none;
+    animation: hsFadeIn 0.12s ease;
+}
+.hs-guests-dropdown.open { display: block; }
+.hs-guest-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+.hs-guest-row:last-of-type { border-bottom: none; }
+.hs-guest-label { font-size: 14.5px; font-weight: 700; color: #1e293b; }
+.hs-guest-sublabel { font-size: 12px; color: #94a3b8; margin-top: 1px; }
+.hs-stepper { display: flex; align-items: center; gap: 8px; }
+.hs-stepper-btn {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 1.5px solid #d1d5db; background: #fff;
+    font-size: 18px; font-weight: 400; color: #1877f2;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    line-height: 1; transition: background 0.1s;
+    -webkit-tap-highlight-color: transparent;
+}
+.hs-stepper-btn:disabled { color: #d1d5db; border-color: #f1f5f9; cursor: not-allowed; }
+.hs-stepper-btn:not(:disabled):hover { background: #eff6ff; }
+.hs-stepper-val { min-width: 26px; text-align: center; font-size: 16px; font-weight: 700; color: #1e293b; }
+.hs-guests-done-btn {
+    width: 100%; margin-top: 14px;
+    background: #1877f2; color: #fff; border: none; border-radius: 8px;
+    padding: 10px 0; font-size: 14.5px; font-weight: 700; cursor: pointer; transition: background 0.15s;
+}
+.hs-guests-done-btn:hover { background: #1664d4; }
+
+/* ── Extras & Search Button ── */
+.hs-extras-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding-left: 2px; }
+.hs-extras-row label { font-size: 13.5px; color: #374151; cursor: pointer; display: flex; align-items: center; gap: 7px; user-select: none; }
+.hs-extras-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: #1877f2; cursor: pointer; flex-shrink: 0; }
+
+.hs-search-btn {
+    background: #1877f2; color: #ffffff; border: none; border-radius: 8px;
+    height: 56px; padding: 0 32px; font-size: 16px; font-weight: 800; letter-spacing: 0.05em;
+    cursor: pointer; transition: background 0.15s, transform 0.1s;
+    box-shadow: 0 4px 14px rgba(24, 119, 242, 0.40);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; margin-top: 14px;
+    -webkit-tap-highlight-color: transparent;
+}
+.hs-search-btn:hover { background: #1664d4; }
+.hs-search-btn:active { transform: scale(0.98); }
+
+/* ── Responsive ── */
+@media (max-width: 991px) {
+    .hs-fields-row { flex-wrap: wrap; border-radius: 8px; }
+    .hs-field { flex: 1 1 calc(50% - 1px); border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; }
+    .hs-field--dest   { flex: 1 1 100%; border-right: none; }
+    .hs-field--guests { flex: 1 1 100%; border-right: none; border-bottom: none; }
+    #hs-date-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+}
+@media (max-width: 575px) {
+    .hs-field { flex: 1 1 100%; border-right: none; }
+    .hs-tab  { font-size: 13px; padding: 9px 13px 8px; gap: 6px; }
+    .hs-search-card { padding: 14px; border-radius: 0 8px 8px 8px; }
+    .hs-suggestions-dropdown { width: calc(100vw - 32px); left: 0; }
+    .hs-cal-months-grid { grid-template-columns: 1fr; }
+    #hs-date-modal { width: calc(100vw - 16px); }
+}

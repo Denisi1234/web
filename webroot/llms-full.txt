@@ -1,0 +1,24 @@
+
+# fastnetstays.com — Deep Knowledge & Entity Architecture (Established 2026)
+
+## Platform Identity & Summary
+- **Official Name**: fastnetstays.com
+- **Established Year**: 2026
+- **Primary Domain**: https://fastnetstays.com
+- **Core Industry**: Hospitality Technology & Accommodation Booking in Tanzania
+- **Target Market**: Tanzania (Dar es Salaam, Zanzibar, Arusha, Dodoma, Mwanza, Kilimanjaro, Mbeya, Tanga)
+
+## Founding History & Key Entities
+- **Founder & Visionary**: Omary Rashid. Conceived the strategic vision in 2026 for fastnetstays.com to solve accommodation booking gaps across Tanzania and eliminate high foreign portal commission fees.
+- **Lead Software Engineers**: Aza Masoud & Mudrick Mudrick. Co-engineered and executed the cross-platform web and mobile software architecture in 2026 with native Tanzanian mobile money payment integrations.
+
+## Core Capabilities & Features
+1. Real-time availability engine for lodges, motels, beach villas, and stays.
+2. Direct local mobile money checkout (M-Pesa, Tigo Pesa, Airtel Money).
+3. GPS interactive location search across all 31 administrative regions of Tanzania.
+4. Instant automated PDF booking receipt generation.
+
+## FastNet Ecosystem & Future Expansion Roadmap
+- **fastnetstays.com** (https://fastnetstays.com) [Active Live Platform Established 2026]: Lodge, motel, and stays booking.
+- **FastNet Schools** (https://fastnetschools.com) [Future Expansion Roadmap]: Upcoming digital education platform.
+- **FastNet Hospital** (https://fastnethospital.com) [Future Expansion Roadmap]: Upcoming healthcare management platform.

@@ -1,0 +1,611 @@
+/* ==========================================================================
+   fastnetstays.com - Trivago Hero & Search Bar Stylesheet
+   ========================================================================== */
+
+/* Trivago Home Hero Section */
+.trivago-hero-section {
+    background-color: #ffffff;
+    padding: 48px 0 60px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.trivago-hero-title {
+    font-size: clamp(26px, 3.8vw, 38px);
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    margin-bottom: 6px;
+}
+
+.trivago-hero-sub {
+    font-size: 17px;
+    color: #334155;
+    margin-bottom: 28px;
+}
+
+/* Trivago Search Card Box */
+.trivago-hero-search-card {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: stretch;
+    height: 56px;
+    position: relative;
+    padding: 3px;
+}
+
+.trivago-hero-pod {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 14px;
+    position: relative;
+    cursor: pointer;
+    border-right: 1px solid #e2e8f0;
+    transition: background-color 0.12s ease;
+    border-radius: 8px;
+}
+.trivago-hero-pod:last-of-type {
+    border-right: none;
+}
+.trivago-hero-pod:hover {
+    background-color: #f8fafc;
+}
+
+/* Active Focus Outline */
+.trivago-hero-pod.pod-active {
+    outline: 2px solid #007fad !important;
+    outline-offset: -2px;
+    background-color: #ffffff !important;
+}
+
+.trivago-hero-pod--dest {
+    flex: 1.35;
+    min-width: 220px;
+}
+
+.trivago-hero-pod--dates {
+    flex: 1.15;
+    min-width: 190px;
+}
+
+.trivago-hero-pod--guests {
+    flex: 1.1;
+    min-width: 180px;
+}
+
+.trivago-pod-label {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+
+.trivago-pod-input {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    width: 100%;
+    padding: 0 !important;
+    line-height: 1.2;
+}
+
+.trivago-pod-val {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+.trivago-hero-search-btn {
+    background-color: #007fad;
+    color: #ffffff !important;
+    font-size: 15.5px;
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    padding: 0 32px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    white-space: nowrap;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.trivago-hero-search-btn:hover {
+    background-color: #006b94;
+}
+
+/* ── Trivago Dual-Month Datepicker Modal ── */
+.trivago-datepicker-modal {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 680px;
+    max-width: 95vw;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
+    padding: 22px 24px;
+    z-index: 3000;
+    display: none;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    animation: trivagoFadeIn 0.15s ease-out;
+}
+.trivago-datepicker-modal.show {
+    display: block;
+}
+
+.trivago-cal-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.trivago-cal-nav-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.15s ease;
+}
+.trivago-cal-nav-btn:hover {
+    background-color: #f1f5f9;
+}
+
+.trivago-cal-month-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    text-align: center;
+}
+
+.trivago-cal-grid-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+}
+
+.trivago-cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background-color: #f1f5f9;
+    border-radius: 8px;
+    padding: 6px 0;
+    margin-bottom: 8px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.trivago-cal-days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    row-gap: 2px;
+    text-align: center;
+}
+
+.trivago-cal-day {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1e293b;
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+}
+.trivago-cal-day.empty {
+    cursor: default;
+}
+.trivago-cal-day.disabled {
+    color: #cbd5e1;
+    cursor: not-allowed;
+}
+
+.trivago-cal-day-inner {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+    transition: background-color 0.12s ease;
+}
+.trivago-cal-day:hover:not(.disabled):not(.empty) .trivago-cal-day-inner {
+    background-color: #e2e8f0;
+}
+
+/* Selected Start and End */
+.trivago-cal-day.range-start .trivago-cal-day-inner,
+.trivago-cal-day.range-end .trivago-cal-day-inner {
+    background-color: #007fad !important;
+    color: #ffffff !important;
+    font-weight: 800;
+}
+
+/* Range Highlighting */
+.trivago-cal-day.in-range {
+    background-color: #e0f2fe;
+}
+.trivago-cal-day.range-start::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    background-color: #e0f2fe;
+    z-index: 1;
+}
+.trivago-cal-day.range-end::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    background-color: #e0f2fe;
+    z-index: 1;
+}
+.trivago-cal-day.range-start.range-end::after,
+.trivago-cal-day.range-start.range-end::before {
+    display: none;
+}
+
+/* Shortcut Pills */
+.trivago-cal-shortcuts {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top: 16px;
+    margin-top: 16px;
+    border-top: 1px solid #f1f5f9;
+    flex-wrap: wrap;
+}
+.trivago-shortcut-btn {
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    color: #1e293b;
+    border-radius: 9999px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+}
+.trivago-shortcut-btn:hover {
+    border-color: #0f172a;
+    background-color: #f8fafc;
+}
+
+/* ── Trivago Guests & Rooms Stepper Modal ── */
+.trivago-guests-modal {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 360px;
+    max-width: 95vw;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
+    padding: 24px 24px 18px;
+    z-index: 3000;
+    display: none;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    animation: trivagoFadeIn 0.15s ease-out;
+}
+.trivago-guests-modal.show {
+    display: block;
+}
+
+.trivago-guest-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.trivago-guest-label {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.trivago-stepper-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.trivago-round-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1.5px solid #007fad;
+    background-color: #ffffff;
+    color: #007fad;
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    user-select: none;
+}
+.trivago-round-btn:hover:not(.disabled) {
+    background-color: #f0f9ff;
+}
+.trivago-round-btn.disabled {
+    border-color: #e0f2fe;
+    color: #7dd3fc;
+    cursor: not-allowed;
+    background-color: #ffffff;
+}
+
+.trivago-count-box {
+    width: 44px;
+    height: 38px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: #0f172a;
+    background-color: #ffffff;
+}
+
+.trivago-guest-divider {
+    border: 0;
+    border-top: 1px solid #e2e8f0;
+    margin: 20px 0 16px;
+}
+
+.trivago-pet-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    cursor: pointer;
+}
+
+.trivago-pet-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+}
+
+.trivago-pet-sub {
+    font-size: 13px;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+.trivago-pet-checkbox {
+    width: 22px;
+    height: 22px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 4px;
+    cursor: pointer;
+    accent-color: #007fad;
+}
+
+.trivago-guest-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 6px;
+}
+
+.trivago-reset-btn {
+    background: none;
+    border: none;
+    color: #cbd5e1;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 6px 0;
+    transition: color 0.15s ease;
+}
+.trivago-reset-btn.active {
+    color: #007fad;
+}
+.trivago-reset-btn:hover {
+    color: #0f172a;
+}
+
+.trivago-apply-btn {
+    background-color: #007fad;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 30px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+.trivago-apply-btn:hover {
+    background-color: #006b94;
+}
+
+/* ── Mapbox Auto-Suggestion / Recent Destinations Dropdown (Hero) ── */
+.trivago-recent-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 480px;
+    max-width: 95vw;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16);
+    z-index: 3500;
+    display: none;
+    overflow: hidden;
+    animation: trivagoFadeIn 0.15s ease-out;
+}
+.trivago-recent-dropdown.show {
+    display: block !important;
+}
+
+.trivago-recent-header {
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+    border-bottom: 1px solid #f1f5f9;
+    background: #f8fafc;
+}
+
+.trivago-recent-list {
+    max-height: 330px;
+    overflow-y: auto;
+    padding: 4px 0;
+}
+
+.trivago-recent-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: background-color 0.12s ease;
+    user-select: none;
+}
+.trivago-recent-item:hover,
+.trivago-recent-item.selected {
+    background-color: #f1f5f9;
+}
+
+.trivago-recent-icon {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13.5px;
+}
+.trivago-recent-icon.icon-blue {
+    background-color: #eff6ff;
+    color: #0284c7;
+}
+.trivago-recent-icon.icon-orange {
+    background-color: #fff7ed;
+    color: #ea580c;
+}
+.trivago-recent-icon.icon-green {
+    background-color: #f0fdf4;
+    color: #16a34a;
+}
+.trivago-recent-icon.icon-purple {
+    background-color: #faf5ff;
+    color: #9333ea;
+}
+
+.trivago-recent-info {
+    flex-grow: 1;
+    overflow: hidden;
+}
+.trivago-recent-name {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.trivago-recent-name mark {
+    background: transparent;
+    color: #007fad;
+    font-weight: 800;
+    padding: 0;
+}
+.trivago-recent-meta {
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.trivago-recent-footer {
+    padding: 7px 14px;
+    border-top: 1px solid #f1f5f9;
+    background: #f8fafc;
+    font-size: 11px;
+    color: #64748b;
+}
+
+@media (max-width: 991px) {
+    .trivago-hero-search-card {
+        flex-direction: column;
+        height: auto;
+        padding: 6px;
+    }
+    .trivago-hero-pod {
+        border-right: none;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 10px 12px;
+    }
+    .trivago-hero-search-btn {
+        width: 100%;
+        margin-top: 6px;
+        padding: 14px;
+        height: 48px;
+    }
+    .trivago-datepicker-modal {
+        width: 100%;
+        padding: 16px;
+    }
+    .trivago-cal-grid-wrapper {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    .trivago-guests-modal {
+        width: 100%;
+        right: auto;
+        left: 0;
+    }
+}

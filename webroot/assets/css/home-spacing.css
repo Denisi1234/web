@@ -1,0 +1,12 @@
+/* Shared homepage rhythm prevents sections from drifting apart. */
+#home-app-root > section:not(.trivago-hero-section) { margin: 0; padding-top: 48px; padding-bottom: 48px; }
+#home-app-root > section:not(.trivago-hero-section) > .container,
+#home-app-root > section:not(.trivago-hero-section) > .container-fluid { max-width: 1180px; padding-left: 20px; padding-right: 20px; }
+#home-app-root > section:not(.trivago-hero-section) h2 { margin-top: 0; }
+#home-app-root > .trivago-hero-section { padding-top: 48px; padding-bottom: 52px; }
+@media (max-width: 767px) {
+    #home-app-root > section:not(.trivago-hero-section) { padding-top: 36px; padding-bottom: 36px; }
+    #home-app-root > section:not(.trivago-hero-section) > .container,
+    #home-app-root > section:not(.trivago-hero-section) > .container-fluid { padding-left: 16px; padding-right: 16px; }
+    #home-app-root > .trivago-hero-section { padding-top: 32px; padding-bottom: 36px; }
+}
