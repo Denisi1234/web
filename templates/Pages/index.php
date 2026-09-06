@@ -1,5 +1,6 @@
 <?php
-$this->assign('title', 'fastnetstays.com - Hotel Deals, Lodges & Beach Escapes');
+$this->assign('title', 'FastNet Stays — Online Hotel Booking & Best Prices Guaranteed');
+$this->assign('description', 'Online Hotel Booking — FastNet Stays - Best Prices Guaranteed with Deals, Special Member Prices. Book Now & Save Big on Hotels, Lodges & Beach Resorts Across Tanzania! Mobile Friendly Website. Easy Instant Booking.');
 ?>
 <?= $this->Html->css('/assets/css/home.css') ?>
 <?= $this->Html->css('/assets/css/home-spacing.css') ?>

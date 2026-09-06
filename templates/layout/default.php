@@ -3,14 +3,115 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title><?= $this->fetch('title') ? h($this->fetch('title')) . ' | fastnetstays.com' : 'fastnetstays.com - Hotel Deals, Lodges & Beach Escapes' ?></title>
-        <meta name="description" content="Book hotel rooms, luxury resorts, and beach escapes across Tanzania with fastnetstays.com." />
-	    <meta name="author" content="fastnetstays.com" />
-	    <meta name="website" content="https://fastnetstays.com" />
+        <title><?= $this->fetch('title') ? h($this->fetch('title')) . ' | fastnetstays.com' : 'FastNet Stays — Online Hotel Booking & Best Prices Guaranteed' ?></title>
+        <meta name="description" content="<?= $this->fetch('description') ? h($this->fetch('description')) : 'Online Hotel Booking — FastNet Stays - Best Prices Guaranteed with Deals, Special Member Prices. Book Hotels, Lodges & Beach Resorts Across Tanzania! Mobile Friendly & Instant Confirmation.' ?>" />
+	    <meta name="author" content="FastNet Stays" />
+	    <meta name="website" content="https://www.fastnetstays.com" />
 	    <meta name="email" content="support@fastnetstays.com" />
         <meta name="csrfToken" content="<?= $this->request->getAttribute('csrfToken'); ?>">
 	    <meta name="version" content="1.0.0" />
-        <link rel="icon" type="image/x-icon" href="<?= $this->Url->build('/assets/img/favicon.png'); ?>">
+        <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+        <link rel="canonical" href="<?= 'https://www.fastnetstays.com' . rawurldecode($this->getRequest()->getPath()) ?>" />
+
+        <!-- Open Graph / Facebook / WhatsApp -->
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="FastNet Stays" />
+        <meta property="og:url" content="<?= 'https://www.fastnetstays.com' . rawurldecode($this->getRequest()->getPath()) ?>" />
+        <meta property="og:title" content="<?= $this->fetch('title') ? h($this->fetch('title')) . ' | fastnetstays.com' : 'FastNet Stays — Online Hotel Booking & Best Prices Guaranteed' ?>" />
+        <meta property="og:description" content="Online Hotel Booking — FastNet Stays - Best Prices Guaranteed with Deals, Special Member Prices. Book Hotels, Lodges & Beach Resorts Across Tanzania!" />
+        <meta property="og:image" content="https://www.fastnetstays.com/assets/img/og-preview.png" />
+
+        <!-- Twitter Card -->
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content="@fastnetstays" />
+        <meta name="twitter:title" content="FastNet Stays — Online Hotel Booking & Best Prices Guaranteed" />
+        <meta name="twitter:description" content="Book hotel rooms, luxury resorts, and beach escapes across Tanzania with fastnetstays.com." />
+        <meta name="twitter:image" content="https://www.fastnetstays.com/assets/img/og-preview.png" />
+
+        <!-- Favicon & Touch Icons for Google Search Snippet Logo -->
+        <link rel="icon" type="image/png" sizes="32x32" href="<?= $this->Url->build('/assets/img/favicon.png'); ?>">
+        <link rel="apple-touch-icon" sizes="180x180" href="<?= $this->Url->build('/assets/img/favicon.png'); ?>">
+        <meta name="theme-color" content="#006CE4">
+
+        <!-- Google Rich Result Structured Data (Schema.org JSON-LD for Sitelinks & Brand Search) -->
+        <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "WebSite",
+              "@id": "https://www.fastnetstays.com/#website",
+              "url": "https://www.fastnetstays.com",
+              "name": "FastNet Stays",
+              "description": "Online Hotel Booking, Luxury Lodges & Beach Escapes across Tanzania",
+              "publisher": {
+                "@id": "https://www.fastnetstays.com/#organization"
+              },
+              "potentialAction": {
+                "@type": "SearchAction",
+                "target": {
+                  "@type": "EntryPoint",
+                  "urlTemplate": "https://www.fastnetstays.com/hotel-list-01?destination={search_term_string}"
+                },
+                "query-input": "required name=search_term_string"
+              }
+            },
+            {
+              "@type": "TravelAgency",
+              "@id": "https://www.fastnetstays.com/#organization",
+              "name": "FastNet Stays",
+              "url": "https://www.fastnetstays.com",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://www.fastnetstays.com/assets/img/favicon.png"
+              },
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+255-700-000-000",
+                "contactType": "customer service",
+                "email": "support@fastnetstays.com",
+                "availableLanguage": ["English", "Swahili"]
+              },
+              "sameAs": [
+                "https://www.fastnetstays.com"
+              ]
+            },
+            {
+              "@type": "ItemList",
+              "itemListElement": [
+                {
+                  "@type": "SiteNavigationElement",
+                  "position": 1,
+                  "name": "Book Hotels & Lodges",
+                  "description": "Best Price Guarantee, Special Member Offers & Huge Discounts",
+                  "url": "https://www.fastnetstays.com/hotels"
+                },
+                {
+                  "@type": "SiteNavigationElement",
+                  "position": 2,
+                  "name": "Zanzibar Beach Escapes",
+                  "description": "Exclusive beachfront resorts, Stone Town hotels and villas",
+                  "url": "https://www.fastnetstays.com/hotel-list-01?destination=Zanzibar"
+                },
+                {
+                  "@type": "SiteNavigationElement",
+                  "position": 3,
+                  "name": "Serengeti & Arusha Safaris",
+                  "description": "Safari lodges, luxury tented camps and wildlife retreats",
+                  "url": "https://www.fastnetstays.com/hotel-list-01?destination=Arusha"
+                },
+                {
+                  "@type": "SiteNavigationElement",
+                  "position": 4,
+                  "name": "List Your Property",
+                  "description": "Partner with FastNet Stays and receive bookings with instant payouts",
+                  "url": "https://www.fastnetstays.com/join-us"
+                }
+              ]
+            }
+          ]
+        }
+        </script>
 
         <!-- CSS Files -->
         <?= $this->Html->css([
