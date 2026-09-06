@@ -1,0 +1,16 @@
+/* Shared header controls stay readable without forcing labels onto two lines. */
+#nav_logged_out_wrapper, #nav_logged_in_wrapper { white-space: nowrap; }
+#nav_logged_out_lang_btn, #nav_logged_out_wrapper > a, #nav_logged_out_menu_btn { white-space: nowrap; flex-shrink: 0; }
+#nav_logged_out_lang_btn { min-width: 68px; }
+#nav_logged_out_wrapper > a { min-width: 76px; }
+@media (max-width: 575px) {
+    .agoda-top-header .container-fluid > .d-flex { align-items: center; }
+    #nav_logged_out_wrapper, #nav_logged_in_wrapper { gap: 16px !important; white-space: nowrap; }
+    #nav_logged_out_wrapper > a, #nav_logged_out_menu_wrapper,
+    #nav_logged_in_wrapper > a, #nav_user_menu_wrapper { flex: 0 0 auto; white-space: nowrap; }
+    #nav_logged_out_wrapper > a span, #nav_logged_out_menu_btn span { white-space: nowrap; }
+    #nav_logged_out_wrapper > a { min-width: 76px; }
+    #nav_logged_out_menu_btn { white-space: nowrap; }
+    #nav_search_wrapper { width: calc(100% - 16px) !important; max-width: calc(100% - 16px) !important; margin-left: 8px !important; margin-right: 8px !important; }
+    #nav_search_container { width: 100% !important; }
+}

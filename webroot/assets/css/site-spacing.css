@@ -1,0 +1,39 @@
+/* FastNet shared spacing system. Keep page content aligned without changing component internals. */
+:root {
+    --fn-content-max: 1180px;
+    --fn-wide-max: 1440px;
+    --fn-gutter: 20px;
+    --fn-gutter-mobile: 16px;
+    --fn-section-space: 48px;
+    --fn-card-gap: 18px;
+}
+
+html, body { max-width: 100%; overflow-x: hidden; }
+main > .container,
+main > .container-fluid {
+    box-sizing: border-box;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--fn-gutter);
+    padding-right: var(--fn-gutter);
+    width: 100%;
+}
+main > .container { max-width: var(--fn-content-max); }
+main > .container-fluid { max-width: var(--fn-wide-max); }
+main > .container > section + section,
+main > .container-fluid > section + section { margin-top: var(--fn-section-space); }
+main .row { --bs-gutter-y: var(--fn-card-gap); }
+
+/* Keep standard content blocks on the same vertical rhythm. */
+main .card + .card,
+main article + article { margin-top: var(--fn-card-gap); }
+
+@media (max-width: 767px) {
+    main > .container,
+    main > .container-fluid {
+        padding-left: var(--fn-gutter-mobile);
+        padding-right: var(--fn-gutter-mobile);
+    }
+    main > .container > section + section,
+    main > .container-fluid > section + section { margin-top: 32px; }
+}

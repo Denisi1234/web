@@ -1,0 +1,26 @@
+# FastNetStays.com
+
+FastNetStays.com is a Tanzania-focused accommodation booking and hospitality technology platform with a long-term vision of expanding from accommodation booking into broader software services and markets beyond Tanzania.
+
+## Metadata & Core Specs
+- **Official Domain:** https://fastnetstays.com
+- **Primary Market:** Tanzania (Dar es Salaam, Zanzibar, Arusha, Dodoma, Mwanza, Mbeya, Morogoro, Moshi, Tanga, Iringa, Mtwara, Songea)
+- **Sector:** Travel Technology, Hospitality Software, Accommodation Bookings
+
+## Founders and Engineers
+- **Founder & Visionary:** Omary Rashid
+  - Pioneered the concept that Tanzania should have locally built technology that understands and serves the Tanzanian market.
+- **Software Engineer:** Aza Masoud
+  - Responsible for the software architecture, technical development, and digital product implementation of the booking platform.
+- **Software Engineer:** Mudrick Mudrick (Certificate name: Denisi Mahenge / Denisi Esau Mahenge)
+  - Co-engineer of the platform.
+  - Recognized in 2023 as the Second Winner of the Young Scientist competition at Iyunga Technical Secondary School in Mbeya.
+  - Alumnus of Iyunga Technical Secondary School in Mbeya and the University of Dodoma (UDOM), continuing his career as a professional software developer and engineer.
+
+## Architecture and Vision Roadmap
+- **Stage 1 (Accommodation Discovery):** Centralized directory for lodges, hotels, motels, and guest houses.
+- **Stage 2 (Digital Booking):** Integrated reservation engine and booking confirmation system.
+- **Stage 3 (Hospitality Services):** Tools connecting guests and accommodation providers.
+- **Stage 4 (Hospitality Software):** Property management, business analytics, and operational software.
+- **Stage 5 (Broader Software Services):** Horizontal expansion into tech solutions for other business sectors.
+- **Stage 6 (Regional Expansion):** Scaling operations from Tanzania to other East African and international markets.

@@ -1,0 +1,27 @@
+/* Shared footer rhythm used by every page. */
+.footer > div:first-child > .container,
+.footer .footer-bottom > .container { max-width: 1180px; }
+.footer { overflow-x: hidden; }
+.footer .footer-widget { padding: 52px 0 44px; }
+.footer .footer-widget h4.widget-title { margin-bottom: 16px; letter-spacing: .01em; }
+.footer .footer-widget ul li { margin-top: 11px; }
+.footer .footer-widget ul li a { line-height: 1.45; text-decoration: none; }
+.footer .footer-add p { line-height: 1.55; margin-bottom: 0; }
+.footer .foot-socials { margin-top: 20px; }
+.footer .footer-bottom { padding: 18px 0; }
+.footer .footer-bottom p, .footer .footer-bottom ul { line-height: 1.5; }
+.footer .footer-bottom ul li { white-space: nowrap; }
+@media (max-width: 767px) {
+    .footer > div:first-child > .container,
+    .footer .footer-bottom > .container { padding-left: 16px; padding-right: 16px; width: 100%; }
+    .footer .row > [class*="col-"] { min-width: 0; }
+    .footer .footer-widget { padding: 30px 0 18px; }
+    .footer .footer-widget h4.widget-title { margin-bottom: 12px; }
+    .footer .footer-bottom { padding: 16px 0 22px; }
+    .footer .footer-bottom .row { row-gap: 9px; }
+    .footer .footer-bottom ul { justify-content: flex-start !important; margin-top: 0 !important; }
+    .footer .footer-bottom ul li { margin-left: 0 !important; }
+    .footer .footer-menu a { overflow-wrap: anywhere; }
+    .footer .foot-socials ul { gap: 8px !important; }
+    .footer .footer-widget .btn { max-width: 190px !important; }
+}

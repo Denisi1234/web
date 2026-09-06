@@ -1,0 +1,9 @@
+/* Keep search icons visually separated from their field labels and values. */
+.trivago-hero-pod { gap: 14px; }
+.trivago-hero-pod > i:first-child { flex: 0 0 auto; margin-right: 2px; }
+#nav_dest_pod, #nav_date_pod, #nav_guest_pod { column-gap: 12px !important; }
+#nav_dest_pod > i:first-child, #nav_date_pod > i:first-child, #nav_guest_pod > i:first-child { flex: 0 0 auto; margin-right: 2px; }
+.trivago-pill-btn { column-gap: 8px; }
+@media (max-width: 575px) {
+    #nav_dest_pod, #nav_date_pod, #nav_guest_pod { column-gap: 10px !important; }
+}
