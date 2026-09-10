@@ -37,49 +37,85 @@ class BookingQuoteService
         if ($adults + $children > 32) {
             throw new InvalidArgumentException('The guest count cannot exceed 32 people.');
         }
+        $guests = $adults + $children;
 
-        $propertyResponse = $this->apiClient->get('/properties/' . $propertyId);
-        $property = $propertyResponse['data'] ?? $propertyResponse;
-        if (!is_array($property) || empty($property)) {
-            throw new InvalidArgumentException('This stay is no longer available.');
+        // Authoritative backend calculation — POST /api/bookings/calculate
+        $payload = [
+            'property_id' => $propertyId,
+            'room_id' => $roomId,
+            'check_in' => $checkIn->format('Y-m-d'),
+            'check_out' => $checkOut->format('Y-m-d'),
+            'guests' => $guests,
+            'rooms_count' => $rooms,
+            'quantity' => $rooms,
+            'rooms' => [['room_id' => $roomId, 'quantity' => $rooms]],
+        ];
+        $calc = $this->apiClient->post('/bookings/calculate', $payload);
+        // Fallback to GET if POST not routed (backend supports both)
+        if (empty($calc) || empty($calc['valid'])) {
+            $calc = $this->apiClient->get('/bookings/calculate', $payload);
+        }
+        if (empty($calc)) {
+            throw new InvalidArgumentException('Unable to calculate room price — backend unavailable. Please try again.');
+        }
+        if (isset($calc['valid']) && $calc['valid'] === false) {
+            throw new InvalidArgumentException($calc['message'] ?? 'Room not available for selected dates.');
+        }
+        // Backend returns 422 with valid false on unavailability — surface as quote error
+        if (isset($calc['message']) && !isset($calc['pricing']) && !isset($calc['grand_total'])) {
+            // Might be error payload
+            if (isset($calc['valid']) && $calc['valid'] === false) {
+                throw new InvalidArgumentException($calc['message']);
+            }
         }
 
-        $roomsResponse = $this->apiClient->get('/properties/' . $propertyId . '/rooms');
-        $availableRooms = $roomsResponse['data'] ?? ($roomsResponse['items'] ?? $roomsResponse);
-        if (!is_array($availableRooms)) {
-            $availableRooms = [];
+        // Extract authoritative pricing
+        $property = $calc['property'] ?? null;
+        if (empty($property)) {
+            // Fallback fetch property/room for display if backend didn't return
+            $propertyResponse = $this->apiClient->get('/properties/' . $propertyId);
+            $property = $propertyResponse['data'] ?? $propertyResponse;
         }
-        if (empty($availableRooms) && !empty($property['rooms']) && is_array($property['rooms'])) {
-            $availableRooms = $property['rooms'];
-        }
-
         $room = null;
-        foreach ($availableRooms as $candidate) {
-            if (is_array($candidate) && (int)($candidate['id'] ?? 0) === $roomId) {
-                $room = $candidate;
-                break;
+        if (!empty($calc['rooms'][0])) {
+            $room = $calc['rooms'][0];
+            // map backend room fields to frontend expected
+            $room['id'] = $room['room_id'] ?? $roomId;
+            $room['price'] = $room['nightly_rate'] ?? $room['owner_nightly_rate'] ?? 0;
+            $room['customer_price'] = $room['nightly_rate'] ?? 0;
+        }
+        if (!$room) {
+            // fallback fetch room
+            $roomsResponse = $this->apiClient->get('/properties/' . $propertyId . '/rooms');
+            $availableRooms = $roomsResponse['data'] ?? ($roomsResponse['items'] ?? $roomsResponse ?? []);
+            if (!empty($property['rooms']) && empty($availableRooms)) $availableRooms = $property['rooms'];
+            foreach ((array)$availableRooms as $candidate) {
+                if ((int)($candidate['id'] ?? 0) === $roomId) { $room = $candidate; break; }
             }
         }
         if (!$room) {
             throw new InvalidArgumentException('This room is no longer available.');
         }
 
-        $maxAdults = (int)($room['max_adults'] ?? 0);
-        $maxChildren = (int)($room['max_children'] ?? 0);
-        if (($maxAdults > 0 && $adults > $maxAdults) || ($maxChildren >= 0 && $children > $maxChildren)) {
-            throw new InvalidArgumentException('This room cannot accommodate the selected guests.');
+        $pricing = $calc['pricing'] ?? [];
+        $pricePerNight = (float)($room['nightly_rate'] ?? $room['price'] ?? $pricing['owner_base_subtotal'] ?? 0);
+        // If nightly_rate is customer rate, use that; otherwise derive
+        if (!empty($calc['rooms'][0]['nightly_rate'])) {
+            $pricePerNight = (float)$calc['rooms'][0]['nightly_rate'];
+        } elseif (!empty($pricing['subtotal'])) {
+            $nightsTmp = (int)($calc['nights'] ?? $checkOut->diff($checkIn)->days);
+            $pricePerNight = $nightsTmp > 0 ? (float)$pricing['subtotal'] / $nightsTmp / $rooms : $pricePerNight;
         }
 
-        $price = $this->roomPrice($room);
-        if ($price <= 0) {
-            throw new InvalidArgumentException('A current price is not available for this room.');
-        }
+        $nights = (int)($calc['nights'] ?? $checkOut->diff($checkIn)->days);
+        $subtotal = (float)($pricing['subtotal'] ?? $pricing['owner_base_subtotal'] ?? ($pricePerNight * $nights * $rooms));
+        // Backend uses 0% VAT + 1% AzamPay fee — map to frontend taxes/fees
+        $azampayFee = (float)($pricing['azampay_fee'] ?? 0);
+        $taxes = (float)($pricing['taxes'] ?? 0);
+        // Frontend expects 18% VAT-like taxes — combine backend taxes + fee for display compatibility, but keep authoritative total
+        $total = (float)($pricing['total'] ?? $pricing['grand_total'] ?? $calc['grand_total'] ?? ($subtotal + $azampayFee + $taxes));
 
-        $nights = (int)$checkOut->diff($checkIn)->days;
-        $subtotal = $price * $nights * $rooms;
-        $taxes = round($subtotal * 0.18);
-        $total = $subtotal + $taxes;
-
+        // Security lock timestamp — 15-minute hold token quote_id
         return [
             'quote_id' => bin2hex(random_bytes(16)),
             'created_at' => time(),
@@ -91,15 +127,18 @@ class BookingQuoteService
             'adults' => $adults,
             'children' => $children,
             'rooms' => $rooms,
-            'property' => $property,
+            'property' => is_array($property) ? $property : [],
             'room' => $room,
             'calculation' => [
-                'price_per_night' => $price,
+                'price_per_night' => $pricePerNight,
                 'subtotal' => $subtotal,
-                'taxes' => $taxes,
+                'taxes' => $taxes + $azampayFee,
+                'azampay_fee' => $azampayFee,
                 'total_amount' => $total,
                 'nights' => $nights,
                 'rooms_count' => $rooms,
+                'raw_pricing' => $pricing,
+                'raw' => $calc,
             ],
         ];
     }

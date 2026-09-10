@@ -3,7 +3,14 @@
  * Clean, modern layout matching Trivago detail screenshot (Breadcrumb, Tabs, Deal Card, Mosaic, Summary)
  * ══════════════════════════════════════════════════════════════════════════════ */
 
-/* Sub-navigation Tabs Strip */
+/* Google Hotels Sticky Anchor Sub-Navigation */
+.gh-detail-nav-wrapper {
+    background: #ffffff;
+    border-bottom: 1px solid #dadce0;
+    position: sticky;
+    top: 64px;
+    z-index: 100;
+}
 .trivago-detail-nav-wrapper {
     background: #ffffff;
     border-bottom: 1px solid #e2e8f0;
@@ -15,7 +22,7 @@
 .shared-header.is-scrolled {
     box-shadow: 0 2px 12px rgba(15, 23, 42, 0.10);
 }
-.trivago-detail-nav-scroll {
+.gh-detail-nav-scroll,.trivago-detail-nav-scroll {
     display: flex;
     align-items: center;
     gap: 28px;
@@ -26,27 +33,32 @@
     padding: 0;
     list-style: none;
 }
-.trivago-detail-nav-scroll::-webkit-scrollbar {
+.gh-detail-nav-scroll::-webkit-scrollbar,.trivago-detail-nav-scroll::-webkit-scrollbar {
     display: none;
 }
-.trivago-detail-tab {
+.gh-detail-tab,.trivago-detail-tab {
     display: inline-block;
     padding: 14px 2px;
-    font-size: 14.5px;
-    font-weight: 600;
-    color: #475569;
+    font-size: 14px;
+    font-weight: 500;
+    color: #5f6368;
     text-decoration: none !important;
-    border-bottom: 3px solid transparent;
+    border-bottom: 2px solid transparent;
     transition: all 0.15s ease;
     white-space: nowrap;
+    font-family: 'Google Sans', Roboto, 'Segoe UI', Arial, sans-serif;
 }
-.trivago-detail-tab:hover {
-    color: #007fad;
+.gh-detail-tab:hover,.trivago-detail-tab:hover {
+    color: #1a73e8;
 }
-.trivago-detail-tab.active {
-    color: #007fad;
-    font-weight: 700;
-    border-bottom-color: #007fad;
+.gh-detail-tab.active,.trivago-detail-tab.active {
+    color: #1a73e8;
+    font-weight: 500;
+    border-bottom-color: #1a73e8;
+}
+/* Smooth scroll padding for anchor sections */
+#overview-section,#rooms-section,#about-section,#location-section,#reviews-section,#policies-section {
+    scroll-margin-top: 110px;
 }
 
 /* Breadcrumb */
@@ -199,11 +211,12 @@
 /* Mosaic Photo Grid (5 photos) */
 .trivago-mosaic-container {
     display: grid;
-    grid-template-columns: 1.15fr 1fr;
-    gap: 8px;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 4px;
     height: 380px;
-    border-radius: 12px;
+    border-radius: 8px;
     overflow: hidden;
+    position: relative;
 }
 .trivago-mosaic-featured {
     height: 100%;
@@ -305,9 +318,30 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
-    gap: 8px;
+    gap: 4px;
     height: 100%;
 }
+/* View all photos pill — Google Hotels */
+.gh-mosaic-pill {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(0,0,0,0.65);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 7px 14px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    backdrop-filter: blur(2px);
+    transition: background 0.15s ease;
+    font-family: 'Google Sans', Roboto, 'Segoe UI', Arial, sans-serif;
+    z-index: 3;
+}
+.gh-mosaic-pill:hover { background: rgba(0,0,0,0.78); }
 .trivago-mosaic-subitem {
     position: relative;
     overflow: hidden;
@@ -771,8 +805,13 @@
     main { padding-bottom: 78px !important; }
 }
 
+.gh-mobile-booking-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #dadce0;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;justify-content:space-between;z-index:1050;box-shadow:0 -2px 12px rgba(60,64,67,0.12);}
 @media (min-width: 768px) {
     .fn-mobile-booking-bar { display: none; }
+    .gh-mobile-booking-bar { display: none !important; }
+}
+@media (max-width: 992px){
+    .gh-mobile-booking-bar{ display:flex; }
 }
 
 @media (max-width: 575px) {

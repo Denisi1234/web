@@ -1,11 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&family=Roboto:wght@400;500&display=swap');
 /* FastNet shared spacing system. Keep page content aligned without changing component internals. */
 :root {
     --fn-content-max: 1180px;
-    --fn-wide-max: 1440px;
-    --fn-gutter: 20px;
-    --fn-gutter-mobile: 16px;
-    --fn-section-space: 48px;
-    --fn-card-gap: 18px;
+    --fn-wide-max: 100%;
+    --fn-gutter: 8px;
+    --fn-gutter-mobile: 12px;
+    --fn-section-space: 24px;
+    --fn-card-gap: 8px;
 }
 
 html, body { max-width: 100%; overflow-x: hidden; }
@@ -35,5 +36,148 @@ main article + article { margin-top: var(--fn-card-gap); }
         padding-right: var(--fn-gutter-mobile);
     }
     main > .container > section + section,
-    main > .container-fluid > section + section { margin-top: 32px; }
+    main > .container-fluid > section + section { margin-top: 24px; }
+}
+@media(min-width:992px){
+    main > .container-fluid { padding-left:4px !important; padding-right:4px !important; }
+    main .row { --bs-gutter-x:8px; --bs-gutter-y:8px; }
+}
+
+
+/* ══ Google Hotels Home — Exact Map Price Pill Markers ══
+ * Visual: [●🛏] TSH 176,697   (red circle with bed icon + price)
+ * White rounded pill with drop shadow, red accent left circle.
+ * Matches Google Hotels screenshot exactly.
+ */
+.gh-map-marker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    background: #ffffff;
+    border: 1px solid #dadce0;
+    border-radius: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.18);
+    cursor: pointer;
+    position: relative;
+    transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .15s;
+    font-family: 'Google Sans', Roboto, -apple-system, sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    z-index: 10;
+    /* Caret/arrow at bottom center */
+}
+/* Triangle pointer at bottom */
+.gh-map-marker::after {
+    content: '';
+    position: absolute;
+    bottom: -8px; left: 50%; transform: translateX(-50%);
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 8px solid rgba(0,0,0,0.2);
+    transition: border-top-color .15s;
+}
+.gh-map-marker::before {
+    content: '';
+    position: absolute;
+    bottom: -6px; left: 50%; transform: translateX(-50%);
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid #ffffff;
+    z-index: 1;
+    transition: border-top-color .15s;
+}
+
+/* Left: FastNet own — blue circle with hotel icon (not Google red) */
+.gh-mm-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #0466c8;   /* FastNet primary blue — own style */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin: 3px 0 3px 3px;
+}
+.gh-mm-icon i {
+    color: #ffffff;
+    font-size: 10px;
+}
+
+/* Right: price text — screenshot 12px 700, TSH */
+.gh-mm-price {
+    font-size: 12px;
+    font-weight: 700;
+    color: #202124;
+    padding: 6px 10px 6px 7px;
+    line-height: 1;
+    letter-spacing: -0.01em;
+}
+
+/* Hover / active — Google Travel: solid #1a73e8 white text scale 1.08 */
+.gh-map-marker:hover,
+.gh-map-marker.active {
+    transform: scale(1.08);
+    background: #1a73e8;
+    border-color: #1a73e8;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.28);
+    z-index: 9999 !important;
+}
+.gh-map-marker:hover .gh-mm-price,
+.gh-map-marker.active .gh-mm-price { color: #fff; }
+.gh-map-marker:hover .gh-mm-icon,
+.gh-map-marker.active .gh-mm-icon { background: #fff; }
+.gh-map-marker:hover .gh-mm-icon i,
+.gh-map-marker.active .gh-mm-icon i { color: #1a73e8; }
+.gh-map-marker:hover::before,
+.gh-map-marker.active::before { border-top-color: #1a73e8; }
+/* FastNet cluster pill — blue */
+.gh-map-marker.gh-cluster {
+    background:#1a73e8;
+    border-color:#1a73e8;
+    color:#fff;
+}
+.gh-map-marker.gh-cluster .gh-mm-price { color:#fff; }
+.gh-map-marker.gh-cluster .gh-mm-icon { background:#fff; color:#1a73e8; }
+.gh-map-marker.gh-cluster .gh-mm-icon i { color:#1a73e8; }
+.gh-map-marker.active::after {
+    border-top-color: rgba(0,0,0,0.28);
+}
+.gh-map-marker.active::before {
+    border-top-color: #ffffff;
+}
+
+/* Pulse animation for "Update list" button */
+@keyframes gh-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(26,115,232,0.4); }
+    70%  { box-shadow: 0 0 0 8px rgba(26,115,232,0); }
+    100% { box-shadow: 0 0 0 0 rgba(26,115,232,0); }
+}
+#gh_update_list_btn.gh-pulse {
+    animation: gh-pulse .6s ease;
+}
+
+/* Map — FULL HEIGHT, non-scrollable, relative to left rooms (sticky viewport) — PC padding ~0 */
+.gh-map-sticky {
+    position: sticky;
+    top: 64px;  /* under fixed header — full viewport height */
+    height: calc(100vh - 64px);
+    z-index: 10;
+    overflow: hidden; /* non-scrollable */
+    display: flex;
+    flex-direction: column;
+    padding-right:0;
+}
+.gh-map-sticky > .gh-map-frame {
+    flex: 1 1 auto;
+    height: 100%;
+    min-height: 0;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #e8ecef;
+    margin-right:0;
+}
+@media(min-width:992px){
+    .gh-map-sticky { padding-left:4px; }
 }

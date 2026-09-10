@@ -96,14 +96,22 @@ class FastnetApiClient
                 $response = $this->http->get($url, $data, $options);
             }
 
-            if ($response->isOk() || $response->getStatusCode() === 201) {
+            $status = $response->getStatusCode();
+            if ($response->isOk() || $status === 201) {
                 return $response->getJson();
+            }
+            // Return JSON even on validation/conflict errors so callers can surface authoritative messages (409 room locked, 422 validation)
+            if (in_array($status, [409, 422], true)) {
+                $json = $response->getJson();
+                if (is_array($json)) return $json;
+                // fallback to body as message
+                return ['message' => trim((string)$response->getBody()) ?: 'Request failed', '_status' => $status];
             }
 
             Log::warning(sprintf(
                 '[FastnetApiClient] HTTP %s returned status %d: %s',
                 $url,
-                $response->getStatusCode(),
+                $status,
                 substr((string)$response->getBody(), 0, 200)
             ));
         } catch (\Throwable $e) {

@@ -29,8 +29,8 @@ $greetingName = !empty($userProfile['first_name'])
         </h1>
         <p class="trivago-hero-sub">Save up to 40% on your next stay in Tanzania & East Africa</p>
 
-        <!-- Search Form -->
-        <form action="<?= $this->Url->build('/hotel-list-01'); ?>" method="GET" autocomplete="off">
+        <!-- Search Form — consolidated to home (/) per prompt -->
+        <form action="<?= $this->Url->build('/'); ?>" method="GET" autocomplete="off">
             <div class="trivago-hero-search-card">
                 
                 <!-- 1. Destination Pod -->

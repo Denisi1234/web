@@ -1,0 +1,161 @@
+/* Google Travel — pixel perfect clone (travel.google.com 2025)
+   Tokens matched via DevTools: #202124 #5f6368 #dadce0 #e8f0fe #1a73e8 #f8f9fa
+   Fonts: Google Sans / Roboto, 400/500, letter-spacing -0.01em
+*/
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&family=Roboto:wght@400;500&display=swap');
+.gt-page{font-family:"Google Sans",Roboto,Arial,sans-serif; color:#202124; background:#fff; -webkit-font-smoothing:antialiased}
+.gt-page *{box-sizing:border-box}
+.gt-tabs-wrap{background:#fff; border-bottom:1px solid #dadce0; position:sticky; top:0; z-index:30; overflow-x:auto; scrollbar-width:none}
+.gt-tabs-wrap::-webkit-scrollbar{display:none}
+.gt-tabs{max-width:1120px; margin:0 auto; padding:0 24px; height:56px; display:flex; align-items:center; justify-content:center; gap:8px; min-width:max-content}
+.gt-tab{display:inline-flex; align-items:center; gap:8px; height:36px; padding:0 16px; border-radius:18px; border:1px solid #dadce0; background:#fff; color:#202124; font-size:14px; font-weight:500; line-height:1; text-decoration:none; white-space:nowrap; transition:all .15s}
+.gt-tab i{font-size:15px; color:#5f6368}
+.gt-tab:hover{ background:#f8f9fa; border-color:#dadce0}
+.gt-tab--active{background:#e8f0fe; border-color:#d2e3fc; color:#1967d2}
+.gt-tab--active i{color:#1967d2}
+.gt-tab--active:hover{ background:#d2e3fc}
+
+/* HERO */
+.gt-hero{ background:#fff; padding:18px 0 28px; border-bottom:1px solid #e8eaed }
+.gt-hero-inner{max-width:1120px; margin:0 auto; padding:0 24px; display:grid; grid-template-columns: 1.05fr .9fr; gap:32px; align-items:center}
+@media(max-width:960px){ .gt-hero-inner{grid-template-columns:1fr; gap:20px} .gt-hero-right{display:none} }
+.gt-hero-left h1{font-size:32px; font-weight:400; letter-spacing:-.02em; line-height:36px; margin:0 0 8px; color:#202124}
+.gt-hero-left h1 span{font-weight:500}
+.gt-hero-left .gt-sub{font-size:15px; color:#5f6368; line-height:20px; margin:0 0 18px; font-family:Roboto,Arial,sans-serif}
+.gt-search-pill{ display:flex; align-items:stretch; background:#fff; border:1px solid #dadce0; border-radius:28px; box-shadow:0 1px 6px rgba(32,33,36,.08); height:56px; overflow:hidden; transition:box-shadow .18s, border-color .18s}
+.gt-search-pill:focus-within{ box-shadow:0 2px 8px rgba(32,33,36,.16); border-color:transparent; box-shadow:0 1px 6px rgba(32,33,36,.28)}
+.gt-search-pill > div{flex:1 1 0; display:flex; align-items:center; gap:10px; padding:0 14px; min-width:0; position:relative}
+.gt-search-pill > div + div{ border-left:1px solid #dadce0 }
+.gt-search-pill label{position:absolute; top:6px; left:38px; font-size:11px; color:#5f6368; font-weight:500; letter-spacing:.02em; line-height:1; pointer-events:none}
+.gt-search-pill input, .gt-search-pill select{width:100%; border:0; outline:0; background:transparent; font-size:14px; color:#202124; font-family:Roboto,Arial,sans-serif; padding-top:12px}
+.gt-search-pill input::placeholder{ color:#5f6368}
+.gt-search-pill .gt-pill-icon{width:20px; height:20px; display:flex; align-items:center; justify-content:center; color:#5f6368; flex-shrink:0; font-size:15px; margin-top:4px}
+.gt-search-pill .gt-search-btn{ flex:0 0 auto; margin:6px; padding:0 22px; border-radius:22px; background:#1a73e8; color:#fff; border:0; font-size:14px; font-weight:500; display:inline-flex; align-items:center; gap:8px; cursor:pointer; transition:background .15s, box-shadow .15s; white-space:nowrap}
+.gt-search-pill .gt-search-btn:hover{background:#1765cc; box-shadow:0 1px 2px rgba(60,64,67,.3)}
+.gt-hero-meta{margin-top:10px; display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+.gt-hero-meta a{font-size:12px; color:#5f6368; text-decoration:none; display:inline-flex; align-items:center; gap:6px}
+.gt-hero-meta a:hover{ color:#1a73e8}
+.gt-hero-right{position:relative; height:320px; border-radius:24px; overflow:hidden; background:linear-gradient(135deg,#e8f0fe 0%, #fef7e0 50%, #e6f4ea 100%); border:1px solid #e8eaed; display:flex; align-items:center; justify-content:center}
+.gt-hero-right img{width:92%; height:92%; object-fit:cover; border-radius:18px; box-shadow:0 8px 24px rgba(32,33,36,.12)}
+
+/* SECTIONS */
+.gt-section{max-width:1120px; margin:0 auto; padding:28px 24px 0}
+.gt-section:last-of-type{padding-bottom:40px}
+.gt-section-head{display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin-bottom:16px}
+.gt-section-head h2{font-size:22px; font-weight:400; line-height:28px; margin:0; color:#202124}
+.gt-section-head a{font-size:14px; font-weight:500; color:#1a73e8; text-decoration:none; white-space:nowrap; padding:6px 12px; border-radius:18px; border:1px solid transparent}
+.gt-section-head a:hover{background:#e8f0fe}
+.gt-section-sub{font-size:14px; color:#5f6368; margin:-8px 0 16px; font-family:Roboto,Arial,sans-serif}
+
+/* CARD GRID — Popular destinations (google travel exact: 4 per row, 16px gap, 12px radius) */
+.gt-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:16px}
+@media(max-width:1024px){ .gt-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:720px){ .gt-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){ .gt-grid{grid-template-columns:1fr}}
+.gt-card{display:block; background:#fff; border:1px solid #dadce0; border-radius:12px; overflow:hidden; text-decoration:none; color:inherit; transition:box-shadow .18s, border-color .18s; cursor:pointer}
+.gt-card:hover{box-shadow:0 1px 2px rgba(60,64,67,.3),0 2px 6px 2px rgba(60,64,67,.15); border-color:transparent}
+.gt-card-media{position:relative; height:154px; overflow:hidden; background:#f8f9fa}
+.gt-card-media img{width:100%; height:100%; object-fit:cover; display:block; transition:transform .35s}
+.gt-card:hover .gt-card-media img{transform:scale(1.03)}
+.gt-card-badge{position:absolute; left:10px; bottom:10px; background:#fff; color:#202124; font-size:12px; font-weight:700; padding:4px 8px; border-radius:16px; box-shadow:0 1px 3px rgba(0,0,0,.18); line-height:1}
+.gt-card-body{padding:10px 12px 12px}
+.gt-card-title{font-size:14px; font-weight:500; line-height:18px; margin:0 0 2px; color:#202124; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.gt-card-meta{font-size:12px; color:#5f6368; line-height:16px; font-family:Roboto,Arial,sans-serif; display:flex; align-items:center; gap:6px}
+.gt-card-meta .dot{width:3px; height:3px; border-radius:50%; background:#5f6368; display:inline-block}
+.gt-card-price{margin-top:6px; font-size:14px; font-weight:500; color:#202124}
+.gt-card-price span{font-weight:400; color:#5f6368; font-size:12px}
+
+/* EXPLORE MAP TEASER */
+.gt-map-teaser{border:1px solid #dadce0; border-radius:12px; overflow:hidden; display:grid; grid-template-columns:1fr 360px; background:#fff}
+@media(max-width:860px){ .gt-map-teaser{grid-template-columns:1fr}}
+.gt-map-teaser-left{padding:18px}
+.gt-map-list{display:flex; flex-direction:column; gap:0}
+.gt-map-row{display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #f1f3f4; cursor:pointer}
+.gt-map-row:last-child{border-bottom:0}
+.gt-map-row img{width:56px; height:56px; border-radius:8px; object-fit:cover; flex-shrink:0}
+.gt-map-row-main{flex:1; min-width:0}
+.gt-map-row-title{font-size:14px; font-weight:500; line-height:18px; color:#202124}
+.gt-map-row-sub{font-size:12px; color:#5f6368; font-family:Roboto,Arial,sans-serif}
+.gt-map-row-price{font-size:13px; font-weight:500; color:#202124; white-space:nowrap}
+.gt-map-teaser-right{background:#e8eaed; min-height:280px; position:relative; overflow:hidden}
+.gt-map-teaser-right img{width:100%; height:100%; object-fit:cover}
+.gt-map-teaser-cta{position:absolute; left:50%; bottom:14px; transform:translateX(-50%); background:#fff; border-radius:20px; padding:8px 14px; font-size:13px; font-weight:500; box-shadow:0 2px 8px rgba(0,0,0,.18); display:inline-flex; align-items:center; gap:8px; white-space:nowrap}
+
+/* INSPIRATION CHIPS */
+.gt-chips{display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; margin-bottom:16px}
+.gt-chips::-webkit-scrollbar{display:none}
+.gt-chip{padding:7px 14px; border-radius:18px; border:1px solid #dadce0; background:#fff; font-size:13px; font-weight:500; color:#202124; white-space:nowrap; cursor:pointer}
+.gt-chip--active{background:#202124; color:#fff; border-color:#202124}
+.gt-chip:hover{border-color:#202124}
+
+/* RECENT SEARCHES */
+.gt-recent{display:flex; gap:12px; overflow-x:auto; scrollbar-width:none}
+.gt-recent::-webkit-scrollbar{display:none}
+.gt-recent-item{flex:0 0 220px; border:1px solid #dadce0; border-radius:12px; padding:12px; display:flex; gap:10px; align-items:center; background:#fff}
+.gt-recent-item i{width:36px; height:36px; border-radius:18px; background:#f1f3f4; display:flex; align-items:center; justify-content:center; color:#5f6368; flex-shrink:0}
+.gt-recent-item strong{font-size:13px; font-weight:500; line-height:16px; display:block}
+.gt-recent-item span{font-size:12px; color:#5f6368; font-family:Roboto,Arial,sans-serif}
+
+/* FAQ — google disclosure style */
+.gt-faq{border:1px solid #dadce0; border-radius:12px; overflow:hidden; background:#fff}
+.gt-faq-item + .gt-faq-item{border-top:1px solid #e8eaed}
+.gt-faq-q{width:100%; text-align:left; background:#fff; border:0; padding:16px; font-size:14px; font-weight:500; display:flex; align-items:center; justify-content:space-between; gap:12px; cursor:pointer}
+.gt-faq-q i{color:#5f6368; transition:transform .2s}
+.gt-faq-item.open .gt-faq-q i{transform:rotate(180deg)}
+.gt-faq-a{display:none; padding:0 16px 16px; font-size:13px; color:#5f6368; line-height:18px; font-family:Roboto,Arial,sans-serif}
+.gt-faq-item.open .gt-faq-a{display:block}
+
+/* ── Home split layout — extracted from templates/Pages/index.php:17-67 for cacheability ── */
+.gh-m-tabs{display:none;background:#fff;border-bottom:1px solid #e8eaed;overflow-x:auto;scrollbar-width:none}
+.gh-m-tabs::-webkit-scrollbar{display:none}
+.gh-m-tabs a{flex:0 0 auto;padding:12px 16px;font-size:14px;font-weight:500;color:#5f6368;text-decoration:none;border-bottom:2px solid transparent;white-space:nowrap;font-family:'Google Sans',Roboto,sans-serif}
+.gh-m-tabs a.active{color:#1a73e8;border-bottom-color:#1a73e8}
+@media(max-width:767px){.gh-m-tabs{display:flex;position:sticky;top:56px;z-index:850}}
+.gh-split-container{align-items:stretch}
+#gh_list_col{min-height:0}
+@media(min-width:992px){
+  html,body{height:100%;overflow:hidden}
+  #main-wrapper{height:100vh;overflow:hidden;display:flex;flex-direction:column}
+  .gh-split-container{flex:1;overflow:hidden;min-height:0;height:calc(100vh - 64px)}
+  .gh-split-container>.container-fluid,.gh-split-container .row{flex:1;overflow:hidden;min-height:0;height:100%}
+  #gh_list_col{display:flex;flex-direction:column;overflow:hidden;height:100%;min-height:0;padding-right:4px}
+  .gh-left-fixed{flex:0 0 auto;background:#fff;z-index:5;border-right:1px solid #f1f3f4}
+  .gh-left-fixed .gh-sb-wrap,.gh-left-fixed .gh-chips-wrap{position:relative !important;top:0 !important}
+  .gh-left-fixed .gh-sb-wrap{padding:6px 0 4px !important;border-bottom:none !important}
+  .gh-left-fixed .gh-chips-wrap{padding:0 !important;border-bottom:1px solid #e8eaed}
+  .gh-left-fixed .gh-sb-row{gap:6px !important;height:auto !important;flex-wrap:nowrap !important}
+  .gh-left-fixed .gh-sb-loc{flex:1 1 0 !important;min-width:0 !important;padding:0 6px 0 8px !important}
+  .gh-left-fixed .gh-sb-loc-input{font-size:13px !important}
+  .gh-left-fixed .gh-sb-date{flex:0 0 auto !important;padding:0 4px !important;gap:1px !important}
+  .gh-left-fixed .gh-date-seg-label{font-size:12px !important;padding:2px 3px !important}
+  .gh-left-fixed .gh-sb-guests{flex:0 0 64px !important;padding:0 8px !important;gap:4px !important}
+  .gh-left-fixed .gh-chips-row{padding:4px 0 6px !important}
+  .gh-left-fixed .gh-chip{padding:5px 10px !important;font-size:12px !important;margin-right:6px !important}
+  .gh-left-fixed .gh-track-row{padding:6px 0 4px !important}
+  .gh-left-scroll{flex:1;overflow-y:auto;overflow-x:hidden;min-height:0;scrollbar-width:thin;scrollbar-color:#dadce0 transparent;padding-right:4px;background:#f8f9fa}
+  .gh-left-scroll::-webkit-scrollbar{width:6px}
+  .gh-left-scroll::-webkit-scrollbar-thumb{background:#dadce0;border-radius:3px}
+  .gh-map-sticky{position:relative !important;top:0 !important;height:100% !important;overflow:hidden;margin-top:0 !important}
+  .gh-map-sticky>.gh-map-frame{height:100% !important;min-height:0 !important;border-radius:8px;margin-left:4px}
+}
+@media(max-width:991px){
+  .gh-split-container{padding-bottom:0}
+  .gh-map-sticky{position:relative !important;top:0 !important;height:auto !important}
+  .gh-map-sticky>.gh-map-frame{height:60vh;min-height:420px}
+}
+/* Short laptop screens 1366x768 — reduce fixed pane overhead */
+@media(min-width:992px) and (max-height:800px){
+  .gh-left-fixed .gh-sb-wrap{padding:4px 0 2px !important}
+  .gh-left-scroll{padding-top:4px !important}
+  .gh-split-container{height:calc(100vh - 56px)}
+}
+/* Mobile peek drawer */
+.gh-mobile-sheet{display:none}
+@media(max-width:991px){
+  .gh-mobile-sheet{position:fixed;left:0;right:0;bottom:0;z-index:1035;background:#fff;border-radius:16px 16px 0 0;box-shadow:0 -8px 32px rgba(0,0,0,.18);max-height:85vh;display:flex;flex-direction:column;transform:translateY(55%);transition:transform .35s cubic-bezier(.32,.72,0,1)}
+  .gh-mobile-sheet.open{transform:translateY(0)}
+  .gh-mobile-sheet.peek{transform:translateY(55%)}
+  .gh-sheet-handle{display:flex;justify-content:center;padding:10px 0 6px;cursor:grab;touch-action:none}
+  .gh-sheet-handle span{width:36px;height:4px;background:#dadce0;border-radius:2px;display:block}
+  .gh-sheet-scroll{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:0 12px 16px}
+}

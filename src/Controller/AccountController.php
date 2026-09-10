@@ -79,9 +79,12 @@ class AccountController extends AppController
         if ($token !== '') {
             $headers['Authorization'] = 'Bearer ' . $token;
         }
-        $res = $this->apiClient->get('/user/bookings', [], $headers);
+        $res = $this->apiClient->get('/bookings', [], $headers);
         if (!empty($res['data'])) {
             $bookings = $res['data'];
+        } elseif (is_array($res) && isset($res[0])) {
+            // Backend may return array directly without data wrapper
+            $bookings = $res;
         }
 
         $userBookings = $bookings;

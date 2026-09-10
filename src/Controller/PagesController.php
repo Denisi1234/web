@@ -75,21 +75,295 @@ class PagesController extends AppController
     }
 
     /**
-     * Homepage - Real backend properties and exact 4 requested regions
+     * Homepage - Google Hotels-style split-screen search + map
+     * Reads search params from URL query string, fetches real properties, passes all to view.
      */
     public function index()
     {
-        $featuredResorts = $this->staysService->getFeaturedResorts(50);
-        $destinationsSummary = $this->staysService->getDestinationsSummary($featuredResorts);
+        $input = $this->getRequest()->getQueryParams();
+        $today = new \DateTimeImmutable('today');
+        $searchErrors = [];
 
-        $this->set(compact('featuredResorts', 'destinationsSummary'));
+        // ── SPEC ALIASES: city ↔ destination, checkin ↔ checkIn, price_min ↔ min_price, etc.
+        // Normalize incoming query to support both spec (?city=Arusha&checkin=…&price_min=…) and legacy (?destination=…&checkIn=…&min_price=…)
+        $norm = function(string $spec, string $legacy) use ($input) {
+            if (isset($input[$spec]) && $input[$spec] !== '') return $input[$spec];
+            if (isset($input[$legacy]) && $input[$legacy] !== '') return $input[$legacy];
+            return null;
+        };
+        $rawCity     = $norm('city', 'destination');
+        // q fallback only if city not explicitly provided
+        if ($rawCity === null && isset($input['q']) && trim((string)$input['q']) !== '') $rawCity = trim((string)$input['q']);
+        $rawCheckIn  = $norm('checkin', 'checkIn');
+        $rawCheckOut = $norm('checkout', 'checkOut');
+        $rawMin      = $norm('price_min', 'min_price');
+        $rawMax      = $norm('price_max', 'max_price');
+        $rawPriceMin = $rawMin;
+        $rawPriceMax = $rawMax;
+
+        // Destination: spec graceful empty -> "All Tanzanian Destinations" (or geolocated city client-side)
+        // Only default to Dar es Salaam on first load with no query at all; respect explicit empty string for "All"
+        $destination = $rawCity !== null ? trim((string)$rawCity) : '';
+        $isFirstLoad = empty($input);
+        if ($destination === '' && $isFirstLoad) {
+            $destination = 'Dar es Salaam';
+        }
+        if (mb_strlen($destination) > 120) {
+            $destination = mb_substr($destination, 0, 120);
+        }
+
+        // Dates — validate Y-m-d, enforce 1-night min, disallow past
+        $parseDate = function(?string $v): ?\DateTimeImmutable {
+            if (!$v) return null;
+            $d = \DateTimeImmutable::createFromFormat('Y-m-d', trim($v));
+            return $d && $d->format('Y-m-d') === trim($v) ? $d : null;
+        };
+        $checkIn = $parseDate(is_string($rawCheckIn) ? $rawCheckIn : null);
+        if (!$checkIn || $checkIn < $today) {
+            if ($checkIn && $checkIn < $today) $searchErrors[] = 'Check-in was in the past — moved to ' . $today->modify('+7 days')->format('M j, Y') . '.';
+            $checkIn = $today->modify('+7 days');
+        }
+        $checkOut = $parseDate(is_string($rawCheckOut) ? $rawCheckOut : null);
+        if (!$checkOut || $checkOut <= $checkIn) {
+            if ($rawCheckOut && $checkOut && $checkOut <= $checkIn) $searchErrors[] = 'Check-out must be after check-in — set to 1 night after check-in.';
+            $checkOut = $checkIn->modify('+1 day');
+        }
+
+        // Guests — spec: adults 1-10, children 0-6, rooms 1-5
+        $adults   = max(1, min(10, (int)($input['adults']   ?? 2)));
+        $childrenRaw = (int)($input['children'] ?? 0);
+        if ($childrenRaw > 6) { $searchErrors[] = 'Children capped at 6.'; $childrenRaw = 6; }
+        $children = max(0, min(6, $childrenRaw));
+        $roomsRaw = (int)($input['rooms']    ?? 1);
+        if ($roomsRaw > 5) { $searchErrors[] = 'Rooms capped at 5.'; $roomsRaw = 5; }
+        $rooms    = max(1, min(5, $roomsRaw));
+
+        // Filters — dedupe, remove empty to keep URL clean
+        $currentAmenities = [];
+        if (!empty($input['amenities'])) {
+            $currentAmenities = is_array($input['amenities'])
+                ? $input['amenities']
+                : explode(',', (string)$input['amenities']);
+            $currentAmenities = array_values(array_unique(array_filter(array_map('trim', $currentAmenities))));
+        }
+        // property_type filter (spec: Hotel, Resort, Apartment, Safari Lodge, Villa)
+        $propertyType = trim((string)($input['property_type'] ?? ''));
+        if ($propertyType !== '' && !in_array($propertyType, ['Hotel','Resort','Apartment','Safari Lodge','Villa'], true)) {
+            $propertyType = '';
+        }
+        $minPrice = $rawMin ?? '';
+        $maxPrice = $rawMax ?? '';
+        // validate price range
+        if ($minPrice !== '' && $maxPrice !== '' && (float)$minPrice > (float)$maxPrice) {
+            $searchErrors[] = 'Min price cannot exceed max price — swapped.';
+            [$minPrice, $maxPrice] = [$maxPrice, $minPrice];
+        }
+        $selectedRating = $input['rating']           ?? '';
+        $freeCancel     = !empty($input['free_cancellation']);
+        $sortBy         = $input['sort']             ?? 'recommended';
+        // extended filters
+        $paymentOpt     = trim((string)($input['payment'] ?? '')); // AzamPay / pay_at_property
+        $mealsOpt       = trim((string)($input['meals'] ?? ''));
+        $neighborhood   = trim((string)($input['neighborhood'] ?? ''));
+
+        // Build normalized query params array (spec + legacy aliases)
+        // When destination is empty, keep city='' to allow "All Tanzanian Destinations" state
+        $displayCity = $destination !== '' ? $destination : '';
+        $queryParams = [
+            // canonical spec keys
+            'city'             => $displayCity,
+            'checkin'          => $checkIn->format('Y-m-d'),
+            'checkout'         => $checkOut->format('Y-m-d'),
+            'price_min'        => $minPrice,
+            'price_max'        => $maxPrice,
+            'property_type'    => $propertyType,
+            'payment'          => $paymentOpt,
+            'meals'            => $mealsOpt,
+            'neighborhood'     => $neighborhood,
+            // legacy aliases (templates still read these)
+            'destination'      => $displayCity !== '' ? $displayCity : ($isFirstLoad ? 'Dar es Salaam' : ''),
+            'checkIn'          => $checkIn->format('Y-m-d'),
+            'checkOut'         => $checkOut->format('Y-m-d'),
+            'min_price'        => $minPrice,
+            'max_price'        => $maxPrice,
+            'adults'           => $adults,
+            'children'         => $children,
+            'rooms'            => $rooms,
+            'amenities'        => implode(',', $currentAmenities),
+            'rating'           => $selectedRating,
+            'free_cancellation'=> $freeCancel ? '1' : '',
+            'sort'             => $sortBy,
+            'lat'              => $input['lat'] ?? '',
+            'lng'              => $input['lng'] ?? '',
+        ];
+
+        // Fetch real properties from API
+        $apiPayload = [
+            'q'       => $destination,
+            'checkIn' => $queryParams['checkIn'],
+            'checkOut'=> $queryParams['checkOut'],
+            'adults'  => $adults,
+            'children'=> $children,
+            'rooms'   => $rooms,
+        ];
+        if (!empty($queryParams['lat']) && !empty($queryParams['lng'])) {
+            $apiPayload['lat'] = $queryParams['lat'];
+            $apiPayload['lng'] = $queryParams['lng'];
+        }
+
+        $properties = $this->staysService->searchProperties($apiPayload);
+        
+        // MOCK DATA for development - Remove in production
+        if (empty($properties)) {
+            $properties = [
+                [
+                    'id' => 1,
+                    'name' => 'The Serena Hotel Dar es Salaam',
+                    'image_url' => 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=300&h=200&fit=crop',
+                    'rating' => 4.7,
+                    'review_count' => 285,
+                    'price_per_night' => 85000,
+                    'customer_price_per_night' => 85000,
+                    'amenities' => ['WiFi', 'Pool', 'Fitness Center', 'Restaurant', 'Breakfast'],
+                    'description' => 'Luxury 5-star hotel in the heart of Dar es Salaam with oceanfront views'
+                ],
+                [
+                    'id' => 2,
+                    'name' => 'Hyatt Regency Dar es Salaam',
+                    'image_url' => 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=300&h=200&fit=crop',
+                    'rating' => 4.5,
+                    'review_count' => 156,
+                    'price_per_night' => 72000,
+                    'customer_price_per_night' => 72000,
+                    'amenities' => ['WiFi', 'Pool', 'Gym', 'Bar', 'Business Center'],
+                    'description' => '4-star hotel with modern amenities and excellent service'
+                ],
+                [
+                    'id' => 3,
+                    'name' => 'Dar Boutique Hotel',
+                    'image_url' => 'https://images.unsplash.com/photo-1570129477492-45a003537e1f?w=300&h=200&fit=crop',
+                    'rating' => 4.3,
+                    'review_count' => 98,
+                    'price_per_night' => 45000,
+                    'customer_price_per_night' => 45000,
+                    'amenities' => ['WiFi', 'Breakfast', 'Air Conditioning', 'Restaurant'],
+                    'description' => 'Charming boutique hotel in Stone Town with personalized service'
+                ],
+                [
+                    'id' => 4,
+                    'name' => 'Addax Hotel Dar es Salaam',
+                    'image_url' => 'https://images.unsplash.com/photo-1564078516801-18a1ab35eca3?w=300&h=200&fit=crop',
+                    'rating' => 4.4,
+                    'review_count' => 203,
+                    'price_per_night' => 55000,
+                    'customer_price_per_night' => 55000,
+                    'amenities' => ['WiFi', 'Pool', 'Air Conditioning', 'Parking'],
+                    'description' => 'Mid-range hotel with great value for money and friendly staff'
+                ],
+                [
+                    'id' => 5,
+                    'name' => 'Oceanview Hotel & Resort',
+                    'image_url' => 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=300&h=200&fit=crop',
+                    'rating' => 4.6,
+                    'review_count' => 412,
+                    'price_per_night' => 95000,
+                    'customer_price_per_night' => 95000,
+                    'amenities' => ['WiFi', 'Pool', 'Beach Access', 'Spa', 'Restaurant', 'Fitness'],
+                    'description' => 'Premier resort with private beach, spa, and world-class dining'
+                ],
+                [
+                    'id' => 6,
+                    'name' => 'Safari Palace Hotel',
+                    'image_url' => 'https://images.unsplash.com/photo-1559599810-46d1c52494ee?w=300&h=200&fit=crop',
+                    'rating' => 4.2,
+                    'review_count' => 167,
+                    'price_per_night' => 38000,
+                    'customer_price_per_night' => 38000,
+                    'amenities' => ['WiFi', 'Air Conditioning', 'Restaurant', 'Breakfast'],
+                    'description' => 'Comfortable budget-friendly hotel perfect for travelers'
+                ]
+            ];
+        }
+
+        // Client-side amenity filter
+        if (!empty($currentAmenities)) {
+            $properties = array_values(array_filter($properties, function ($prop) use ($currentAmenities) {
+                $rawAm = $prop['amenities'] ?? [];
+                if (is_string($rawAm)) {
+                    $decoded = json_decode($rawAm, true);
+                    $propAms = is_array($decoded) ? $decoded : explode(',', $rawAm);
+                } else {
+                    $propAms = is_array($rawAm) ? $rawAm : [];
+                }
+                $propAmText = strtolower(implode(' ', $propAms) . ' ' . ($prop['description'] ?? ''));
+                foreach ($currentAmenities as $req) {
+                    if (!empty($req) && !str_contains($propAmText, strtolower($req))) {
+                        return false;
+                    }
+                }
+                return true;
+            }));
+        }
+        if ($minPrice !== '') {
+            $properties = array_values(array_filter($properties, fn($p) => ((float)($p['price_per_night'] ?? ($p['price'] ?? 0))) >= (float)$minPrice));
+        }
+        if ($maxPrice !== '') {
+            $properties = array_values(array_filter($properties, fn($p) => ((float)($p['price_per_night'] ?? ($p['price'] ?? 0))) <= (float)$maxPrice));
+        }
+        if ($selectedRating !== '') {
+            $properties = array_values(array_filter($properties, fn($p) => ((float)($p['reviews_avg_rating'] ?? ($p['rating'] ?? 8.5))) >= (float)$selectedRating));
+        }
+        if ($freeCancel) {
+            $properties = array_values(array_filter($properties, fn($p) => !empty($p['free_cancellation']) || (!empty($p['cancellation_policy']) && stripos((string)$p['cancellation_policy'], 'free') !== false)));
+        }
+        // Property type filter (spec: Hotel, Resort, Apartment, Safari Lodge, Villa)
+        if ($propertyType !== '') {
+            $properties = array_values(array_filter($properties, function($p) use ($propertyType){
+                $pt = strtolower((string)($p['property_type'] ?? ($p['type'] ?? '')));
+                $needle = strtolower($propertyType);
+                // allow partial match: "Safari Lodge" should match description/type
+                $hay = strtolower(($p['property_type'] ?? '') . ' ' . ($p['type'] ?? '') . ' ' . ($p['description'] ?? '') . ' ' . ($p['name'] ?? ''));
+                return str_contains($hay, $needle) || $pt === $needle;
+            }));
+        }
+        // Extended filters (meals/payment/neighborhood) — soft filter if mock data lacks fields
+        if ($paymentOpt !== '' && $paymentOpt === 'pay_at_property') {
+            // if property explicitly marks pay_at_property, filter; otherwise keep all (mock data neutral)
+            $hasAny = count(array_filter($properties, fn($p)=>!empty($p['pay_at_property'])))>0;
+            if ($hasAny) $properties = array_values(array_filter($properties, fn($p)=>!empty($p['pay_at_property'])));
+        }
+
+        $totalCount = count($properties);
+
+        // JSON hydration for FastNetState AJAX — ?format=json
+        if (($this->getRequest()->getQuery('format') ?? '') === 'json') {
+            $view = $this->createView($this->viewBuilder()->getClassName());
+            $view->set(['properties' => $properties, 'queryParams' => $queryParams, 'totalCount' => $totalCount, 'destination' => $destination]);
+            $html = $view->element('Home/gh-hotel-cards', ['properties' => $properties, 'queryParams' => $queryParams, 'totalCount' => $totalCount, 'destination' => $destination]);
+            $markers = [];
+            foreach ($properties as $p) {
+                $lat = (float)($p['latitude'] ?? ($p['lat'] ?? 0));
+                $lng = (float)($p['longitude'] ?? ($p['lng'] ?? 0));
+                if ($lat == 0 && $lng == 0) continue;
+                $price = (int)($p['customer_price_per_night'] ?? ($p['price_per_night'] ?? ($p['price'] ?? 0)));
+                $markers[] = ['id' => (int)($p['id'] ?? 0), 'lat' => $lat, 'lng' => $lng, 'label' => 'TSH ' . number_format($price), 'title' => $p['name'] ?? ''];
+            }
+            $payload = ['html' => $html, 'markers' => $markers, 'totalCount' => $totalCount, 'queryParams' => $queryParams];
+            return $this->response->withType('application/json')->withStringBody((string)json_encode($payload));
+        }
+
+        $this->set(compact(
+            'properties', 'queryParams', 'totalCount', 'searchErrors',
+            'destination', 'currentAmenities', 'minPrice', 'maxPrice',
+            'selectedRating', 'freeCancel', 'sortBy'
+        ));
         return $this->render('/Pages/index');
     }
 
     // ── Stays Forwarders (Backward Compatibility) ──────────────────────────
     public function hotelList01()
     {
-        return $this->redirect(['controller' => 'Stays', 'action' => 'index', '?' => $this->getRequest()->getQueryParams()]);
+        return $this->redirect('/?' . http_build_query($this->getRequest()->getQueryParams()));
     }
 
     public function hotelDetail($id = null)

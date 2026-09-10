@@ -13,6 +13,15 @@
         <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
         <link rel="canonical" href="<?= 'https://www.fastnetstays.com' . rawurldecode($this->getRequest()->getPath()) ?>" />
         <link rel="alternate" type="text/plain" href="https://www.fastnetstays.com/llms.txt" title="LLM Knowledge Graph" />
+        <!-- Production: resource hints -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="preconnect" href="https://api.mapbox.com" crossorigin>
+        <link rel="preconnect" href="https://api.fastnetstays.com" crossorigin>
+        <link rel="dns-prefetch" href="https://images.unsplash.com">
+        <link rel="preload" href="/assets/css/google-travel-layout.css" as="style">
+        <link rel="preload" href="/assets/css/google-travel-cards.css" as="style">
+        <meta http-equiv="x-dns-prefetch-control" content="on">
 
         <!-- Open Graph / Facebook / WhatsApp -->
         <meta property="og:type" content="website" />
@@ -136,9 +145,10 @@
         <?= $this->fetch('css') ?>
         <?= $this->Html->css('/assets/css/site-spacing.css') ?>
 
-        <!-- Mapbox GL JS -->
-        <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js"></script>
-        <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css" rel="stylesheet" />
+        <!-- Mapbox GL JS — deferred production -->
+        <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css" rel="stylesheet" media="print" onload="this.media='all'">
+        <noscript><link href="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css" rel="stylesheet"></noscript>
+        <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js" defer></script>
 
         <script>
             window.FASTNET_API_URL = (
@@ -194,8 +204,8 @@
     </head>
 
     <body>
-        
-        <div id="preloader">
+        <a href="#main-content" class="skip-link visually-hidden-focusable" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">Skip to main content</a>
+        <div id="preloader" aria-hidden="true">
             <div class="preloader"><span></span><span></span></div>
         </div>
 
@@ -203,9 +213,6 @@
 
             <!-- Main Content -->
         	<?= $this->fetch('content') ?>
-
-            <!-- FastNet AI Concierge Floating Assistant -->
-            <?= $this->element('ai-concierge') ?>
 
             <a id="back2Top" class="top-scroll" title="Back to top" href="#"><i class="fa-solid fa-sort-up"></i></a>
 

@@ -1,64 +1,62 @@
 <?php
 $footerSkin = $skin ?? 'skin-light-footer';
 $isDark = str_contains($footerSkin, 'dark');
+$isCompact = !empty($compact) && $compact === true;
 ?>
 <?= $this->Html->css('/assets/css/shared-footer.css') ?>
+<?php if ($isCompact): ?>
+<!-- Google Travel Compact Micro-Footer — for index left scroll -->
+<footer class="footer footer-compact <?= $footerSkin ?>">
+    <div class="footer-compact-inner">
+        <div class="fc-row fc-disclaimer"><span style="margin-right:4px;">ℹ️</span> Rates shown are nightly averages. Total includes estimated taxes and fees.</div>
+        <div class="fc-row fc-links">
+            <a href="<?= $this->Url->build('/about-us'); ?>">About</a><span class="fc-sep">·</span>
+            <a href="<?= $this->Url->build('/privacy-policy'); ?>">Privacy</a><span class="fc-sep">·</span>
+            <a href="<?= $this->Url->build('/terms-of-service'); ?>">Terms</a><span class="fc-sep">·</span>
+            <a href="<?= $this->Url->build('/help-center'); ?>">Help</a><span class="fc-sep">·</span>
+            <a href="<?= $this->Url->build('/faq'); ?>">FAQ</a>
+        </div>
+        <div class="fc-row fc-copy">© <?= date('Y') ?> FastNet Stays Ltd. All rights reserved.</div>
+    </div>
+</footer>
+<?php else: ?>
 <footer class="footer <?= $footerSkin ?>">
     <div>
         <div class="container">
-            <div class="row">
-
-                <!-- Brand & Description -->
-                <div class="col-lg-3 col-md-4">
+            <div class="footer-grid">
+                <!-- Column 1 Brand & Social ~28% -->
+                <div class="footer-col footer-col--brand">
                     <div class="footer-widget">
-                        <div class="d-flex align-items-start flex-column mb-3">
-                            <div class="d-inline-block mb-2">
-                                <a class="d-flex flex-column text-decoration-none py-1" href="<?= $this->Url->build('/'); ?>" title="FastNetStays.com">
-                                    <div class="d-flex align-items-baseline lh-1">
-                                        <span class="fw-bold tracking-tight font-sans fs-4 me-0" style="color: <?= $isDark ? '#60a5fa' : '#003580' ?> !important;">FASTNET</span>
-                                        <span class="fw-bold tracking-tight font-sans fs-4 me-0" style="color: #f87171 !important;">STAYS</span>
-                                        <span class="fw-bold <?= $isDark ? 'text-light-50' : 'text-muted' ?> font-sans fs-6" style="font-size: 13px;">.com</span>
-                                    </div>
-                                    <div class="d-flex align-items-center gap-1 mt-1">
-                                        <span class="rounded-circle bg-danger d-inline-block" style="width: 8px; height: 8px;"></span>
-                                        <span class="rounded-circle d-inline-block" style="width: 8px; height: 8px; background-color: #f97316;"></span>
-                                        <span class="rounded-circle d-inline-block" style="width: 8px; height: 8px; background-color: #eab308;"></span>
-                                        <span class="rounded-circle bg-success d-inline-block" style="width: 8px; height: 8px;"></span>
-                                        <span class="rounded-circle bg-primary d-inline-block" style="width: 8px; height: 8px;"></span>
-                                    </div>
-                                </a>
-                            </div>
-                        </div>
-                        <div class="footer-add pe-xl-3 mb-3">
-                            <p class="<?= $isDark ? 'text-light-50' : 'text-muted' ?>">Book hotel rooms and fast stays instantly across Tanzania with fastnetstays.com.</p>
-                        </div>
+                        <a class="footer-brand" href="<?= $this->Url->build('/'); ?>" title="FastNetStays.com" style="display:inline-flex;align-items:baseline;gap:3px;text-decoration:none;line-height:1;margin:2px 0 4px;flex-direction:row;">
+                            <span style="font-family:'Grand Hotel','Brush Script MT',cursive;font-size:30px;font-weight:400;letter-spacing:-.02em;line-height:1;background:linear-gradient(45deg,#feda75 0%,#fa7e1e 18%,#d62976 38%,#962fbf 68%,#4f5bd5 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap;display:inline-block;padding-bottom:2px;">FastNetStays</span>
+                            <span style="font-family:'Grand Hotel',cursive;font-size:11px;color:<?= $isDark ? '#cbd5e1' : '#64748b' ?>;opacity:.95;transform:translateY(1px);">.com</span>
+                        </a>
+                        <p class="footer-tagline <?= $isDark ? 'text-light-50' : 'text-muted' ?>">Book hotel rooms and fast stays instantly across Tanzania with fastnetstays.com.</p>
                         <div class="foot-socials">
-                            <ul class="d-flex align-items-center gap-2 p-0 m-0 list-unstyled">
-                                <li><a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-light-secondary rounded-circle d-flex align-items-center justify-content-center p-0" style="width:36px; height:36px;"><i class="fa-brands fa-instagram"></i></a></li>
-                                <li><a href="https://facebook.com" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-light-secondary rounded-circle d-flex align-items-center justify-content-center p-0" style="width:36px; height:36px;"><i class="fa-brands fa-facebook-f"></i></a></li>
-                                <li><a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-light-secondary rounded-circle d-flex align-items-center justify-content-center p-0" style="width:36px; height:36px;"><i class="fa-brands fa-linkedin-in"></i></a></li>
-                                <li><a href="https://twitter.com" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-light-secondary rounded-circle d-flex align-items-center justify-content-center p-0" style="width:36px; height:36px;"><i class="fa-brands fa-x-twitter"></i></a></li>
+                            <ul>
+                                <li><a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a></li>
+                                <li><a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a></li>
+                                <li><a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a></li>
+                                <li><a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="X"><i class="fa-brands fa-x-twitter"></i></a></li>
                             </ul>
                         </div>
                     </div>
                 </div>
-
-                <!-- Product Column -->
-                <div class="col-lg-2 col-md-4">
+                <!-- Column 2 Product ~18% -->
+                <div class="footer-col footer-col--product">
                     <div class="footer-widget">
                         <h4 class="widget-title">Product</h4>
                         <ul class="footer-menu">
                             <li><a href="<?= $this->Url->build('/about-us'); ?>">How FastNetStays Works</a></li>
-                            <li><a href="<?= $this->Url->build('/hotel-list-01'); ?>">Browse Stays</a></li>
+                            <li><a href="<?= $this->Url->build('/'); ?>">Browse Stays</a></li>
                             <li><a href="<?= $this->Url->build('/destination-01'); ?>">Destinations</a></li>
                             <li><a href="<?= $this->Url->build('/privacy-policy'); ?>">Privacy Policy</a></li>
                             <li><a href="<?= $this->Url->build('/terms-of-service'); ?>">Terms of Use</a></li>
                         </ul>
                     </div>
                 </div>
-
-                <!-- Company Column -->
-                <div class="col-lg-2 col-md-4">
+                <!-- Column 3 Company ~18% -->
+                <div class="footer-col footer-col--company">
                     <div class="footer-widget">
                         <h4 class="widget-title">Company</h4>
                         <ul class="footer-menu">
@@ -69,9 +67,8 @@ $isDark = str_contains($footerSkin, 'dark');
                         </ul>
                     </div>
                 </div>
-
-                <!-- Contact Column -->
-                <div class="col-lg-2 col-md-6">
+                <!-- Column 4 Contact ~18% -->
+                <div class="footer-col footer-col--contact">
                     <div class="footer-widget">
                         <h4 class="widget-title">Contact</h4>
                         <ul class="footer-menu">
@@ -81,48 +78,31 @@ $isDark = str_contains($footerSkin, 'dark');
                         </ul>
                     </div>
                 </div>
-
-                <!-- Get the App & Mobile Payments -->
-                <div class="col-lg-3 col-md-6">
+                <!-- Column 5 Get the App ~18% -->
+                <div class="footer-col footer-col--app">
                     <div class="footer-widget">
                         <h4 class="widget-title">Get the App</h4>
-                        <div class="d-flex flex-column gap-2 mb-4">
-                            <a href="https://apple.com/app-store/" target="_blank" class="btn btn-dark d-inline-flex align-items-center gap-2 px-3 py-2 rounded-3 text-start w-100" style="max-width: 200px;">
-                                <i class="fa-brands fa-apple fs-4"></i>
-                                <div class="lh-1">
-                                    <div style="font-size: 9px;" class="text-uppercase text-muted">Download on</div>
-                                    <div class="fw-bold" style="font-size: 13px;">App Store</div>
-                                </div>
+                        <div class="footer-app-stack">
+                            <a href="https://apple.com/app-store/" target="_blank" class="footer-app-badge" aria-label="Download on App Store">
+                                <i class="fa-brands fa-apple"></i>
+                                <span><small>Download on</small><strong>App Store</strong></span>
                             </a>
-                            <a href="https://play.google.com/store" target="_blank" class="btn btn-dark d-inline-flex align-items-center gap-2 px-3 py-2 rounded-3 text-start w-100" style="max-width: 200px;">
-                                <i class="fa-brands fa-google-play fs-5"></i>
-                                <div class="lh-1">
-                                    <div style="font-size: 9px;" class="text-uppercase text-muted">GET IT ON</div>
-                                    <div class="fw-bold" style="font-size: 13px;">Google Play</div>
-                                </div>
+                            <a href="https://play.google.com/store" target="_blank" class="footer-app-badge" aria-label="Get it on Google Play">
+                                <i class="fa-brands fa-google-play"></i>
+                                <span><small>GET IT ON</small><strong>Google Play</strong></span>
                             </a>
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
-
-    <div class="footer-bottom border-top">
+    <div class="footer-bottom">
         <div class="container">
-            <div class="row align-items-center justify-content-between">
-                <div class="col-xl-6 col-lg-6 col-md-6">
-                    <p class="mb-0">© <?= date('Y') ?> fastnetstays.com. All rights reserved.</p>
-                </div>
-                <div class="col-xl-6 col-lg-6 col-md-6">
-                    <ul class="p-0 d-flex justify-content-start justify-content-md-end text-start text-md-end m-0 list-unstyled">
-                        <li><a href="<?= $this->Url->build('/privacy-policy'); ?>">Terms of Service</a></li>
-                        <li class="ms-3"><a href="<?= $this->Url->build('/privacy-policy'); ?>">Privacy Policy</a></li>
-                        <li class="ms-3"><a href="<?= $this->Url->build('/faq'); ?>">FAQ</a></li>
-                    </ul>
-                </div>
+            <div class="footer-bottom-inner" style="justify-content:flex-start;">
+                <p>© <?= date('Y') ?> fastnetstays.com. All rights reserved.</p>
             </div>
         </div>
     </div>
 </footer>
+<?php endif; ?>

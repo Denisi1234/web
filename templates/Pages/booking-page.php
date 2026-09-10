@@ -25,15 +25,16 @@ $nights = max(1, (int)round((strtotime($checkOut) - strtotime($checkIn)) / 86400
 
 $pricePerNight = (float)($room['price'] ?? ($room['customer_price'] ?? ($calculation['price_per_night'] ?? 0)));
 
-// Authoritative price calculations with 18% VAT
+// Authoritative price calculations — from backend POST /bookings/calculate via BookingQuoteService (no in-memory fallback)
 if (!empty($calculation) && !empty($calculation['total_amount'])) {
     $grandTotal = (float)$calculation['total_amount'];
     $subtotal = !empty($calculation['subtotal']) ? (float)$calculation['subtotal'] : ($pricePerNight * $nights * $rooms);
     $taxFee = !empty($calculation['taxes']) ? (float)$calculation['taxes'] : ($grandTotal - $subtotal);
 } else {
-    $subtotal = $pricePerNight * $nights * $rooms;
-    $taxFee = round($subtotal * 0.18);
-    $grandTotal = $subtotal + $taxFee;
+    // No authoritative quote — show unavailable state, do not estimate
+    $subtotal = 0;
+    $taxFee = 0;
+    $grandTotal = 0;
 }
 $avgPerNight = $nights > 0 ? round($subtotal / ($nights * $rooms)) : $pricePerNight;
 

@@ -72,24 +72,10 @@ class BookingsController extends AppController
             }
         }
 
-        // 3. Instant in-memory price calculation (0ms latency, zero blocking)
-        $pricePerNight = (float)($room['price'] ?? ($room['customer_price'] ?? ($property['customer_price_per_night'] ?? 0)));
-        $nights = max(1, (int)round((strtotime($checkOut) - strtotime($checkIn)) / 86400));
-        $subtotal = $pricePerNight * $nights * $roomsCount;
-        $taxFee = round($subtotal * 0.18);
-        $totalAmount = $subtotal + $taxFee;
-
-        $calculation = [
-            'price_per_night' => $pricePerNight,
-            'subtotal' => $subtotal,
-            'taxes' => $taxFee,
-            'total_amount' => $totalAmount,
-            'nights' => $nights,
-            'rooms_count' => $roomsCount
-        ];
-
+        // 3. Authoritative price calculation via backend POST /bookings/calculate (no in-memory fallback)
         $quote = null;
         $quoteError = null;
+        $calculation = null;
         try {
             $quote = $this->quoteService->create($propertyId, $roomId, $queryParams);
             $this->getRequest()->getSession()->write('booking_quotes.' . $quote['quote_id'], $quote);
@@ -165,17 +151,41 @@ class BookingsController extends AppController
                 'special_requests' => $postData['special_requests'] ?? null,
             ];
 
-            // Create a pending booking. Payment is verified separately.
+            // Create a pending booking via authoritative Laravel API POST /api/bookings/create (maps to POST /api/v1/bookings per spec)
             $payload['status'] = 'payment_pending';
             $apiResult = $this->apiClient->post('/bookings/create', $payload);
+
+            // Handle room-locked / already booked validation (409)
+            if (!empty($apiResult['_status']) && (int)$apiResult['_status'] === 409) {
+                $msg = $apiResult['message'] ?? 'Room is not available for the selected dates.';
+                // Clean user-facing message
+                if (stripos($msg, 'not available') !== false || stripos($msg, 'already booked') !== false || stripos($msg, 'locked') !== false) {
+                    $msg = 'This room was just booked for these dates. Please choose another room.';
+                }
+                $this->Flash->error(__($msg));
+                return $this->redirect(['action' => 'bookingPage', '?' => ['quote_id' => $quoteId]]);
+            }
+            if (!empty($apiResult['message']) && empty($apiResult['id']) && empty($apiResult['booking_id']) && empty($apiResult['data'])) {
+                // 422 validation or generic error without booking data
+                $msg = $apiResult['message'];
+                if (stripos($msg, 'not available') !== false) $msg = 'This room was just booked for these dates. Please choose another room.';
+                $this->Flash->error(__($msg));
+                return $this->redirect(['action' => 'bookingPage', '?' => ['quote_id' => $quoteId]]);
+            }
 
             if (!empty($apiResult) && (!empty($apiResult['id']) || !empty($apiResult['booking_id']) || !empty($apiResult['data']))) {
                 $bData = $apiResult['data'] ?? $apiResult;
                 $bookingId = (string)($bData['id'] ?? ($bData['booking_id'] ?? ''));
+                $bookingCode = (string)($bData['booking_code'] ?? $bData['reference'] ?? $bookingId);
                 $totalAmount = (float)($bData['total_price'] ?? ($bData['total_amount'] ?? $quote['calculation']['total_amount']));
                 if ($bookingId === '') {
                     $this->Flash->error(__('We could not start your booking. Please try again.'));
                     return $this->redirect(['action' => 'bookingPage', '?' => ['quote_id' => $quoteId]]);
+                }
+                // Store authoritative booking object (booking_code, status, invoice_url)
+                $bData['_stored_at'] = time();
+                if (!empty($bData['invoice_url'])) {
+                    $this->getRequest()->getSession()->write('booking_invoices.' . $bookingCode, $bData['invoice_url']);
                 }
 
                 $paymentResult = $this->paymentService->initiate([

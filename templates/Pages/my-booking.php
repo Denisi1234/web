@@ -19,14 +19,14 @@ $this->assign('title', 'Your bookings - FastNet Stays');
             <div class="col-lg-9 ps-lg-4">
                 <div class="trivago-profile-header">
                     <h1 class="trivago-profile-title">Your bookings</h1>
-                    <p class="trivago-profile-sub" style="font-size: 15px; color: #334155; margin-bottom: 24px;">Check bookings made with trivago DEALS</p>
+                    <p class="trivago-profile-sub" style="font-size: 15px; color: #334155; margin-bottom: 24px;">All bookings from FastNet Stays — real-time from our booking engine</p>
                 </div>
 
-                <!-- Info Notice Box -->
-                <div style="background-color: #f8fafc; border: 1px solid #f1f5f9; border-radius: 12px; padding: 18px 22px; display: flex; align-items: flex-start; gap: 14px; margin-bottom: 38px; font-size: 14px; line-height: 1.55; color: #334155; max-width: 820px;">
-                    <i class="fa-solid fa-circle-info" style="font-size: 17px; color: #0f172a; margin-top: 2px; flex-shrink: 0;"></i>
+                <!-- Info Notice Box — FastNet branded -->
+                <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 18px 22px; display: flex; align-items: flex-start; gap: 14px; margin-bottom: 38px; font-size: 14px; line-height: 1.55; color: #14532d; max-width: 820px;">
+                    <i class="fa-solid fa-shield-halved" style="font-size: 17px; color: #15803d; margin-top: 2px; flex-shrink: 0;"></i>
                     <div>
-                        Your booking details come from trivago Deals Ltd and aren't saved by us. See their <a href="<?= $this->Url->build('/privacy-policy'); ?>" style="color: #007fad; text-decoration: none; font-weight: 500;">Privacy Policy</a> for more info.
+                        Your bookings are securely stored with <strong>FastNet Stays</strong> and synced live with our booking engine. View real room titles, stay dates, totals in TZS, and cancel directly when eligible. See our <a href="<?= $this->Url->build('/privacy-policy'); ?>" style="color: #15803d; text-decoration: underline; font-weight: 600;">Privacy Policy</a> for details.
                     </div>
                 </div>
 
@@ -97,7 +97,7 @@ $this->assign('title', 'Your bookings - FastNet Stays');
                             </div>
                             <div class="col-md-6">
                                 <label style="display: block; font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 8px;" for="bookingNumber">Booking number</label>
-                                <input type="text" id="bookingNumber" class="form-control" style="height: 48px; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 0 16px; font-size: 15px;" placeholder="BKBJMQK3H4" oninput="checkFormValidity()">
+                                <input type="text" id="bookingNumber" class="form-control" style="height: 48px; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 0 16px; font-size: 15px;" placeholder="Enter booking number (e.g. BK…)" oninput="checkFormValidity()">
                             </div>
                         </div>
 

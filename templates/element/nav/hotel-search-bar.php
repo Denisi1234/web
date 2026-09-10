@@ -12,8 +12,8 @@ if (strtotime($navCheckOut) <= strtotime($navCheckIn)) {
 $navNights = max(1, (int)round((strtotime($navCheckOut) - strtotime($navCheckIn)) / 86400));
 $navDest = $queryParams['destination'] ?? ($queryParams['q'] ?? 'Dar es Salaam');
 ?>
-                    <!-- Trivago Integrated Search Pods in Header (hotel-list-01 page) -->
-                    <form action="<?= $this->Url->build('/hotel-list-01'); ?>" method="GET" class="d-flex align-items-center flex-grow-1 mx-3 position-relative" style="max-width: 840px;" id="nav_search_form">
+                    <!-- Trivago Integrated Search Pods in Header — consolidated to home (/) -->
+                    <form action="<?= $this->Url->build('/'); ?>" method="GET" class="d-flex align-items-center flex-grow-1 mx-3 position-relative" style="max-width: 840px;" id="nav_search_form">
                         <input type="hidden" name="lat" id="nav_hidden_lat" value="<?= h($queryParams['lat'] ?? '') ?>">
                         <input type="hidden" name="lng" id="nav_hidden_lng" value="<?= h($queryParams['lng'] ?? '') ?>">
                         <div class="d-flex align-items-center border rounded-3 bg-white w-100 shadow-xs" id="nav_search_container" style="height: 46px; border-color: #cbd5e1 !important; transition: border 0.15s ease;">

@@ -113,7 +113,7 @@ $propCity = $queryParams['property_city'] ?: ($property['city'] ?? '');
 						</div>
 
 						<div class="text-center d-flex align-items-center justify-content-center flex-wrap gap-2">
-							<a href="<?= $this->Url->build('/hotel-list-01'); ?>" class="btn btn-md btn-light-seegreen fw-bold rounded-full px-4">Browse More Stays</a>
+							<a href="<?= $this->Url->build('/'); ?>" class="btn btn-md btn-light-seegreen fw-bold rounded-full px-4">Browse More Stays</a>
 							<a href="<?= $this->Url->build('/my-booking'); ?>" class="btn btn-md btn-primary fw-bold rounded-full px-4">View My Bookings</a>
 							<button type="button" data-bs-toggle="modal" data-bs-target="#invoice" class="btn btn-md btn-light-primary fw-bold rounded-full px-4">
 								<i class="fa-solid fa-receipt me-1"></i>View Invoice Receipt

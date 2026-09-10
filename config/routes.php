@@ -15,7 +15,7 @@ return function (RouteBuilder $routes): void {
         // Home
         $builder->connect('/', ['controller' => 'Pages', 'action' => 'index']);
 
-        // Stays / Accommodations (Modular StaysController)
+        // Stays / Accommodations — consolidated to home (/) per prompt (StaysController::index redirects)
         $builder->connect('/hotel-list-01', ['controller' => 'Stays', 'action' => 'index']);
         $builder->connect('/hotels', ['controller' => 'Stays', 'action' => 'index']);
         $builder->connect('/stays', ['controller' => 'Stays', 'action' => 'index']);

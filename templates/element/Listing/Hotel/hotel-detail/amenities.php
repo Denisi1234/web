@@ -55,21 +55,23 @@ foreach ($allAmenities as $item) {
     }
 }
 
-function getAmenityIcon(string $name): string {
-    $l = strtolower($name);
-    if (str_contains($l, 'wifi') || str_contains($l, 'wi-fi')) return 'fa-wifi text-success';
-    if (str_contains($l, 'air') || str_contains($l, 'ac')) return 'fa-snowflake text-info';
-    if (str_contains($l, 'parking')) return 'fa-square-parking text-primary';
-    if (str_contains($l, 'breakfast') || str_contains($l, 'tea') || str_contains($l, 'coffee')) return 'fa-mug-saucer text-warning';
-    if (str_contains($l, 'pool')) return 'fa-person-swimming text-info';
-    if (str_contains($l, 'tv')) return 'fa-tv text-secondary';
-    if (str_contains($l, 'bath') || str_contains($l, 'shower')) return 'fa-bath text-primary';
-    if (str_contains($l, 'bar') || str_contains($l, 'lounge')) return 'fa-martini-glass text-danger';
-    if (str_contains($l, 'security')) return 'fa-shield-halved text-success';
-    if (str_contains($l, 'front') || str_contains($l, 'desk')) return 'fa-bell-concierge text-primary';
-    if (str_contains($l, 'balcony')) return 'fa-mountain-sun text-warning';
-    if (str_contains($l, 'laundry')) return 'fa-shirt text-info';
-    return 'fa-circle-check text-success';
+if (!function_exists('getAmenityIcon')) {
+    function getAmenityIcon(string $name): string {
+        $l = strtolower($name);
+        if (str_contains($l, 'wifi') || str_contains($l, 'wi-fi')) return 'fa-wifi text-success';
+        if (str_contains($l, 'air') || str_contains($l, 'ac')) return 'fa-snowflake text-info';
+        if (str_contains($l, 'parking')) return 'fa-square-parking text-primary';
+        if (str_contains($l, 'breakfast') || str_contains($l, 'tea') || str_contains($l, 'coffee')) return 'fa-mug-saucer text-warning';
+        if (str_contains($l, 'pool')) return 'fa-person-swimming text-info';
+        if (str_contains($l, 'tv')) return 'fa-tv text-secondary';
+        if (str_contains($l, 'bath') || str_contains($l, 'shower')) return 'fa-bath text-primary';
+        if (str_contains($l, 'bar') || str_contains($l, 'lounge')) return 'fa-martini-glass text-danger';
+        if (str_contains($l, 'security')) return 'fa-shield-halved text-success';
+        if (str_contains($l, 'front') || str_contains($l, 'desk')) return 'fa-bell-concierge text-primary';
+        if (str_contains($l, 'balcony')) return 'fa-mountain-sun text-warning';
+        if (str_contains($l, 'laundry')) return 'fa-shirt text-info';
+        return 'fa-circle-check text-success';
+    }
 }
 ?>
 

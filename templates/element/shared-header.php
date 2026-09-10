@@ -7,7 +7,10 @@
 
 $controller = $this->request->getParam('controller');
 $action = $this->request->getParam('action');
-$showNavSearchBar = in_array($action, ['hotelList01', 'detail', 'hotelDetail']) || ($controller === 'Stays' && in_array($action, ['index', 'detail']));
+// Hide nav inline search bar on home page — it has its own Google Hotels search bar
+$isHomePage = ($controller === 'Pages' && $action === 'index');
+$showNavSearchBar = !$isHomePage && (in_array($action, ['hotelList01', 'detail', 'hotelDetail']) || ($controller === 'Stays' && in_array($action, ['index', 'detail'])));
+
 
 // ── Authentication Resolution ──
 $session = $this->getRequest()->getSession();
@@ -33,11 +36,11 @@ $navUserName = !empty($effectiveUser['first_name'])
         <div class="container-fluid px-2 px-md-3 px-lg-4 max-w-[1440px] mx-auto h-100">
             <div class="d-flex align-items-center justify-content-between flex-wrap flex-lg-nowrap h-100">
                 
-                <!-- fastnetstays.com Brand Logo -->
+                <!-- fastnetstays.com Brand Logo — Instagram watermark wordmark -->
+                <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&display=swap" rel="stylesheet">
                 <a class="d-flex align-items-center text-decoration-none py-1 select-none me-2 me-lg-3 flex-shrink-0 order-1" href="<?= $this->Url->build('/'); ?>" title="fastnetstays.com">
-                    <span style="font-size: 23px; font-weight: 850; letter-spacing: -0.03em; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1;">
-                        <span style="color: #d93025;">fast</span><span style="color: #1a73e8;">net</span><span style="color: #f29900;">stays</span><span style="color: #64748b; font-size: 16px; font-weight: 700;">.com</span>
-                    </span>
+                    <span style="font-family:'Grand Hotel','Brush Script MT',cursive;font-size:32px;font-weight:400;letter-spacing:-.02em;line-height:1;background:linear-gradient(45deg,#feda75 0%,#fa7e1e 18%,#d62976 38%,#962fbf 68%,#4f5bd5 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 1px 0 rgba(0,0,0,.04));white-space:nowrap;">FastNetStays</span>
+                    <span style="font-family:'Grand Hotel',cursive;font-size:13px;font-weight:400;color:#9ca3af;letter-spacing:.02em;margin-left:1px;align-self:flex-end;margin-bottom:4px;opacity:.9;">.com</span>
                 </a>
 
                 <!-- Context-Aware Search Bar (Order 2 on desktop inline, Order 3 on mobile full-width row) -->

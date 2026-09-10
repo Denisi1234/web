@@ -71,16 +71,16 @@ $this->assign('title', h($propTitle) . ' | fastnetstays.com');
 <!-- Top fastnetstays Shared Navbar with Integrated Search Bar -->
 <?= $this->element('navbar'); ?>
 
-<!-- Sub-navigation Tabs (Trivago Style) -->
-<div class="trivago-detail-nav-wrapper">
+<!-- Google Hotels Sticky Anchor Sub-Navigation -->
+<div class="gh-detail-nav-wrapper">
     <div class="container" style="max-width: 1440px;">
-        <ul class="trivago-detail-nav-scroll">
-            <li><a href="#overview-section" class="trivago-detail-tab active" onclick="activateDetailTab(event, 'overview-section')">Overview</a></li>
-            <li><a href="#rooms-section" class="trivago-detail-tab" onclick="activateDetailTab(event, 'rooms-section')">Prices</a></li>
-            <li><a href="javascript:void(0)" class="trivago-detail-tab" onclick="openHotelReviewsModal()">Reviews</a></li>
-            <li><a href="javascript:void(0)" class="trivago-detail-tab" onclick="openHotelAmenitiesModal()">Amenities</a></li>
-            <li><a href="javascript:void(0)" class="trivago-detail-tab" onclick="openHotelMapModal()">Location</a></li>
-            <li><a href="#overview-section" class="trivago-detail-tab" onclick="activateDetailTab(event, 'overview-section')">About</a></li>
+        <ul class="gh-detail-nav-scroll">
+            <li><a href="#overview-section" class="gh-detail-tab active" onclick="activateDetailTab(event, 'overview-section')">Overview</a></li>
+            <li><a href="#rooms-section" class="gh-detail-tab" onclick="activateDetailTab(event, 'rooms-section')">Prices & Rooms</a></li>
+            <li><a href="#about-section" class="gh-detail-tab" onclick="activateDetailTab(event, 'about-section')">About & Amenities</a></li>
+            <li><a href="#location-section" class="gh-detail-tab" onclick="activateDetailTab(event, 'location-section')">Location & Neighborhood</a></li>
+            <li><a href="#reviews-section" class="gh-detail-tab" onclick="activateDetailTab(event, 'reviews-section')">Reviews</a></li>
+            <li><a href="#policies-section" class="gh-detail-tab" onclick="activateDetailTab(event, 'policies-section')">Policies</a></li>
         </ul>
     </div>
 </div>
@@ -170,6 +170,9 @@ $this->assign('title', h($propTitle) . ' | fastnetstays.com');
                             <img src="<?= h($galleryImage) ?>" alt="<?= h($propTitle) ?> photo">
                         </div><?php endforeach; ?>
                     </div><?php endif; ?>
+                    <button type="button" class="gh-mosaic-pill" onclick="event.stopPropagation(); openPhotoLightbox(0)" aria-label="View all photos">
+                        <i class="fa-solid fa-camera" style="font-size: 12px;"></i> View all <?= count($galleryImages) ?> photos
+                    </button>
                 </div><?php else: ?><div class="trivago-mosaic-container trivago-mosaic-empty" role="status"><span>Photos unavailable</span></div><?php endif; ?>
 
                 <!-- Right: Review Summary Card -->
@@ -248,13 +251,65 @@ $this->assign('title', h($propTitle) . ' | fastnetstays.com');
             <?= $this->element('Listing/Hotel/hotel-detail/rooms'); ?>
         </section>
 
+        <!-- ABOUT & AMENITIES SECTION -->
+        <section id="about-section" class="mb-5">
+            <h2 class="fw-bold text-slate-900 mb-3" style="font-size: 20px; font-family: 'Google Sans', Roboto, sans-serif;">About & Amenities</h2>
+            <div class="bg-white border rounded-3 p-4" style="border-color: #dadce0 !important; border-radius: 12px !important;">
+                <?php if (!empty($propDesc)): ?><p class="text-slate-700" style="font-size: 14px; line-height: 1.6;"><?= h($propDesc) ?></p><?php endif; ?>
+                <?= $this->element('Listing/Hotel/hotel-detail/amenities'); ?>
+            </div>
+        </section>
+
+        <!-- LOCATION & NEIGHBORHOOD SECTION -->
+        <section id="location-section" class="mb-5">
+            <h2 class="fw-bold text-slate-900 mb-3" style="font-size: 20px; font-family: 'Google Sans', Roboto, sans-serif;">Location & Neighborhood</h2>
+            <div class="bg-white border rounded-3 overflow-hidden mb-3" style="border-color: #dadce0 !important; border-radius: 12px !important;">
+                <div id="hotel-detail-inline-map" style="height: 360px; width: 100%; background: #e5e7eb;"></div>
+            </div>
+            <?= $this->element('Listing/Hotel/hotel-detail/nearest'); ?>
+        </section>
+
+        <!-- REVIEWS SECTION -->
+        <section id="reviews-section" class="mb-5">
+            <h2 class="fw-bold text-slate-900 mb-3" style="font-size: 20px; font-family: 'Google Sans', Roboto, sans-serif;">Reviews</h2>
+            <?= $this->element('Listing/Hotel/hotel-detail/guests-reviews'); ?>
+        </section>
+
+        <!-- POLICIES SECTION -->
+        <section id="policies-section" class="mb-5">
+            <h2 class="fw-bold text-slate-900 mb-3" style="font-size: 20px; font-family: 'Google Sans', Roboto, sans-serif;">Policies</h2>
+            <div class="bg-white border rounded-3 p-4" style="border-color: #dadce0 !important; border-radius: 12px !important;">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold text-slate-900 mb-2"><i class="fa-solid fa-clock me-2 text-primary"></i>Check-in / Check-out</h6>
+                        <p class="text-sm text-slate-600 mb-0">Check-in from 2:00 PM · Check-out until 11:00 AM<br>Early check-in and late check-out on request.</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold text-slate-900 mb-2"><i class="fa-solid fa-ban-smoking me-2 text-primary"></i>Cancellation</h6>
+                        <p class="text-sm text-slate-600 mb-0">Free cancellation until 24h before check-in. Non-refundable rates available at discount.</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold text-slate-900 mb-2"><i class="fa-solid fa-paw me-2 text-primary"></i>Pets</h6>
+                        <p class="text-sm text-slate-600 mb-0">Pet-friendly on request. Charges may apply.</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold text-slate-900 mb-2"><i class="fa-solid fa-credit-card me-2 text-primary"></i>Payment</h6>
+                        <p class="text-sm text-slate-600 mb-0">Pay at property or online. Taxes and fees included where noted.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </div>
 </main>
 
-<!-- Mobile booking action stays available while room details scroll. -->
-<?php if ($propPrice > 0 && $firstRoomId !== null): ?><div class="fn-mobile-booking-bar" id="fn-mobile-booking-bar">
-    <div><small>From</small><strong>TZS <?= number_format($propPrice) ?></strong><span>per night</span></div>
-    <a href="<?= h($bookingUrl) ?>">Book now <i class="fa-solid fa-arrow-right"></i></a>
+<!-- Mobile Sticky Bottom Booking Pill (<992px) -->
+<?php if ($propPrice > 0): ?><div class="gh-mobile-booking-bar" id="gh-mobile-booking-bar">
+    <div style="display:flex;flex-direction:column;line-height:1.1;">
+        <span style="font-size:11px;color:#5f6368;">From</span>
+        <span style="font-size:16px;font-weight:700;color:#202124;">TZS <?= number_format($propPrice) ?> <span style="font-size:11px;font-weight:400;color:#5f6368;">/night</span></span>
+    </div>
+    <button type="button" onclick="document.getElementById('rooms-section')?.scrollIntoView({behavior:'smooth',block:'start'})" style="background:#1a73e8;color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:500;height:40px;display:inline-flex;align-items:center;gap:6px;font-family:'Google Sans',sans-serif;">Select Room</button>
 </div><?php endif; ?>
 
 <!-- Fullscreen Photo Gallery Lightbox Modal -->
@@ -398,7 +453,7 @@ function closeHotelReviewsModal() {
 
 function activateDetailTab(e, sectionId) {
     if (e) e.preventDefault();
-    document.querySelectorAll('.trivago-detail-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.gh-detail-tab, .trivago-detail-tab').forEach(t => t.classList.remove('active'));
     if (e && e.currentTarget) e.currentTarget.classList.add('active');
 
     const target = document.getElementById(sectionId);
@@ -428,8 +483,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (header) header.classList.toggle('is-scrolled', window.scrollY > 8);
     }, { passive: true });
 
-    const sections = ['overview-section', 'rooms-section'].map(id => document.getElementById(id)).filter(Boolean);
-    const tabs = Array.from(document.querySelectorAll('.trivago-detail-tab'));
+    const sections = ['overview-section', 'rooms-section','about-section','location-section','reviews-section','policies-section'].map(id => document.getElementById(id)).filter(Boolean);
+    const tabs = Array.from(document.querySelectorAll('.gh-detail-tab'));
     if ('IntersectionObserver' in window && sections.length) {
         const observer = new IntersectionObserver(entries => {
             entries.forEach(entry => {
@@ -438,6 +493,20 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }, { rootMargin: '-140px 0px -55% 0px', threshold: 0 });
         sections.forEach(section => observer.observe(section));
+    }
+    // inline location map
+    const inlineMapEl = document.getElementById('hotel-detail-inline-map');
+    if (inlineMapEl && typeof mapboxgl !== 'undefined') {
+        setTimeout(() => {
+            try {
+                const lat2 = <?= (!empty($property['latitude']) && is_numeric($property['latitude'])) ? (float)$property['latitude'] : -6.1659 ?>;
+                const lng2 = <?= (!empty($property['longitude']) && is_numeric($property['longitude'])) ? (float)$property['longitude'] : 39.2026 ?>;
+                mapboxgl.accessToken = window.MAPBOX_TOKEN || window.DEFAULT_MAPBOX_TOKEN || '';
+                const imap = new mapboxgl.Map({ container: 'hotel-detail-inline-map', style: 'mapbox://styles/mapbox/streets-v12', center: [lng2, lat2], zoom: 14 });
+                imap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+                new mapboxgl.Marker({ color: '#1a73e8' }).setLngLat([lng2, lat2]).addTo(imap);
+            } catch(e) { console.warn('inline map', e); }
+        }, 800);
     }
 });
 
