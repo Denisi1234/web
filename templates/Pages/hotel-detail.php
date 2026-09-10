@@ -63,40 +63,61 @@ if (!empty($rooms) && is_array($rooms)) {
 }
 
 $this->assign('title', h($propTitle) . ' | fastnetstays.com');
+$this->assign('description', h(mb_strimwidth(strip_tags($propDesc), 0, 155, '...')) . ' — Book on FastNet Stays, best prices in ' . h($propCity) . '.');
+$hotelLd = [
+  '@context' => 'https://schema.org',
+  '@type' => 'Hotel',
+  'name' => $propTitle,
+  'image' => $galleryImages[0] ?? '',
+  'address' => ['@type' => 'PostalAddress', 'addressLocality' => $propCity, 'addressCountry' => 'TZ', 'streetAddress' => $propAddress],
+  'description' => mb_strimwidth(strip_tags($propDesc), 0, 280, '...'),
+  'aggregateRating' => $propRating ? ['@type' => 'AggregateRating', 'ratingValue' => (float)$propRating, 'reviewCount' => (int)$reviewsCount] : null,
+  'priceRange' => $propPrice ? 'TSH ' . number_format($propPrice) : null,
+];
+echo $this->Html->scriptBlock(json_encode(array_filter($hotelLd), JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE), ['block' => true]);
 ?>
-
+<?= $this->Html->css('/assets/css/google-travel-layout.css') ?>
+<?= $this->Html->css('/assets/css/google-travel-home.css') ?>
 <?= $this->Html->css('/assets/css/hotel-detail.css?v=' . filemtime(WWW_ROOT . 'assets/css/hotel-detail.css')); ?>
 <?= $this->Html->css('/assets/css/hotel-detail-spacing.css') ?>
-
-<!-- Top fastnetstays Shared Navbar with Integrated Search Bar -->
-<?= $this->element('navbar'); ?>
-
-<!-- Google Hotels Sticky Anchor Sub-Navigation -->
+<?= $this->element('navbar') ?>
+<!-- ── Google Travel tabs (as in index.php:46) ── -->
+<div class="gh-m-tabs" role="tablist" aria-label="Travel types">
+  <a href="/?explore=1" role="tab">Explore</a>
+  <a href="/?homes=1" role="tab">Homes</a>
+  <a href="/" role="tab" class="active" aria-selected="true">Hotels</a>
+  <a href="/?destination=Vacation" role="tab">Vacation rentals</a>
+</div>
+<!-- ── Google breadcrumb — single, dynamic (replaces trivago breadcrumb) ── -->
+<nav aria-label="Breadcrumb" class="container-fluid px-2 px-lg-2" style="max-width:1180px;margin:0 auto;background:#fff;border-bottom:1px solid #e8eaed;">
+  <ol class="breadcrumb mb-0 py-2" style="background:transparent;font-size:12px;line-height:1.2;--bs-breadcrumb-divider:'›';" itemscope itemtype="https://schema.org/BreadcrumbList">
+    <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="/" itemprop="item" style="color:#5f6368;text-decoration:none;"><span itemprop="name">Home</span></a><meta itemprop="position" content="1"></li>
+    <?php if (!empty($propCity)): ?>
+    <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="<?= $this->Url->build('/?destination=' . urlencode($propCity)) ?>" itemprop="item" style="color:#5f6368;text-decoration:none;"><span itemprop="name"><?= h($propCity) ?></span></a><meta itemprop="position" content="2"></li>
+    <li class="breadcrumb-item active" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><span itemprop="name"><?= h(mb_strimwidth($propTitle, 0, 44, '…')) ?></span><meta itemprop="position" content="3"></li>
+    <?php else: ?>
+    <li class="breadcrumb-item active" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><span itemprop="name"><?= h(mb_strimwidth($propTitle, 0, 44, '…')) ?></span><meta itemprop="position" content="2"></li>
+    <?php endif; ?>
+  </ol>
+</nav>
+<main id="main-content" style="background:#fff;min-height:85vh;" role="main">
+<!-- Google Hotels Sticky Anchor Sub-Navigation — clean -->
 <div class="gh-detail-nav-wrapper">
-    <div class="container" style="max-width: 1440px;">
+    <div class="container" style="max-width: 1180px;">
         <ul class="gh-detail-nav-scroll">
             <li><a href="#overview-section" class="gh-detail-tab active" onclick="activateDetailTab(event, 'overview-section')">Overview</a></li>
-            <li><a href="#rooms-section" class="gh-detail-tab" onclick="activateDetailTab(event, 'rooms-section')">Prices & Rooms</a></li>
-            <li><a href="#about-section" class="gh-detail-tab" onclick="activateDetailTab(event, 'about-section')">About & Amenities</a></li>
-            <li><a href="#location-section" class="gh-detail-tab" onclick="activateDetailTab(event, 'location-section')">Location & Neighborhood</a></li>
+            <li><a href="#rooms-section" class="gh-detail-tab" onclick="activateDetailTab(event, 'rooms-section')">Prices</a></li>
+            <li><a href="#about-section" class="gh-detail-tab" onclick="activateDetailTab(event, 'about-section')">About</a></li>
+            <li><a href="#location-section" class="gh-detail-tab" onclick="activateDetailTab(event, 'location-section')">Location</a></li>
             <li><a href="#reviews-section" class="gh-detail-tab" onclick="activateDetailTab(event, 'reviews-section')">Reviews</a></li>
             <li><a href="#policies-section" class="gh-detail-tab" onclick="activateDetailTab(event, 'policies-section')">Policies</a></li>
         </ul>
     </div>
 </div>
 
-<!-- Main Hotel Detail Page Body -->
-<main class="py-2 bg-white" style="min-height: 85vh;">
-    <div class="container" style="max-width: 1440px;">
-        
-        <!-- Breadcrumb Row -->
-        <nav class="trivago-detail-breadcrumb" aria-label="breadcrumb">
-            <a href="<?= $this->Url->build('/'); ?>">Home</a>
-            <span class="sep">&gt;</span>
-            <a href="<?= $this->Url->build('/hotel-list-01?destination=' . urlencode($propCity)); ?>"><?= h($propCity) ?></a>
-            <span class="sep">&gt;</span>
-            <span class="text-slate-900 fw-semibold"><?= h($propTitle) ?></span>
-        </nav>
+<!-- Main Hotel Detail Page Body — Google Travel white -->
+<div class="py-3" style="background:#fff;min-height:85vh;">
+    <div class="container" style="max-width: 1180px;">
 
         <!-- OVERVIEW SECTION: Header, Dealbox, Mosaic & Review Summary -->
         <section id="overview-section" class="mb-4">
@@ -107,7 +128,7 @@ $this->assign('title', h($propTitle) . ' | fastnetstays.com');
                 <div class="trivago-detail-title-col">
                     <h1 class="trivago-detail-title">
                         <span><?= h($propTitle) ?></span>
-                        <button type="button" class="border-0 bg-transparent text-slate-400 hover:text-danger p-0 ms-1 transition-all" data-property-id="<?= $detailPropertyId ?>" onclick="toggleWishlist(<?= $detailPropertyId ?>, this);" title="Save to Favourites">
+                        <button type="button" class="border-0 bg-transparent  hover:text-danger p-0 ms-1 transition-all" data-property-id="<?= $detailPropertyId ?>" onclick="toggleWishlist(<?= $detailPropertyId ?>, this);" title="Save to Favourites">
                             <i class="fa-regular fa-heart fs-4"></i>
                         </button>
                     </h1>
@@ -117,17 +138,17 @@ $this->assign('title', h($propTitle) . ' | fastnetstays.com');
                         <span class="trivago-detail-stars">
                             <?= str_repeat('★', $propStars) ?>
                         </span>
-                        <?php if ($propType !== ''): ?><span class="text-slate-700 fw-semibold"><?= h($propType) ?></span><?php endif; ?>
+                        <?php if ($propType !== ''): ?><span class="" style="color:#3c4043;" fw-semibold"><?= h($propType) ?></span><?php endif; ?>
                         <span class="text-slate-300">·</span>
 
                         <!-- Score Badge & Word -->
-                        <?php if ($propRating !== null): ?><span class="trivago-detail-score"><?= h($propRating) ?></span><span class="fw-bold text-slate-900"><?= (float)$propRating >= 9 ? 'Excellent' : ((float)$propRating >= 8 ? 'Very good' : 'Good') ?></span><?php endif; ?>
-                        <?php if ($reviewsCount > 0): ?><span class="text-slate-500">(<?= number_format($reviewsCount) ?> ratings)</span><?php endif; ?>
+                        <?php if ($propRating !== null): ?><span class="trivago-detail-score"><?= h($propRating) ?></span><span class="fw-bold" style="color:#202124;"><?= (float)$propRating >= 9 ? 'Excellent' : ((float)$propRating >= 8 ? 'Very good' : 'Good') ?></span><?php endif; ?>
+                        <?php if ($reviewsCount > 0): ?><span class="" style="color:#5f6368;">(<?= number_format($reviewsCount) ?> ratings)</span><?php endif; ?>
                     </div>
 
                     <!-- Location Link -->
                     <?php if ($propAddress !== ''): ?><a href="javascript:void(0)" class="trivago-detail-address" onclick="openHotelMapModal()">
-                        <i class="fa-solid fa-location-dot text-slate-500"></i>
+                        <i class="fa-solid fa-location-dot " style="color:#5f6368;"></i>
                         <span><?= h($propAddress) ?></span>
                     </a><?php endif; ?>
                 </div>
@@ -138,7 +159,7 @@ $this->assign('title', h($propTitle) . ' | fastnetstays.com');
                         <span style="font-weight: 850; font-size: 13px;">
                             <span style="color: #d93025;">fast</span><span style="color: #1a73e8;">net</span><span style="color: #f29900;">stays</span>
                         </span>
-                        <span class="fw-bold text-slate-800">Book &amp; Go</span>
+                        <span class="fw-bold" style="color:#202124;">Book &amp; Go</span>
                     </div>
                     <div class="trivago-dealcard-lowest">Our lowest price</div>
 
@@ -183,7 +204,7 @@ $this->assign('title', h($propTitle) . ' | fastnetstays.com');
                             <div class="trivago-review-top-title"><?= $propRating !== null ? ((float)$propRating >= 9 ? 'Excellent' : ((float)$propRating >= 8 ? 'Very good' : 'Good')) : 'No rating yet' ?></div>
                             <div class="trivago-review-top-sub">
                                 <?= $reviewsCount > 0 ? 'Based on ' . number_format($reviewsCount) . ' verified ratings' : 'Guest ratings are not available yet' ?>
-                                <i class="fa-solid fa-circle-info text-slate-400 ms-1" title="Aggregated from real guest reviews"></i>
+                                <i class="fa-solid fa-circle-info  ms-1" title="Aggregated from real guest reviews"></i>
                             </div>
                         </div>
                     </div>
@@ -219,7 +240,7 @@ $this->assign('title', h($propTitle) . ' | fastnetstays.com');
                 </div>
                 <a href="javascript:void(0)" class="trivago-viewmap-tile" onclick="openHotelMapModal()">
                     <div class="trivago-viewmap-btn">
-                        <i class="fa-solid fa-location-dot text-slate-900" style="font-size: 14px;"></i>
+                        <i class="fa-solid fa-location-dot " style="color:#202124;" style="font-size: 14px;"></i>
                         <span>View map</span>
                     </div>
                 </a>
@@ -241,11 +262,11 @@ $this->assign('title', h($propTitle) . ' | fastnetstays.com');
         <section id="rooms-section" class="mb-5">
             <div class="d-flex align-items-center justify-content-between pb-2 border-bottom">
                 <div>
-                    <h2 class="fw-bold text-slate-900 mb-1 d-flex align-items-center gap-2" style="font-size: 22px;">
+                    <h2 class="fw-bold mb-1 d-flex align-items-center gap-2" style="color:#202124;font-size:22px;">
                         <i class="fa-solid fa-bed text-primary"></i>
                         <span>Select your room</span>
                     </h2>
-                    <p class="text-slate-500 text-xs mb-0">Choose your preferred room type and rate options</p>
+                    <p class="" style="color:#5f6368; text-xs mb-0">Choose your preferred room type and rate options</p>
                 </div>
             </div>
             <?= $this->element('Listing/Hotel/hotel-detail/rooms'); ?>
@@ -253,17 +274,17 @@ $this->assign('title', h($propTitle) . ' | fastnetstays.com');
 
         <!-- ABOUT & AMENITIES SECTION -->
         <section id="about-section" class="mb-5">
-            <h2 class="fw-bold text-slate-900 mb-3" style="font-size: 20px; font-family: 'Google Sans', Roboto, sans-serif;">About & Amenities</h2>
-            <div class="bg-white border rounded-3 p-4" style="border-color: #dadce0 !important; border-radius: 12px !important;">
-                <?php if (!empty($propDesc)): ?><p class="text-slate-700" style="font-size: 14px; line-height: 1.6;"><?= h($propDesc) ?></p><?php endif; ?>
+            <h2 class="mb-3" style="font-size:22px;font-weight:400;color:#202124;font-family:'Google Sans',Roboto,sans-serif;letter-spacing:-0.01em;">About</h2>
+            <div style="background:#fff;border:1px solid #dadce0;border-radius:12px;padding:18px 20px;box-shadow:0 1px 3px rgba(60,64,67,0.06);">
+                <?php if (!empty($propDesc)): ?><p style="font-size:14px;line-height:1.65;color:#3c4043;font-family:Roboto,sans-serif;margin-bottom:16px;"><?= h($propDesc) ?></p><?php endif; ?>
                 <?= $this->element('Listing/Hotel/hotel-detail/amenities'); ?>
             </div>
         </section>
 
         <!-- LOCATION & NEIGHBORHOOD SECTION -->
         <section id="location-section" class="mb-5">
-            <h2 class="fw-bold text-slate-900 mb-3" style="font-size: 20px; font-family: 'Google Sans', Roboto, sans-serif;">Location & Neighborhood</h2>
-            <div class="bg-white border rounded-3 overflow-hidden mb-3" style="border-color: #dadce0 !important; border-radius: 12px !important;">
+            <h2 class="mb-3" style="font-size:22px;font-weight:400;color:#202124;font-family:'Google Sans',Roboto,sans-serif;letter-spacing:-0.01em;">Location</h2>
+            <div style="background:#fff;border:1px solid #dadce0;border-radius:12px;overflow:hidden;margin-bottom:14px;box-shadow:0 1px 3px rgba(60,64,67,0.06);">
                 <div id="hotel-detail-inline-map" style="height: 360px; width: 100%; background: #e5e7eb;"></div>
             </div>
             <?= $this->element('Listing/Hotel/hotel-detail/nearest'); ?>
@@ -271,35 +292,36 @@ $this->assign('title', h($propTitle) . ' | fastnetstays.com');
 
         <!-- REVIEWS SECTION -->
         <section id="reviews-section" class="mb-5">
-            <h2 class="fw-bold text-slate-900 mb-3" style="font-size: 20px; font-family: 'Google Sans', Roboto, sans-serif;">Reviews</h2>
+            <h2 class="mb-3" style="font-size:22px;font-weight:400;color:#202124;font-family:'Google Sans',Roboto,sans-serif;letter-spacing:-0.01em;">Reviews</h2>
             <?= $this->element('Listing/Hotel/hotel-detail/guests-reviews'); ?>
         </section>
 
         <!-- POLICIES SECTION -->
         <section id="policies-section" class="mb-5">
-            <h2 class="fw-bold text-slate-900 mb-3" style="font-size: 20px; font-family: 'Google Sans', Roboto, sans-serif;">Policies</h2>
-            <div class="bg-white border rounded-3 p-4" style="border-color: #dadce0 !important; border-radius: 12px !important;">
+            <h2 class="mb-3" style="font-size:22px;font-weight:400;color:#202124;font-family:'Google Sans',Roboto,sans-serif;letter-spacing:-0.01em;">Policies</h2>
+            <div style="background:#fff;border:1px solid #dadce0;border-radius:12px;padding:18px 20px;box-shadow:0 1px 3px rgba(60,64,67,0.06);">
                 <div class="row g-4">
                     <div class="col-md-6">
-                        <h6 class="fw-bold text-slate-900 mb-2"><i class="fa-solid fa-clock me-2 text-primary"></i>Check-in / Check-out</h6>
-                        <p class="text-sm text-slate-600 mb-0">Check-in from 2:00 PM · Check-out until 11:00 AM<br>Early check-in and late check-out on request.</p>
+                        <h6 class="fw-bold mb-2" style="color:#202124;"><i class="fa-solid fa-clock me-2 text-primary"></i>Check-in / Check-out</h6>
+                        <p class="text-sm mb-0" style="color:#5f6368;">Check-in from 2:00 PM · Check-out until 11:00 AM<br>Early check-in and late check-out on request.</p>
                     </div>
                     <div class="col-md-6">
-                        <h6 class="fw-bold text-slate-900 mb-2"><i class="fa-solid fa-ban-smoking me-2 text-primary"></i>Cancellation</h6>
-                        <p class="text-sm text-slate-600 mb-0">Free cancellation until 24h before check-in. Non-refundable rates available at discount.</p>
+                        <h6 class="fw-bold mb-2" style="color:#202124;"><i class="fa-solid fa-ban-smoking me-2 text-primary"></i>Cancellation</h6>
+                        <p class="text-sm mb-0" style="color:#5f6368;">Free cancellation until 24h before check-in. Non-refundable rates available at discount.</p>
                     </div>
                     <div class="col-md-6">
-                        <h6 class="fw-bold text-slate-900 mb-2"><i class="fa-solid fa-paw me-2 text-primary"></i>Pets</h6>
-                        <p class="text-sm text-slate-600 mb-0">Pet-friendly on request. Charges may apply.</p>
+                        <h6 class="fw-bold mb-2" style="color:#202124;"><i class="fa-solid fa-paw me-2 text-primary"></i>Pets</h6>
+                        <p class="text-sm mb-0" style="color:#5f6368;">Pet-friendly on request. Charges may apply.</p>
                     </div>
                     <div class="col-md-6">
-                        <h6 class="fw-bold text-slate-900 mb-2"><i class="fa-solid fa-credit-card me-2 text-primary"></i>Payment</h6>
-                        <p class="text-sm text-slate-600 mb-0">Pay at property or online. Taxes and fees included where noted.</p>
+                        <h6 class="fw-bold mb-2" style="color:#202124;"><i class="fa-solid fa-credit-card me-2 text-primary"></i>Payment</h6>
+                        <p class="text-sm mb-0" style="color:#5f6368;">Pay at property or online. Taxes and fees included where noted.</p>
                     </div>
                 </div>
             </div>
         </section>
 
+    </div>
     </div>
 </main>
 
@@ -332,11 +354,11 @@ $this->assign('title', h($propTitle) . ' | fastnetstays.com');
     <div class="trivago-lightbox-content bg-white p-3 rounded-3 shadow-lg position-relative" onclick="event.stopPropagation()" style="max-width: 860px;">
         <div class="d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom">
             <div>
-                <h5 class="fw-bold text-slate-900 mb-0 d-flex align-items-center gap-2">
+                <h5 class="fw-bold mb-0 d-flex align-items-center gap-2" style="color:#202124;">
                     <i class="fa-solid fa-map-location-dot text-danger"></i>
                     <span><?= h($propTitle) ?></span>
                 </h5>
-                <span class="text-slate-500 text-xs"><i class="fa-solid fa-location-dot me-1 text-slate-400"></i><?= h($propAddress) ?></span>
+                <span class="text-xs" style="color:#5f6368;"><i class="fa-solid fa-location-dot me-1 "></i><?= h($propAddress) ?></span>
             </div>
             <div class="d-flex align-items-center gap-2">
                 <a href="https://maps.google.com/?q=<?= urlencode($propAddress) ?>" target="_blank" class="btn btn-sm btn-outline-primary fw-bold text-xs">
@@ -353,7 +375,7 @@ $this->assign('title', h($propTitle) . ' | fastnetstays.com');
 <div class="trivago-lightbox-modal" id="hotel_amenities_modal" onclick="closeHotelAmenitiesModal()">
     <div class="trivago-lightbox-content bg-white p-4 rounded-3 shadow-lg position-relative overflow-y-auto" onclick="event.stopPropagation()" style="max-width: 800px; max-height: 85vh;">
         <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
-            <h5 class="fw-bold text-slate-900 mb-0 d-flex align-items-center gap-2">
+            <h5 class="fw-bold mb-0 d-flex align-items-center gap-2" style="color:#202124;">
                 <i class="fa-solid fa-bell-concierge text-primary"></i>
                 <span>All Property Amenities &amp; Services</span>
             </h5>
@@ -367,7 +389,7 @@ $this->assign('title', h($propTitle) . ' | fastnetstays.com');
 <div class="trivago-lightbox-modal" id="hotel_reviews_modal" onclick="closeHotelReviewsModal()">
     <div class="trivago-lightbox-content bg-white p-4 rounded-3 shadow-lg position-relative overflow-y-auto" onclick="event.stopPropagation()" style="max-width: 800px; max-height: 85vh;">
         <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
-            <h5 class="fw-bold text-slate-900 mb-0 d-flex align-items-center gap-2">
+            <h5 class="fw-bold mb-0 d-flex align-items-center gap-2" style="color:#202124;">
                 <i class="fa-solid fa-star text-warning"></i>
                 <span>Guest Reviews &amp; Rating Breakdown</span>
             </h5>
@@ -377,8 +399,8 @@ $this->assign('title', h($propTitle) . ' | fastnetstays.com');
     </div>
 </div>
 
-<!-- Include Footer -->
-<?= $this->element('footer', ['skin' => 'skin-dark-footer']); ?>
+<!-- Include Footer — Google light (as index.php:99) -->
+<?= $this->element('footer', ['skin' => 'skin-light-footer']) ?>
 
 <script>
 let currentLightboxIdx = 0;
@@ -472,7 +494,7 @@ function activateDetailTab(e, sectionId) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    const nav = document.querySelector('.trivago-detail-nav-wrapper');
+    const nav = document.querySelector('.gh-detail-nav-wrapper, .trivago-detail-nav-wrapper');
     const header = document.querySelector('.agoda-top-header, .shared-header, header');
     const updateHeaderOffset = function () {
         if (nav && header) nav.style.setProperty('--detail-header-offset', header.offsetHeight + 'px');

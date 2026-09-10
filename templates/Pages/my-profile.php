@@ -3,6 +3,8 @@
  * Trivago Personal Info Profile Page
  */
 ?>
+<?= $this->Html->css('/assets/css/google-travel-layout.css') ?>
+<?= $this->Html->css('/assets/css/google-travel-home.css') ?>
 <?= $this->element('navbar'); ?>
 
 <?= $this->Html->css('/assets/css/profile.css'); ?>
@@ -238,3 +240,5 @@
 <div id="trivago-toast"></div>
 
 <?= $this->Html->script('/assets/js/profile.js'); ?>
+</main>
+<?= $this->element('footer', ['skin' => 'skin-light-footer']) ?>

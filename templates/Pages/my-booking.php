@@ -4,6 +4,8 @@
  */
 $this->assign('title', 'Your bookings - FastNet Stays');
 ?>
+<?= $this->Html->css('/assets/css/google-travel-layout.css') ?>
+<?= $this->Html->css('/assets/css/google-travel-home.css') ?>
 <?= $this->element('navbar'); ?>
 
 <?= $this->Html->css('/assets/css/profile.css'); ?>
@@ -210,3 +212,5 @@ function showBookingToast(msg) {
     }, 2500);
 }
 </script>
+</main>
+<?= $this->element('footer', ['skin' => 'skin-light-footer']) ?>

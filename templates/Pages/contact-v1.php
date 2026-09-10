@@ -2,18 +2,34 @@
 $this->assign('title', 'Contact Us | FastNetStays');
 ?>
 
-<!-- Include Navbar -->
+<?= $this->Html->css('/assets/css/google-travel-layout.css') ?>
+<?= $this->Html->css('/assets/css/google-travel-home.css') ?>
+<?= $this->Html->css('/assets/css/google-travel-cards.css') ?>
+
 <?= $this->element('navbar') ?>
+<div class="gh-m-tabs" role="tablist" aria-label="Travel types">
+  <a href="/?explore=1" role="tab">Explore</a>
+  <a href="/?homes=1" role="tab">Homes</a>
+  <a href="/" role="tab" class="active" aria-selected="true">Hotels</a>
+  <a href="/?destination=Vacation" role="tab">Vacation rentals</a>
+</div>
+<nav aria-label="Breadcrumb" class="container-fluid px-2 px-lg-2" style="max-width:100%;margin:0 auto;background:#f8f9fa;">
+  <ol class="breadcrumb mb-0 py-1" style="background:transparent;font-size:12px;line-height:1.2;--bs-breadcrumb-divider:'›';" itemscope itemtype="https://schema.org/BreadcrumbList">
+    <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="/" itemprop="item" style="color:#5f6368;text-decoration:none;"><span itemprop="name">Home</span></a><meta itemprop="position" content="1"></li>
+    <li class="breadcrumb-item active" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><span itemprop="name">Contact V1</span><meta itemprop="position" content="2"></li>
+  </ol>
+</nav>
+<main id="main-content" style="background:#f8f9fa;min-height:85vh;" role="main">
 
 <!-- Hero Title Header -->
-<section class="bg-cover position-relative" style="background:url(<?= $this->Url->build('/assets/img/bg-title.jpg'); ?>)no-repeat;" data-overlay="5">
+<section class="position-relative" style="background:#fff;border-bottom:1px solid #e8eaed;padding:28px 0 22px;">
 	<div class="container">
 		<div class="row align-items-center justify-content-center">
 			<div class="col-xl-7 col-lg-9 col-md-12">
 				<div class="fpc-capstion text-center my-4">
 					<div class="fpc-captions">
-						<h1 class="xl-heading text-light font-bold">Contact FastNetStays</h1>
-						<p class="text-light opacity-90">Have questions about your booking or listing your property? Reach out to our local team in Dar es Salaam & Arusha.</p>
+						<h1 class="xl-heading fw-bold" style="color:#202124;font-family:'Google Sans',Roboto,sans-serif;font-weight:400;"">Contact FastNetStays</h1>
+						<p class="text-muted" style="color:#5f6368;font-family:Roboto,sans-serif;"">Have questions about your booking or listing your property? Reach out to our local team in Dar es Salaam & Arusha.</p>
 					</div>
 				</div>
 			</div>
@@ -23,7 +39,7 @@ $this->assign('title', 'Contact Us | FastNetStays');
 <!-- Hero Title Header -->
 
 <!-- Form Section -->
-<section class="gray-simple">
+<section class="" style="background:#f8f9fa;">
 	<div class="container">
 
 		<div class="row align-items-stretch justify-content-between g-4">
@@ -147,4 +163,5 @@ $this->assign('title', 'Contact Us | FastNetStays');
 <?= $this->element('Home/index/countries'); ?>
 
 <!-- Include Footer -->
-<?= $this->element('footer', ['skin' => 'skin-dark-footer']) ?>
+</main>
+<?= $this->element('footer', ['skin' => 'skin-light-footer']) ?>

@@ -75,52 +75,52 @@ if (!function_exists('getAmenityIcon')) {
 }
 ?>
 
-<?php if (!empty($allAmenities)): ?><div class="card mb-4 border-0 p-4 shadow-sm rounded-3">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-        <h4 class="fs-5 fw-bold text-slate-900 mb-0">
-            <i class="fa-solid fa-list-check me-2 text-primary"></i>Property Amenities & Facilities
+<?php if (!empty($allAmenities)): ?><div style="background:#fff;border:1px solid #dadce0;border-radius:12px;padding:18px 20px;box-shadow:0 1px 3px rgba(60,64,67,0.06);">
+    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+        <h4 class="fs-6 fw-medium mb-0" style="color:#202124;font-family:'Google Sans',Roboto,sans-serif;font-weight:500;">
+            <i class="fa-solid fa-list-check me-2" style="color:#1a73e8;"></i>Popular amenities
         </h4>
-        <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold" data-bs-toggle="modal" data-bs-target="#allAmenitiesModal">
-            View all (<?= count($allAmenities) ?>)
+        <button type="button" class="btn btn-sm rounded-pill px-3 fw-medium" data-bs-toggle="modal" data-bs-target="#allAmenitiesModal" style="border:1px solid #dadce0;background:#fff;color:#1a73e8;font-family:'Google Sans',sans-serif;">
+            View all <?= count($allAmenities) ?>
         </button>
     </div>
 
-    <!-- Quick Preview Grid (Top 8 Amenities) -->
+    <!-- Quick Preview Grid (Top 8 Amenities) — Google 4-col -->
     <div class="row g-3">
         <?php foreach (array_slice($allAmenities, 0, 8) as $am): ?>
             <div class="col-md-3 col-6">
-                <span class="d-flex align-items-center text-slate-700 fs-6">
-                    <i class="fa-solid <?= getAmenityIcon($am) ?> me-2 fs-5"></i>
+                <span class="d-flex align-items-center" style="color:#3c4043;font-size:13px;font-family:Roboto,sans-serif;">
+                    <i class="fa-solid <?= getAmenityIcon($am) ?> me-2" style="font-size:14px;width:18px;text-align:center;"></i>
                     <span><?= h($am) ?></span>
                 </span>
             </div>
         <?php endforeach; ?>
     </div>
-</div><?php else: ?><div class="alert alert-light border text-muted" role="status">Amenities are not available for this property.</div><?php endif; ?>
+</div><?php else: ?><div class="alert alert-light border text-muted" role="status" style="border-radius:12px;border-color:#dadce0;">Amenities are not available for this property.</div><?php endif; ?>
 
 <!-- Dedicated All Amenities Modal -->
 <div class="modal fade" id="allAmenitiesModal" tabindex="-1" aria-labelledby="allAmenitiesModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-bottom px-4 py-3 bg-white">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" style="border:1px solid #dadce0;">
+            <div class="modal-header px-4 py-3 bg-white" style="border-bottom:1px solid #e8eaed;">
                 <div class="d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-hotel text-primary fs-5"></i>
-                    <h5 class="modal-title fw-bold text-slate-900" id="allAmenitiesModalLabel">
-                        All Facilities & Amenities at <?= h($property['name'] ?? 'Lodge') ?>
+                    <i class="fa-solid fa-hotel fs-5" style="color:#1a73e8;"></i>
+                    <h5 class="modal-title fw-medium" id="allAmenitiesModalLabel" style="color:#202124;font-family:'Google Sans',sans-serif;">
+                        All amenities · <?= h($property['name'] ?? 'Lodge') ?>
                     </h5>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body px-4 py-4">
+            <div class="modal-body px-4 py-4" style="background:#fff;">
                 <div class="row g-4">
                     <?php foreach ($categorized as $categoryName => $items): ?>
                         <?php if (!empty($items)): ?>
                             <div class="col-md-6">
-                                <h6 class="fw-bold text-slate-900 pb-2 border-bottom mb-3"><?= h($categoryName) ?></h6>
+                                <h6 class="fw-medium pb-2 mb-3" style="color:#202124;font-family:'Google Sans',sans-serif;border-bottom:1px solid #e8eaed;"><?= h($categoryName) ?></h6>
                                 <ul class="list-unstyled mb-0">
                                     <?php foreach ($items as $itm): ?>
-                                        <li class="d-flex align-items-center gap-2 mb-2.5 text-slate-700" style="font-size: 14px;">
-                                            <i class="fa-solid <?= getAmenityIcon($itm) ?>" style="font-size: 15px; width: 20px; text-align: center;"></i>
+                                        <li class="d-flex align-items-center gap-2 mb-2" style="color:#3c4043;font-size:13px;font-family:Roboto,sans-serif;">
+                                            <i class="fa-solid <?= getAmenityIcon($itm) ?>" style="font-size:14px; width:20px; text-align:center;"></i>
                                             <span><?= h($itm) ?></span>
                                         </li>
                                     <?php endforeach; ?>
@@ -130,8 +130,8 @@ if (!function_exists('getAmenityIcon')) {
                     <?php endforeach; ?>
                 </div>
             </div>
-            <div class="modal-footer border-top px-4 py-3 bg-light">
-                <button type="button" class="btn btn-primary fw-bold px-4 py-2 rounded-2" data-bs-dismiss="modal">Close</button>
+            <div class="modal-footer px-4 py-3" style="background:#f8f9fa;border-top:1px solid #e8eaed;">
+                <button type="button" class="btn fw-medium px-4 py-2 rounded-pill" data-bs-dismiss="modal" style="background:#1a73e8;color:#fff;border:none;">Done</button>
             </div>
         </div>
     </div>

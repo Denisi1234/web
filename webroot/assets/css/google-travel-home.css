@@ -110,12 +110,13 @@
 .gh-m-tabs::-webkit-scrollbar{display:none}
 .gh-m-tabs a{flex:0 0 auto;padding:12px 16px;font-size:14px;font-weight:500;color:#5f6368;text-decoration:none;border-bottom:2px solid transparent;white-space:nowrap;font-family:'Google Sans',Roboto,sans-serif}
 .gh-m-tabs a.active{color:#1a73e8;border-bottom-color:#1a73e8}
-@media(max-width:767px){.gh-m-tabs{display:flex;position:sticky;top:56px;z-index:850}}
+@media(max-width:767px){.gh-m-tabs{display:flex;position:sticky;top:58px;z-index:850}}
 .gh-split-container{align-items:stretch}
 #gh_list_col{min-height:0}
 @media(min-width:992px){
   html,body{height:100%;overflow:hidden}
-  #main-wrapper{height:100vh;overflow:hidden;display:flex;flex-direction:column}
+  body{padding-top:0 !important}
+  #main-wrapper{height:100vh;overflow:hidden;display:flex;flex-direction:column;padding-top:64px;box-sizing:border-box}
   .gh-split-container{flex:1;overflow:hidden;min-height:0;height:calc(100vh - 64px)}
   .gh-split-container>.container-fluid,.gh-split-container .row{flex:1;overflow:hidden;min-height:0;height:100%}
   #gh_list_col{display:flex;flex-direction:column;overflow:hidden;height:100%;min-height:0;padding-right:4px}
@@ -147,7 +148,7 @@
 @media(min-width:992px) and (max-height:800px){
   .gh-left-fixed .gh-sb-wrap{padding:4px 0 2px !important}
   .gh-left-scroll{padding-top:4px !important}
-  .gh-split-container{height:calc(100vh - 56px)}
+  .gh-split-container{height:calc(100vh - 64px)}
 }
 /* Mobile peek drawer */
 .gh-mobile-sheet{display:none}

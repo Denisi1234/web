@@ -28,7 +28,7 @@ $catScores = [
         </div>
     </div>
     <!-- Write a Review Accordion/Collapsible -->
-    <div class="mb-4 p-3 border border-slate-200 rounded-3 bg-white">
+    <div style="margin-bottom:16px;padding:14px;border:1px solid #dadce0;border-radius:12px;background:#fff;">
         <button class="btn btn-outline-primary btn-sm fw-bold rounded-pill px-3" type="button" data-bs-toggle="collapse" data-bs-target="#writeReviewCollapse">
             <i class="fa-solid fa-pen-to-square me-1"></i>Write a Review
         </button>
@@ -72,31 +72,31 @@ $catScores = [
                 $date = !empty($rev['created_at']) ? (is_string($rev['created_at']) && strlen($rev['created_at']) > 10 ? date('d M Y', strtotime($rev['created_at'])) : $rev['created_at']) : 'Recently';
             ?>
                 <div class="col-xl-6 col-lg-6 col-md-12">
-                    <div class="p-3 border rounded-3 bg-slate-50/50 h-100">
+                    <div style="padding:14px;border:1px solid #dadce0;border-radius:12px;background:#fff;box-shadow:0 1px 3px rgba(60,64,67,0.06);">
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <div class="d-flex align-items-center gap-2">
-                                <div class="square--35 circle bg-orange-100 text-orange-600 fw-bold fs-6 d-flex align-items-center justify-content-center">
+                                <div style="width:35px;height:35px;border-radius:50%;background:#fef7e0;color:#b7791f;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                                     <?= strtoupper(substr($author, 0, 1)) ?>
                                 </div>
                                 <div>
-                                    <h6 class="mb-0 fw-bold text-slate-900 fs-sm"><?= h($author) ?></h6>
-                                    <span class="text-xs text-muted"><?= h($date) ?></span>
+                                    <h6 style="margin:0;font-weight:500;color:#202124;font-size:13px;font-family:'Google Sans',sans-serif;"><?= h($author) ?></h6>
+                                    <span style="font-size:11px;color:#5f6368;"><?= h($date) ?></span>
                                 </div>
                             </div>
                             <div class="text-warning text-xs">
                                 <?= str_repeat('★', $stars) ?>
                             </div>
                         </div>
-                        <p class="text-slate-600 text-sm mb-0 italic">"<?= h($comment) ?>"</p>
+                        <p style="color:#3c4043;font-size:13px;line-height:1.5;font-style:italic;margin:0;font-family:Roboto,sans-serif;">"<?= h($comment) ?>"</p>
                     </div>
                 </div>
             <?php endforeach; ?>
         </div>
     <?php else: ?>
-        <div class="text-center py-4 px-3 border rounded-3 bg-slate-50">
+        <div style="text-align:center;padding:20px 14px;border:1px solid #dadce0;border-radius:12px;background:#f8f9fa;">
             <i class="fa-regular fa-comment-dots fs-2 text-slate-400 mb-2"></i>
-            <h6 class="fw-bold text-slate-700 mb-1">No Reviews Yet</h6>
-            <p class="text-sm text-slate-500 mb-0">Be the first verified guest to share your experience for this stay.</p>
+            <h6 style="font-weight:500;color:#202124;font-family:'Google Sans',sans-serif;margin-bottom:4px;">No Reviews Yet</h6>
+            <p style="font-size:12px;color:#5f6368;margin:0;font-family:Roboto,sans-serif;">Be the first verified guest to share your experience for this stay.</p>
         </div>
     <?php endif; ?>
 </div>

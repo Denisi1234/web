@@ -4,6 +4,8 @@
  */
 $this->assign('title', 'Your favourites - FastNet Stays');
 ?>
+<?= $this->Html->css('/assets/css/google-travel-layout.css') ?>
+<?= $this->Html->css('/assets/css/google-travel-home.css') ?>
 <?= $this->element('navbar'); ?>
 
 <?= $this->Html->css('/assets/css/wishlists.css'); ?>
@@ -60,3 +62,5 @@ $this->assign('title', 'Your favourites - FastNet Stays');
 
 
 <?= $this->Html->script('/assets/js/wishlists.js'); ?>
+</main>
+<?= $this->element('footer', ['skin' => 'skin-light-footer']) ?>

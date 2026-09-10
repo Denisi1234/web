@@ -4,6 +4,8 @@
  */
 $this->assign('title', 'Account security - FastNet Stays');
 ?>
+<?= $this->Html->css('/assets/css/google-travel-layout.css') ?>
+<?= $this->Html->css('/assets/css/google-travel-home.css') ?>
 <?= $this->element('navbar'); ?>
 
 <?= $this->Html->css('/assets/css/profile.css'); ?>
@@ -111,3 +113,5 @@ function handleDeleteAccount() {
     }
 }
 </script>
+</main>
+<?= $this->element('footer', ['skin' => 'skin-light-footer']) ?>

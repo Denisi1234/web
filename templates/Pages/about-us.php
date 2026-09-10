@@ -2,18 +2,34 @@
 $this->assign('title', 'About Us | FastNetStays');
 ?>
 
-<!-- Include Navbar -->
+<?= $this->Html->css('/assets/css/google-travel-layout.css') ?>
+<?= $this->Html->css('/assets/css/google-travel-home.css') ?>
+<?= $this->Html->css('/assets/css/google-travel-cards.css') ?>
+
 <?= $this->element('navbar') ?>
+<div class="gh-m-tabs" role="tablist" aria-label="Travel types">
+  <a href="/?explore=1" role="tab">Explore</a>
+  <a href="/?homes=1" role="tab">Homes</a>
+  <a href="/" role="tab" class="active" aria-selected="true">Hotels</a>
+  <a href="/?destination=Vacation" role="tab">Vacation rentals</a>
+</div>
+<nav aria-label="Breadcrumb" class="container-fluid px-2 px-lg-2" style="max-width:100%;margin:0 auto;background:#f8f9fa;">
+  <ol class="breadcrumb mb-0 py-1" style="background:transparent;font-size:12px;line-height:1.2;--bs-breadcrumb-divider:'›';" itemscope itemtype="https://schema.org/BreadcrumbList">
+    <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="/" itemprop="item" style="color:#5f6368;text-decoration:none;"><span itemprop="name">Home</span></a><meta itemprop="position" content="1"></li>
+    <li class="breadcrumb-item active" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><span itemprop="name">About Us</span><meta itemprop="position" content="2"></li>
+  </ol>
+</nav>
+<main id="main-content" style="background:#f8f9fa;min-height:85vh;" role="main">
 
 <!-- Hero Title Header -->
-<section class="bg-cover position-relative" style="background:url(<?= $this->Url->build('/assets/img/bg.jpg'); ?>)no-repeat;" data-overlay="5">
+<section class="position-relative" style="background:#fff;border-bottom:1px solid #e8eaed;padding:28px 0 22px;">
 	<div class="container">
 		<div class="row align-items-center justify-content-center">
 			<div class="col-xl-8 col-lg-10 col-md-12">
 				<div class="fpc-capstion text-center my-5">
 					<div class="fpc-captions">
-						<h1 class="xl-heading text-light font-bold">About FastNetStays</h1>
-						<p class="text-light opacity-90 fs-5">Tanzania’s premier accommodation & travel booking marketplace connecting travelers with authentic lodges, beachfront resorts, and city stays.</p>
+						<h1 class="xl-heading fw-bold" style="color:#202124;font-family:'Google Sans',Roboto,sans-serif;font-weight:400;"">About FastNetStays</h1>
+						<p class="text-muted" style="color:#5f6368;font-family:Roboto,sans-serif;" fs-5">Tanzania’s premier accommodation & travel booking marketplace connecting travelers with authentic lodges, beachfront resorts, and city stays.</p>
 					</div>
 				</div>
 			</div>
@@ -69,7 +85,7 @@ $this->assign('title', 'About Us | FastNetStays');
 </section>
 
 <!-- Values & Pillars Section -->
-<section class="py-5 gray-simple">
+<section class="py-5 " style="background:#f8f9fa;">
 	<div class="container">
 		<div class="row justify-content-center text-center mb-5">
 			<div class="col-xl-8 col-lg-9 col-md-11">
@@ -117,4 +133,5 @@ $this->assign('title', 'About Us | FastNetStays');
 <?= $this->element('Home/index/countries'); ?>
 
 <!-- Include Footer -->
-<?= $this->element('footer', ['skin' => 'skin-dark-footer']) ?>
+</main>
+<?= $this->element('footer', ['skin' => 'skin-light-footer']) ?>
