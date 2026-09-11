@@ -55,24 +55,23 @@ foreach ($allAmenities as $item) {
     }
 }
 
-if (!function_exists('getAmenityIcon')) {
-    function getAmenityIcon(string $name): string {
-        $l = strtolower($name);
-        if (str_contains($l, 'wifi') || str_contains($l, 'wi-fi')) return 'fa-wifi text-success';
-        if (str_contains($l, 'air') || str_contains($l, 'ac')) return 'fa-snowflake text-info';
-        if (str_contains($l, 'parking')) return 'fa-square-parking text-primary';
-        if (str_contains($l, 'breakfast') || str_contains($l, 'tea') || str_contains($l, 'coffee')) return 'fa-mug-saucer text-warning';
-        if (str_contains($l, 'pool')) return 'fa-person-swimming text-info';
-        if (str_contains($l, 'tv')) return 'fa-tv text-secondary';
-        if (str_contains($l, 'bath') || str_contains($l, 'shower')) return 'fa-bath text-primary';
-        if (str_contains($l, 'bar') || str_contains($l, 'lounge')) return 'fa-martini-glass text-danger';
-        if (str_contains($l, 'security')) return 'fa-shield-halved text-success';
-        if (str_contains($l, 'front') || str_contains($l, 'desk')) return 'fa-bell-concierge text-primary';
-        if (str_contains($l, 'balcony')) return 'fa-mountain-sun text-warning';
-        if (str_contains($l, 'laundry')) return 'fa-shirt text-info';
-        return 'fa-circle-check text-success';
-    }
-}
+// Use closure to avoid global function redeclaration when element is included twice (About + Modal)
+$getAmenityIcon = function(string $name): string {
+    $l = strtolower($name);
+    if (str_contains($l, 'wifi') || str_contains($l, 'wi-fi')) return 'fa-wifi text-success';
+    if (str_contains($l, 'air') || str_contains($l, 'ac')) return 'fa-snowflake text-info';
+    if (str_contains($l, 'parking')) return 'fa-square-parking text-primary';
+    if (str_contains($l, 'breakfast') || str_contains($l, 'tea') || str_contains($l, 'coffee')) return 'fa-mug-saucer text-warning';
+    if (str_contains($l, 'pool')) return 'fa-person-swimming text-info';
+    if (str_contains($l, 'tv')) return 'fa-tv text-secondary';
+    if (str_contains($l, 'bath') || str_contains($l, 'shower')) return 'fa-bath text-primary';
+    if (str_contains($l, 'bar') || str_contains($l, 'lounge')) return 'fa-martini-glass text-danger';
+    if (str_contains($l, 'security')) return 'fa-shield-halved text-success';
+    if (str_contains($l, 'front') || str_contains($l, 'desk')) return 'fa-bell-concierge text-primary';
+    if (str_contains($l, 'balcony')) return 'fa-mountain-sun text-warning';
+    if (str_contains($l, 'laundry')) return 'fa-shirt text-info';
+    return 'fa-circle-check text-success';
+};
 ?>
 
 <?php if (!empty($allAmenities)): ?><div style="background:#fff;border:1px solid #dadce0;border-radius:12px;padding:18px 20px;box-shadow:0 1px 3px rgba(60,64,67,0.06);">
@@ -90,7 +89,7 @@ if (!function_exists('getAmenityIcon')) {
         <?php foreach (array_slice($allAmenities, 0, 8) as $am): ?>
             <div class="col-md-3 col-6">
                 <span class="d-flex align-items-center" style="color:#3c4043;font-size:13px;font-family:Roboto,sans-serif;">
-                    <i class="fa-solid <?= getAmenityIcon($am) ?> me-2" style="font-size:14px;width:18px;text-align:center;"></i>
+                    <i class="fa-solid <?= $getAmenityIcon($am) ?> me-2" style="font-size:14px;width:18px;text-align:center;"></i>
                     <span><?= h($am) ?></span>
                 </span>
             </div>
@@ -120,7 +119,7 @@ if (!function_exists('getAmenityIcon')) {
                                 <ul class="list-unstyled mb-0">
                                     <?php foreach ($items as $itm): ?>
                                         <li class="d-flex align-items-center gap-2 mb-2" style="color:#3c4043;font-size:13px;font-family:Roboto,sans-serif;">
-                                            <i class="fa-solid <?= getAmenityIcon($itm) ?>" style="font-size:14px; width:20px; text-align:center;"></i>
+                                            <i class="fa-solid <?= $getAmenityIcon($itm) ?>" style="font-size:14px; width:20px; text-align:center;"></i>
                                             <span><?= h($itm) ?></span>
                                         </li>
                                     <?php endforeach; ?>

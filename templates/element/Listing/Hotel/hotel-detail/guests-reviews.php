@@ -102,6 +102,8 @@ $catScores = [
 </div>
 
 <script>
+(function(){
+if (window._web1ReviewBound) return; window._web1ReviewBound = true;
 document.addEventListener("DOMContentLoaded", function() {
     const revForm = document.getElementById("web1-write-review-form");
     const revAlert = document.getElementById("web1-review-alert");
@@ -158,4 +160,5 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 });
+})();
 </script>

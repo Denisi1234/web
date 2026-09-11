@@ -50,17 +50,17 @@ $this->Html->meta(['name'=>'format-detection','content'=>'telephone=no'], null, 
   <a href="/?destination=Vacation" role="tab">Vacation rentals</a>
 </div>
 <!-- ── Split styles moved to google-travel-home.css ── -->
-<!-- Breadcrumb (compact) -->
-<nav aria-label="Breadcrumb" class="container-fluid px-2 px-lg-2" style="max-width:100%;margin:0 auto;background:#f8f9fa;">
-  <ol class="breadcrumb mb-0 py-1" style="background:transparent;font-size:12px;line-height:1.2;--bs-breadcrumb-divider:'›';" itemscope itemtype="https://schema.org/BreadcrumbList">
+<!-- Breadcrumb (ultra-compact) -->
+<nav aria-label="Breadcrumb" class="container-fluid px-2 px-lg-2" style="max-width:100%;margin:0 auto;background:#f8f9fa;padding:0;">
+  <ol class="breadcrumb mb-0 py-0" style="background:transparent;font-size:11px;line-height:1;padding:0;--bs-breadcrumb-divider:'›';" itemscope itemtype="https://schema.org/BreadcrumbList">
     <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="/" itemprop="item" style="color:#5f6368;text-decoration:none;"><span itemprop="name">Home</span></a><meta itemprop="position" content="1"></li>
     <li class="breadcrumb-item active" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><span itemprop="name"><?= h($queryParams['city'] ?? $queryParams['destination'] ?? 'Tanzania') ?> Hotels</span><meta itemprop="position" content="2"></li>
   </ol>
 </nav>
 <!-- ── Split Screen: HALF — LEFT (search+chips+list scroll) + RIGHT (map full-height from header) ── -->
-<main id="main-content" class="gh-split-container" style="background:#f8f9fa; min-height:85vh;" role="main" aria-label="Hotel search results">
-    <div class="container-fluid px-1 px-lg-2" style="max-width:100%; margin:0 auto; height:100%;">
-        <div class="row g-2 g-lg-2 position-relative" style="--bs-gutter-x:8px; height:100%;">
+<main id="main-content" class="gh-split-container" style="background:#f8f9fa; min-height:85vh; margin-top:0;" role="main" aria-label="Hotel search results">
+    <div class="container-fluid px-1 px-lg-2" style="max-width:100%; margin:0 auto; height:100%; padding-top:0;">
+        <div class="row g-0 g-lg-0 position-relative" style="--bs-gutter-x:0; --bs-gutter-y:0; height:100%; margin-top:0; padding-top:0;">
 
             <!-- ══ LEFT PANE: HALF screen — search+chips fixed + list scrolls ══ -->
             <div class="col-xl-6 col-lg-6 col-md-12 pe-lg-1" id="gh_list_col">
@@ -104,10 +104,10 @@ $this->Html->meta(['name'=>'format-detection','content'=>'telephone=no'], null, 
             <!-- ══ RIGHT PANE: HALF screen — map starts right after header, full height ── -->
             <div class="col-xl-6 col-lg-6 d-none d-lg-block ps-lg-1" id="gh_map_col" aria-hidden="true">
                 <div class="gh-map-sticky">
-                    <div class="gh-map-frame shadow-sm position-relative" style="background:#e8ecef;">
+                    <div class="gh-map-frame shadow-sm position-relative" style="background:#e8ecef; min-height:560px; height:100%; height:calc(100vh - 80px);">
 
-                        <!-- Mapbox GL Container -->
-                        <div id="gh-interactive-map" style="width:100%; height:100%;" role="application" aria-label="Map of hotels"></div>
+                        <!-- Mapbox GL Container — real Mapbox from backend -->
+                        <div id="gh-interactive-map" style="width:100%; height:100%; min-height:560px; background:#e8ecef;" role="application" aria-label="Map of hotels"></div>
                         <noscript><img src="https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/-6.7725,39.245,11/600x800?access_token=placeholder" alt="Map of hotels" style="width:100%;height:100%;object-fit:cover;opacity:.6"></noscript>
 
                         <!-- "Update list when map moves" — PC screenshot: checkbox + text pill -->
@@ -176,7 +176,28 @@ $this->Html->meta(['name'=>'format-detection','content'=>'telephone=no'], null, 
 <!-- Filters Modal -->
 <?= $this->element('Home/gh-filters-modal') ?>
 
-<!-- Markers JSON Payload for Mapbox — EXACT pink Hotel price pills [●🏨] TSH 176,697 -->
+<?php
+// Real Mapbox from backend — server-side injection avoids CORS/race and powers map on first paint
+$serverMapboxToken = $mapboxToken ?? \Cake\Core\Configure::read('App.mapboxToken', env('MAPBOX_TOKEN', ''));
+$serverMapboxStyle = $mapboxStyle ?? \Cake\Core\Configure::read('App.mapboxStyle', 'mapbox://styles/mapbox/streets-v12');
+if (!is_string($serverMapboxToken)) $serverMapboxToken = '';
+if (!is_string($serverMapboxStyle) || $serverMapboxStyle === '') $serverMapboxStyle = 'mapbox://styles/mapbox/streets-v12';
+?>
+<script>
+// Server-injected Mapbox — real token from backend GET /api/map-config (with env fallback)
+window.MAPBOX_TOKEN = <?= json_encode($serverMapboxToken) ?>;
+window.MAPBOX_STYLE = <?= json_encode($serverMapboxStyle) ?>;
+window.DEFAULT_MAPBOX_TOKEN = window.MAPBOX_TOKEN || window.DEFAULT_MAPBOX_TOKEN || '';
+if (window.MAPBOX_TOKEN && typeof mapboxgl !== 'undefined') {
+    mapboxgl.accessToken = window.MAPBOX_TOKEN;
+}
+if (window.MAPBOX_TOKEN) {
+    // dispatch immediately so gh-home-map can init without waiting for layout's async fetch
+    setTimeout(function(){ window.dispatchEvent(new CustomEvent('fastnet:mapbox-ready')); }, 0);
+}
+</script>
+
+<!-- Markers JSON Payload for Mapbox — real backend lat/lng or mock Dar/ZNZ/Arusha -->
 <script id="gh_markers_json" type="application/json">
 <?php
 $markers = [];
@@ -199,7 +220,7 @@ echo json_encode($markers, JSON_UNESCAPED_UNICODE);
 
 <!-- FastNetState — URL deep-linking engine (push/replaceState, popstate, AJAX hydration) -->
 <?= $this->Html->script('/assets/js/fastnet-state.js?v=' . filemtime(WWW_ROOT . 'assets/js/fastnet-state.js')) ?>
-<!-- Google Hotels Interactive Map Script -->
+<!-- Google Hotels Interactive Map Script — uses real Mapbox style/token from backend -->
 <?= $this->Html->script('/assets/js/gh-home-map.js?v=' . filemtime(WWW_ROOT . 'assets/js/gh-home-map.js')) ?>
 
 <script>
@@ -212,27 +233,97 @@ echo json_encode($markers, JSON_UNESCAPED_UNICODE);
         defaultLat: <?= !empty($queryParams['lat']) ? (float)$queryParams['lat'] : -6.7725 ?>,
         defaultLng: <?= !empty($queryParams['lng']) ? (float)$queryParams['lng'] : 39.2450 ?>,
         defaultZoom: 13,
+        style: window.MAPBOX_STYLE || 'mapbox://styles/mapbox/streets-v12',
     };
-    function startMap() {
-        if (typeof initGhHomeMap === 'function' && window.MAPBOX_TOKEN && typeof mapboxgl !== 'undefined') {
-            try{ initGhHomeMap(cfg); }catch(e){ console.warn('map init',e); }
+    window._ghCfg = cfg;
+    let _mapRetry=0;
+    function showMapFallback(reason){
+        const el=document.getElementById('gh-interactive-map');
+        if(!el) return;
+        // don't overwrite a successfully initialized map (mapboxgl-map class)
+        if(el.classList.contains('mapboxgl-map')) return;
+        if(el.dataset.fallbackShown) return;
+        el.dataset.fallbackShown='1';
+        console.warn('[FastNet] Map fallback:', reason);
+        // only show placeholder if mapboxgl itself failed to load after retries
+        if(typeof mapboxgl === 'undefined' && _mapRetry >= 10){
+            el.style.display='flex';
+            el.style.alignItems='center';
+            el.style.justifyContent='center';
+            el.style.background='#e8ecef';
+            el.innerHTML='<div style="text-align:center;padding:24px;font-family:Google Sans,Roboto,sans-serif;color:#5f6368;">'
+              +'<div style="font-size:28px;margin-bottom:8px;">🗺️</div>'
+              +'<div style="font-weight:500;color:#202124;margin-bottom:4px;">Map loading failed</div>'
+              +'<div style="font-size:12px;">Check network / Mapbox config</div></div>';
         }
     }
-    window.addEventListener('fastnet:mapbox-ready', startMap);
+    function startMap() {
+        if (typeof mapboxgl === 'undefined') {
+            if(_mapRetry < 12){
+                _mapRetry++;
+                setTimeout(startMap, 300);
+            } else {
+                showMapFallback('mapboxgl not loaded after retry');
+            }
+            return;
+        }
+        // clear any previous fallback overlay if map now succeeds
+        const el=document.getElementById('gh-interactive-map');
+        if(el && el.dataset.fallbackShown && el.classList.contains('mapboxgl-map')){
+            // map initialized after fallback — remove overlay text but keep canvas
+            el.querySelectorAll('div[style*="Map loading failed"]').forEach(n=>n.remove());
+            el.dataset.fallbackShown='';
+            el.style.display=''; el.style.background='';
+        }
+        // gh-home-map.js now handles OSM fallback automatically when token missing — just ensure style is set
+        if (!window.MAPBOX_TOKEN && !window.MAPBOX_STYLE) {
+            window.MAPBOX_STYLE = 'https://demotiles.maplibre.org/style.json';
+        }
+        if (typeof initGhHomeMap === 'function') {
+            try{
+                if (window.MAPBOX_STYLE) cfg.style = window.MAPBOX_STYLE;
+                if (window.MAPBOX_TOKEN) mapboxgl.accessToken = window.MAPBOX_TOKEN;
+                initGhHomeMap(cfg);
+            }catch(e){ console.warn('map init',e); showMapFallback(e.message); }
+        }
+    }
+    window.addEventListener('fastnet:mapbox-ready', function(){
+        if(window.MAPBOX_TOKEN && typeof mapboxgl!=='undefined') mapboxgl.accessToken = window.MAPBOX_TOKEN;
+        startMap();
+    });
     document.addEventListener('DOMContentLoaded', function () {
         // perf: web-vitals beacon (production) + CLS guard
         try{
           const po=new PerformanceObserver((l)=>{ l.getEntries().forEach(e=>{ if(e.entryType==='largest-contentful-paint') console.debug('LCP',e.startTime); }); });
           po.observe({type:'largest-contentful-paint', buffered:true});
         }catch(e){}
-        // aria-busy toggle on hydrate
+        // aria-busy toggle on hydrate — also sync real Mapbox token from JSON hydration payload
         const sec=document.getElementById('gh_results_section');
-        const origHydrate=window.FastNetState&&window.FastNetState.hydrate;
         if(sec && window.FastNetState){
-          const w=window.FastNetState.hydrate;
-          window.FastNetState.hydrate=async function(u){ sec.setAttribute('aria-busy','true'); const r=await w.call(this,u); sec.setAttribute('aria-busy','false'); return r; };
+          const origHydrate=window.FastNetState.hydrate;
+          window.FastNetState.hydrate=async function(u){
+              sec.setAttribute('aria-busy','true');
+              const r=await origHydrate.call(this,u);
+              // if hydration response contained fresh mapbox token, apply it
+              try{
+                  if(r && r.mapboxToken && r.mapboxToken !== window.MAPBOX_TOKEN){
+                      window.MAPBOX_TOKEN = r.mapboxToken;
+                      window.DEFAULT_MAPBOX_TOKEN = r.mapboxToken;
+                      if(typeof mapboxgl!=='undefined') mapboxgl.accessToken = r.mapboxToken;
+                      if(r.mapboxStyle) window.MAPBOX_STYLE = r.mapboxStyle;
+                      window.dispatchEvent(new CustomEvent('fastnet:mapbox-ready'));
+                  }
+                  if(r && r.markers) cfg.markers = r.markers;
+              }catch(e){}
+              sec.setAttribute('aria-busy','false');
+              return r;
+          };
+          // wrap FastNetState setState hydrate already handles markers — also keep token fresh
+          const origFetchUrl = window.FastNetState.hydrate;
         }
-        setTimeout(startMap, 300);
+        // If token already injected server-side, start immediately; otherwise wait for backend fetch (layout) or 800ms
+        if(window.MAPBOX_TOKEN) setTimeout(startMap, 150);
+        else setTimeout(startMap, 900);
         // offline + slow-network toast (any-device)
         const toast=document.getElementById('fns_toast');
         const showToast=(m)=>{ if(!toast) return; toast.textContent=m; toast.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(()=>toast.style.display='none', 2800); };
@@ -242,8 +333,8 @@ echo json_encode($markers, JSON_UNESCAPED_UNICODE);
         const conn=navigator.connection; if(conn && conn.effectiveType && conn.effectiveType.includes('2g')) showToast('Slow connection — loading lighter view');
     });
     startMap();
-    // global error guard (production) + user-visible fallback
-    window.addEventListener('error', function(e){ console.warn('index error', e.message); const t=document.getElementById('fns_toast'); if(t && e.message && !e.message.includes('Script error')){ t.textContent='Something went wrong — try again'; t.style.display='block'; setTimeout(()=>t.style.display='none',3000); } });
+    // global error guard (production) — log only, no intrusive toast on refresh
+    window.addEventListener('error', function(e){ console.warn('index error', e.message); });
     window.addEventListener('unhandledrejection', function(e){ console.warn('promise', e.reason); });
 })();
 </script>

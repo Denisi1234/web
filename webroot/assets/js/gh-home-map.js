@@ -14,19 +14,50 @@
 
     window.initGhHomeMap = function (cfg) {
         if (_inited) return;
-        _cfg = cfg;
+        // keep cfg for mobile lazy init (when container was hidden)
+        if (cfg) {
+            _cfg = cfg;
+            window._ghCfg = cfg;
+        } else if (_cfg) {
+            cfg = _cfg;
+        } else if (window._ghCfg) {
+            cfg = window._ghCfg;
+            _cfg = cfg;
+        }
+        if (!cfg) return;
 
-        if (!window.MAPBOX_TOKEN || typeof mapboxgl === 'undefined') {
+        if (typeof mapboxgl === 'undefined') {
+            console.warn('[FastNet] mapboxgl not loaded');
+            return;
+        }
+        // defer init if container hidden on mobile (d-none) — will init when View Map clicked
+        var _container = document.getElementById('gh-interactive-map');
+        if (_container && _container.offsetParent === null && window.innerWidth < 992) {
+            console.info('[FastNet] Deferring map init — container hidden on mobile');
+            return;
+        }
+        var _style = (cfg && cfg.style) || window.MAPBOX_STYLE || 'mapbox://styles/mapbox/streets-v12';
+        // Free OSM fallback when no Mapbox token — uses demotiles (no token required)
+        var isOsmFallback = _style.indexOf('demotiles.maplibre.org') !== -1 || _style.indexOf('openstreetmap') !== -1;
+        if (!window.MAPBOX_TOKEN && !isOsmFallback) {
+            // if token missing and style is Mapbox, switch to OSM fallback
+            _style = 'https://demotiles.maplibre.org/style.json';
+            isOsmFallback = true;
+            window.MAPBOX_STYLE = _style;
+            console.info('[FastNet] Using OSM fallback style (no Mapbox token)');
+        }
+        if (window.MAPBOX_TOKEN) {
+            mapboxgl.accessToken = window.MAPBOX_TOKEN;
+        } else if (!isOsmFallback) {
             console.warn('[FastNet] Mapbox token or library not available');
             return;
         }
         _inited = true;
-        mapboxgl.accessToken = window.MAPBOX_TOKEN;
 
-        // FastNet own style — not Google light; uses Streets with FastNet accents
+        // FastNet own style — real backend style (or OSM fallback)
         _map = new mapboxgl.Map({
             container: 'gh-interactive-map',
-            style: 'mapbox://styles/mapbox/streets-v12',
+            style: _style,
             center: [cfg.defaultLng, cfg.defaultLat],
             zoom:   cfg.defaultZoom || 12,
             attributionControl: false,
@@ -35,8 +66,42 @@
         window._ghMap = _map;
 
         _map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-right');
+        // ensure proper size after parent flex layout settles + remove any fallback overlay
+        setTimeout(function(){
+            try{ _map.resize(); }catch(e){}
+            var el=document.getElementById('gh-interactive-map');
+            if(el){
+                el.style.background='';
+                el.style.display='';
+                // remove fallback message inserted before map init
+                var fb=el.querySelector('div[style*="Map loading"]');
+                if(fb && !el.classList.contains('mapboxgl-map')) fb.remove();
+                // if fallback div is first child covering canvas, remove it
+                if(el.firstChild && el.firstChild.textContent && el.firstChild.textContent.indexOf('Map loading')!==-1){
+                    el.firstChild.remove();
+                }
+                el.removeAttribute('data-fallback-shown');
+            }
+        }, 200);
+        _map.on('error', function(e){
+            console.warn('[FastNet] Mapbox error', e && e.error && e.error.message);
+            // if Mapbox style fails (403/401) fallback to OSM without token
+            if(e && e.error && e.error.status === 401 && window.MAPBOX_STYLE && window.MAPBOX_STYLE.indexOf('mapbox://')===0){
+                console.info('[FastNet] Mapbox 401 — switching to OSM fallback');
+                try{ _map.setStyle('https://demotiles.maplibre.org/style.json'); }catch(err){}
+            }
+        });
 
         _map.on('load', function () {
+            try{ _map.resize(); }catch(e){}
+            // clear fallback overlay once map actually loads
+            var el=document.getElementById('gh-interactive-map');
+            if(el){
+                el.style.background='';
+                el.removeAttribute('data-fallback-shown');
+                var fb=el.querySelector('div[style*="Map loading"]');
+                if(fb) fb.remove();
+            }
             _addMarkers(cfg.markers || []);
             // FastNet own colors + hide POIs (brand, not Google)
             try{
@@ -225,7 +290,8 @@
     window.ghToggleSatellite = function () {
         if (!_map) return;
         _sat = !_sat;
-        _map.setStyle(_sat ? 'mapbox://styles/mapbox/satellite-streets-v12' : 'mapbox://styles/mapbox/streets-v12');
+        var base = window.MAPBOX_STYLE || 'mapbox://styles/mapbox/streets-v12';
+        _map.setStyle(_sat ? 'mapbox://styles/mapbox/satellite-streets-v12' : base);
         // Re-add markers after style change + keep FastNet clean (no POI icons)
         _markers = {};
         _map.once('style.load', function () {
@@ -334,10 +400,11 @@
             if (!showingList && _map) setTimeout(function () { _map.resize(); }, 120);
             return;
         }
-        // Mobile: show map + horizontal carousel (spec) + peek sheet
+        // Mobile: show map + horizontal carousel (spec) + peek sheet — real map from backend
         var carousel = document.getElementById('gh_mobile_carousel');
         if (!sheet) return;
         var isOpen = sheet.classList.contains('open');
+        var mapCol = document.getElementById('gh_map_col');
         if (!isOpen) {
             // clone cards into sheet on first open
             if (sheetScroll && !sheetScroll.dataset.filled) {
@@ -364,6 +431,7 @@
                         var clone = card.cloneNode(true);
                         clone.style.flex='0 0 78vw';
                         clone.style.maxWidth='320px';
+                        clone.style.cursor='pointer';
                         clone.addEventListener('click', function(){ if(window.ghFocusMarker) window.ghFocusMarker(parseInt(id)); });
                         carousel.appendChild(clone);
                     });
@@ -388,9 +456,33 @@
             sheet.classList.remove('peek');
             sheet.setAttribute('aria-hidden','false');
             if (carousel) { carousel.style.display='flex'; carousel.setAttribute('aria-hidden','false'); }
+            // show real map as full-screen overlay on mobile
+            if (mapCol) {
+                mapCol.classList.add('gh-mobile-active');
+                mapCol.classList.remove('d-none');
+                mapCol.style.display='block';
+                mapCol.setAttribute('aria-hidden','false');
+            }
             var mapWrap = document.querySelector('.gh-map-sticky');
-            if (mapWrap) { mapWrap.style.display='block'; mapWrap.parentElement.style.display='block'; mapWrap.parentElement.classList.remove('d-none'); }
-            if (_map) setTimeout(function(){ _map.resize(); }, 150);
+            if (mapWrap) {
+                mapWrap.style.display='block';
+                if (mapWrap.parentElement) {
+                    mapWrap.parentElement.style.display='block';
+                    mapWrap.parentElement.classList.remove('d-none');
+                }
+            }
+            // lazy init if deferred on mobile
+            if (!_inited && (_cfg || window._ghCfg)) {
+                try{ window.initGhHomeMap(_cfg || window._ghCfg); }catch(e){ console.warn('mobile init',e); }
+            }
+            // ensure map resizes and fits markers after becoming visible
+            if (_map) {
+                setTimeout(function(){ try{ _map.resize(); _map.triggerRepaint&&_map.triggerRepaint(); }catch(e){} }, 120);
+                setTimeout(function(){ try{ _map.resize(); if(_cfg && _cfg.markers) _map.fitBounds && _map.fitBounds(new mapboxgl.LngLatBounds().extend && new mapboxgl.LngLatBounds(),{padding:56}); }catch(e){} }, 350);
+                setTimeout(function(){ try{ if(window.ghRecenter) window.ghRecenter(); }catch(e){} }, 500);
+            } else if (window._ghCfg) {
+                setTimeout(function(){ if(!_inited) try{ window.initGhHomeMap(window._ghCfg); }catch(e){} }, 200);
+            }
             if (icon) icon.className = 'fa-solid fa-list';
             if (text) text.textContent = 'View List';
             document.body.style.overflow='hidden';
@@ -398,10 +490,16 @@
             sheet.classList.remove('open');
             sheet.setAttribute('aria-hidden','true');
             if (carousel) { carousel.style.display='none'; carousel.setAttribute('aria-hidden','true'); }
+            if (mapCol) {
+                mapCol.classList.remove('gh-mobile-active');
+                mapCol.classList.add('d-none');
+                mapCol.style.display='';
+                mapCol.setAttribute('aria-hidden','true');
+            }
             if (icon) icon.className = 'fa-solid fa-map-location-dot text-warning';
             if (text) text.textContent = 'View Map';
             document.body.style.overflow='';
-            if (_map) setTimeout(function(){ _map.resize(); }, 120);
+            if (_map) setTimeout(function(){ try{ _map.resize(); }catch(e){} }, 120);
         }
     };
     // Sheet drag handle — tap to toggle peek/open

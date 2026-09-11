@@ -212,13 +212,53 @@ class PagesController extends AppController
         }
 
         $properties = $this->staysService->searchProperties($apiPayload);
+
+        // ── Real Mapbox token from backend (server-side, no CORS race) ──
+        // Backend exposes GET /api/map-config → { mapbox_token: "pk.XXX" }
+        // Falls back to env MAPBOX_TOKEN / Configure App.mapboxToken for prod
+        // When no Mapbox token, fallback to free OSM style (demotiles) so map never shows "unavailable"
+        $mapboxToken = null;
+        $mapboxStyle = (string)Configure::read('App.mapboxStyle', 'mapbox://styles/mapbox/streets-v12');
+        $osmFallbackStyle = 'https://demotiles.maplibre.org/style.json';
+        try {
+            $cfg = $this->apiClient->get('/map-config');
+            if (is_array($cfg)) {
+                $candidate = $cfg['mapbox_token'] ?? $cfg['mapboxToken'] ?? $cfg['token'] ?? $cfg['access_token'] ?? null;
+                if (!$candidate && isset($cfg['data']) && is_array($cfg['data'])) {
+                    $candidate = $cfg['data']['mapbox_token'] ?? $cfg['data']['token'] ?? null;
+                }
+                if (is_string($candidate) && trim($candidate) !== '' && $candidate !== 'YOUR_MAPBOX_ACCESS_TOKEN' && $candidate !== 'pk.placeholder') {
+                    $mapboxToken = trim($candidate);
+                }
+                if (!empty($cfg['mapbox_style']) && is_string($cfg['mapbox_style'])) {
+                    $mapboxStyle = trim($cfg['mapbox_style']);
+                } elseif (!empty($cfg['style']) && is_string($cfg['style'])) {
+                    $mapboxStyle = trim($cfg['style']);
+                }
+            }
+        } catch (\Throwable $e) {
+            // silent — will use env fallback
+        }
+        if (!$mapboxToken) {
+            $envToken = Configure::read('App.mapboxToken', env('MAPBOX_TOKEN', ''));
+            if (is_string($envToken) && trim($envToken) !== '' && $envToken !== 'YOUR_MAPBOX_ACCESS_TOKEN' && $envToken !== 'pk.placeholder') {
+                $mapboxToken = trim($envToken);
+            }
+        }
+        // Final fallback: free OSM style guarantees map renders even when no Mapbox token configured
+        if (!$mapboxToken) {
+            $mapboxStyle = $osmFallbackStyle;
+        }
         
         // MOCK DATA for development - Remove in production
+        // Includes real lat/lng so Mapbox renders markers even when backend is offline
         if (empty($properties)) {
             $properties = [
                 [
                     'id' => 1,
                     'name' => 'The Serena Hotel Dar es Salaam',
+                    'city' => 'Dar es Salaam',
+                    'latitude' => -6.7760, 'longitude' => 39.2828, 'lat' => -6.7760, 'lng' => 39.2828,
                     'image_url' => 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=300&h=200&fit=crop',
                     'rating' => 4.7,
                     'review_count' => 285,
@@ -230,6 +270,8 @@ class PagesController extends AppController
                 [
                     'id' => 2,
                     'name' => 'Hyatt Regency Dar es Salaam',
+                    'city' => 'Dar es Salaam',
+                    'latitude' => -6.8010, 'longitude' => 39.2833, 'lat' => -6.8010, 'lng' => 39.2833,
                     'image_url' => 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=300&h=200&fit=crop',
                     'rating' => 4.5,
                     'review_count' => 156,
@@ -241,6 +283,8 @@ class PagesController extends AppController
                 [
                     'id' => 3,
                     'name' => 'Dar Boutique Hotel',
+                    'city' => 'Dar es Salaam',
+                    'latitude' => -6.7690, 'longitude' => 39.2500, 'lat' => -6.7690, 'lng' => 39.2500,
                     'image_url' => 'https://images.unsplash.com/photo-1570129477492-45a003537e1f?w=300&h=200&fit=crop',
                     'rating' => 4.3,
                     'review_count' => 98,
@@ -252,6 +296,8 @@ class PagesController extends AppController
                 [
                     'id' => 4,
                     'name' => 'Addax Hotel Dar es Salaam',
+                    'city' => 'Dar es Salaam',
+                    'latitude' => -6.7924, 'longitude' => 39.2083, 'lat' => -6.7924, 'lng' => 39.2083,
                     'image_url' => 'https://images.unsplash.com/photo-1564078516801-18a1ab35eca3?w=300&h=200&fit=crop',
                     'rating' => 4.4,
                     'review_count' => 203,
@@ -263,6 +309,8 @@ class PagesController extends AppController
                 [
                     'id' => 5,
                     'name' => 'Oceanview Hotel & Resort',
+                    'city' => 'Zanzibar',
+                    'latitude' => -6.1659, 'longitude' => 39.2026, 'lat' => -6.1659, 'lng' => 39.2026,
                     'image_url' => 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=300&h=200&fit=crop',
                     'rating' => 4.6,
                     'review_count' => 412,
@@ -274,6 +322,8 @@ class PagesController extends AppController
                 [
                     'id' => 6,
                     'name' => 'Safari Palace Hotel',
+                    'city' => 'Arusha',
+                    'latitude' => -3.3869, 'longitude' => 36.6820, 'lat' => -3.3869, 'lng' => 36.6820,
                     'image_url' => 'https://images.unsplash.com/photo-1559599810-46d1c52494ee?w=300&h=200&fit=crop',
                     'rating' => 4.2,
                     'review_count' => 167,
@@ -348,14 +398,14 @@ class PagesController extends AppController
                 $price = (int)($p['customer_price_per_night'] ?? ($p['price_per_night'] ?? ($p['price'] ?? 0)));
                 $markers[] = ['id' => (int)($p['id'] ?? 0), 'lat' => $lat, 'lng' => $lng, 'label' => 'TSH ' . number_format($price), 'title' => $p['name'] ?? ''];
             }
-            $payload = ['html' => $html, 'markers' => $markers, 'totalCount' => $totalCount, 'queryParams' => $queryParams];
+            $payload = ['html' => $html, 'markers' => $markers, 'totalCount' => $totalCount, 'queryParams' => $queryParams, 'mapboxToken' => $mapboxToken, 'mapboxStyle' => $mapboxStyle];
             return $this->response->withType('application/json')->withStringBody((string)json_encode($payload));
         }
 
         $this->set(compact(
             'properties', 'queryParams', 'totalCount', 'searchErrors',
             'destination', 'currentAmenities', 'minPrice', 'maxPrice',
-            'selectedRating', 'freeCancel', 'sortBy'
+            'selectedRating', 'freeCancel', 'sortBy', 'mapboxToken', 'mapboxStyle'
         ));
         return $this->render('/Pages/index');
     }

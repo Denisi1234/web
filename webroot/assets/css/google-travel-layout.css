@@ -44,6 +44,32 @@
   .gh-split-container{padding-bottom:16px}
   .gh-map-sticky{position:relative !important;top:0 !important;height:auto !important}
   .gh-map-sticky>.gh-map-frame{height:60vh;min-height:420px}
+  /* Mobile map full-screen overlay when active — real map from backend */
+  #gh_map_col.gh-mobile-active{
+    display:block !important;
+    position:fixed !important;
+    inset:64px 0 0 0 !important;
+    z-index:1025 !important;
+    width:100vw !important;
+    height:calc(100vh - 64px) !important;
+    height:calc(100dvh - 64px) !important;
+    background:#e8ecef !important;
+    padding:0 !important;
+  }
+  #gh_map_col.gh-mobile-active .gh-map-sticky{
+    height:100% !important;
+    position:relative !important;
+  }
+  #gh_map_col.gh-mobile-active .gh-map-frame{
+    height:100% !important;
+    min-height:0 !important;
+    border-radius:0 !important;
+    margin:0 !important;
+  }
+  #gh_map_col.gh-mobile-active #gh-interactive-map{
+    min-height:0 !important;
+    height:100% !important;
+  }
 }
 @media(min-width:992px) and (max-height:800px){
   .gh-left-fixed .gh-sb-wrap{padding:4px 0 2px !important}
@@ -277,9 +303,9 @@
   .gh-chips-wrap{transition:top .22s ease}
 }
 /* ── SPEC OVERRIDES: new enterprise pill + chips handle new classes in split layout ── */
-.gh-left-fixed .fns-search-wrap,.gh-left-fixed .fns-chips-wrap{position:relative !important;top:0 !important}
+.gh-left-fixed .fns-search-wrap,.gh-left-fixed .fns-chips-wrap{position:relative !important;top:0 !important;margin-top:0 !important;padding-top:0 !important}
 @media(min-width:992px){
-  .gh-left-fixed .fns-search-wrap{padding:2px 0 2px !important;border-bottom:none !important}
+  .gh-left-fixed .fns-search-wrap{padding:0 !important;border-bottom:none !important;margin-top:0 !important}
   .gh-left-fixed .fns-chips-wrap{padding:0 !important;border-bottom:1px solid #E5E7EB}
   .gh-left-fixed .fns-pill{min-height:56px !important}
   .gh-left-fixed .fns-seg{padding:6px 14px 6px 14px !important}
@@ -294,7 +320,7 @@
 html{scrollbar-gutter:stable}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto} *{animation-duration:.01ms !important;transition:none !important}}
 @media (max-width:320px){
-  .fns-search-wrap{padding:6px 0 !important}
+  .fns-search-wrap{padding:1px 0 !important}
   .gh-m-tabs a{padding:10px 12px;font-size:13px}
   .fns-chips-row{padding:8px 0 10px}
 }

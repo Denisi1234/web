@@ -158,13 +158,21 @@ if (!function_exists('ghPropImage2')) {
                 <div class="gh-card-dot"></div>
             </div>
         </div>
-        <!-- Mobile mini-map with blue price pill (visible only ≤767px) -->
+        <!-- Mobile mini-map with blue price pill (visible only ≤767px) — real Mapbox from backend -->
         <div class="gh-card-map-mobile" aria-hidden="true">
             <?php
-                // Use static map placeholder; if lat/lng available use Mapbox static
                 $mlat = (float)($prop['latitude'] ?? ($prop['lat'] ?? -6.7725));
                 $mlng = (float)($prop['longitude'] ?? ($prop['lng'] ?? 39.245));
-                $mapImg = "https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-s+1a73e8($mlng,$mlat)/$mlng,$mlat,13,0/300x300@2x?access_token=pk.placeholder";
+                $cardMapToken = $mapboxToken ?? \Cake\Core\Configure::read('App.mapboxToken', '');
+                if (!is_string($cardMapToken) || $cardMapToken === 'YOUR_MAPBOX_ACCESS_TOKEN' || $cardMapToken === 'pk.placeholder') $cardMapToken = '';
+                if ($cardMapToken !== '') {
+                    $mapImg = "https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-s+1a73e8($mlng,$mlat)/$mlng,$mlat,13,0/300x300@2x?access_token=" . $cardMapToken;
+                } else {
+                    // OSM fallback — no token needed, use lightweight placeholder
+                    $mapImg = "https://tiles.a.openstreetmap.org/13/" . (int)(($mlng+180)/360*8192) . "/" . (int)((1 - log(tan(deg2rad($mlat)) + 1/cos(deg2rad($mlat)))/M_PI)/2*8192) . ".png";
+                    // use generic OSM static as fallback (avoid 403)
+                    $mapImg = "https://via.placeholder.com/300x300/e8ecef/5f6368?text=Map";
+                }
             ?>
             <img src="<?= h($mapImg) ?>" alt="" loading="lazy" onerror="this.style.background='#e8ecef'; this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27%3E%3C/svg%3E'">
             <span class="gh-card-map-price"><?= h($priceLabel) ?></span>
@@ -274,7 +282,6 @@ window.ghScrollToCard = function(propId) {
     if(cards&&shim){ cards.style.display='none'; shim.style.display='block'; shim.setAttribute('aria-hidden','false'); if(sec) sec.setAttribute('aria-busy','true'); }
     var chips=document.getElementById('fns_shimmer_chips'); if(chips) chips.classList.add('show');
     ctaBusy(true);
-    window.dispatchEvent(new CustomEvent('fastnet:shimmer-show'));
   };
   var hide=function(){
     var cards=document.getElementById('gh-cards-container');
@@ -282,7 +289,6 @@ window.ghScrollToCard = function(propId) {
     var sec=document.getElementById('gh_results_section');
     if(cards&&shim){ cards.style.display=''; shim.style.display='none'; shim.setAttribute('aria-hidden','true'); if(sec) sec.setAttribute('aria-busy','false'); }
     ctaBusy(false);
-    window.dispatchEvent(new CustomEvent('fastnet:shimmer-hide'));
   };
   window.ghTriggerShimmer=show;
   window.fnsTriggerShimmer=show;

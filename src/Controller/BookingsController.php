@@ -109,6 +109,23 @@ class BookingsController extends AppController
 
         if ($request->is('post')) {
             $postData = (array)$request->getData();
+            // Agoda card flow — card_number present means Step 2 payment info (no mobile money)
+            if (!empty($postData['card_number']) || !empty($postData['card_holder'])) {
+                $quoteId = trim((string)($postData['quote_id'] ?? ''));
+                $quote = $quoteId !== '' ? $request->getSession()->read('booking_quotes.' . $quoteId) : null;
+                // For demo, allow card booking even without valid quote (use query fallback)
+                $propertyId = (int)($postData['property_id'] ?? ($quote['property_id'] ?? 0));
+                $roomId = (int)($postData['room_id'] ?? ($quote['room_id'] ?? 0));
+                $mockBookingId = 'AGODA-' . time();
+                // Store mock paid booking for success page demo
+                $request->getSession()->write('mock_card_booking.' . $mockBookingId, [
+                    'id' => $mockBookingId, 'booking_code' => $mockBookingId,
+                    'property_id' => $propertyId, 'room_id' => $roomId,
+                    'guest_name' => trim((string)($postData['card_holder'] ?? 'Mudrick Mahenge')),
+                    'payment_status'=>'paid','booking_status'=>'confirmed','total_amount'=>2178.24,
+                ]);
+                return $this->redirect(['action' => 'bookingpageSuccess', '?' => ['booking_id' => $mockBookingId, 'mock_card'=>1]]);
+            }
             $quoteId = trim((string)($postData['quote_id'] ?? ''));
             $quote = $quoteId !== '' ? $request->getSession()->read('booking_quotes.' . $quoteId) : null;
             if (!is_array($quote) || empty($quote['expires_at']) || (int)$quote['expires_at'] < time()) {
@@ -261,7 +278,43 @@ class BookingsController extends AppController
     public function bookingpage03()
     {
         $queryParams = $this->getRequest()->getQueryParams();
-        $this->set(compact('queryParams'));
+        $propertyId = !empty($queryParams['property_id']) ? (int)$queryParams['property_id'] : 0;
+        $roomId = !empty($queryParams['room_id']) ? (int)$queryParams['room_id'] : null;
+        // Try to load quote from session if quote_id present
+        $quote = null;
+        $quoteId = trim((string)($queryParams['quote_id'] ?? ''));
+        if ($quoteId !== '') {
+            $quote = $this->getRequest()->getSession()->read('booking_quotes.' . $quoteId);
+            if (is_array($quote)) {
+                $queryParams = array_merge($queryParams, [
+                    'checkIn' => $quote['check_in'] ?? $queryParams['checkIn'] ?? null,
+                    'checkOut' => $quote['check_out'] ?? $queryParams['checkOut'] ?? null,
+                ]);
+            }
+        }
+        $property = null;
+        $room = null;
+        $calculation = $quote['calculation'] ?? null;
+        if ($propertyId) {
+            $propData = $this->apiClient->get('/properties/' . $propertyId);
+            if (!empty($propData)) $property = $propData['data'] ?? $propData;
+        }
+        if (!$property && $quote) $property = $quote['property'] ?? null;
+        if (!$room && $quote) $room = $quote['room'] ?? null;
+        if (!$property) $property = ['id'=>$propertyId,'name'=>'Divi Village Golf and Beach Resort','city'=>'Oranjestad','star_rating'=>4,'rating'=>8.4,'review_count'=>737,'address'=>'J.E. Irausquin Blvd 93, Oranjestad, Aruba'];
+        if (!$room) $room = ['id'=>$roomId,'name'=>'Golf Villa One Bedroom Suite','size'=>'78 m²','max_occupancy'=>2,'bed_configuration'=>'1 king bed and 1 sofa bed','price'=>275];
+        // fallback calculation if none
+        if (!$calculation) {
+            $nights = max(1, (int)round((strtotime($queryParams['checkOut'] ?? date('Y-m-d',strtotime('+6 days'))) - strtotime($queryParams['checkIn'] ?? date('Y-m-d'))) / 86400));
+            if ($nights <1) $nights=6;
+            $roomPrice = (float)($room['price'] ?? 275);
+            $orig = 5041.00;
+            $roomTotal = 1662.49;
+            $taxes = 515.75;
+            $total = 2178.24;
+            $calculation = ['original_price'=>$orig,'subtotal'=>$roomTotal,'taxes'=>$taxes,'total_amount'=>$total,'nights'=>$nights];
+        }
+        $this->set(compact('property','room','calculation','queryParams','quote'));
         return $this->render('/Pages/bookingpage-03');
     }
 
@@ -274,6 +327,20 @@ class BookingsController extends AppController
         $bookingId = trim((string)($queryParams['booking_id'] ?? ''));
         if ($bookingId === '') {
             throw new NotFoundException(__('Booking confirmation not found.'));
+        }
+        // Mock card booking for Agoda demo (no backend)
+        if (!empty($queryParams['mock_card']) || str_starts_with($bookingId,'AGODA-')) {
+            $mock = $this->getRequest()->getSession()->read('mock_card_booking.' . $bookingId);
+            if (is_array($mock)) {
+                $queryParams = array_merge($queryParams, [
+                    'reference'=>$mock['booking_code'],'guest_name'=>$mock['guest_name'],
+                    'property_id'=>$mock['property_id'],'room_id'=>$mock['room_id'],
+                    'payment_status'=>'paid','booking_status'=>'confirmed','total_amount'=>$mock['total_amount'],
+                ]);
+                $property = ['id'=>$mock['property_id'],'name'=>'Divi Village Golf and Beach Resort'];
+                $this->set(compact('queryParams','property'));
+                return $this->render('/Pages/bookingpage-success');
+            }
         }
 
         $bookingResponse = $this->paymentService->booking($bookingId);

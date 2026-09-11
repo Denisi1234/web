@@ -37,7 +37,7 @@ $mSummary = h($destVal ?: 'All Tanzanian Destinations') . ' • ' . date('M j', 
 :root{--fns-blue:#1A73E8;--fns-blue-active:#2563EB;--fns-border:#E5E7EB;--fns-text:#1F2937;--fns-text-sec:#6B7280;--fns-bg:#FFFFFF;--fns-pill-shadow:0 4px 20px rgba(0,0,0,.08);--fns-pill-shadow-hover:0 8px 30px rgba(0,0,0,.12);}
 *{scrollbar-width:thin}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;scroll-behavior:auto !important}}
-.fns-search-wrap{position:sticky;top:64px;z-index:910;background:transparent;padding:4px 0;}
+.fns-search-wrap{position:sticky;top:64px;z-index:910;background:transparent;padding:0;}
 /* any-device: clamp fluid type + touch coarseness */
 @media (pointer:coarse){.fns-seg,.fns-chip,.fns-step-btn{min-height:44px} .fns-cta{min-height:48px}}
 /* Unified pill — desktop — pixel grid 4px */
@@ -200,7 +200,7 @@ $mSummary = h($destVal ?: 'All Tanzanian Destinations') . ' • ' . date('M j', 
 .fns-sheet-footer .fns-btn-reset{min-height:48px;padding:0 18px;font-size:14px;}
 /* ── Responsive ── */
 @media(max-width:991px){
-  .fns-search-wrap{top:56px;padding:8px 0;background:#fff;border-bottom:1px solid #E5E7EB;position:sticky;z-index:902;}
+  .fns-search-wrap{top:56px;padding:0;background:#fff;border-bottom:1px solid #E5E7EB;position:sticky;z-index:902;}
   .fns-search-wrap .container-fluid:first-child{padding-left:16px !important;padding-right:16px !important;}
   .fns-pill{display:none !important;}
   .fns-divider{display:none !important;}
@@ -218,7 +218,7 @@ $mSummary = h($destVal ?: 'All Tanzanian Destinations') . ' • ' . date('M j', 
 @media(min-width:992px){
   .fns-mobile-chip{display:none !important;}
   .fns-mobile-sheet,.fns-sheet-backdrop{display:none !important;}
-  .fns-search-wrap{padding:10px 0 8px;}
+  .fns-search-wrap{padding:0;}
 }
 @media(max-width:380px){
   .fns-mobile-chip-text{font-size:13px;}
