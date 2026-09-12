@@ -97,12 +97,19 @@ function showShimmer(on){
   const cards=document.getElementById('gh-cards-container');
   const shim=document.getElementById('gh-shimmer-container');
   const bar=document.getElementById('fastnet-progress');
+  const section=document.getElementById('gh_results_section');
+  const btn=document.getElementById('fns_search_btn');
+  const chip=document.getElementById('fns_shimmer_chips');
   if(on){
-    if(cards&&shim){ cards.style.opacity='0.55'; shim.style.display='block'; }
-    if(bar) bar.style.width='30%';
+    if(cards&&shim){ cards.style.opacity='0.55'; cards.setAttribute('aria-busy','true'); shim.style.display='block'; shim.setAttribute('aria-hidden','false'); if(chip) chip.classList.add('show'); }
+    if(section) section.setAttribute('aria-busy','true');
+    if(btn){ btn.setAttribute('aria-busy','true'); btn.disabled=true; }
+    if(bar){ bar.style.transition='width 0.25s ease'; bar.style.width='45%'; }
   } else {
-    if(cards&&shim){ cards.style.opacity=''; shim.style.display='none'; }
-    if(bar) setTimeout(()=>bar.style.width='0%', 280);
+    if(cards&&shim){ cards.style.opacity=''; cards.setAttribute('aria-busy','false'); shim.style.display='none'; shim.setAttribute('aria-hidden','true'); if(chip) chip.classList.remove('show'); }
+    if(section) section.setAttribute('aria-busy','false');
+    if(btn){ btn.setAttribute('aria-busy','false'); btn.disabled=false; }
+    if(bar){ bar.style.width='100%'; setTimeout(()=>{bar.style.width='0%'; bar.style.transition='width 0.3s ease';}, 260); }
   }
 }
 async function hydrate(url){
@@ -111,6 +118,7 @@ async function hydrate(url){
   const fetchUrl = url + (url.includes('?')?'&':'?') + 'format=json';
   if(_lastFetchUrl===fetchUrl) return;
   _lastFetchUrl=fetchUrl;
+  const t0=Date.now();
   showShimmer(true);
   try{
     const res=await fetch(fetchUrl, {signal:_abort.signal, headers:{'X-Requested-With':'XMLHttpRequest'}});
@@ -128,10 +136,19 @@ async function hydrate(url){
       }
     }
     refreshDetailLinks();
+    // ensure results count header live region announces
+    const live=document.getElementById('gh_results_live');
+    if(live && data.totalCount!==undefined) live.textContent=data.totalCount + ' stays';
   }catch(e){
     if(e.name!=='AbortError') console.warn('[FastNetState] hydrate failed',e);
   }finally{
-    showShimmer(false);
+    const elapsed=Date.now()-t0;
+    const minShow=380;
+    if(elapsed < minShow){
+      setTimeout(()=>showShimmer(false), minShow - elapsed);
+    } else {
+      showShimmer(false);
+    }
   }
 }
 function refreshDetailLinks(){

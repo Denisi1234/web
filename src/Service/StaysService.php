@@ -24,11 +24,14 @@ class StaysService
     public function getFeaturedResorts(int $limit = 50): array
     {
         $res = $this->apiClient->get('/properties', ['limit' => $limit]);
-        if (!empty($res)) {
-            $data = $res['data'] ?? ($res['items'] ?? $res);
-            if (is_array($data) && !empty($data)) {
-                return $data;
-            }
+        if (empty($res) || (!empty($res['_status']) && $res['_status'] >= 400)) {
+            return [];
+        }
+        $data = $res['data'] ?? ($res['items'] ?? $res);
+        if (is_array($data) && !empty($data)) {
+            // Filter to only valid property arrays
+            $filtered = array_filter($data, fn($item) => is_array($item) && isset($item['id']));
+            return $filtered ? array_values($filtered) : [];
         }
 
         return [];
@@ -95,12 +98,18 @@ class StaysService
     public function searchProperties(array $params = []): array
     {
         $res = $this->apiClient->get('/properties', $params);
-        if ($res === null) {
+        if ($res === null || (!empty($res['_status']) && $res['_status'] >= 400)) {
             return [];
         }
 
         $data = $res['data'] ?? ($res['items'] ?? $res);
-        return is_array($data) ? array_values($data) : [];
+        // Ensure data is list of property arrays, not error string
+        if (!is_array($data) || (isset($data['message']) && isset($data['_status']))) {
+            return [];
+        }
+        // Filter to only array items with id
+        $filtered = array_filter($data, fn($item) => is_array($item) && isset($item['id']));
+        return $filtered ? array_values($filtered) : (is_array($data) && isset($data[0]) && is_array($data[0]) ? array_values($data) : []);
     }
 
     /**
@@ -109,7 +118,10 @@ class StaysService
     public function getProperty(int $id): ?array
     {
         $res = $this->apiClient->get('/properties/' . $id);
-        if (!empty($res['data'])) {
+        if (!empty($res['_status']) && $res['_status'] >= 400) {
+            $res = null;
+        }
+        if (!empty($res['data']) && is_array($res['data'])) {
             return $res['data'];
         }
         if (!empty($res) && is_array($res) && isset($res['id'])) {
@@ -120,6 +132,9 @@ class StaysService
         // while the single-property route is unavailable. Search that same
         // live backend response before treating the property as missing.
         $collection = $this->apiClient->get('/properties', ['limit' => 100]);
+        if (!empty($collection['_status']) && $collection['_status'] >= 400) {
+            return null;
+        }
         $properties = $collection['data'] ?? ($collection['items'] ?? $collection);
         if (is_array($properties)) {
             foreach ($properties as $property) {

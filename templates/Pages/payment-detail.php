@@ -6,12 +6,6 @@ $this->assign('title', 'Payment Details');
 <?= $this->Html->css('/assets/css/google-travel-layout.css') ?>
 <?= $this->Html->css('/assets/css/google-travel-home.css') ?>
 <?= $this->element('navbar') ?>
-<div class="gh-m-tabs" role="tablist" aria-label="Travel types">
-  <a href="/?explore=1" role="tab">Explore</a>
-  <a href="/?homes=1" role="tab">Homes</a>
-  <a href="/" role="tab" class="active" aria-selected="true">Hotels</a>
-  <a href="/?destination=Vacation" role="tab">Vacation rentals</a>
-</div>
 <nav aria-label="Breadcrumb" class="container-fluid px-2 px-lg-2" style="max-width:100%;margin:0 auto;background:#f8f9fa;">
   <ol class="breadcrumb mb-0 py-1" style="background:transparent;font-size:12px;line-height:1.2;--bs-breadcrumb-divider:'›';" itemscope itemtype="https://schema.org/BreadcrumbList">
     <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="/" itemprop="item" style="color:#5f6368;text-decoration:none;"><span itemprop="name">Home</span></a><meta itemprop="position" content="1"></li>
@@ -20,23 +14,12 @@ $this->assign('title', 'Payment Details');
 </nav>
 <main id="main-content" style="background:#f8f9fa;min-height:85vh;" role="main">
 
-<!-- Dashboard Menu -->
-<?= $this->element('Listing/User-Dashboard/dashboard-menu'); ?>
+<div class="trivago-profile-wrapper">
+    <div class="container" style="max-width: 1180px; padding-left: 20px; padding-right: 20px;">
+        <div class="row">
+            <?= $this->element('profile_sidebar', ['active' => 'payment-detail']); ?>
 
-<!-- Payment Page -->
-<section class="pt-5 gray-simple position-relative">
-	<div class="container">
-
-		<div class="row align-items-center justify-content-center">
-			<?= $this->element('Listing/User-Dashboard/navigation'); ?>
-		</div>
-
-		<div class="row align-items-start justify-content-between gx-xl-4">
-
-			<!-- Left user sidebar info -->
-			<?= $this->element('Listing/User-Dashboard/side-info'); ?>
-
-			<div class="col-xl-8 col-lg-8 col-md-12">
+            <div class="col-lg-9 ps-lg-5 trivago-profile-content-col">
 
 				<!-- Saved Payment Methods -->
 				<div class="card mb-4">
@@ -87,11 +70,9 @@ $this->assign('title', 'Payment Details');
 
 			</div>
 
-		</div>
-	</div>
-</section>
-
-<!-- Add card modal -->
+        </div>
+    </div>
+</div>
 <div class="modal fade" id="addcard" tabindex="-1" role="dialog" aria-labelledby="addcardmodal" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered addcard-pop-form" role="document">
 		<div class="modal-content" id="addcardmodal">

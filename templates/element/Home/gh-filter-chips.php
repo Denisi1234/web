@@ -85,15 +85,15 @@ $toggleAmen = function(string $key) use ($buildUrl, $amenList): string {
 /* Mobile handle */
 .fns-chips-handle{display:none;}
 @media(max-width:991px){
-  .fns-chips-wrap{top:64px;padding:0 16px;background:#fff;}
+  .fns-chips-wrap{top:64px;padding:0 16px 0;background:#fff;}
   .fns-chips-wrap .container-fluid{padding-left:0 !important;padding-right:0 !important;}
-  .fns-chip{padding:8px 12px;font-size:13px;height:40px;gap:8px;}
+  .fns-chip{padding:10px 14px;font-size:13.5px;min-height:44px;height:44px;gap:8px;scroll-snap-align:start;}
   .fns-chip i{font-size:12px !important;}
-  .fns-chips-row{padding:10px 0 12px;gap:0;}
-  .fns-chips-handle{display:flex;justify-content:center;padding:8px 0 0;}
+  .fns-chips-row{padding:10px 16px 12px 0;gap:8px;scroll-snap-type:x mandatory;scroll-padding-left:16px;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;overscroll-behavior-x:contain;}
+  .fns-chips-handle{display:flex;justify-content:center;padding:6px 0 2px;}
   .fns-chips-handle span{width:40px;height:5px;background:#E5E7EB;border-radius:9999px;display:block;}
-  .fns-price-pop{position:fixed !important;left:12px !important;right:12px !important;top:auto !important;bottom:12px !important;width:auto !important;max-width:none !important;border-radius:20px;max-height:78vh;overflow-y:auto;}
-  .fns-scroll-btn{width:40px;height:40px;}
+  .fns-price-pop{position:fixed !important;left:12px !important;right:12px !important;top:auto !important;bottom:calc(12px + env(safe-area-inset-bottom)) !important;width:auto !important;max-width:none !important;border-radius:20px;max-height:82vh;max-height:82dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+  .fns-scroll-btn{display:none !important;}
 }
 @media(max-width:380px){
   .fns-chip{padding:9px 12px;font-size:12.5px;min-height:38px;}

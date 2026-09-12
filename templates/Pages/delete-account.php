@@ -6,12 +6,6 @@ $this->assign('title', 'Delete Account - FastNet Stays');
 <?= $this->Html->css('/assets/css/google-travel-layout.css') ?>
 <?= $this->Html->css('/assets/css/google-travel-home.css') ?>
 <?= $this->element('navbar') ?>
-<div class="gh-m-tabs" role="tablist" aria-label="Travel types">
-  <a href="/?explore=1" role="tab">Explore</a>
-  <a href="/?homes=1" role="tab">Homes</a>
-  <a href="/" role="tab" class="active" aria-selected="true">Hotels</a>
-  <a href="/?destination=Vacation" role="tab">Vacation rentals</a>
-</div>
 <nav aria-label="Breadcrumb" class="container-fluid px-2 px-lg-2" style="max-width:100%;margin:0 auto;background:#f8f9fa;">
   <ol class="breadcrumb mb-0 py-1" style="background:transparent;font-size:12px;line-height:1.2;--bs-breadcrumb-divider:'›';" itemscope itemtype="https://schema.org/BreadcrumbList">
     <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="/" itemprop="item" style="color:#5f6368;text-decoration:none;"><span itemprop="name">Home</span></a><meta itemprop="position" content="1"></li>
@@ -20,24 +14,12 @@ $this->assign('title', 'Delete Account - FastNet Stays');
 </nav>
 <main id="main-content" style="background:#f8f9fa;min-height:85vh;" role="main">
 
-<!-- templates/element/Listing/User-Dashboard/dashboard-menu.php -->
-<?= $this->element('Listing/User-Dashboard/dashboard-menu'); ?>
+<div class="trivago-profile-wrapper">
+    <div class="container" style="max-width: 1180px; padding-left: 20px; padding-right: 20px;">
+        <div class="row">
+            <?= $this->element('profile_sidebar', ['active' => 'delete-account']); ?>
 
-<!-- Delete Account Page -->
-<section class="pt-5 gray-simple position-relative">
-	<div class="container">
-
-		<div class="row align-items-center justify-content-center">
-			<!-- templates/element/Listing/User-Dashboard/navigation.php -->
-			<?= $this->element('Listing/User-Dashboard/navigation'); ?>
-		</div>
-
-		<div class="row align-items-start justify-content-between gx-xl-4">
-
-			<!-- templates/element/Listing/User-Dashboard/side-info.php -->
-			<?= $this->element('Listing/User-Dashboard/side-info'); ?>
-
-			<div class="col-xl-8 col-lg-8 col-md-12">
+            <div class="col-lg-9 ps-lg-5 trivago-profile-content-col">
 
 				<!-- Delete Account Confirmation -->
 				<div class="card mb-4 border border-danger/30 shadow-sm rounded-3 bg-white">
@@ -70,10 +52,9 @@ $this->assign('title', 'Delete Account - FastNet Stays');
 
 			</div>
 
-		</div>
-	</div>
-</section>
-<!-- End Delete Account Page -->
+        </div>
+    </div>
+</div>
 
 <script>
 function confirmDeleteAccount() {

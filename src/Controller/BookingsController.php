@@ -109,23 +109,6 @@ class BookingsController extends AppController
 
         if ($request->is('post')) {
             $postData = (array)$request->getData();
-            // Agoda card flow — card_number present means Step 2 payment info (no mobile money)
-            if (!empty($postData['card_number']) || !empty($postData['card_holder'])) {
-                $quoteId = trim((string)($postData['quote_id'] ?? ''));
-                $quote = $quoteId !== '' ? $request->getSession()->read('booking_quotes.' . $quoteId) : null;
-                // For demo, allow card booking even without valid quote (use query fallback)
-                $propertyId = (int)($postData['property_id'] ?? ($quote['property_id'] ?? 0));
-                $roomId = (int)($postData['room_id'] ?? ($quote['room_id'] ?? 0));
-                $mockBookingId = 'AGODA-' . time();
-                // Store mock paid booking for success page demo
-                $request->getSession()->write('mock_card_booking.' . $mockBookingId, [
-                    'id' => $mockBookingId, 'booking_code' => $mockBookingId,
-                    'property_id' => $propertyId, 'room_id' => $roomId,
-                    'guest_name' => trim((string)($postData['card_holder'] ?? 'Mudrick Mahenge')),
-                    'payment_status'=>'paid','booking_status'=>'confirmed','total_amount'=>2178.24,
-                ]);
-                return $this->redirect(['action' => 'bookingpageSuccess', '?' => ['booking_id' => $mockBookingId, 'mock_card'=>1]]);
-            }
             $quoteId = trim((string)($postData['quote_id'] ?? ''));
             $quote = $quoteId !== '' ? $request->getSession()->read('booking_quotes.' . $quoteId) : null;
             if (!is_array($quote) || empty($quote['expires_at']) || (int)$quote['expires_at'] < time()) {
@@ -143,10 +126,21 @@ class BookingsController extends AppController
             if (empty($fullName)) $fullName = 'Guest Traveler';
 
             $paymentMethod = trim($postData['payment_method'] ?? 'vodacom');
-            $paymentPhone = trim($postData['payment_phone'] ?? ($postData['phone'] ?? ''));
-            if ($paymentPhone === '') {
-                $this->Flash->error(__('Enter the mobile number that should receive the payment request.'));
-                return $this->redirect(['action' => 'bookingPage', '?' => ['quote_id' => $quoteId]]);
+            $isCard = $paymentMethod === 'card';
+            if ($isCard) {
+                $cardHolder = trim((string)($postData['card_holder'] ?? ''));
+                if ($cardHolder !== '') $fullName = $cardHolder;
+                if (empty($postData['card_number']) || empty($postData['expiry']) || empty($postData['cvc'])) {
+                    $this->Flash->error(__('Please fill all card details.'));
+                    return $this->redirect(['action' => 'bookingpage03', '?' => ['quote_id' => $quoteId]]);
+                }
+                $paymentPhone = trim((string)($postData['payment_phone'] ?? ($postData['phone'] ?? '')));
+            } else {
+                $paymentPhone = trim((string)($postData['payment_phone'] ?? ($postData['phone'] ?? '')));
+                if ($paymentPhone === '') {
+                    $this->Flash->error(__('Enter the mobile number that should receive the payment request.'));
+                    return $this->redirect(['action' => 'bookingPage', '?' => ['quote_id' => $quoteId]]);
+                }
             }
             $guestEmail = trim((string)($postData['email'] ?? ''));
             $guestPhone = trim((string)($postData['phone'] ?? $paymentPhone));
@@ -205,6 +199,17 @@ class BookingsController extends AppController
                     $this->getRequest()->getSession()->write('booking_invoices.' . $bookingCode, $bData['invoice_url']);
                 }
 
+                if ($isCard) {
+                    // Card payment — do not use AzamPay mobile Money. Create pending for card verification (requires card gateway webhook, not auto-paid).
+                    $paymentId = 'card-' . $bookingId;
+                    $request->getSession()->write('pending_payments.' . $paymentId, [
+                        'booking_id' => $bookingId,
+                        'created_at' => time(),
+                        'method' => 'card',
+                    ]);
+                    $request->getSession()->delete('booking_quotes.' . $quoteId);
+                    return $this->redirect(['action' => 'paymentPending', '?' => ['payment_id' => $paymentId]]);
+                }
                 $paymentResult = $this->paymentService->initiate([
                     'booking_id' => $bookingId,
                     'amount' => $totalAmount,
@@ -292,27 +297,20 @@ class BookingsController extends AppController
                 ]);
             }
         }
-        $property = null;
-        $room = null;
         $calculation = $quote['calculation'] ?? null;
-        if ($propertyId) {
+        if (empty($quote) || empty($calculation)) {
+            $this->Flash->error(__('Your booking session has expired. Please select your room again.'));
+            return $this->redirect(['action' => 'bookingPage']);
+        }
+        $property = $quote['property'] ?? null;
+        $room = $quote['room'] ?? null;
+        if (!$property && $propertyId) {
             $propData = $this->apiClient->get('/properties/' . $propertyId);
             if (!empty($propData)) $property = $propData['data'] ?? $propData;
         }
-        if (!$property && $quote) $property = $quote['property'] ?? null;
-        if (!$room && $quote) $room = $quote['room'] ?? null;
-        if (!$property) $property = ['id'=>$propertyId,'name'=>'Divi Village Golf and Beach Resort','city'=>'Oranjestad','star_rating'=>4,'rating'=>8.4,'review_count'=>737,'address'=>'J.E. Irausquin Blvd 93, Oranjestad, Aruba'];
-        if (!$room) $room = ['id'=>$roomId,'name'=>'Golf Villa One Bedroom Suite','size'=>'78 m²','max_occupancy'=>2,'bed_configuration'=>'1 king bed and 1 sofa bed','price'=>275];
-        // fallback calculation if none
-        if (!$calculation) {
-            $nights = max(1, (int)round((strtotime($queryParams['checkOut'] ?? date('Y-m-d',strtotime('+6 days'))) - strtotime($queryParams['checkIn'] ?? date('Y-m-d'))) / 86400));
-            if ($nights <1) $nights=6;
-            $roomPrice = (float)($room['price'] ?? 275);
-            $orig = 5041.00;
-            $roomTotal = 1662.49;
-            $taxes = 515.75;
-            $total = 2178.24;
-            $calculation = ['original_price'=>$orig,'subtotal'=>$roomTotal,'taxes'=>$taxes,'total_amount'=>$total,'nights'=>$nights];
+        if (!$property || !$room) {
+            $this->Flash->error(__('Booking details are incomplete. Please start again.'));
+            return $this->redirect(['action' => 'bookingPage']);
         }
         $this->set(compact('property','room','calculation','queryParams','quote'));
         return $this->render('/Pages/bookingpage-03');
@@ -327,20 +325,6 @@ class BookingsController extends AppController
         $bookingId = trim((string)($queryParams['booking_id'] ?? ''));
         if ($bookingId === '') {
             throw new NotFoundException(__('Booking confirmation not found.'));
-        }
-        // Mock card booking for Agoda demo (no backend)
-        if (!empty($queryParams['mock_card']) || str_starts_with($bookingId,'AGODA-')) {
-            $mock = $this->getRequest()->getSession()->read('mock_card_booking.' . $bookingId);
-            if (is_array($mock)) {
-                $queryParams = array_merge($queryParams, [
-                    'reference'=>$mock['booking_code'],'guest_name'=>$mock['guest_name'],
-                    'property_id'=>$mock['property_id'],'room_id'=>$mock['room_id'],
-                    'payment_status'=>'paid','booking_status'=>'confirmed','total_amount'=>$mock['total_amount'],
-                ]);
-                $property = ['id'=>$mock['property_id'],'name'=>'Divi Village Golf and Beach Resort'];
-                $this->set(compact('queryParams','property'));
-                return $this->render('/Pages/bookingpage-success');
-            }
         }
 
         $bookingResponse = $this->paymentService->booking($bookingId);

@@ -79,7 +79,14 @@ return [
      *   You should treat it as extremely sensitive data.
      */
     'Security' => [
-        'salt' => env('SECURITY_SALT', '7c9a6f3e1b8d2a4c5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d'),
+        'salt' => (function () {
+            $s = env('SECURITY_SALT', null);
+            if (!empty($s)) return $s;
+            if (filter_var(env('DEBUG', true), FILTER_VALIDATE_BOOLEAN)) {
+                return 'dev-insecure-salt-' . bin2hex(random_bytes(16));
+            }
+            throw new \RuntimeException('SECURITY_SALT environment variable is required — generate with `bin/cake security get_salt` and set in .env / app_local.php. No default is shipped for production.');
+        })(),
     ],
 
     /*

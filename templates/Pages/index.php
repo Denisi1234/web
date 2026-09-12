@@ -3,17 +3,29 @@
  * fastnetstays.com — Home Page — PRODUCTION GRADE
  * - Google Hotels pixel-perfect split 50/50, a11y, SEO, perf (preload, lazy, web-vitals), hardened empty/error states
  */
-$this->assign('title', 'FastNet Stays — Find Hotels in Tanzania | Best Prices Guaranteed');
-$this->assign('description', 'Search hotels in Dar es Salaam, Zanzibar & Tanzania. Real prices, verified stays, map view. Book direct and save.');
+// ── Dynamic SEO per city — helps fast ranking for "Hotels in Dar / Zanzibar / Arusha" queries ──
+$seoCity = trim((string)($queryParams['city'] ?? $destination ?? ''));
+$seoCount = (int)($totalCount ?? count($properties ?? []));
+if ($seoCity !== '' && strtolower($seoCity) !== 'tanzania') {
+    $seoTitle = 'Hotels in ' . $seoCity . ' — ' . ($seoCount ? $seoCount . ' Stays | ' : '') . 'FastNet Stays | Best Prices Guaranteed';
+    $seoDesc  = 'Find ' . ($seoCount ? $seoCount . ' ' : '') . 'hotels in ' . $seoCity . ', Tanzania — real prices, verified stays, map view, free cancellation. Compare & book direct on FastNet Stays.';
+} else {
+    $seoTitle = 'FastNet Stays — Find Hotels in Tanzania | Best Prices Guaranteed';
+    $seoDesc  = 'Search hotels in Dar es Salaam, Zanzibar & Arusha, Tanzania. Real prices, verified stays, map view. Book direct and save.';
+}
+$this->assign('title', $seoTitle);
+$this->assign('description', $seoDesc);
 // preload first hotel image (LCP)
 $firstImg = $properties[0]['image_url'] ?? ($properties[0]['primary_image_url'] ?? '');
 if ($firstImg) $this->Html->meta(['rel'=>'preload','as'=>'image','href'=>$firstImg,'fetchpriority'=>'high'], null, ['block'=>true]);
+// canonical self for this filtered view — also emitted in layout, but set here for social share
+$seoCanon = 'https://www.fastnetstays.com/' . ($seoCity !== '' ? '?city=' . rawurlencode($seoCity) : '');
 ?>
-<?= $this->Html->css('/assets/css/google-travel-layout.css') ?>
-<?= $this->Html->css('/assets/css/google-travel-cards.css') ?>
-<?= $this->Html->css('/assets/css/hotel-card.css') ?>
-<?= $this->Html->css('/assets/css/search-spacing.css') ?>
-<?= $this->Html->css('/assets/css/google-travel-home.css') ?>
+<?= $this->Html->css('/assets/css/google-travel-layout.css?v=' . filemtime(WWW_ROOT . 'assets/css/google-travel-layout.css')) ?>
+<?= $this->Html->css('/assets/css/google-travel-cards.css?v=' . filemtime(WWW_ROOT . 'assets/css/google-travel-cards.css')) ?>
+<?= $this->Html->css('/assets/css/hotel-card.css?v=' . filemtime(WWW_ROOT . 'assets/css/hotel-card.css')) ?>
+<?= $this->Html->css('/assets/css/search-spacing.css?v=' . filemtime(WWW_ROOT . 'assets/css/search-spacing.css')) ?>
+<?= $this->Html->css('/assets/css/google-travel-home.css?v=' . filemtime(WWW_ROOT . 'assets/css/google-travel-home.css')) ?>
 <?php
 // Hotel ItemList JSON-LD for SEO (production)
 $hotelListLd = [
@@ -42,16 +54,37 @@ $this->Html->meta(['name'=>'format-detection','content'=>'telephone=no'], null, 
 <!-- ── Retained Header (do not modify) ── -->
 <?= $this->element('navbar') ?>
 
-<!-- ── Mobile tabs — FastNet Stays (no Flights) ── -->
+<?php
+// ── Mobile tabs — real working (Apartment / Home / Hotels / Lodge) ──
+$tabCity = trim((string)($queryParams['city'] ?? $destination ?? ''));
+$tabProp = trim((string)($queryParams['property_type'] ?? ''));
+$isApartment = $tabProp === 'Apartment';
+$isLodge = $tabProp === 'Safari Lodge';
+$isHome = !$isApartment && !$isLodge;
+$isHotels = !$isApartment && !$isLodge;
+$buildTabUrl = function(array $overrides) use ($tabCity): string {
+    $p = [];
+    if ($tabCity !== '') $p['city'] = $tabCity;
+    foreach ($overrides as $k=>$v) {
+        if ($v === '' || $v === null) unset($p[$k]); else $p[$k] = $v;
+    }
+    return $p ? '/?' . http_build_query($p) : '/';
+};
+// Apartment (was Explore), Home same as Hotels (no filter), Lodge (was Vacation)
+$apartmentUrl = $buildTabUrl(['property_type'=>'Apartment']);
+$homeUrl = $buildTabUrl(['property_type'=>'']);
+$hotelsUrl = $buildTabUrl(['property_type'=>'']);
+$lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
+?>
 <div class="gh-m-tabs" role="tablist" aria-label="Travel types">
-  <a href="/?explore=1" role="tab">Explore</a>
-  <a href="/?homes=1" role="tab">Homes</a>
-  <a href="/" role="tab" class="active" aria-selected="true">Hotels</a>
-  <a href="/?destination=Vacation" role="tab">Vacation rentals</a>
+  <a href="<?= h($apartmentUrl) ?>" role="tab" class="<?= $isApartment ? 'active' : '' ?>" <?= $isApartment ? 'aria-selected="true"' : '' ?>>Apartment</a>
+  <a href="<?= h($homeUrl) ?>" role="tab" class="<?= $isHome ? 'active' : '' ?>" <?= $isHome ? 'aria-selected="true"' : '' ?>>Home</a>
+  <a href="<?= h($hotelsUrl) ?>" role="tab" class="<?= $isHotels ? 'active' : '' ?>" <?= $isHotels ? 'aria-selected="true"' : '' ?>>Hotels</a>
+  <a href="<?= h($lodgeUrl) ?>" role="tab" class="<?= $isLodge ? 'active' : '' ?>" <?= $isLodge ? 'aria-selected="true"' : '' ?>>Lodge</a>
 </div>
 <!-- ── Split styles moved to google-travel-home.css ── -->
 <!-- Breadcrumb (ultra-compact) -->
-<nav aria-label="Breadcrumb" class="container-fluid px-2 px-lg-2" style="max-width:100%;margin:0 auto;background:#f8f9fa;padding:0;">
+<nav aria-label="Breadcrumb" class="container-fluid px-3 px-lg-4" style="max-width:100%;margin:0 auto;background:#f8f9fa;padding-top:4px;padding-bottom:4px;">
   <ol class="breadcrumb mb-0 py-0" style="background:transparent;font-size:11px;line-height:1;padding:0;--bs-breadcrumb-divider:'›';" itemscope itemtype="https://schema.org/BreadcrumbList">
     <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="/" itemprop="item" style="color:#5f6368;text-decoration:none;"><span itemprop="name">Home</span></a><meta itemprop="position" content="1"></li>
     <li class="breadcrumb-item active" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><span itemprop="name"><?= h($queryParams['city'] ?? $queryParams['destination'] ?? 'Tanzania') ?> Hotels</span><meta itemprop="position" content="2"></li>
@@ -59,8 +92,8 @@ $this->Html->meta(['name'=>'format-detection','content'=>'telephone=no'], null, 
 </nav>
 <!-- ── Split Screen: HALF — LEFT (search+chips+list scroll) + RIGHT (map full-height from header) ── -->
 <main id="main-content" class="gh-split-container" style="background:#f8f9fa; min-height:85vh; margin-top:0;" role="main" aria-label="Hotel search results">
-    <div class="container-fluid px-1 px-lg-2" style="max-width:100%; margin:0 auto; height:100%; padding-top:0;">
-        <div class="row g-0 g-lg-0 position-relative" style="--bs-gutter-x:0; --bs-gutter-y:0; height:100%; margin-top:0; padding-top:0;">
+    <div class="container-fluid px-3 px-lg-4" style="max-width:100%; margin:0 auto; height:100%; padding-top:0;">
+        <div class="row g-2 g-lg-3 position-relative" style="height:100%; margin-top:0; padding-top:0;">
 
             <!-- ══ LEFT PANE: HALF screen — search+chips fixed + list scrolls ══ -->
             <div class="col-xl-6 col-lg-6 col-md-12 pe-lg-1" id="gh_list_col">
@@ -94,8 +127,8 @@ $this->Html->meta(['name'=>'format-detection','content'=>'telephone=no'], null, 
                     <?= $this->element('Home/gh-hotel-cards') ?>
                     </div>
                     <noscript><div class="alert alert-info mt-3">Enable JavaScript for live filtering, map and instant price updates. <a href="/">Reload</a></div></noscript>
-                    <!-- Shared Footer — same as other pages (full 5-column) inside left scroll so map stays fixed -->
-                    <div class="gh-index-footer-wrap">
+                    <!-- Shared Footer — desktop-only to eliminate mobile vertical clutter; hidden <992px so list ends at pagination -->
+                    <div class="gh-index-footer-wrap d-none d-lg-block">
                         <?= $this->element('footer', ['skin' => 'skin-light-footer']) ?>
                     </div>
                 </section>
@@ -156,11 +189,11 @@ $this->Html->meta(['name'=>'format-detection','content'=>'telephone=no'], null, 
     </div>
 </main>
 
-<!-- Mobile Floating Map / List Toggle — peek sheet -->
-<div class="d-lg-none position-fixed bottom-0 start-50 translate-middle-x mb-4" style="z-index:1040;">
+<!-- Mobile Floating Map / List Toggle — peek sheet (safe-area aware, avoids gesture-bar overlap) -->
+<div class="d-lg-none gh-mob-toggle-wrap position-fixed start-50 translate-middle-x" style="z-index:1040; bottom:calc(16px + env(safe-area-inset-bottom, 0px));">
     <button type="button" id="gh_mob_toggle" onclick="ghToggleMobileView()"
         class="btn btn-dark shadow-lg rounded-pill px-4 py-2 fw-bold d-inline-flex align-items-center gap-2 border border-2 border-white"
-        style="font-size:14px; background:#202124;">
+        style="font-size:14px; background:#202124; min-height:44px; box-shadow:0 4px 20px rgba(0,0,0,.24);">
         <i class="fa-solid fa-map-location-dot" id="gh_mob_icon" style="color:#fbbc04;"></i>
         <span id="gh_mob_text">View Map</span>
     </button>
@@ -177,14 +210,14 @@ $this->Html->meta(['name'=>'format-detection','content'=>'telephone=no'], null, 
 <?= $this->element('Home/gh-filters-modal') ?>
 
 <?php
-// Real Mapbox from backend — server-side injection avoids CORS/race and powers map on first paint
+// Real Mapbox — only public pk.* echoed (never secret). Backend GET /api/map-config is cached.
 $serverMapboxToken = $mapboxToken ?? \Cake\Core\Configure::read('App.mapboxToken', env('MAPBOX_TOKEN', ''));
 $serverMapboxStyle = $mapboxStyle ?? \Cake\Core\Configure::read('App.mapboxStyle', 'mapbox://styles/mapbox/streets-v12');
-if (!is_string($serverMapboxToken)) $serverMapboxToken = '';
+if (!is_string($serverMapboxToken) || !str_starts_with($serverMapboxToken, 'pk.')) $serverMapboxToken = '';
 if (!is_string($serverMapboxStyle) || $serverMapboxStyle === '') $serverMapboxStyle = 'mapbox://styles/mapbox/streets-v12';
 ?>
 <script>
-// Server-injected Mapbox — real token from backend GET /api/map-config (with env fallback)
+// Server-injected Mapbox — only pk.* public token echoed (secret never in HTML). Restrict by Referrer in Mapbox dashboard.
 window.MAPBOX_TOKEN = <?= json_encode($serverMapboxToken) ?>;
 window.MAPBOX_STYLE = <?= json_encode($serverMapboxStyle) ?>;
 window.DEFAULT_MAPBOX_TOKEN = window.MAPBOX_TOKEN || window.DEFAULT_MAPBOX_TOKEN || '';

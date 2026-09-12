@@ -9,6 +9,7 @@
 
 <?= $this->Html->css('/assets/css/profile.css'); ?>
 
+<main id="main-content" role="main">
 <div class="trivago-profile-wrapper">
     <div class="container" style="max-width: 1180px; padding-left: 20px; padding-right: 20px;">
         <div class="row">

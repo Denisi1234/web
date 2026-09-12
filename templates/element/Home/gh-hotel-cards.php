@@ -17,6 +17,29 @@ if (!function_exists('ghPropImage2')) {
         return '';
     }
 }
+if (!function_exists('ghPropImages')) {
+    function ghPropImages(array $p): array {
+        $out = [];
+        // Primary images array (real deploy will have $p['images'] as JSON or array of urls/objects)
+        $raw = $p['images'] ?? $p['gallery'] ?? $p['photos'] ?? null;
+        if (is_string($raw)) { $d = json_decode($raw, true); if (is_array($d)) $raw = $d; else $raw = null; }
+        if (is_array($raw)) {
+            foreach ($raw as $it) {
+                $u = is_array($it) ? ($it['url'] ?? $it['image_url'] ?? $it['src'] ?? '') : (string)$it;
+                $u = trim($u);
+                if ($u !== '' && !in_array($u, $out, true)) $out[] = $u;
+                if (count($out) >= 8) break;
+            }
+        }
+        // fallback single fields if no gallery
+        if (empty($out)) {
+            foreach (['primary_image_url','image_url','cover_image','thumbnail'] as $k) {
+                if (!empty($p[$k]) && !in_array($p[$k], $out, true)) $out[] = $p[$k];
+            }
+        }
+        return $out;
+    }
+}
 ?>
 
 
@@ -49,6 +72,7 @@ if (!function_exists('ghPropImage2')) {
 <div id="gh-cards-container">
 <?php if (!empty($properties)): ?>
     <?php foreach ($properties as $idx => $prop):
+        if (!is_array($prop)) continue;
         $propId = $prop['id'] ?? 0;
         $title  = $prop['name'] ?? '';
 
@@ -62,10 +86,20 @@ if (!function_exists('ghPropImage2')) {
         $propType = !empty($prop['property_type']) ? ucfirst($prop['property_type']) : '';
         $starLabel = $stars > 0 ? $stars . '-star hotel' : ($propType ?: '');
 
-        // Price
+        // Price — nightly vs stay total (real logic: total = nightly * nights)
         $price      = (int)($prop['customer_price_per_night'] ?? ($prop['price_per_night'] ?? ($prop['price'] ?? 0)));
         $currency   = ($price > 500) ? 'TSh ' : '$';
         $priceLabel = $price > 0 ? $currency . number_format($price) : '';
+        // nights for stay total
+        $ciTmp = $queryParams['checkin'] ?? $queryParams['checkIn'] ?? null;
+        $coTmp = $queryParams['checkout'] ?? $queryParams['checkOut'] ?? null;
+        $nightsForPrice = 1;
+        if (!empty($ciTmp) && !empty($coTmp)) {
+            $tsCi = strtotime((string)$ciTmp); $tsCo = strtotime((string)$coTmp);
+            if ($tsCi && $tsCo) $nightsForPrice = max(1, (int)round(($tsCo - $tsCi) / 86400));
+        }
+        $totalPrice = $price * $nightsForPrice;
+        $totalLabel = $price > 0 ? $currency . number_format($totalPrice) : '';
 
         // Location
         $area    = $prop['area'] ?? ($prop['address'] ?? '');
@@ -132,50 +166,51 @@ if (!function_exists('ghPropImage2')) {
     >
         <!-- ── Top media: Photo + Mobile mini-map (mobile only split) ── -->
         <div class="gh-card-media-row">
-        <div class="gh-card-photo">
-            <?php $img = ghPropImage2($prop); ?>
-            <?php if ($img !== ''): ?>
-                <img
-                    src="<?= str_starts_with($img,'http') ? h($img) : $this->Url->build('/'.h($img)) ?>"
-                    alt="<?= h($title) ?>"
-                    loading="lazy"
-                >
-            <?php else: ?>
-                <div class="gh-card-no-photo">
-                    <div><i class="fa-solid fa-image" style="font-size:30px;color:#bdbdbd;"></i><br>No photo</div>
+        <div class="gh-card-photo gh-card-photo--slider" data-prop-id="<?= $propId ?>">
+            <?php $cardImgs = ghPropImages($prop); $isSlider = count($cardImgs) > 1; ?>
+            <?php if ($isSlider): ?>
+                <div class="gh-card-track" id="gh-track-<?= $propId ?>">
+                    <?php foreach ($cardImgs as $ci => $u): ?>
+                        <img src="<?= str_starts_with($u,'http') ? h($u) : $this->Url->build('/'.h($u)) ?>" alt="<?= h($title) ?> photo <?= $ci+1 ?>" loading="<?= $ci===0?'eager':'lazy' ?>" draggable="false">
+                    <?php endforeach; ?>
                 </div>
+                <button type="button" class="gh-card-nav gh-card-prev" onclick="event.stopPropagation();ghSlide(<?= $propId ?>,-1)" aria-label="Previous image">‹</button>
+                <button type="button" class="gh-card-nav gh-card-next" onclick="event.stopPropagation();ghSlide(<?= $propId ?>,1)" aria-label="Next image">›</button>
+            <?php else: ?>
+                <?php $img = $cardImgs[0] ?? ghPropImage2($prop); ?>
+                <?php if ($img !== ''): ?>
+                    <img src="<?= str_starts_with($img,'http') ? h($img) : $this->Url->build('/'.h($img)) ?>" alt="<?= h($title) ?>" loading="lazy">
+                <?php else: ?>
+                    <div class="gh-card-no-photo"><div><i class="fa-solid fa-image" style="font-size:30px;color:#bdbdbd;"></i><br>No photo</div></div>
+                <?php endif; ?>
             <?php endif; ?>
             <!-- Bookmark -->
             <button type="button" class="gh-card-bm" onclick="event.stopPropagation();ghBookmark(<?= $propId ?>,this)" title="Save" aria-label="Save">
                 <i class="fa-regular fa-bookmark" style="font-size:12px;"></i>
             </button>
-            <!-- Carousel dots -->
-            <div class="gh-card-dots">
-                <div class="gh-card-dot a"></div>
-                <div class="gh-card-dot"></div>
-                <div class="gh-card-dot"></div>
-                <div class="gh-card-dot"></div>
-                <div class="gh-card-dot"></div>
-            </div>
+            <!-- Carousel dots / counter -->
+            <?php if ($isSlider): ?>
+                <div class="gh-card-dots" id="gh-dots-<?= $propId ?>">
+                    <?php foreach ($cardImgs as $di => $_): ?>
+                        <button type="button" class="gh-card-dot <?= $di===0?'a active':'' ?>" data-idx="<?= $di ?>" onclick="event.stopPropagation();ghGoSlide(<?= $propId ?>,<?= $di ?>)" aria-label="Go to image <?= $di+1 ?>"></button>
+                    <?php endforeach; ?>
+                </div>
+                <span class="gh-card-count" id="gh-count-<?= $propId ?>">1 / <?= count($cardImgs) ?></span>
+            <?php else: ?>
+                <div class="gh-card-dots"><div class="gh-card-dot a"></div><div class="gh-card-dot"></div><div class="gh-card-dot"></div><div class="gh-card-dot"></div><div class="gh-card-dot"></div></div>
+            <?php endif; ?>
         </div>
-        <!-- Mobile mini-map with blue price pill (visible only ≤767px) — real Mapbox from backend -->
+        <!-- Mobile mini-map with blue price pill (visible only ≤767px) — real Mapbox static map -->
         <div class="gh-card-map-mobile" aria-hidden="true">
             <?php
                 $mlat = (float)($prop['latitude'] ?? ($prop['lat'] ?? -6.7725));
                 $mlng = (float)($prop['longitude'] ?? ($prop['lng'] ?? 39.245));
-                $cardMapToken = $mapboxToken ?? \Cake\Core\Configure::read('App.mapboxToken', '');
-                if (!is_string($cardMapToken) || $cardMapToken === 'YOUR_MAPBOX_ACCESS_TOKEN' || $cardMapToken === 'pk.placeholder') $cardMapToken = '';
-                if ($cardMapToken !== '') {
-                    $mapImg = "https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-s+1a73e8($mlng,$mlat)/$mlng,$mlat,13,0/300x300@2x?access_token=" . $cardMapToken;
-                } else {
-                    // OSM fallback — no token needed, use lightweight placeholder
-                    $mapImg = "https://tiles.a.openstreetmap.org/13/" . (int)(($mlng+180)/360*8192) . "/" . (int)((1 - log(tan(deg2rad($mlat)) + 1/cos(deg2rad($mlat)))/M_PI)/2*8192) . ".png";
-                    // use generic OSM static as fallback (avoid 403)
-                    $mapImg = "https://via.placeholder.com/300x300/e8ecef/5f6368?text=Map";
-                }
+                $mapService = new \App\Service\MapService();
+                $mapImg = $mapService->getStaticMapUrl($mlat, $mlng, 13, 300, 300);
+                $svgFallback = $mapService->getSvgFallbackUrl(300, 300);
             ?>
-            <img src="<?= h($mapImg) ?>" alt="" loading="lazy" onerror="this.style.background='#e8ecef'; this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27%3E%3C/svg%3E'">
-            <span class="gh-card-map-price"><?= h($priceLabel) ?></span>
+            <img src="<?= h($mapImg) ?>" alt="Map location" loading="lazy" onerror="this.onerror=null;this.src='<?= $svgFallback ?>';">
+            <span class="gh-card-map-price" data-nightly="<?= h($priceLabel) ?>" data-total="<?= h($totalLabel) ?>"><?= h($priceLabel) ?></span>
         </div>
         </div>
 
@@ -187,7 +222,7 @@ if (!function_exists('ghPropImage2')) {
                     <?= h($title) ?>
                 </a>
                 <?php if ($priceLabel !== ''): ?>
-                    <span class="gh-hotel-price"><?= h($priceLabel) ?><span class="gh-price-night">/night</span></span>
+                    <span class="gh-hotel-price" data-nightly="<?= h($priceLabel) ?>" data-total="<?= h($totalLabel) ?>" data-nights="<?= (int)$nightsForPrice ?>"><?= h($priceLabel) ?><span class="gh-price-night">/night</span></span>
                 <?php endif; ?>
             </div>
 
@@ -227,13 +262,12 @@ if (!function_exists('ghPropImage2')) {
                     <a href="<?= $detailUrl ?>" class="gh-btn-prices" onclick="event.stopPropagation()">View prices</a>
                 <?php endif; ?>
             </div>
-            <!-- Mobile View map bar (visible ≤767px) — screenshot: View map | bookmark -->
+            <!-- Mobile: blue Show details button (was View map link) -->
             <div class="gh-card-viewmap">
-                <a href="<?= $detailUrl ?>" class="gh-viewmap-btn" onclick="event.stopPropagation()">
-                    <i class="fa-solid fa-map-location-dot" style="font-size:15px;"></i> View map
+                <a href="<?= $detailUrl ?>" class="gh-btn-prices" onclick="event.stopPropagation()" style="flex:1;justify-content:center;min-height:44px;font-size:14px;font-weight:600;">
+                    Show details
                 </a>
-                <span class="gh-viewmap-divider" aria-hidden="true"></span>
-                <button type="button" class="gh-viewmap-bm" onclick="event.stopPropagation();ghBookmark(<?= $propId ?>,this)" aria-label="Save"><i class="fa-regular fa-bookmark"></i></button>
+                <button type="button" class="gh-viewmap-bm" onclick="event.stopPropagation();ghBookmark(<?= $propId ?>,this)" aria-label="Save" style="width:44px;height:44px;border:1px solid #dadce0;border-radius:50%;background:#fff;"><i class="fa-regular fa-bookmark"></i></button>
             </div>
         </div>
     </div>
@@ -266,6 +300,38 @@ window.ghScrollToCard = function(propId) {
     var c = document.getElementById('gh-card-' + propId);
     if (c) c.scrollIntoView({ behavior:'smooth', block:'nearest' });
 };
+// ── Card slider: sliding images for demo + real deploy (same logic: $prop['images'] array) ──
+window._ghSlideIdx = window._ghSlideIdx || {};
+window.ghGoSlide = function(propId, idx){
+    var track = document.getElementById('gh-track-' + propId);
+    var dots = document.getElementById('gh-dots-' + propId);
+    var count = document.getElementById('gh-count-' + propId);
+    if(!track) return;
+    var total = track.children.length;
+    if(idx < 0) idx = total - 1;
+    if(idx >= total) idx = 0;
+    window._ghSlideIdx[propId] = idx;
+    track.style.transform = 'translateX(' + (-idx * 100) + '%)';
+    if(dots){ Array.prototype.forEach.call(dots.children, function(d,i){ d.classList.toggle('a', i===idx); d.classList.toggle('active', i===idx); }); }
+    if(count) count.textContent = (idx+1) + ' / ' + total;
+};
+window.ghSlide = function(propId, dir){ var cur = window._ghSlideIdx[propId] || 0; window.ghGoSlide(propId, cur + dir); };
+// touch swipe for cards
+(function(){
+    document.addEventListener('DOMContentLoaded', function(){
+        document.querySelectorAll('.gh-card-photo--slider').forEach(function(el){
+            var pid = el.getAttribute('data-prop-id');
+            if(!pid) return;
+            var startX = 0, dx = 0, dragging = false;
+            el.addEventListener('touchstart', function(e){ startX = e.touches[0].clientX; dragging = true; }, {passive:true});
+            el.addEventListener('touchmove', function(e){ if(!dragging) return; dx = e.touches[0].clientX - startX; }, {passive:true});
+            el.addEventListener('touchend', function(){ if(!dragging) return; dragging = false; if(Math.abs(dx) > 36){ window.ghSlide(parseInt(pid,10), dx < 0 ? 1 : -1); } dx = 0; });
+            // also mouse drag for desktop
+            el.addEventListener('mousedown', function(e){ startX = e.clientX; dragging = true; e.preventDefault(); });
+            window.addEventListener('mouseup', function(e){ if(!dragging) return; dragging = false; var diff = e.clientX - startX; if(Math.abs(diff) > 36){ window.ghSlide(parseInt(pid,10), diff < 0 ? 1 : -1); } });
+        });
+    });
+})();
 // any-device shimmer: instant on any filter/search, auto-hide on hydrate + 8s fail-safe + CTA spinner
 (function(){
   var ctaBusy=function(on){
@@ -293,14 +359,21 @@ window.ghScrollToCard = function(propId) {
   window.ghTriggerShimmer=show;
   window.fnsTriggerShimmer=show;
   window.ghHideShimmer=hide;
-  // demo on first paint for any-device QA (2s)
-  document.addEventListener('DOMContentLoaded', function(){
-    // only demo if not already hydrated
-    if(!sessionStorage.getItem('fns_shimmer_demo')){
-      show();
-      setTimeout(function(){ hide(); sessionStorage.setItem('fns_shimmer_demo','1'); }, 900);
-    }
-  });
+  // OTA-style refresh feel: show shimmer on every hard reload / F5 (not just once per session) — like Booking/Agoda
+  var _shimmerTimer=null;
+  function showRefreshShimmer(){
+    show();
+    clearTimeout(_shimmerTimer);
+    _shimmerTimer=setTimeout(hide, 850);
+  }
+  // instant on DOM ready
+  document.addEventListener('DOMContentLoaded', function(){ showRefreshShimmer(); });
+  // if script loads after DOM (fast refresh), show immediately
+  if(document.readyState !== 'loading'){ showRefreshShimmer(); }
+  // bfcache restore (back/forward, pull-to-refresh) → show again
+  window.addEventListener('pageshow', function(e){ if(e.persisted){ showRefreshShimmer(); } });
+  // also tie to beforeunload visual (optional) — ensures spinner on leaving
+  window.addEventListener('beforeunload', function(){ try{ show(); }catch(e){} });
   // fail-safe: hide after 8s if network hangs
   var t=null;
   window.addEventListener('fastnet:shimmer-show', function(){ clearTimeout(t); show(); t=setTimeout(hide,8000); });

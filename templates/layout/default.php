@@ -11,9 +11,22 @@
         <meta name="csrfToken" content="<?= $this->request->getAttribute('csrfToken'); ?>">
 	    <meta name="version" content="1.0.0" />
         <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
-        <link rel="canonical" href="<?= 'https://www.fastnetstays.com' . rawurldecode($this->getRequest()->getPath()) ?>" />
+        <?php
+        $canonReq = $this->getRequest();
+        $canonPath = rawurldecode($canonReq->getPath());
+        $canonQs = '';
+        $canonCity = $canonReq->getQuery('city') ?? $canonReq->getQuery('destination') ?? '';
+        if (in_array($canonPath, ['/', '/hotel-list-01', '/hotels', '/stays'], true) && $canonCity !== '') {
+            $canonQs = '?city=' . rawurlencode(trim((string)$canonCity));
+        }
+        $canonUrl = 'https://www.fastnetstays.com' . $canonPath . $canonQs;
+        ?>
+        <link rel="canonical" href="<?= h($canonUrl) ?>" />
+        <link rel="alternate" hreflang="en-TZ" href="<?= h($canonUrl) ?>" />
+        <link rel="alternate" hreflang="sw-TZ" href="<?= h($canonUrl) ?>" />
+        <link rel="alternate" hreflang="x-default" href="https://www.fastnetstays.com/" />
         <link rel="alternate" type="text/plain" href="https://www.fastnetstays.com/llms.txt" title="LLM Knowledge Graph" />
-        <!-- Production: resource hints -->
+        <!-- Production: resource hints — fast LCP + CLS -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="preconnect" href="https://api.mapbox.com" crossorigin>
@@ -22,11 +35,13 @@
         <link rel="preload" href="/assets/css/google-travel-layout.css" as="style">
         <link rel="preload" href="/assets/css/google-travel-cards.css" as="style">
         <meta http-equiv="x-dns-prefetch-control" content="on">
+        <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+        <meta name="bingbot" content="index, follow, max-media-preview:large" />
 
         <!-- Open Graph / Facebook / WhatsApp -->
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="FastNet Stays" />
-        <meta property="og:url" content="<?= 'https://www.fastnetstays.com' . rawurldecode($this->getRequest()->getPath()) ?>" />
+        <meta property="og:url" content="<?= h($canonUrl) ?>" />
         <meta property="og:title" content="<?= $this->fetch('title') ? h($this->fetch('title')) . ' | fastnetstays.com' : 'FastNet Stays — Online Hotel Booking & Best Prices Guaranteed' ?>" />
         <meta property="og:description" content="Online Hotel Booking — FastNet Stays - Best Prices Guaranteed with Deals, Special Member Prices. Book Hotels, Lodges & Beach Resorts Across Tanzania!" />
         <meta property="og:image" content="https://www.fastnetstays.com/assets/img/og-preview.png" />
@@ -41,7 +56,8 @@
         <!-- Favicon & Touch Icons for Google Search Snippet Logo -->
         <link rel="icon" type="image/png" sizes="32x32" href="<?= $this->Url->build('/assets/img/favicon.png'); ?>">
         <link rel="apple-touch-icon" sizes="180x180" href="<?= $this->Url->build('/assets/img/favicon.png'); ?>">
-        <meta name="theme-color" content="#006CE4">
+        <meta name="theme-color" content="#1A73E8">
+        <meta name="format-detection" content="telephone=no" />
 
         <!-- Google Rich Result Structured Data (Schema.org JSON-LD for Sitelinks & Brand Search) -->
         <script type="application/ld+json">
@@ -88,35 +104,59 @@
             },
             {
               "@type": "ItemList",
+              "name": "FastNet Stays Sitelinks",
               "itemListElement": [
                 {
                   "@type": "SiteNavigationElement",
                   "position": 1,
-                  "name": "Book Hotels & Lodges",
-                  "description": "Best Price Guarantee, Special Member Offers & Huge Discounts",
-                  "url": "https://www.fastnetstays.com/hotels"
+                  "name": "FastNet Hotels",
+                  "description": "When booking a hotel in Dar es Salaam, play around with dates and price options on ...",
+                  "url": "https://www.fastnetstays.com/?city=Dar%20es%20Salaam"
                 },
                 {
                   "@type": "SiteNavigationElement",
                   "position": 2,
-                  "name": "Zanzibar Beach Escapes",
-                  "description": "Exclusive beachfront resorts, Stone Town hotels and villas",
-                  "url": "https://www.fastnetstays.com/hotel-list-01?destination=Zanzibar"
+                  "name": "Track and Compare Hotel Prices",
+                  "description": "Set up price tracking. Track hotel prices for specific trip dates, or ...",
+                  "url": "https://www.fastnetstays.com/?city=Dar%20es%20Salaam#track-prices"
                 },
                 {
                   "@type": "SiteNavigationElement",
                   "position": 3,
-                  "name": "Serengeti & Arusha Safaris",
-                  "description": "Safari lodges, luxury tented camps and wildlife retreats",
-                  "url": "https://www.fastnetstays.com/hotel-list-01?destination=Arusha"
+                  "name": "Hotel Deals",
+                  "description": "Describe your ideal stay — desired length, time of the year, location ...",
+                  "url": "https://www.fastnetstays.com/?city=Zanzibar"
                 },
                 {
                   "@type": "SiteNavigationElement",
                   "position": 4,
-                  "name": "List Your Property",
-                  "description": "Partner with FastNet Stays and receive bookings with instant payouts",
-                  "url": "https://www.fastnetstays.com/join-us"
+                  "name": "Hotels to Zanzibar",
+                  "description": "Beach stay. City hotel; Resort; Boutique — Off-peak travel is ...",
+                  "url": "https://www.fastnetstays.com/?city=Zanzibar"
+                },
+                {
+                  "@type": "SiteNavigationElement",
+                  "position": 5,
+                  "name": "Hotels to Arusha",
+                  "description": "Safari lodge. Safari stay; City hotel; Lodge — Peak season deals ...",
+                  "url": "https://www.fastnetstays.com/?city=Arusha"
+                },
+                {
+                  "@type": "SiteNavigationElement",
+                  "position": 6,
+                  "name": "Stays",
+                  "description": "Hotel suggestions are based on a route's cheapest nightly fares ...",
+                  "url": "https://www.fastnetstays.com/"
                 }
+              ]
+            },
+            {
+              "@type": "BreadcrumbList",
+              "@id": "https://www.fastnetstays.com/#breadcrumb",
+              "itemListElement": [
+                {"@type": "ListItem","position": 1,"name": "Home","item": "https://www.fastnetstays.com/"},
+                {"@type": "ListItem","position": 2,"name": "Hotels","item": "https://www.fastnetstays.com/?city=Dar%20es%20Salaam"},
+                {"@type": "ListItem","position": 3,"name": "Zanzibar Hotels","item": "https://www.fastnetstays.com/?city=Zanzibar"}
               ]
             }
           ]
@@ -141,14 +181,15 @@
             '/assets/css/style.css',
         ]); ?>
 
+        <?= $this->Html->css('/assets/css/ui-tokens.css') ?>
         <?= $this->fetch('meta') ?>
         <?= $this->fetch('css') ?>
         <?= $this->Html->css('/assets/css/site-spacing.css') ?>
 
-        <!-- Mapbox GL JS — deferred production -->
-        <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css" rel="stylesheet" media="print" onload="this.media='all'">
-        <noscript><link href="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css" rel="stylesheet"></noscript>
-        <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js" defer></script>
+        <!-- Mapbox GL JS — production CSS & JS -->
+        <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css" rel="stylesheet">
+        <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js"></script>
+        <?= $this->Html->script('/assets/js/fastnet-map-core.js') ?>
 
         <script>
             window.FASTNET_API_URL = (
@@ -161,22 +202,24 @@
                 return window.FASTNET_API_URL + path;
             };
 
-            // Mapbox configuration — real token from backend (server-injected if controller provided $mapboxToken, else runtime fetch)
+            // Mapbox configuration — public pk.* token only (never echo secret sk.*). Restrict token by HTTP Referrer in Mapbox dashboard.
             <?php
-            // Server-injected token for first paint (PagesController::index provides $mapboxToken)
             $layoutMapboxToken = $mapboxToken ?? \Cake\Core\Configure::read('App.mapboxToken', env('MAPBOX_TOKEN', ''));
             $layoutMapboxStyle = $mapboxStyle ?? \Cake\Core\Configure::read('App.mapboxStyle', 'mapbox://styles/mapbox/streets-v12');
-            if (!is_string($layoutMapboxToken)) $layoutMapboxToken = '';
+            if (!is_string($layoutMapboxToken) || !str_starts_with($layoutMapboxToken, 'pk.')) $layoutMapboxToken = '';
             if (!is_string($layoutMapboxStyle) || $layoutMapboxStyle === '') $layoutMapboxStyle = 'mapbox://styles/mapbox/streets-v12';
+            // Only pk.* public tokens are echoed to HTML; secrets never leave server.
             ?>
             window.MAPBOX_TOKEN = <?= json_encode($layoutMapboxToken) ?> || window.MAPBOX_TOKEN || '';
             window.MAPBOX_STYLE = <?= json_encode($layoutMapboxStyle) ?> || window.MAPBOX_STYLE || 'mapbox://styles/mapbox/streets-v12';
-            // Free OSM fallback when no Mapbox token — guarantees map renders (demotiles) even if backend not configured
             var _isMapboxStyle = window.MAPBOX_STYLE && window.MAPBOX_STYLE.indexOf('mapbox://') === 0;
             if (!window.MAPBOX_TOKEN && _isMapboxStyle) {
                 window.MAPBOX_STYLE = 'https://demotiles.maplibre.org/style.json';
             }
-            window.DEFAULT_MAPBOX_TOKEN = window.MAPBOX_TOKEN || window.DEFAULT_MAPBOX_TOKEN || '';
+            window.DEFAULT_MAPBOX_TOKEN = window.MAPBOX_TOKEN || '';
+            if (window.MAPBOX_TOKEN && typeof mapboxgl !== 'undefined') {
+                mapboxgl.accessToken = window.MAPBOX_TOKEN;
+            }
             if (window.MAPBOX_TOKEN) {
                 window.DEFAULT_MAPBOX_TOKEN = window.MAPBOX_TOKEN;
                 if (typeof mapboxgl !== 'undefined') {
@@ -193,7 +236,7 @@
                     .then(data => {
                         const tok = data && (data.mapbox_token || data.mapboxToken || data.token || (data.data && data.data.mapbox_token));
                         const sty = data && (data.mapbox_style || data.style);
-                        if (tok && tok !== 'YOUR_MAPBOX_ACCESS_TOKEN' && tok !== 'pk.placeholder' && tok !== '') {
+                        if (tok && tok !== 'YOUR_MAPBOX_ACCESS_TOKEN' && tok !== 'pk.placeholder' && tok !== '' && tok.indexOf('pk.')===0) {
                             window.MAPBOX_TOKEN = tok;
                             window.DEFAULT_MAPBOX_TOKEN = tok;
                             if (sty) window.MAPBOX_STYLE = sty;
@@ -236,11 +279,23 @@
         <div id="preloader" aria-hidden="true">
             <div class="preloader"><span></span><span></span></div>
         </div>
+        <style>@media (prefers-reduced-motion: reduce){#preloader{display:none!important}}</style>
+        <script>(function(){var p=document.getElementById('preloader');if(!p)return;if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){p.style.display='none';return}function h(){p.style.opacity='0';p.style.transition='opacity 200ms';setTimeout(function(){p.style.display='none'},200)}document.addEventListener('DOMContentLoaded',function(){setTimeout(h,500)});window.addEventListener('load',h);})();</script>
 
         <div id="main-wrapper">
 
             <!-- Main Content -->
         	<?= $this->fetch('content') ?>
+
+            <!-- SEO: crawlable sitelinks anchors (matches JSON-LD SiteNavigationElement) - helps Google generate expanded sitelinks like screenshot) -->
+            <nav aria-label="Sitelinks" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">
+                <a href="https://www.fastnetstays.com/?city=Dar%20es%20Salaam">FastNet Hotels</a>
+                <a href="https://www.fastnetstays.com/?city=Dar%20es%20Salaam#track-prices">Track and Compare Hotel Prices</a>
+                <a href="https://www.fastnetstays.com/?city=Zanzibar">Hotel Deals</a>
+                <a href="https://www.fastnetstays.com/?city=Zanzibar">Hotels to Zanzibar</a>
+                <a href="https://www.fastnetstays.com/?city=Arusha">Hotels to Arusha</a>
+                <a href="https://www.fastnetstays.com/">Stays</a>
+            </nav>
 
             <a id="back2Top" class="top-scroll" title="Back to top" href="#"><i class="fa-solid fa-sort-up"></i></a>
 
@@ -251,6 +306,10 @@
             '/assets/js/jquery.min.js',
             '/assets/js/popper.min.js',
             '/assets/js/bootstrap.min.js',
+            '/assets/js/custom.js',
+            '/assets/js/active.js',
+        ]); ?>
+        <?= $this->Html->script([
             '/assets/js/dropzone.min.js',
             '/assets/js/flatpickr.js',
             '/assets/js/flickity.pkgd.min.js',
@@ -262,10 +321,8 @@
             '/assets/js/prism.js',
             '/assets/js/addadult.js',
             '/assets/js/browselocation.js',
-            '/assets/js/custom.js',
-            '/assets/js/active.js',
             '/assets/js/contact.js',
-        ]); ?>
+        ], ['defer' => true]); ?>
 
         <?= $this->fetch('script') ?>
 

@@ -6,11 +6,11 @@
 $propId = (int)($queryParams['property_id'] ?? ($property['id'] ?? 0));
 $roomId = (int)($queryParams['room_id'] ?? ($room['id'] ?? 51));
 $propTitle = $property['name'] ?? 'Divi Village Golf and Beach Resort';
-$propCity = $property['city'] ?? 'Oranjestad';
-$propArea = $property['area'] ?? 'Oranjestad-West';
-$propCountry = $property['country'] ?? 'Aruba';
+$propCity = $property['city'] ?? 'Dar es Salaam';
+$propArea = $property['area'] ?? 'Msasani';
+$propCountry = $property['country'] ?? 'Tanzania';
 $propStars = !empty($property['star_rating']) ? max(1, min(5, (int)$property['star_rating'])) : 4;
-$propAddressShort = $property['address'] ?? 'J.E. Irausquin Blvd 93, Oranjestad, Aruba, Oranjestad-West';
+$propAddressShort = $property['address'] ?? 'Msasani Peninsula, Dar es Salaam, Tanzania';
 $propRating = $property['rating'] ?? 8.4;
 $propReviews = $property['review_count'] ?? $property['reviews_count'] ?? 737;
 
@@ -67,17 +67,15 @@ if (empty($prefillFirstName) && !empty($userProfile['name'])) {
     $prefillFirstName = $parts[0] ?? '';
     $prefillLastName = $parts[1] ?? '';
 }
-$prefillEmail = $userProfile['email'] ?? 'dm328432@gmail.com';
-$prefillPhone = $userProfile['phone'] ?? '255 624105850';
+$prefillEmail = $userProfile['email'] ?? '';
+$prefillPhone = $userProfile['phone'] ?? '';
 $prefillFullName = trim($prefillFirstName . ' ' . $prefillLastName);
-if ($prefillFullName === '') $prefillFullName = 'Mudrick Mahenge';
-if ($prefillEmail === '') $prefillEmail = 'dm328432@gmail.com';
 
 $this->assign('title', 'Customer information | fastnetstays.com');
 ?>
 <style>
 /* Agoda Checkout — exact to screenshot */
-.agoda-checkout-header{background:#fff;border-bottom:1px solid #e8eaed;height:64px;display:flex;align-items:center;position:sticky;top:0;z-index:100}
+.agoda-checkout-header{background:#fff;border-bottom:1px solid #e8eaed;min-height:64px;display:flex;align-items:center;position:sticky;top:0;z-index:100;margin-top:16px;padding:14px 0}
 .agoda-checkout-header-inner{max-width:1180px;margin:0 auto;padding:0 16px;width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px}
 .agoda-logo{font-size:22px;font-weight:800;letter-spacing:-0.02em;display:flex;align-items:center;gap:4px;text-decoration:none!important}
 .agoda-logo .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
@@ -139,7 +137,7 @@ $this->assign('title', 'Customer information | fastnetstays.com');
 .agoda-input{width:100%;height:40px;border:1px solid #dadce0;border-radius:6px;padding:0 10px;font-size:13px}
 .agoda-input:focus{outline:none;border-color:#1a73e8;box-shadow:0 0 0 2px rgba(26,115,232,0.15)}
 @media(max-width:992px){
-  .agoda-checkout-header{height:auto;padding:10px 0}
+  .agoda-checkout-header{height:auto;padding:10px 0;margin-top:8px}
   .agoda-checkout-header-inner{flex-wrap:wrap;gap:10px}
   .agoda-steps{order:3;max-width:none;width:100%;margin:0;justify-content:space-between}
   .agoda-checkout-wrap{grid-template-columns:1fr;gap:12px;padding:0 12px}
@@ -156,9 +154,11 @@ $this->assign('title', 'Customer information | fastnetstays.com');
   .agoda-hotel-title{font-size:13px}
   .agoda-dates{padding:10px 12px;font-size:12px}
   .agoda-dates b{font-size:13px}
+  .agoda-user{display:none!important}
 }
 @media(max-width:768px){
   html,body{max-width:100%;overflow-x:hidden}
+  .agoda-user{display:none!important}
   .agoda-checkout-wrap{padding:0 8px;gap:12px}
   .agoda-card{border-radius:10px}
   .agoda-timer-bar{flex-wrap:wrap;gap:4px}
@@ -198,26 +198,25 @@ $this->assign('title', 'Customer information | fastnetstays.com');
 </style>
 <?= $this->element('navbar') ?>
 
-<!-- Checkout header — agoda logo removed per request -->
-<header class="agoda-checkout-header">
-  <div class="agoda-checkout-header-inner" style="justify-content:center">
-    <div class="agoda-steps" style="margin:0 auto">
+<!-- Checkout progress stepper — clean banner under navbar (no duplicate avatar) -->
+<div class="agoda-checkout-stepper" style="background:#fff;border-bottom:1px solid #e8eaed;padding:14px 0;margin-top:16px;">
+  <div style="max-width:1180px;margin:0 auto;padding:0 16px;display:flex;align-items:center;justify-content:center;gap:16px;">
+    <div class="agoda-steps" style="margin:0 auto;max-width:620px;flex:1;">
       <div class="agoda-step active"><span class="num">1</span><span>Customer information</span></div>
       <div class="agoda-step-line filled"></div>
       <div class="agoda-step"><span class="num">2</span><span>Payment information</span></div>
       <div class="agoda-step-line"></div>
       <div class="agoda-step"><span class="num">3</span><span>Booking is confirmed!</span></div>
     </div>
-    <div class="agoda-user" style="margin-left:auto"><span class="avatar">M</span> Mudrick M. <i class="fa-solid fa-caret-down" style="font-size:10px;color:#5f6368"></i></div>
   </div>
-</header>
+</div>
 <div class="agoda-timer-bar">This price is guaranteed for... <b><i class="fa-regular fa-clock"></i> <span id="agodaCountdown">00:18:35</span></b></div>
 
 <div class="agoda-checkout-wrap">
   <!-- LEFT -->
   <div style="display:flex;flex-direction:column;gap:12px">
     <div class="agoda-card" style="padding:12px 16px">
-      <div class="agoda-welcome"><span class="icon"><i class="fa-regular fa-user"></i></span> <span>Welcome, Mudrick ! (Not Mudrick ? <a href="#" class="agoda-link">Sign out</a>)</span></div>
+      <div class="agoda-welcome"><span class="icon"><i class="fa-regular fa-user"></i></span> <span>Welcome, <?= h($prefillFirstName ?: 'Guest') ?> ! (Not <?= h($prefillFirstName ?: 'Guest') ?> ? <a href="#" class="agoda-link">Sign out</a>)</span></div>
     </div>
 
     <form id="agodaCheckoutForm" action="<?= $this->Url->build('/bookingpage-03') ?>" method="GET" style="display:flex;flex-direction:column;gap:12px">
@@ -279,7 +278,7 @@ $this->assign('title', 'Customer information | fastnetstays.com');
           <i class="fa-solid fa-calendar-check" style="color:#1a73e8;font-size:28px"></i>
           <div style="flex:1">
             <div style="font-size:13px;font-weight:700;color:#202124">Fully refundable</div>
-            <div style="font-size:12px;color:#5f6368">Cancel for free before 12 September 2026</div>
+            <div style="font-size:12px;color:#5f6368"><?= h($calculation['cancellation_policy'] ?? $quote['calculation']['cancellation_policy'] ?? 'Free cancellation before ' . date('j F Y', strtotime($checkIn))) ?></div>
           </div>
           <span class="free-badge">FREE</span>
         </div>
@@ -318,7 +317,7 @@ $this->assign('title', 'Customer information | fastnetstays.com');
             <a href="javascript:void(0)" class="agoda-link" style="font-size:12px">What's nearby?</a>
           </div>
         </div>
-        <div style="margin-top:10px;font-size:11px;color:#0f7a2b;display:flex;gap:6px;align-items:center"><i class="fa-solid fa-shield-check"></i> Stay flexible! Cancel for free before 12 September 2026.</div>
+        <div style="margin-top:10px;font-size:11px;color:#0f7a2b;display:flex;gap:6px;align-items:center"><i class="fa-solid fa-shield-check"></i> <?= h($calculation['cancellation_policy'] ?? $quote['calculation']['cancellation_policy'] ?? 'Stay flexible! Free cancellation') ?>.</div>
       </div>
     </div>
 
@@ -350,7 +349,7 @@ $this->assign('title', 'Customer information | fastnetstays.com');
 </div>
 
 <script>
-let agodaSeconds = 18*60+35;
+let agodaSeconds = <?= isset($quote['expires_at']) ? max(0, (int)$quote['expires_at'] - time()) : 18*60+35 ?>;
 function tickAgoda(){
   const el=document.getElementById('agodaCountdown');
   if(!el) return;

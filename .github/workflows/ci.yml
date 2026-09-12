@@ -76,4 +76,4 @@ jobs:
       if: always()
       run: phpstan
       env:
-        SECURITY_SALT: f76f1c8475585c46c6acd3ddcb8f5e0f15de524637bb4080a08c4afe7cfc9144
+        SECURITY_SALT: ${{ secrets.SECURITY_SALT != '' && secrets.SECURITY_SALT || 'ci-test-salt-not-for-prod-do-not-use-in-prod' }}

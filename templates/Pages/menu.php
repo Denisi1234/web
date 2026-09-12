@@ -20,16 +20,6 @@ $this->assign('title', 'Menu - FastNet Stays');
   </ol>
 </nav>
 <main id="main-content" style="background:#f8f9fa;min-height:85vh;" role="main">
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-    <title><?= $this->fetch('title'); ?></title>
-    
-    <!-- Google Fonts & Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <script>
         // Only visible on mobile/tablet viewports; redirect desktop to /my-profile
         if (window.innerWidth > 991) {
@@ -286,8 +276,5 @@ $this->assign('title', 'Menu - FastNet Stays');
         </a>
     </div>
 </div>
-
-</body>
-</html>
 </main>
 <?= $this->element('footer', ['skin' => 'skin-light-footer']) ?>

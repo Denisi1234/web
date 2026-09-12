@@ -7,12 +7,6 @@ $this->assign('title', 'Contact Us | FastNetStays');
 <?= $this->Html->css('/assets/css/google-travel-cards.css') ?>
 
 <?= $this->element('navbar') ?>
-<div class="gh-m-tabs" role="tablist" aria-label="Travel types">
-  <a href="/?explore=1" role="tab">Explore</a>
-  <a href="/?homes=1" role="tab">Homes</a>
-  <a href="/" role="tab" class="active" aria-selected="true">Hotels</a>
-  <a href="/?destination=Vacation" role="tab">Vacation rentals</a>
-</div>
 <nav aria-label="Breadcrumb" class="container-fluid px-2 px-lg-2" style="max-width:100%;margin:0 auto;background:#f8f9fa;">
   <ol class="breadcrumb mb-0 py-1" style="background:transparent;font-size:12px;line-height:1.2;--bs-breadcrumb-divider:'›';" itemscope itemtype="https://schema.org/BreadcrumbList">
     <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="/" itemprop="item" style="color:#5f6368;text-decoration:none;"><span itemprop="name">Home</span></a><meta itemprop="position" content="1"></li>
@@ -28,8 +22,8 @@ $this->assign('title', 'Contact Us | FastNetStays');
 			<div class="col-xl-7 col-lg-9 col-md-12">
 				<div class="fpc-capstion text-center my-4">
 					<div class="fpc-captions">
-						<h1 class="xl-heading fw-bold" style="color:#202124;font-family:'Google Sans',Roboto,sans-serif;font-weight:400;"">Contact FastNetStays</h1>
-						<p class="text-muted" style="color:#5f6368;font-family:Roboto,sans-serif;"">Have questions about your booking or listing your property? Reach out to our local team in Dar es Salaam & Arusha.</p>
+						<h1 class="xl-heading fw-bold" style="color:#202124;font-family:'Google Sans',Roboto,sans-serif;font-weight:400;">Contact FastNetStays</h1>
+						<p class="text-muted" style="color:#5f6368;font-family:Roboto,sans-serif;">Have questions about your booking or listing your property? Reach out to our local team in Dar es Salaam &amp; Arusha.</p>
 					</div>
 				</div>
 			</div>

@@ -19,36 +19,63 @@ class PaymentService
     public function initiate(array $payload): ?array
     {
         $phone = $this->normalizePhone((string)($payload['payment_phone'] ?? ''));
-        if ($phone === null || (string)($payload['booking_id'] ?? '') === '') {
+        $bookingId = (string)($payload['booking_id'] ?? '');
+        if ($phone === null || $bookingId === '') {
             return null;
         }
+        try {
+            $provider = $this->normalizeProvider((string)($payload['payment_method'] ?? ''));
+        } catch (\InvalidArgumentException $e) {
+            \Cake\Log\Log::warning('[PaymentService] Invalid provider: ' . $e->getMessage());
+            return null;
+        }
+        // Card should not go via AzamPay — caller handles card separately
+        if ($provider === 'Card') {
+            return null;
+        }
+        // Idempotency — same booking+method+phone must not double-charge
+        $idempotencyKey = hash('sha256', $bookingId . '|' . $provider . '|' . $phone);
 
         return $this->apiClient->post('/payments/checkout', [
-            'booking_id' => (string)$payload['booking_id'],
+            'booking_id' => $bookingId,
             'gateway' => 'AzamPay',
-            'payment_method' => $this->normalizeProvider((string)($payload['payment_method'] ?? '')),
+            'payment_method' => $provider,
             'phone_number' => $phone,
+            'idempotency_key' => $idempotencyKey,
         ]);
     }
 
     public function status(string $paymentId, ?string $bookingId = null): ?array
     {
-        $lookup = trim($bookingId ?? '') !== '' ? $bookingId : $paymentId;
-        return $lookup === '' ? null : $this->apiClient->get('/payments/status/' . rawurlencode($lookup));
+        // Payment status is payment-centric — never fallback to bookingId (prevents booking-success without paid)
+        $paymentId = trim($paymentId);
+        if ($paymentId === '') return null;
+        // If caller passed card-* synthetic id, verify via bookings endpoint instead
+        if (str_starts_with($paymentId, 'card-')) {
+            $bid = substr($paymentId, 5);
+            return $this->booking($bid);
+        }
+        return $this->apiClient->get('/payments/status/' . rawurlencode($paymentId));
     }
 
     public function booking(string $bookingId): ?array
     {
-        return $bookingId === '' ? null : $this->apiClient->get('/payments/status/' . rawurlencode($bookingId));
+        $bookingId = trim($bookingId);
+        if ($bookingId === '') return null;
+        // Booking verification is booking-centric — separate endpoint, webhook is source of truth
+        return $this->apiClient->get('/bookings/' . rawurlencode($bookingId));
     }
 
     private function normalizeProvider(string $provider): string
     {
-        return match (strtolower(trim($provider))) {
+        $p = strtolower(trim($provider));
+        return match ($p) {
             'tigo', 'tigopesa', 'tigo pesa' => 'Tigo',
             'airtel', 'airtelmoney', 'airtel money' => 'Airtel',
             'halotel', 'halopesa', 'halo pesa' => 'Halopesa',
-            default => 'Mpesa',
+            'mpesa', 'vodacom', 'vodacom mpesa', 'm-pesa' => 'Mpesa',
+            'card', 'credit', 'credit_card', 'visa', 'mastercard' => 'Card',
+            default => throw new \InvalidArgumentException('Unsupported payment provider: ' . $provider),
         };
     }
 

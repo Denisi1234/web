@@ -8,6 +8,7 @@ $this->assign('title', 'Recently viewed - FastNet Stays');
 <?= $this->Html->css('/assets/css/google-travel-home.css') ?>
 <?= $this->element('navbar'); ?>
 
+<main id="main-content" role="main">
 <style>
 /* ── Trivago Recently Viewed Page Styles ─────────────────────────── */
 .trivago-profile-wrapper {

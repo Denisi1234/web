@@ -5,6 +5,7 @@ namespace App\Controller;
 
 use App\Service\FastnetApiClient;
 use App\Service\StaysService;
+use Cake\Core\Configure;
 use Cake\Http\Exception\NotFoundException;
 use Cake\Http\Response;
 use DateTimeImmutable;
@@ -70,9 +71,9 @@ class StaysController extends AppController
             }
         }
 
-        $adults = $this->boundedSearchInt($input['adults'] ?? 2, 1, 16);
-        $children = $this->boundedSearchInt($input['children'] ?? 0, 0, 8);
-        $rooms = $this->boundedSearchInt($input['rooms'] ?? 1, 1, 8);
+        $adults = $this->boundedSearchInt($input['adults'] ?? 2, 1, 10);
+        $children = $this->boundedSearchInt($input['children'] ?? 0, 0, 6);
+        $rooms = $this->boundedSearchInt($input['rooms'] ?? 1, 1, 5);
         if ($adults + $children > 32) {
             $children = max(0, 32 - $adults);
             $errors[] = 'The guest count cannot exceed 32 people.';
@@ -149,18 +150,31 @@ class StaysController extends AppController
             }
         }
 
-        // Mock fallback for local dev / when backend is unreachable (index is now the only list)
-        if (!$property && $propertyId > 0) {
-            $property = $this->getMockProperty($propertyId);
+        // Demo preview for id=1 always available so map + gallery can be seen (also when ?demo=1)
+        $isDemoDetail = ($propertyId === 1) || isset($queryParams['demo']);
+        // No mock in prod — /hotel-detail/9999 must 404. Mocks only when debug true or demo id=1 (local dev without backend)
+        if (!$property && $propertyId > 0 && (Configure::read('debug') || $isDemoDetail)) {
+            $property = $this->getMockProperty($propertyId) ?? $this->getMockProperty(1);
+            if ($property) $propertyId = (int)$property['id'];
         }
-        // Final fallback for demo: any id -> first mock
-        if (!$property && $requestedPropertyId === 0) {
+        if (!$property && $requestedPropertyId === 0 && Configure::read('debug')) {
             $property = $this->getMockProperty(1);
             if ($property) $propertyId = (int)$property['id'];
         }
 
         if (!$property) {
             throw new NotFoundException(__('Property not found.'));
+        }
+        // Enrich demo property with full gallery + coords if missing (so map is real)
+        if (!empty($property) && $propertyId === 1 && empty($property['images'])) {
+            $property['images'] = [
+                'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1200&h=800&fit=crop',
+                'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&h=600&fit=crop',
+                'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop',
+                'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop',
+                'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&h=600&fit=crop',
+            ];
+            if (empty($property['latitude'])) { $property['latitude'] = -6.7760; $property['longitude'] = 39.2828; }
         }
 
         // Fetch Rooms for Property dynamically
@@ -194,24 +208,22 @@ class StaysController extends AppController
     private function getMockProperty(int $id): ?array
     {
         $mocks = [
-            1 => ['id'=>1,'name'=>'The Serena Hotel Dar es Salaam','city'=>'Dar es Salaam','image_url'=>'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop','rating'=>4.7,'review_count'=>285,'price_per_night'=>85000,'customer_price_per_night'=>85000,'amenities'=>['WiFi','Pool','Fitness Center'],'description'=>'Luxury 5-star hotel in the heart of Dar es Salaam'],
+            1 => ['id'=>1,'name'=>'The Serena Hotel Dar es Salaam','city'=>'Dar es Salaam','latitude'=>-6.7760,'longitude'=>39.2828,'lat'=>-6.7760,'lng'=>39.2828,'address'=>'Plot 123, Msasani Peninsula, Dar es Salaam, Tanzania','star_rating'=>5,'image_url'=>'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop','primary_image_url'=>'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop','images'=>['https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1200&h=800&fit=crop','https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&h=600&fit=crop','https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop','https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop','https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&h=600&fit=crop'],'rating'=>4.7,'review_count'=>285,'reviews_count'=>285,'price_per_night'=>85000,'customer_price_per_night'=>85000,'amenities'=>['WiFi','Pool','Fitness Center','Free parking','Air conditioning'],'description'=>'Luxury 5-star hotel, apartment, villa and safari lodge options in the heart of Dar es Salaam — demo with real gallery and map pin at Msasani.'],
             2 => ['id'=>2,'name'=>'Hyatt Regency Dar es Salaam','city'=>'Dar es Salaam','image_url'=>'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop','rating'=>4.5,'review_count'=>156,'price_per_night'=>72000,'customer_price_per_night'=>72000,'amenities'=>['WiFi','Pool','Gym'],'description'=>'4-star hotel with modern amenities'],
             3 => ['id'=>3,'name'=>'Dar Boutique Hotel','city'=>'Dar es Salaam','image_url'=>'https://images.unsplash.com/photo-1570129477492-45a003537e1f?w=800&h=600&fit=crop','rating'=>4.3,'review_count'=>98,'price_per_night'=>45000,'customer_price_per_night'=>45000,'amenities'=>['WiFi','Breakfast'],'description'=>'Charming boutique hotel'],
             4 => ['id'=>4,'name'=>'Addax Hotel Dar es Salaam','city'=>'Dar es Salaam','image_url'=>'https://images.unsplash.com/photo-1564078516801-18a1ab35eca3?w=800&h=600&fit=crop','rating'=>4.4,'review_count'=>203,'price_per_night'=>55000,'customer_price_per_night'=>55000,'amenities'=>['WiFi','Pool'],'description'=>'Mid-range hotel'],
             5 => ['id'=>5,'name'=>'Oceanview Hotel & Resort','city'=>'Zanzibar','image_url'=>'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&h=600&fit=crop','rating'=>4.6,'review_count'=>412,'price_per_night'=>95000,'customer_price_per_night'=>95000,'amenities'=>['WiFi','Pool','Beach'],'description'=>'Premier resort'],
             6 => ['id'=>6,'name'=>'Safari Palace Hotel','city'=>'Arusha','image_url'=>'https://images.unsplash.com/photo-1559599810-46d1c52494ee?w=800&h=600&fit=crop','rating'=>4.2,'review_count'=>167,'price_per_night'=>38000,'customer_price_per_night'=>38000,'amenities'=>['WiFi','Restaurant'],'description'=>'Comfortable hotel'],
         ];
-        return $mocks[$id] ?? $mocks[1] ?? null;
+        return $mocks[$id] ?? null;
     }
 
     /**
-     * Destinations listing
+     * Destinations listing — deleted Explore page: now Apartment
      */
     public function destination01()
     {
-        $queryParams = $this->getRequest()->getQueryParams();
-        $destinations = $this->staysService->getDestinationsSummary();
-        $this->set(compact('destinations', 'queryParams'));
-        return $this->render('/Pages/destination-01');
+        // Deleted explore page — redirect to Apartment (was Explore)
+        return $this->redirect('/?property_type=Apartment');
     }
 }

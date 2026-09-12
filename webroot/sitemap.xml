@@ -2,118 +2,64 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 
-  <!-- Core Pages -->
+  <!-- Core — daily, highest priority -->
   <url>
     <loc>https://www.fastnetstays.com/</loc>
+    <lastmod>2026-09-12</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.00</priority>
+    <image:image>
+      <image:loc>https://www.fastnetstays.com/assets/img/og-preview.png</image:loc>
+      <image:title>FastNet Stays — Hotels in Tanzania</image:title>
+    </image:image>
   </url>
 
+  <!-- Canonical city searches — use /?city= (hotel-list-01 301 → /) -->
+  <url><loc>https://www.fastnetstays.com/?city=Zanzibar</loc><lastmod>2026-09-12</lastmod><changefreq>daily</changefreq><priority>0.90</priority></url>
+  <url><loc>https://www.fastnetstays.com/?city=Dar%20es%20Salaam</loc><lastmod>2026-09-12</lastmod><changefreq>daily</changefreq><priority>0.90</priority></url>
+  <url><loc>https://www.fastnetstays.com/?city=Arusha</loc><lastmod>2026-09-12</lastmod><changefreq>daily</changefreq><priority>0.90</priority></url>
+  <url><loc>https://www.fastnetstays.com/?city=Dodoma</loc><lastmod>2026-09-12</lastmod><changefreq>daily</changefreq><priority>0.85</priority></url>
+  <url><loc>https://www.fastnetstays.com/?city=Serengeti</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://www.fastnetstays.com/?city=Kilimanjaro</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://www.fastnetstays.com/?city=Mwanza</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.80</priority></url>
+
+  <!-- Hotel detail — sample 6 verified stays (dynamic via API, static for crawl seed) -->
   <url>
-    <loc>https://www.fastnetstays.com/hotels</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.95</priority>
+    <loc>https://www.fastnetstays.com/hotel-detail/1</loc>
+    <lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.88</priority>
+    <image:image><image:loc>https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800</image:loc><image:title>The Serena Hotel Dar es Salaam</image:title></image:image>
+  </url>
+  <url>
+    <loc>https://www.fastnetstays.com/hotel-detail/2</loc>
+    <lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.88</priority>
+    <image:image><image:loc>https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800</image:loc><image:title>Hyatt Regency Dar es Salaam</image:title></image:image>
+  </url>
+  <url>
+    <loc>https://www.fastnetstays.com/hotel-detail/5</loc>
+    <lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.88</priority>
+    <image:image><image:loc>https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800</image:loc><image:title>Oceanview Hotel &amp; Resort Zanzibar</image:title></image:image>
   </url>
 
-  <url>
-    <loc>https://www.fastnetstays.com/destinations</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.90</priority>
-  </url>
-
-  <!-- Popular Destination Search URLs for Direct Sitelinks Indexing -->
-  <url>
-    <loc>https://www.fastnetstays.com/hotel-list-01?destination=Zanzibar</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-  </url>
-
-  <url>
-    <loc>https://www.fastnetstays.com/hotel-list-01?destination=Dar+es+Salaam</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-  </url>
-
-  <url>
-    <loc>https://www.fastnetstays.com/hotel-list-01?destination=Arusha</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-  </url>
-
-  <url>
-    <loc>https://www.fastnetstays.com/hotel-list-01?destination=Dodoma</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.80</priority>
-  </url>
+  <!-- Destinations -->
+  <url><loc>https://www.fastnetstays.com/destinations</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.90</priority></url>
+  <url><loc>https://www.fastnetstays.com/destination-detail/zanzibar</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.80</priority></url>
 
   <!-- Host & Property Onboarding -->
-  <url>
-    <loc>https://www.fastnetstays.com/join-us</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
+  <url><loc>https://www.fastnetstays.com/join-us</loc><lastmod>2026-09-12</lastmod><changefreq>monthly</changefreq><priority>0.85</priority></url>
 
-  <url>
-    <loc>https://www.fastnetstays.com/add-listing</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.80</priority>
-  </url>
-
-  <!-- Auth -->
-  <url>
-    <loc>https://www.fastnetstays.com/login</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.70</priority>
-  </url>
-
-  <url>
-    <loc>https://www.fastnetstays.com/signup</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.70</priority>
-  </url>
+  <!-- Auth (lower priority, but crawlable for sitelinks) -->
+  <url><loc>https://www.fastnetstays.com/login</loc><lastmod>2026-09-12</lastmod><changefreq>monthly</changefreq><priority>0.40</priority></url>
+  <url><loc>https://www.fastnetstays.com/signup</loc><lastmod>2026-09-12</lastmod><changefreq>monthly</changefreq><priority>0.40</priority></url>
 
   <!-- Support & Info -->
-  <url>
-    <loc>https://www.fastnetstays.com/about-us</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.75</priority>
-  </url>
-
-  <url>
-    <loc>https://www.fastnetstays.com/how-we-work</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.70</priority>
-  </url>
-
-  <url>
-    <loc>https://www.fastnetstays.com/help-center</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-
-  <url>
-    <loc>https://www.fastnetstays.com/faq</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-
-  <url>
-    <loc>https://www.fastnetstays.com/contact</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.70</priority>
-  </url>
+  <url><loc>https://www.fastnetstays.com/about-us</loc><lastmod>2026-09-12</lastmod><changefreq>monthly</changefreq><priority>0.75</priority></url>
+  <url><loc>https://www.fastnetstays.com/how-we-work</loc><lastmod>2026-09-12</lastmod><changefreq>monthly</changefreq><priority>0.70</priority></url>
+  <url><loc>https://www.fastnetstays.com/help-center</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.75</priority></url>
+  <url><loc>https://www.fastnetstays.com/faq</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.75</priority></url>
+  <url><loc>https://www.fastnetstays.com/contact</loc><lastmod>2026-09-12</lastmod><changefreq>monthly</changefreq><priority>0.70</priority></url>
 
   <!-- Legal -->
-  <url>
-    <loc>https://www.fastnetstays.com/privacy-policy</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.50</priority>
-  </url>
-
-  <url>
-    <loc>https://www.fastnetstays.com/terms-of-service</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.50</priority>
-  </url>
+  <url><loc>https://www.fastnetstays.com/privacy-policy</loc><lastmod>2026-09-12</lastmod><changefreq>yearly</changefreq><priority>0.30</priority></url>
+  <url><loc>https://www.fastnetstays.com/terms-of-service</loc><lastmod>2026-09-12</lastmod><changefreq>yearly</changefreq><priority>0.30</priority></url>
 
 </urlset>

@@ -74,7 +74,7 @@ $getAmenityIcon = function(string $name): string {
 };
 ?>
 
-<?php if (!empty($allAmenities)): ?><div style="background:#fff;border:1px solid #dadce0;border-radius:12px;padding:18px 20px;box-shadow:0 1px 3px rgba(60,64,67,0.06);">
+<?php if (!empty($allAmenities)): ?><div style="margin-top:16px;padding-top:16px;border-top:1px solid #e8eaed;">
     <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
         <h4 class="fs-6 fw-medium mb-0" style="color:#202124;font-family:'Google Sans',Roboto,sans-serif;font-weight:500;">
             <i class="fa-solid fa-list-check me-2" style="color:#1a73e8;"></i>Popular amenities
@@ -84,7 +84,7 @@ $getAmenityIcon = function(string $name): string {
         </button>
     </div>
 
-    <!-- Quick Preview Grid (Top 8 Amenities) — Google 4-col -->
+    <!-- Quick Preview Grid (Top 8 Amenities) — Google 4-col, now integrated not separated -->
     <div class="row g-3">
         <?php foreach (array_slice($allAmenities, 0, 8) as $am): ?>
             <div class="col-md-3 col-6">
@@ -95,7 +95,7 @@ $getAmenityIcon = function(string $name): string {
             </div>
         <?php endforeach; ?>
     </div>
-</div><?php else: ?><div class="alert alert-light border text-muted" role="status" style="border-radius:12px;border-color:#dadce0;">Amenities are not available for this property.</div><?php endif; ?>
+</div><?php else: ?><div class="alert alert-light border text-muted mt-3" role="status" style="border-radius:12px;border-color:#dadce0;">Amenities are not available for this property.</div><?php endif; ?>
 
 <!-- Dedicated All Amenities Modal -->
 <div class="modal fade" id="allAmenitiesModal" tabindex="-1" aria-labelledby="allAmenitiesModalLabel" aria-hidden="true">

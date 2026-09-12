@@ -78,22 +78,7 @@ $isCompact = !empty($compact) && $compact === true;
                         </ul>
                     </div>
                 </div>
-                <!-- Column 5 Get the App ~18% -->
-                <div class="footer-col footer-col--app">
-                    <div class="footer-widget">
-                        <h4 class="widget-title">Get the App</h4>
-                        <div class="footer-app-stack">
-                            <a href="https://apple.com/app-store/" target="_blank" class="footer-app-badge" aria-label="Download on App Store">
-                                <i class="fa-brands fa-apple"></i>
-                                <span><small>Download on</small><strong>App Store</strong></span>
-                            </a>
-                            <a href="https://play.google.com/store" target="_blank" class="footer-app-badge" aria-label="Get it on Google Play">
-                                <i class="fa-brands fa-google-play"></i>
-                                <span><small>GET IT ON</small><strong>Google Play</strong></span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
+
             </div>
         </div>
     </div>

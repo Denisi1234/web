@@ -18,9 +18,10 @@
   /* header is fixed → cancel body padding, use flex offset */
   body{padding-top:0 !important}
   #main-wrapper{height:100vh;overflow:hidden;display:flex;flex-direction:column;padding-top:64px;box-sizing:border-box}
-  .gh-split-container{flex:1;overflow:hidden;min-height:0;height:calc(100vh - 64px)}
+  .gh-split-container{flex:1;overflow:hidden;min-height:0;height:calc(100vh - 64px);padding-left:16px !important;padding-right:16px !important}
   .gh-split-container>.container-fluid,.gh-split-container .row{flex:1;overflow:hidden;min-height:0;height:100%}
   #gh_list_col{display:flex;flex-direction:column;overflow:hidden;height:100%;min-height:0;padding-right:4px}
+  #gh_map_col{padding-left:4px}
   .gh-left-fixed{flex:0 0 auto;background:#fff;z-index:5;border-right:1px solid #f1f3f4}
   .gh-left-fixed .gh-sb-wrap,.gh-left-fixed .gh-chips-wrap{position:relative !important;top:0 !important}
   .gh-left-fixed .gh-sb-wrap{padding:6px 0 4px !important;border-bottom:none !important}
@@ -34,11 +35,11 @@
   .gh-left-fixed .gh-chips-row{padding:4px 0 6px !important}
   .gh-left-fixed .gh-chip{padding:5px 10px !important;font-size:12px !important;margin-right:6px !important}
   .gh-left-fixed .gh-track-row{padding:6px 0 4px !important}
-  .gh-left-scroll{flex:1;overflow-y:auto;overflow-x:hidden;min-height:0;scrollbar-width:thin;scrollbar-color:#dadce0 transparent;padding-right:4px;background:#f8f9fa}
+  .gh-left-scroll{flex:1;overflow-y:auto;overflow-x:hidden;min-height:0;scrollbar-width:thin;scrollbar-color:#dadce0 transparent;padding:8px 10px 12px 12px;background:#f8f9fa}
   .gh-left-scroll::-webkit-scrollbar{width:6px}
   .gh-left-scroll::-webkit-scrollbar-thumb{background:#dadce0;border-radius:3px}
   .gh-map-sticky{position:relative !important;top:0 !important;height:100% !important;overflow:hidden;margin-top:0 !important}
-  .gh-map-sticky>.gh-map-frame{height:100% !important;min-height:0 !important;border-radius:8px;margin-left:4px}
+  .gh-map-sticky>.gh-map-frame{height:100% !important;min-height:0 !important;border-radius:8px;margin-left:0}
 }
 @media(max-width:991px){
   .gh-split-container{padding-bottom:16px}
@@ -65,16 +66,37 @@
     min-height:0 !important;
     border-radius:0 !important;
     margin:0 !important;
+    position:relative !important;
+    width:100% !important;
   }
   #gh_map_col.gh-mobile-active #gh-interactive-map{
     min-height:0 !important;
     height:100% !important;
+    width:100% !important;
+    position:absolute !important;
+    inset:0 !important;
   }
 }
 @media(min-width:992px) and (max-height:800px){
-  .gh-left-fixed .gh-sb-wrap{padding:4px 0 2px !important}
-  .gh-left-scroll{padding-top:4px !important}
+  .gh-left-fixed .gh-sb-wrap{padding:6px 0 4px !important}
+  .gh-left-fixed .fns-search-wrap{padding:8px 12px 6px !important}
+  .gh-left-fixed .fns-chips-wrap{padding:6px 12px 8px !important}
+  .gh-left-fixed .fns-pill{height:52px !important; min-height:52px !important}
+  .gh-left-fixed .fns-seg{padding:4px 10px !important}
+  .gh-left-fixed .fns-seg-label{font-size:9px !important; margin-bottom:2px !important}
+  .gh-left-fixed .fns-seg-value,.gh-left-fixed .fns-seg-input{font-size:12.5px !important; line-height:14px !important}
+  .gh-left-fixed .fns-cta{height:34px !important; padding:0 14px !important; font-size:12.5px !important}
+  .fns-chips-row{padding:2px 0 4px !important}
+  .fns-chip{height:30px !important; padding:5px 10px !important; font-size:11.5px !important}
+  .fns-chips-wrap div[style*="Track prices"], #fns_chips_wrap > div:first-child{padding:6px 12px 4px !important; font-size:12px !important}
+  .gh-left-scroll{padding-top:8px !important}
+  .gh-left-fixed .gh-chips-row{padding:2px 0 4px !important}
   .gh-split-container{height:calc(100vh - 64px)}
+}
+@media(min-width:992px) and (max-height:720px){
+  .gh-left-fixed .fns-pill{height:48px !important; min-height:48px !important}
+  .gh-left-fixed .fns-chip{height:28px !important; padding:4px 9px !important; font-size:11px !important}
+  .fns-chips-row{padding:1px 0 3px !important}
 }
 /* Bottom Micro-Footer — Google Travel */
 .gh-micro-footer{margin-top:18px;padding:14px 0 8px;border-top:1px solid #e8eaed;display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:12px;color:#5f6368;font-family:Roboto,'Segoe UI',Arial,sans-serif;line-height:1.4}
@@ -98,7 +120,7 @@
   .gh-index-footer-wrap .footer .widget-title{font-size:14px;margin-bottom:10px}
 }
 @media(max-width:991px){
-  .gh-index-footer-wrap{margin-left:0;margin-right:0;padding-bottom:0;margin-bottom:0}
+  .gh-index-footer-wrap{margin-left:0;margin-right:0;padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));margin-bottom:0}
   .gh-index-footer-wrap .footer{margin-bottom:0;padding-bottom:0}
   .gh-index-footer-wrap .footer .footer-widget{padding:16px 0 10px}
   .gh-index-footer-wrap .footer .row{row-gap:16px}
@@ -112,8 +134,27 @@
 @media(max-width:991px){
   .gh-split-container{min-height:auto !important;height:auto !important}
   #gh_list_col{height:auto !important}
-  .gh-left-scroll{height:auto !important;min-height:0 !important;padding-bottom:0 !important}
-  .gh-index-footer-wrap .footer-bottom{padding-top:8px;padding-bottom:10px}
+  .gh-left-scroll{height:auto !important;min-height:0 !important;padding-bottom:calc(88px + env(safe-area-inset-bottom, 0px)) !important}
+  .gh-index-footer-wrap .footer-bottom{padding-top:8px;padding-bottom:calc(10px + env(safe-area-inset-bottom, 0px))}
+}
+/* Breadcrumb mobile — sticky below header+tabs, not clipped */
+@media(max-width:991px){
+  nav[aria-label="Breadcrumb"]{position:sticky !important;top:96px !important;z-index:790 !important;background:#f8f9fa !important;display:block !important;visibility:visible !important;opacity:1 !important;overflow:visible !important;overflow-x:auto !important;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:10px 16px 10px !important; padding-left:calc(20px + env(safe-area-inset-left, 0px)) !important;padding-right:16px !important;margin:0 !important;min-height:36px !important;box-sizing:border-box !important}
+  nav[aria-label="Breadcrumb"] .breadcrumb{display:flex !important;flex-wrap:nowrap !important;gap:8px !important;min-width:max-content !important;align-items:center !important}
+  nav[aria-label="Breadcrumb"] .breadcrumb-item{flex:0 0 auto !important;white-space:nowrap !important;display:inline-flex !important;align-items:center !important}
+}
+  nav[aria-label="Breadcrumb"]::-webkit-scrollbar{display:none}
+  nav[aria-label="Breadcrumb"] .breadcrumb{flex-wrap:nowrap !important;white-space:nowrap !important;gap:6px}
+  nav[aria-label="Breadcrumb"] .breadcrumb-item{flex:0 0 auto;white-space:nowrap}
+}
+@media(max-width:575px){
+  nav[aria-label="Breadcrumb"]{padding-left:calc(12px + env(safe-area-inset-left, 0px)) !important;padding-right:12px !important}
+}
+/* Floating toggle safe-area: prevents OS gesture bar overlap */
+.gh-mob-toggle-wrap{pointer-events:auto; transform:translateX(-50%); transition:bottom .2s ease;}
+.gh-mob-toggle-wrap .btn{pointer-events:auto;}
+@media(max-width:991px){
+  #gh_cards_live{padding-bottom:8px}
 }
 /* Mobile peek drawer + horizontal carousel */
 .gh-mobile-sheet{display:none}
@@ -303,10 +344,10 @@
   .gh-chips-wrap{transition:top .22s ease}
 }
 /* ── SPEC OVERRIDES: new enterprise pill + chips handle new classes in split layout ── */
-.gh-left-fixed .fns-search-wrap,.gh-left-fixed .fns-chips-wrap{position:relative !important;top:0 !important;margin-top:0 !important;padding-top:0 !important}
+.gh-left-fixed .fns-search-wrap,.gh-left-fixed .fns-chips-wrap{position:relative !important;top:0 !important;margin-top:0 !important}
 @media(min-width:992px){
-  .gh-left-fixed .fns-search-wrap{padding:0 !important;border-bottom:none !important;margin-top:0 !important}
-  .gh-left-fixed .fns-chips-wrap{padding:0 !important;border-bottom:1px solid #E5E7EB}
+  .gh-left-fixed .fns-search-wrap{padding:10px 12px 8px !important;border-bottom:none !important;margin-top:0 !important}
+  .gh-left-fixed .fns-chips-wrap{padding:6px 12px 8px !important;border-bottom:1px solid #E5E7EB}
   .gh-left-fixed .fns-pill{min-height:56px !important}
   .gh-left-fixed .fns-seg{padding:6px 14px 6px 14px !important}
   .gh-left-fixed .fns-seg-label{font-size:10px !important}

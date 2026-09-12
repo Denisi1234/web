@@ -36,47 +36,81 @@
             console.info('[FastNet] Deferring map init — container hidden on mobile');
             return;
         }
-        var _style = (cfg && cfg.style) || window.MAPBOX_STYLE || 'mapbox://styles/mapbox/streets-v12';
-        // Free OSM fallback when no Mapbox token — uses demotiles (no token required)
-        var isOsmFallback = _style.indexOf('demotiles.maplibre.org') !== -1 || _style.indexOf('openstreetmap') !== -1;
-        if (!window.MAPBOX_TOKEN && !isOsmFallback) {
-            // if token missing and style is Mapbox, switch to OSM fallback
-            _style = 'https://demotiles.maplibre.org/style.json';
-            isOsmFallback = true;
-            window.MAPBOX_STYLE = _style;
-            console.info('[FastNet] Using OSM fallback style (no Mapbox token)');
+        var osmStyle = {
+            version: 8,
+            sources: {
+                'osm-tiles': {
+                    type: 'raster',
+                    tiles: [
+                        'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                    ],
+                    tileSize: 256,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                }
+            },
+            layers: [
+                {
+                    id: 'osm-tiles-layer',
+                    type: 'raster',
+                    source: 'osm-tiles',
+                    minzoom: 0,
+                    maxzoom: 19
+                }
+            ]
+        };
+
+        var hasValidToken = window.MAPBOX_TOKEN && typeof window.MAPBOX_TOKEN === 'string' && window.MAPBOX_TOKEN.startsWith('pk.');
+        var _style = (cfg && cfg.style) || window.MAPBOX_STYLE;
+        
+        if (!hasValidToken || !_style || _style.indexOf('mapbox://') !== 0) {
+            if (!_style || _style.indexOf('mapbox://') === 0) {
+                _style = osmStyle;
+            }
         }
-        if (window.MAPBOX_TOKEN) {
+        
+        if (hasValidToken && typeof mapboxgl !== 'undefined') {
             mapboxgl.accessToken = window.MAPBOX_TOKEN;
-        } else if (!isOsmFallback) {
-            console.warn('[FastNet] Mapbox token or library not available');
-            return;
         }
+        
         _inited = true;
 
-        // FastNet own style — real backend style (or OSM fallback)
-        _map = new mapboxgl.Map({
-            container: 'gh-interactive-map',
-            style: _style,
-            center: [cfg.defaultLng, cfg.defaultLat],
-            zoom:   cfg.defaultZoom || 12,
-            attributionControl: false,
-        });
+        try {
+            _map = new mapboxgl.Map({
+                container: 'gh-interactive-map',
+                style: _style,
+                center: [cfg.defaultLng || 39.2450, cfg.defaultLat || -6.7725],
+                zoom:   cfg.defaultZoom || 12,
+                attributionControl: false,
+            });
+        } catch (err) {
+            console.warn('[FastNet] Primary map style init failed, switching to OpenStreetMap', err);
+            try {
+                _map = new mapboxgl.Map({
+                    container: 'gh-interactive-map',
+                    style: osmStyle,
+                    center: [cfg.defaultLng || 39.2450, cfg.defaultLat || -6.7725],
+                    zoom:   cfg.defaultZoom || 12,
+                    attributionControl: false,
+                });
+            } catch (fallbackErr) {
+                console.error('[FastNet] OpenStreetMap fallback also failed', fallbackErr);
+                return;
+            }
+        }
 
         window._ghMap = _map;
 
         _map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-right');
-        // ensure proper size after parent flex layout settles + remove any fallback overlay
         setTimeout(function(){
             try{ _map.resize(); }catch(e){}
             var el=document.getElementById('gh-interactive-map');
             if(el){
                 el.style.background='';
                 el.style.display='';
-                // remove fallback message inserted before map init
                 var fb=el.querySelector('div[style*="Map loading"]');
                 if(fb && !el.classList.contains('mapboxgl-map')) fb.remove();
-                // if fallback div is first child covering canvas, remove it
                 if(el.firstChild && el.firstChild.textContent && el.firstChild.textContent.indexOf('Map loading')!==-1){
                     el.firstChild.remove();
                 }
@@ -84,11 +118,10 @@
             }
         }, 200);
         _map.on('error', function(e){
-            console.warn('[FastNet] Mapbox error', e && e.error && e.error.message);
-            // if Mapbox style fails (403/401) fallback to OSM without token
-            if(e && e.error && e.error.status === 401 && window.MAPBOX_STYLE && window.MAPBOX_STYLE.indexOf('mapbox://')===0){
-                console.info('[FastNet] Mapbox 401 — switching to OSM fallback');
-                try{ _map.setStyle('https://demotiles.maplibre.org/style.json'); }catch(err){}
+            console.warn('[FastNet] Mapbox tile error', e && e.error && e.error.message);
+            if(e && e.error && (e.error.status === 401 || e.error.status === 403)){
+                console.info('[FastNet] Mapbox token unauthorized — switching to OpenStreetMap tiles');
+                try{ _map.setStyle(osmStyle); }catch(err){}
             }
         });
 
@@ -473,16 +506,21 @@
             }
             // lazy init if deferred on mobile
             if (!_inited && (_cfg || window._ghCfg)) {
-                try{ window.initGhHomeMap(_cfg || window._ghCfg); }catch(e){ console.warn('mobile init',e); }
+                try { window.initGhHomeMap(_cfg || window._ghCfg); } catch(e) { console.warn('mobile init', e); }
             }
+            
             // ensure map resizes and fits markers after becoming visible
-            if (_map) {
-                setTimeout(function(){ try{ _map.resize(); _map.triggerRepaint&&_map.triggerRepaint(); }catch(e){} }, 120);
-                setTimeout(function(){ try{ _map.resize(); if(_cfg && _cfg.markers) _map.fitBounds && _map.fitBounds(new mapboxgl.LngLatBounds().extend && new mapboxgl.LngLatBounds(),{padding:56}); }catch(e){} }, 350);
-                setTimeout(function(){ try{ if(window.ghRecenter) window.ghRecenter(); }catch(e){} }, 500);
-            } else if (window._ghCfg) {
-                setTimeout(function(){ if(!_inited) try{ window.initGhHomeMap(window._ghCfg); }catch(e){} }, 200);
-            }
+            var doResizeSequence = function() {
+                if (_map) {
+                    try { _map.resize(); } catch(e) {}
+                    if (window.ghRecenter) try { window.ghRecenter(); } catch(e) {}
+                }
+            };
+            
+            setTimeout(doResizeSequence, 100);
+            setTimeout(doResizeSequence, 300);
+            setTimeout(doResizeSequence, 600);
+            
             if (icon) icon.className = 'fa-solid fa-list';
             if (text) text.textContent = 'View List';
             document.body.style.overflow='hidden';

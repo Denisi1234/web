@@ -1,5 +1,5 @@
 <?php
-$this->assign('title', 'Destination-Detail Page');
+$this->assign('title', 'Destination Travel Guide | FastNet Stays');
 ?>
 
 <?= $this->Html->css('/assets/css/google-travel-layout.css') ?>
@@ -16,30 +16,11 @@ $this->assign('title', 'Destination-Detail Page');
 <nav aria-label="Breadcrumb" class="container-fluid px-2 px-lg-2" style="max-width:100%;margin:0 auto;background:#f8f9fa;">
   <ol class="breadcrumb mb-0 py-1" style="background:transparent;font-size:12px;line-height:1.2;--bs-breadcrumb-divider:'›';" itemscope itemtype="https://schema.org/BreadcrumbList">
     <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="/" itemprop="item" style="color:#5f6368;text-decoration:none;"><span itemprop="name">Home</span></a><meta itemprop="position" content="1"></li>
-    <li class="breadcrumb-item active" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><span itemprop="name">Destination Detail</span><meta itemprop="position" content="2"></li>
+    <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="/?city=<?= h($destination['city'] ?? 'Zanzibar') ?>" itemprop="item" style="color:#5f6368;text-decoration:none;"><span itemprop="name">Hotel in <?= h($destination['city'] ?? 'Zanzibar, Tanzania') ?></span></a><meta itemprop="position" content="2"></li>
+    <li class="breadcrumb-item active" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><span itemprop="name"><?= h($destination['title'] ?? $article['title'] ?? 'Stone Town & Beach Escape') ?></span><meta itemprop="position" content="3"></li>
   </ol>
 </nav>
 <main id="main-content" style="background:#f8f9fa;min-height:85vh;" role="main">
-
-<!-- breadcrumbs  Start -->
-<div class="py-2 " style="background:#f8f9fa; position-relative">
-	<div class="container">
-		<!-- Search Form -->
-		<div class="row justify-content-center align-items-center mt-6 mt-md-0">
-			<div class="col-xl-12 col-lg-12 col-md-12">
-				<nav aria-label="breadcrumb">
-					<ol class="breadcrumb mb-0">
-						<li class="breadcrumb-item"><a href="#" class="text-primary">Home</a></li>
-						<li class="breadcrumb-item"><a href="#" class="text-primary">Hotel in Denver, USA</a></li>
-						<li class="breadcrumb-item active" aria-current="page">Royal Plaza on Scotts</li>
-					</ol>
-				</nav>
-			</div>
-		</div>
-		<!-- </row> -->
-	</div>
-</div>
-<!-- Breadcrumbs End -->
 
 <!-- Destination Detail Start -->
 <section class="pt-3">
@@ -55,8 +36,10 @@ $this->assign('title', 'Destination-Detail Page');
 								<h4 class="mb-0">
 									<?php if (!empty($article['title'])): ?>
 										<?= h($article['title']) ?>
+									<?php elseif (!empty($destination['title'])): ?>
+										<?= h($destination['title']) ?>
 									<?php else: ?>
-										Swiss Paris Delight Group Departure Oman Air Special
+										Zanzibar Stone Town &amp; Beach Escape
 									<?php endif; ?>
 								</h4>
 								<div class="exlops">

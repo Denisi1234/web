@@ -76,52 +76,63 @@ class FastnetApiClient
     }
 
     /**
-     * Internal request executor with error handling & graceful fallback
+     * Internal request executor — bubbles 4xx/5xx as JSON with _status, retries timeouts, caches safe GETs
      */
     protected function request(string $method, string $endpoint, array $data = [], array $headers = []): ?array
     {
         $url = $this->baseUrl . '/' . ltrim($endpoint, '/');
+        $isGet = strtoupper($method) === 'GET';
+        $cacheKey = null;
+        // Per-route cache for safe GETs (60s) — /properties, /map-config
+        if ($isGet && (str_contains($endpoint, '/properties') || str_contains($endpoint, '/map-config'))) {
+            $cacheKey = 'fastnet_api_' . md5($method . $endpoint . json_encode($data));
+            $cached = \Cake\Cache\Cache::read($cacheKey, 'default');
+            if (is_array($cached)) return $cached;
+        }
         $options = [
             'headers' => array_merge(['Accept' => 'application/json'], $headers)
         ];
 
-        try {
-            if (strtoupper($method) === 'POST') {
-                $response = $this->http->post($url, $data, $options);
-            } elseif (strtoupper($method) === 'PUT') {
-                $response = $this->http->put($url, $data, $options);
-            } elseif (strtoupper($method) === 'DELETE') {
-                $response = $this->http->delete($url, $options);
-            } else {
-                $response = $this->http->get($url, $data, $options);
-            }
+        $attempts = 0;
+        $maxAttempts = 3;
+        while ($attempts < $maxAttempts) {
+            try {
+                if (strtoupper($method) === 'POST') {
+                    $response = $this->http->post($url, $data, $options);
+                } elseif (strtoupper($method) === 'PUT') {
+                    $response = $this->http->put($url, $data, $options);
+                } elseif (strtoupper($method) === 'DELETE') {
+                    $response = $this->http->delete($url, $options);
+                } else {
+                    $response = $this->http->get($url, $data, $options);
+                }
 
-            $status = $response->getStatusCode();
-            if ($response->isOk() || $status === 201) {
-                return $response->getJson();
-            }
-            // Return JSON even on validation/conflict errors so callers can surface authoritative messages (409 room locked, 422 validation)
-            if (in_array($status, [409, 422], true)) {
-                $json = $response->getJson();
-                if (is_array($json)) return $json;
-                // fallback to body as message
+                $status = $response->getStatusCode();
+                if ($response->isOk() || $status === 201) {
+                    $json = $response->getJson();
+                    if ($cacheKey && is_array($json)) \Cake\Cache\Cache::write($cacheKey, $json);
+                    return $json;
+                }
+                // Bubble all 4xx/5xx as JSON with _status so callers don't fallback to mocks silently
+                $json = null;
+                try { $json = $response->getJson(); } catch (\Throwable $e) { $json = null; }
+                if (is_array($json)) {
+                    $json['_status'] = $status;
+                    return $json;
+                }
                 return ['message' => trim((string)$response->getBody()) ?: 'Request failed', '_status' => $status];
+
+            } catch (\Throwable $e) {
+                $attempts++;
+                $isTimeout = str_contains($e->getMessage(), 'timeout') || str_contains($e->getMessage(), 'timed out') || str_contains($e->getMessage(), 'cURL');
+                if ($isTimeout && $attempts < $maxAttempts) {
+                    usleep(200000 * $attempts); // 200ms, 400ms backoff
+                    continue;
+                }
+                Log::error(sprintf('[FastnetApiClient] %s %s failed after %d attempts: %s', $method, $url, $attempts, $e->getMessage()));
+                return null;
             }
-
-            Log::warning(sprintf(
-                '[FastnetApiClient] HTTP %s returned status %d: %s',
-                $url,
-                $status,
-                substr((string)$response->getBody(), 0, 200)
-            ));
-        } catch (\Throwable $e) {
-            Log::error(sprintf(
-                '[FastnetApiClient] Connection failure to %s: %s',
-                $url,
-                $e->getMessage()
-            ));
         }
-
         return null;
     }
 }

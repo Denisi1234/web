@@ -51,8 +51,8 @@ class BookingQuoteService
             'rooms' => [['room_id' => $roomId, 'quantity' => $rooms]],
         ];
         $calc = $this->apiClient->post('/bookings/calculate', $payload);
-        // Fallback to GET if POST not routed (backend supports both)
-        if (empty($calc) || empty($calc['valid'])) {
+        // Only fallback to GET if POST returned null (no response), not when backend explicitly says valid=false — surface authoritative failure directly
+        if (empty($calc)) {
             $calc = $this->apiClient->get('/bookings/calculate', $payload);
         }
         if (empty($calc)) {
@@ -61,12 +61,9 @@ class BookingQuoteService
         if (isset($calc['valid']) && $calc['valid'] === false) {
             throw new InvalidArgumentException($calc['message'] ?? 'Room not available for selected dates.');
         }
-        // Backend returns 422 with valid false on unavailability — surface as quote error
-        if (isset($calc['message']) && !isset($calc['pricing']) && !isset($calc['grand_total'])) {
-            // Might be error payload
-            if (isset($calc['valid']) && $calc['valid'] === false) {
-                throw new InvalidArgumentException($calc['message']);
-            }
+        // If backend returned error without pricing/grand_total, surface message (422 valid:false already handled)
+        if (isset($calc['_status']) && $calc['_status'] >= 400) {
+            throw new InvalidArgumentException($calc['message'] ?? 'Unable to calculate price — please check dates and try again.');
         }
 
         // Extract authoritative pricing
@@ -137,6 +134,7 @@ class BookingQuoteService
                 'total_amount' => $total,
                 'nights' => $nights,
                 'rooms_count' => $rooms,
+                'cancellation_policy' => $calc['cancellation_policy'] ?? "Free cancellation before " . $checkIn->format('Y-m-d'),
                 'raw_pricing' => $pricing,
                 'raw' => $calc,
             ],

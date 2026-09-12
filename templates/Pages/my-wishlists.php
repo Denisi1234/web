@@ -10,6 +10,7 @@ $this->assign('title', 'Your favourites - FastNet Stays');
 
 <?= $this->Html->css('/assets/css/wishlists.css'); ?>
 
+<main id="main-content" role="main">
 <div class="trivago-profile-wrapper">
     <div class="container" style="max-width: 1120px;">
         <div class="row">

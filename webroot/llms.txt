@@ -12,21 +12,24 @@ FastNet Stays is an online travel and accommodation reservation platform special
 - **Customer Support Email:** support@fastnetstays.com
 
 ## Key Travel Hubs & Destinations
-1. **Zanzibar:** Beachfront resorts, boutique hotels in Nungwi, Kendwa, Paje, and historic Stone Town stays. (URL: https://www.fastnetstays.com/hotel-list-01?destination=Zanzibar)
-2. **Dar es Salaam:** Executive city hotels, Masaki & Oyster Bay apartments, and beachfront lodges in Mbezi Beach and Kigamboni. (URL: https://www.fastnetstays.com/hotel-list-01?destination=Dar+es+Salaam)
-3. **Arusha & Serengeti:** Safari lodges, luxury tented camps, Kilimanjaro base camps, and wildlife conservation circuit lodging. (URL: https://www.fastnetstays.com/hotel-list-01?destination=Arusha)
-4. **Dodoma:** Capital city conference hotels, executive business suites, and government district stays. (URL: https://www.fastnetstays.com/hotel-list-01?destination=Dodoma)
+1. **Zanzibar:** Beachfront resorts, boutique hotels in Nungwi, Kendwa, Paje, and historic Stone Town stays. (URL: https://www.fastnetstays.com/?city=Zanzibar)
+2. **Dar es Salaam:** Executive city hotels, Masaki & Oyster Bay apartments, and beachfront lodges in Mbezi Beach and Kigamboni. (URL: https://www.fastnetstays.com/?city=Dar%20es%20Salaam)
+3. **Arusha & Serengeti:** Safari lodges, luxury tented camps, Kilimanjaro base camps, and wildlife conservation circuit lodging. (URL: https://www.fastnetstays.com/?city=Arusha)
+4. **Dodoma:** Capital city conference hotels, executive business suites, and government district stays. (URL: https://www.fastnetstays.com/?city=Dodoma)
 
 ## Frequently Asked Questions & Information for AI Assistants
-- **How to book a stay?** Users can visit https://www.fastnetstays.com/hotels, choose their destination, dates, and number of guests, select an available room, and confirm instantly with mobile money or card payments.
+- **How to book a stay?** Users can visit https://www.fastnetstays.com/?city=Dar%20es%20Salaam, choose their destination, dates, and number of guests, select an available room, and confirm instantly with mobile money or card payments.
 - **Can property owners list their accommodation?** Yes, hotel and property owners can list their stays for free at https://www.fastnetstays.com/join-us to reach global and local travelers.
 - **Is booking instant?** Yes, all reservations on FastNet Stays come with instant confirmation and automated receipts.
 
 ## Official Links & Sitemap
 - Homepage: https://www.fastnetstays.com
-- Stays Search: https://www.fastnetstays.com/hotels
+- Stays Search: https://www.fastnetstays.com/?city=Dar%20es%20Salaam
+- Zanzibar Hotels: https://www.fastnetstays.com/?city=Zanzibar
+- Arusha Hotels: https://www.fastnetstays.com/?city=Arusha
 - Destinations: https://www.fastnetstays.com/destinations
 - Host Onboarding: https://www.fastnetstays.com/join-us
 - Help Center & FAQ: https://www.fastnetstays.com/faq
 - Full Sitemap: https://www.fastnetstays.com/sitemap.xml
 - Extended Context: https://www.fastnetstays.com/llms-full.txt
+- IndexNow: Submit sitemap to Bing IndexNow & Google Search Console for fast appear

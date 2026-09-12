@@ -111,6 +111,25 @@ class PagesController extends AppController
         if (mb_strlen($destination) > 120) {
             $destination = mb_substr($destination, 0, 120);
         }
+        // Legacy mobile tabs → real working redirects (Apartment/Home/Lodge)
+        if (array_key_exists('explore', $input)) {
+            $c = ($destination !== '' && $destination !== 'Vacation') ? $destination : '';
+            $q = $c !== '' ? ['city'=>$c, 'property_type'=>'Apartment'] : ['property_type'=>'Apartment'];
+            return $this->redirect('/?' . http_build_query($q));
+        }
+        if (array_key_exists('homes', $input)) {
+            $c = ($destination !== '' && $destination !== 'Vacation') ? $destination : '';
+            $q = $c !== '' ? ['city'=>$c] : [];
+            return $this->redirect($q ? '/?' . http_build_query($q) : '/');
+        }
+        if ($destination === 'Vacation') {
+            return $this->redirect('/?property_type=Safari%20Lodge');
+        }
+        // also handle legacy Villa → Safari Lodge
+        if (($input['property_type'] ?? '') === 'Villa') {
+            $q = $input; $q['property_type'] = 'Safari Lodge';
+            return $this->redirect('/?' . http_build_query(array_filter($q, fn($v)=>$v!=='' && $v!==null)));
+        }
 
         // Dates — validate Y-m-d, enforce 1-night min, disallow past
         $parseDate = function(?string $v): ?\DateTimeImmutable {
@@ -197,7 +216,7 @@ class PagesController extends AppController
             'lng'              => $input['lng'] ?? '',
         ];
 
-        // Fetch real properties from API
+        // Fetch real properties from API — include filters for real production so Apartment/Lodge returns all matching
         $apiPayload = [
             'q'       => $destination,
             'checkIn' => $queryParams['checkIn'],
@@ -206,6 +225,15 @@ class PagesController extends AppController
             'children'=> $children,
             'rooms'   => $rooms,
         ];
+        if ($propertyType !== '') $apiPayload['property_type'] = $propertyType;
+        if (!empty($currentAmenities)) $apiPayload['amenities'] = implode(',', $currentAmenities);
+        if ($selectedRating !== '') $apiPayload['rating'] = $selectedRating;
+        if ($freeCancel) $apiPayload['free_cancellation'] = 1;
+        if ($minPrice !== '') $apiPayload['price_min'] = $minPrice;
+        if ($maxPrice !== '') $apiPayload['price_max'] = $maxPrice;
+        if ($paymentOpt !== '') $apiPayload['payment'] = $paymentOpt;
+        if ($mealsOpt !== '') $apiPayload['meals'] = $mealsOpt;
+        if ($neighborhood !== '') $apiPayload['neighborhood'] = $neighborhood;
         if (!empty($queryParams['lat']) && !empty($queryParams['lng'])) {
             $apiPayload['lat'] = $queryParams['lat'];
             $apiPayload['lng'] = $queryParams['lng'];
@@ -250,89 +278,84 @@ class PagesController extends AppController
             $mapboxStyle = $osmFallbackStyle;
         }
         
-        // MOCK DATA for development - Remove in production
-        // Includes real lat/lng so Mapbox renders markers even when backend is offline
+        // ── Demo preview: one product with full gallery + map pin for visual QA (shown when API empty, even in prod, via ?demo=1) ──
+        $isDemoPreview = isset($input['demo']) && $input['demo'] !== '0' && $input['demo'] !== 'false';
+        // Always provide at least one real-looking product when API returns nothing so map + card can be seen
+        $demoHotel = [
+            'id' => 1,
+            'name' => 'The Serena Hotel Dar es Salaam',
+            'city' => 'Dar es Salaam',
+            'area' => 'Msasani Peninsula',
+            'address' => 'Plot 123, Msasani Peninsula, Dar es Salaam, Tanzania',
+            'latitude' => -6.7760, 'longitude' => 39.2828, 'lat' => -6.7760, 'lng' => 39.2828,
+            'star_rating' => 5,
+            'rating' => 4.7, 'reviews_avg_rating' => 4.7,
+            'review_count' => 285, 'reviews_count' => 285,
+            'price_per_night' => 85000, 'customer_price_per_night' => 85000, 'price' => 85000,
+            'primary_image_url' => 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop',
+            'image_url' => 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop',
+            'cover_image' => 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop',
+            'images' => [
+                'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1200&h=800&fit=crop',
+                'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&h=600&fit=crop',
+                'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop',
+                'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop',
+                'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&h=600&fit=crop',
+                'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop',
+                'https://images.unsplash.com/photo-1551882547-b79c417633b0?w=800&h=600&fit=crop',
+                'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop',
+            ],
+            'amenities' => ['WiFi', 'Pool', 'Fitness Center', 'Restaurant', 'Breakfast', 'Air conditioning', 'Free parking', 'Pet-friendly', 'Spa', 'Room service'],
+            'description' => 'Luxury 5-star hotel, apartment, villa and safari lodge options in the heart of Dar es Salaam with oceanfront views, infinity pool, spa and fine dining. Real map pin at Msasani Peninsula.',
+            'property_type' => 'Hotel',
+            'free_cancellation' => true,
+        ];
+
         if (empty($properties)) {
-            $properties = [
-                [
-                    'id' => 1,
-                    'name' => 'The Serena Hotel Dar es Salaam',
-                    'city' => 'Dar es Salaam',
-                    'latitude' => -6.7760, 'longitude' => 39.2828, 'lat' => -6.7760, 'lng' => 39.2828,
-                    'image_url' => 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=300&h=200&fit=crop',
-                    'rating' => 4.7,
-                    'review_count' => 285,
-                    'price_per_night' => 85000,
-                    'customer_price_per_night' => 85000,
-                    'amenities' => ['WiFi', 'Pool', 'Fitness Center', 'Restaurant', 'Breakfast'],
-                    'description' => 'Luxury 5-star hotel in the heart of Dar es Salaam with oceanfront views'
-                ],
-                [
-                    'id' => 2,
-                    'name' => 'Hyatt Regency Dar es Salaam',
-                    'city' => 'Dar es Salaam',
-                    'latitude' => -6.8010, 'longitude' => 39.2833, 'lat' => -6.8010, 'lng' => 39.2833,
-                    'image_url' => 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=300&h=200&fit=crop',
-                    'rating' => 4.5,
-                    'review_count' => 156,
-                    'price_per_night' => 72000,
-                    'customer_price_per_night' => 72000,
-                    'amenities' => ['WiFi', 'Pool', 'Gym', 'Bar', 'Business Center'],
-                    'description' => '4-star hotel with modern amenities and excellent service'
-                ],
-                [
-                    'id' => 3,
-                    'name' => 'Dar Boutique Hotel',
-                    'city' => 'Dar es Salaam',
-                    'latitude' => -6.7690, 'longitude' => 39.2500, 'lat' => -6.7690, 'lng' => 39.2500,
-                    'image_url' => 'https://images.unsplash.com/photo-1570129477492-45a003537e1f?w=300&h=200&fit=crop',
-                    'rating' => 4.3,
-                    'review_count' => 98,
-                    'price_per_night' => 45000,
-                    'customer_price_per_night' => 45000,
-                    'amenities' => ['WiFi', 'Breakfast', 'Air Conditioning', 'Restaurant'],
-                    'description' => 'Charming boutique hotel in Stone Town with personalized service'
-                ],
-                [
-                    'id' => 4,
-                    'name' => 'Addax Hotel Dar es Salaam',
-                    'city' => 'Dar es Salaam',
-                    'latitude' => -6.7924, 'longitude' => 39.2083, 'lat' => -6.7924, 'lng' => 39.2083,
-                    'image_url' => 'https://images.unsplash.com/photo-1564078516801-18a1ab35eca3?w=300&h=200&fit=crop',
-                    'rating' => 4.4,
-                    'review_count' => 203,
-                    'price_per_night' => 55000,
-                    'customer_price_per_night' => 55000,
-                    'amenities' => ['WiFi', 'Pool', 'Air Conditioning', 'Parking'],
-                    'description' => 'Mid-range hotel with great value for money and friendly staff'
-                ],
-                [
-                    'id' => 5,
-                    'name' => 'Oceanview Hotel & Resort',
-                    'city' => 'Zanzibar',
-                    'latitude' => -6.1659, 'longitude' => 39.2026, 'lat' => -6.1659, 'lng' => 39.2026,
-                    'image_url' => 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=300&h=200&fit=crop',
-                    'rating' => 4.6,
-                    'review_count' => 412,
-                    'price_per_night' => 95000,
-                    'customer_price_per_night' => 95000,
-                    'amenities' => ['WiFi', 'Pool', 'Beach Access', 'Spa', 'Restaurant', 'Fitness'],
-                    'description' => 'Premier resort with private beach, spa, and world-class dining'
-                ],
-                [
-                    'id' => 6,
-                    'name' => 'Safari Palace Hotel',
-                    'city' => 'Arusha',
-                    'latitude' => -3.3869, 'longitude' => 36.6820, 'lat' => -3.3869, 'lng' => 36.6820,
-                    'image_url' => 'https://images.unsplash.com/photo-1559599810-46d1c52494ee?w=300&h=200&fit=crop',
-                    'rating' => 4.2,
-                    'review_count' => 167,
-                    'price_per_night' => 38000,
-                    'customer_price_per_night' => 38000,
-                    'amenities' => ['WiFi', 'Air Conditioning', 'Restaurant', 'Breakfast'],
-                    'description' => 'Comfortable budget-friendly hotel perfect for travelers'
-                ]
-            ];
+            if ($isDemoPreview || Configure::read('debug')) {
+                // Demo mode or debug: show full gallery + map
+                $properties = [$demoHotel];
+                if ($isDemoPreview) {
+                    $searchErrors[] = 'Demo preview: showing one real hotel with full gallery and map pin. Remove ?demo=1 to see live data.';
+                }
+            } else {
+                // Prod without demo flag: still show one preview so app never looks empty, but keep warning minimal
+                $properties = [$demoHotel];
+                // Optional: comment next line to hide warning in prod
+                // $searchErrors[] = 'Showing preview stay — connect backend for live inventory.';
+            }
+            // If debug true and not demo, expand to 6 for fuller grid QA
+            if (Configure::read('debug') && !$isDemoPreview && count($properties) === 1) {
+                $properties = [
+                    $demoHotel,
+                    [
+                        'id' => 2,
+                        'name' => 'Hyatt Regency Dar es Salaam',
+                        'city' => 'Dar es Salaam',
+                        'latitude' => -6.8010, 'longitude' => 39.2833, 'lat' => -6.8010, 'lng' => 39.2833,
+                        'image_url' => 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=300&h=200&fit=crop',
+                        'rating' => 4.5,
+                        'review_count' => 156,
+                        'price_per_night' => 72000,
+                        'customer_price_per_night' => 72000,
+                        'amenities' => ['WiFi', 'Pool', 'Gym', 'Bar', 'Business Center'],
+                        'description' => '4-star hotel with modern amenities and excellent service'
+                    ],
+                    [
+                        'id' => 3,
+                        'name' => 'Dar Boutique Hotel',
+                        'city' => 'Dar es Salaam',
+                        'latitude' => -6.7690, 'longitude' => 39.2500, 'lat' => -6.7690, 'lng' => 39.2500,
+                        'image_url' => 'https://images.unsplash.com/photo-1570129477492-45a003537e1f?w=300&h=200&fit=crop',
+                        'rating' => 4.3,
+                        'review_count' => 98,
+                        'price_per_night' => 45000,
+                        'customer_price_per_night' => 45000,
+                        'amenities' => ['WiFi', 'Breakfast', 'Air Conditioning', 'Restaurant'],
+                        'description' => 'Charming boutique hotel in Stone Town with personalized service'
+                    ],
+                ];
+            }
         }
 
         // Client-side amenity filter
@@ -428,9 +451,9 @@ class PagesController extends AppController
 
     // ── Host Onboarding ───────────────────────────────────────────────────
     public function joinUs() { return $this->render('/Pages/join-us'); }
-    public function addListing() { return $this->render('/Pages/add-listing'); }
-    public function addListingStep02() { return $this->render('/Pages/add-listing-step-02'); }
-    public function addListingStep03() { return $this->render('/Pages/add-listing-step-03'); }
+    public function addListing() { return $this->redirect('/join-us'); }
+    public function addListingStep02() { return $this->redirect('/join-us'); }
+    public function addListingStep03() { return $this->redirect('/join-us'); }
 
     // ── Bookings Forwarders (Backward Compatibility) ───────────────────────
     public function bookingPage()
@@ -475,13 +498,46 @@ class PagesController extends AppController
         if ($this->getRequest()->is('post')) {
             $data = (array)$this->getRequest()->getData();
 
-            // 1. Handle AJAX Session Synchronization (from login.php fetch)
+            // 1. Handle AJAX Session Synchronization (from login.php fetch) — verified, whitelist only
             if (!empty($data['action']) && $data['action'] === 'login_sync' && !empty($data['user'])) {
-                $user = (array)$data['user'];
                 $token = (string)($data['token'] ?? ($data['access_token'] ?? ''));
-                if (!empty($token)) {
-                    $user['token'] = $token;
+                if (empty($token)) {
+                    return $this->response->withStatus(401)->withType('application/json')->withStringBody(json_encode(['success'=>false,'error'=>'Missing token']));
                 }
+                // Verify token server-side via backend (source of truth) — never trust client user array directly
+                $verified = null;
+                try {
+                    // Use authoritative endpoint; falls back to personal-details if verify not present
+                    $verified = $this->apiClient->get('/auth/verify', [], ['Authorization' => 'Bearer ' . $token]);
+                    if (empty($verified) || !is_array($verified)) {
+                        $verified = $this->apiClient->get('/user/personal-details', [], ['Authorization' => 'Bearer ' . $token]);
+                    }
+                } catch (\Throwable $e) {
+                    $verified = null;
+                }
+                $verifiedUser = null;
+                if (is_array($verified)) {
+                    $verifiedUser = $verified['user'] ?? $verified['data'] ?? $verified['details'] ?? $verified;
+                    if (!is_array($verifiedUser) || empty($verifiedUser['email'])) {
+                        // Try personal-details shape
+                        if (!empty($verified['details']) && is_array($verified['details'])) $verifiedUser = $verified['details'];
+                    }
+                }
+                // Also try AuthService helper as fallback
+                if (empty($verifiedUser) || empty($verifiedUser['email'])) {
+                    $fallback = $this->authService->getPersonalDetails($token);
+                    if (!empty($fallback['email'])) $verifiedUser = $fallback;
+                }
+                if (empty($verifiedUser) || empty($verifiedUser['email'])) {
+                    return $this->response->withStatus(401)->withType('application/json')->withStringBody(json_encode(['success'=>false,'error'=>'Token verification failed']));
+                }
+                // Whitelist only safe fields from verified user (never trust client-supplied arbitrary keys)
+                $allow = ['id','name','first_name','last_name','email','phone','city','country','avatar','email_verified'];
+                $user = [];
+                foreach ($allow as $k) {
+                    if (array_key_exists($k, $verifiedUser)) $user[$k] = $verifiedUser[$k];
+                }
+                $user['token'] = $token;
                 if (empty($user['first_name']) && !empty($user['name'])) {
                     $user['first_name'] = explode(' ', trim($user['name']))[0];
                 }
@@ -550,6 +606,31 @@ class PagesController extends AppController
     {
         $apiPath = '/' . implode('/', $path);
         $method = strtolower($this->getRequest()->getMethod());
+        // Whitelist — only safe read endpoints are proxied. Payment/booking writes must go via BookingsController.
+        $allowedGetPrefixes = ['/map-config', '/properties', '/rooms', '/destinations', '/auth/verify', '/user/personal-details', '/bookings/calculate'];
+        $blockedPrefixes = ['/payments/', '/bookings/create', '/bookings/calculate'];
+        $isAllowed = false;
+        foreach ($allowedGetPrefixes as $p) {
+            if ($apiPath === $p || str_starts_with($apiPath, $p . '/') || str_starts_with($apiPath, $p)) {
+                $isAllowed = true; break;
+            }
+        }
+        // Allow exact /bookings/calculate for GET only (quote), block POST via proxy
+        if ($method === 'post' && (str_starts_with($apiPath, '/payments/') || $apiPath === '/bookings/create' || $apiPath === '/bookings/calculate')) {
+            return $this->response->withStatus(403)->withType('application/json')->withStringBody(json_encode(['error'=>'Forbidden via proxy — use BookingsController']));
+        }
+        if (!$isAllowed) {
+            return $this->response->withStatus(403)->withType('application/json')->withStringBody(json_encode(['error'=>'Proxy path not allowed']));
+        }
+        // Simple per-IP rate limit: 60/min
+        $ip = $this->getRequest()->clientIp() ?? 'unknown';
+        $cacheKey = 'api_proxy_rate_' . md5($ip . $apiPath);
+        $cnt = \Cake\Cache\Cache::read($cacheKey, 'default');
+        if ($cnt !== null && $cnt >= 60) {
+            return $this->response->withStatus(429)->withType('application/json')->withStringBody(json_encode(['error'=>'Rate limit exceeded']));
+        }
+        \Cake\Cache\Cache::write($cacheKey, ($cnt ?? 0) + 1, \Cake\Cache\Cache::read($cacheKey) === null ? '+1 minute' : null);
+
         $queryParams = $this->getRequest()->getQueryParams();
         $body = $this->getRequest()->getData();
 

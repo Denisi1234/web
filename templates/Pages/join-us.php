@@ -1,5 +1,5 @@
 <?php
-$this->assign('title', 'Join-Us Page');
+$this->assign('title', 'List Your Property | Partner with FastNet Stays');
 ?>
 
 <?= $this->Html->css('/assets/css/google-travel-layout.css') ?>
@@ -35,18 +35,18 @@ $this->assign('title', 'Join-Us Page');
 							</svg>
 							</span></span> & List your Hotel
 						</h1>
-						<p>Cicero famously orated against Lucius Sergius Catilina. Occasionally the first Oration against Catiline is taken for type specimens</p>
+						<p>List your property on Tanzania’s fastest-growing stays platform — from Stone Town riads to Serengeti camps. Get instant bookings with local payouts via M-Pesa &amp; Tigo Pesa.</p>
 						<div class="d-flex justify-content-center my-3 mt-5"><button type="button" class="btn btn-light-primary px-5 rounded-5 fw-medium">Add Your Hotel</button></div>
 					</div>
 					<div class="d-flex align-items-center justify-content-center flex-wrap">
 						<div class="exlope fw-light fs-6 px-4 my-2"><i class="fa-solid fa-check-circle text-success me-2 mt-1"></i>
-							More than 5.1 million holiday rentals already listed 
+							More than 5.1 million travellers search monthly
 						</div>
 						<div class="exlope fw-light fs-6 px-4 my-2"><i class="fa-solid fa-check-circle text-success me-2 mt-1"></i>
-							Bed one supposing breakfast day fulfilled off depending questions.
+							Get bookings with instant M-Pesa / Tigo Pesa payouts
 						</div>
 						<div class="exlope fw-light fs-6 px-4 my-2"><i class="fa-solid fa-check-circle text-success me-2 mt-1"></i>
-							The difference in the cost shall be borne by the client in case.
+							Free listing + 24/7 local host support in Dar, Zanzibar &amp; Arusha
 						</div>
 					</div>
 				</div>
@@ -67,7 +67,7 @@ $this->assign('title', 'Join-Us Page');
 			<div class="col-xl-8 col-lg-9 col-md-11 col-sm-12">
 				<div class="secHeading-wrap text-center mb-5">
 					<h2>Why FastNet Stays Fits You?</h2>
-					<p>Cicero famously orated against his political opponent Lucius Sergius Catilina.</p>
+					<p>Earn more with direct bookings — 0% commission launch, verified guests, and instant payouts via M-Pesa, Tigo Pesa &amp; bank.</p>
 				</div>
 			</div>
 		</div>
@@ -91,7 +91,7 @@ $this->assign('title', 'Join-Us Page');
 			<div class="col-xl-8 col-lg-9 col-md-11 col-sm-12">
 				<div class="secHeading-wrap text-center mb-5">
 					<h2>Loving Reviews By Our Customers</h2>
-					<p>Cicero famously orated against his political opponent Lucius Sergius Catilina.</p>
+					<p>Trusted by hosts and guests across Tanzania — from Dar hostels to Zanzibar resorts.</p>
 				</div>
 			</div>
 		</div>
@@ -148,8 +148,8 @@ $this->assign('title', 'Join-Us Page');
 
 						<!-- Title and content -->
 						<div class="col-xl-8 col-lg-7 col-md-6">
-							<h4 class="fs-2">Intresting To Join Us?</h4>
-							<p class="mb-0">The are likely to focus on the text, disregarding the layout and its elements.</p>
+							<h4 class="fs-2">Interesting To Join Us?</h4>
+							<p class="mb-0">Grow with FastNet Stays — get direct bookings, verified reviews, and local support.</p>
 						</div>
 
 						<!-- Button -->

@@ -1,5 +1,5 @@
 <?php
-$this->assign('title', '404 Page');
+$this->assign('title', 'Page Not Found (404) | FastNet Stays');
 ?>
 
 <?= $this->Html->css('/assets/css/google-travel-layout.css') ?>
@@ -7,12 +7,6 @@ $this->assign('title', '404 Page');
 <?= $this->Html->css('/assets/css/google-travel-cards.css') ?>
 
 <?= $this->element('navbar') ?>
-<div class="gh-m-tabs" role="tablist" aria-label="Travel types">
-  <a href="/?explore=1" role="tab">Explore</a>
-  <a href="/?homes=1" role="tab">Homes</a>
-  <a href="/" role="tab" class="active" aria-selected="true">Hotels</a>
-  <a href="/?destination=Vacation" role="tab">Vacation rentals</a>
-</div>
 <nav aria-label="Breadcrumb" class="container-fluid px-2 px-lg-2" style="max-width:100%;margin:0 auto;background:#f8f9fa;">
   <ol class="breadcrumb mb-0 py-1" style="background:transparent;font-size:12px;line-height:1.2;--bs-breadcrumb-divider:'›';" itemscope itemtype="https://schema.org/BreadcrumbList">
     <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="/" itemprop="item" style="color:#5f6368;text-decoration:none;"><span itemprop="name">Home</span></a><meta itemprop="position" content="1"></li>
@@ -32,7 +26,11 @@ $this->assign('title', '404 Page');
 						<img src="<?= $this->Url->build('/assets/img/404.png'); ?>" class="img-fluid mb-3" alt="">
 						<h1 class="display-1 fw-bold mb-0">404</h1>
 						<h2>Ohhh ho, something went wrong!</h2>
-						<p class="fs-6">Cicero famously orated against his political opponent.</p>
+						<p class="fs-6 text-muted">We can’t find that page — it may have moved. Try searching stays or go back home.</p>
+						<div class="d-flex gap-2 justify-content-center mt-3">
+							<a href="/" class="btn btn-primary rounded-pill px-4">Back to Stays</a>
+							<a href="/?city=Zanzibar" class="btn btn-outline-primary rounded-pill px-4">Search Hotels</a>
+						</div>
 					</div>
 				</div>
 

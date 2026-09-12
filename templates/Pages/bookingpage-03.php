@@ -1,30 +1,30 @@
 <?php
 $this->assign('title', 'Payment information | fastnetstays.com');
 $propTitle = $property['name'] ?? 'Divi Village Golf and Beach Resort';
-$propCity = $property['city'] ?? 'Oranjestad';
-$propAddress = $property['address'] ?? 'J.E. Irausquin Blvd 93, Oranjestad, Aruba';
+$propCity = $property['city'] ?? 'Dar es Salaam';
+$propAddress = $property['address'] ?? 'Msasani Peninsula, Dar es Salaam, Tanzania';
 $propStars = !empty($property['star_rating']) ? max(1,min(5,(int)$property['star_rating'])) : 4;
 $checkIn = $queryParams['checkIn'] ?? $queryParams['check_in'] ?? date('Y-m-d', strtotime('+7 days'));
 $checkOut = $queryParams['checkOut'] ?? $queryParams['check_out'] ?? date('Y-m-d', strtotime('+13 days'));
 $nights = max(1, (int)round((strtotime($checkOut)-strtotime($checkIn))/86400));
 if ($nights <1) $nights=6;
 $roomTitle = $room['name'] ?? 'Golf Villa One Bedroom Suite';
-$origPrice = $calculation['original_price'] ?? 5041.00;
-$roomPrice = $calculation['subtotal'] ?? $calculation['room_price'] ?? 1662.49;
-$taxes = $calculation['taxes'] ?? 515.75;
-$bookingFees = $calculation['booking_fees'] ?? 0;
-$total = $calculation['total_amount'] ?? 2178.24;
+$origPrice = (float)($calculation['original_price'] ?? $calculation['subtotal'] ?? 0);
+$roomPrice = (float)($calculation['subtotal'] ?? $calculation['room_price'] ?? 0);
+$taxes = (float)($calculation['taxes'] ?? 0);
+$bookingFees = (float)($calculation['booking_fees'] ?? 0);
+$total = (float)($calculation['total_amount'] ?? 0);
+$saved = max(0, $origPrice - $total);
+$offPercent = $origPrice > 0 ? (int)round(($saved / $origPrice) * 100) : 0;
 $quoteId = $quote['quote_id'] ?? $queryParams['quote_id'] ?? '';
 $propertyId = $property['id'] ?? $queryParams['property_id'] ?? 0;
 $roomId = $room['id'] ?? $queryParams['room_id'] ?? 0;
-$guestEmail = $queryParams['guest_email'] ?? $queryParams['email'] ?? 'dm328432@gmail.com';
-if ($guestEmail==='') $guestEmail='dm328432@gmail.com';
-$holderName = trim(($queryParams['first_name'] ?? 'Mudrick') . ' ' . ($queryParams['last_name'] ?? 'Mahenge'));
-if (trim($holderName)==='') $holderName='Mudrick  Mahenge';
+$guestEmail = $queryParams['guest_email'] ?? $queryParams['email'] ?? '';
+$holderName = trim(($queryParams['first_name'] ?? '') . ' ' . ($queryParams['last_name'] ?? ''));
 ?>
 <style>
 /* Agoda Payment — step 2 — matches screenshot */
-.agoda-pay-header{background:#fff;border-bottom:1px solid #e8eaed;height:64px;display:flex;align-items:center;position:sticky;top:0;z-index:100}
+.agoda-pay-header{background:#fff;border-bottom:1px solid #e8eaed;min-height:64px;display:flex;align-items:center;position:sticky;top:0;z-index:100;margin-top:16px;padding:14px 0}
 .agoda-pay-header-inner{max-width:1180px;margin:0 auto;padding:0 16px;width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px}
 .agoda-logo{font-size:22px;font-weight:900;letter-spacing:-0.02em;display:flex;align-items:center;gap:4px;text-decoration:none!important;color:#202124}
 .agoda-logo .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
@@ -107,7 +107,7 @@ if (trim($holderName)==='') $holderName='Mudrick  Mahenge';
 .agoda-dot.active{background:#0f7a2b;border:2px solid #0f7a2b}
 .agoda-dot.next{background:#fff;border:2px solid #cbd5e1}
 @media(max-width:992px){
-  .agoda-pay-header{height:auto;padding:10px 0}
+  .agoda-pay-header{height:auto;padding:10px 0;margin-top:8px}
   .agoda-pay-header-inner{flex-wrap:wrap}
   .agoda-steps{order:3;max-width:none;width:100%;margin:0;justify-content:space-between}
   .agoda-pay-wrap{grid-template-columns:1fr;gap:12px;padding:0 12px}
@@ -121,9 +121,11 @@ if (trim($holderName)==='') $holderName='Mudrick  Mahenge';
   .agoda-form-grid{grid-template-columns:1fr;gap:12px}
   .agoda-card-preview{height:130px}
   .agoda-pay-head{flex-direction:column;align-items:flex-start}
+  .agoda-user{display:none!important}
 }
 @media(max-width:768px){
   html,body{max-width:100%;overflow-x:hidden}
+  .agoda-user{display:none!important}
   .agoda-pay-wrap{padding:0 8px;gap:12px}
   .agoda-card{border-radius:10px}
   .agoda-timer-bar{flex-wrap:wrap;gap:4px}
@@ -161,18 +163,17 @@ if (trim($holderName)==='') $holderName='Mudrick  Mahenge';
 }
 </style>
 <?= $this->element('navbar') ?>
-<header class="agoda-pay-header">
-  <div class="agoda-pay-header-inner" style="justify-content:center">
-    <div class="agoda-steps" style="margin:0 auto">
+<div class="agoda-checkout-stepper" style="background:#fff;border-bottom:1px solid #e8eaed;padding:14px 0;margin-top:16px;">
+  <div style="max-width:1180px;margin:0 auto;padding:0 16px;display:flex;align-items:center;justify-content:center;">
+    <div class="agoda-steps" style="margin:0 auto;max-width:620px;flex:1;">
       <div class="agoda-step done"><span class="num"><i class="fa-solid fa-check" style="font-size:10px"></i></span><span>Customer information</span></div>
       <div class="agoda-step-line filled"></div>
       <div class="agoda-step active"><span class="num">2</span><span>Payment information</span></div>
       <div class="agoda-step-line"></div>
       <div class="agoda-step"><span class="num">3</span><span>Booking is confirmed!</span></div>
     </div>
-    <div class="agoda-user" style="margin-left:auto;display:flex;align-items:center;gap:8px;white-space:nowrap;font-size:13px;color:#202124"><span class="avatar" style="width:32px;height:32px;border-radius:50%;background:#7c6af0;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">M</span> Mudrick M. <i class="fa-solid fa-caret-down" style="font-size:10px;color:#5f6368"></i></div>
   </div>
-</header>
+</div>
 <div class="agoda-timer-bar">This price is guaranteed for... <b><i class="fa-regular fa-clock"></i> <span id="agodaPayCountdown">00:15:32</span></b></div>
 
 <div class="agoda-pay-wrap">
@@ -296,40 +297,40 @@ if (trim($holderName)==='') $holderName='Mudrick  Mahenge';
 
     <div class="agoda-green">
       <div style="display:flex;gap:6px;align-items:center"><b>We price match.</b> Find it for less, and we'll match it! <i class="fa-regular fa-circle-question" style="color:#137333"></i></div>
-      <div style="margin-top:6px;color:#137333;font-weight:700">You saved USD 3,378.51 on this booking!</div>
+      <?php if ($saved > 0): ?><div style="margin-top:6px;color:#137333;font-weight:700">You saved USD <?= number_format($saved,2) ?> on this booking!</div><?php endif; ?>
     </div>
 
     <div class="agoda-side-card">
       <div class="agoda-price-card">
-        <span class="agoda-off-badge">67% OFF TODAY</span>
+        <?php if ($offPercent > 0): ?><span class="agoda-off-badge"><?= $offPercent ?>% OFF TODAY</span><?php endif; ?>
         <div style="clear:both"></div>
         <div class="agoda-price-row strike"><span>Original price (1 room x <?= h($nights) ?> nights)</span><span>USD <?= number_format($origPrice,2) ?></span></div>
         <div class="agoda-price-row"><span>Room price (1 room x <?= h($nights) ?> nights)</span><span>USD <?= number_format($roomPrice,2) ?></span></div>
         <div class="agoda-price-row"><span>Taxes and fees</span><span>USD <?= number_format($taxes,2) ?></span></div>
         <div class="agoda-price-row"><span style="color:#0f7a2b">Booking fees</span><span style="color:#0f7a2b">FREE</span></div>
         <div class="agoda-price-total"><span style="font-size:13px;color:#202124;display:flex;align-items:center;gap:4px">Price <i class="fa-regular fa-circle-question" style="font-size:11px;color:#5f6368"></i></span><b>USD <?= number_format($total,2) ?></b></div>
-        <div class="agoda-included">Included in price: Tax USD 497.75, Hotel tax and service fees USD 18.00</div>
+        <div class="agoda-included">Included in price: Taxes &amp; fees USD <?= number_format($taxes,2) ?> (incl. VAT &amp; service)</div>
       </div>
     </div>
 
-    <div class="agoda-side-card">
+     <div class="agoda-side-card">
       <div class="agoda-cancel-card">
         <div class="agoda-cancel-title">How much will it cost to cancel?</div>
-        <div class="agoda-cancel-text"><span style="color:#0f7a2b">Stay flexible!</span> Cancel for free before 12 Sep 2026. Quickly edit your booking online - no added cost! <a href="#" style="color:#3264ff;font-weight:700">See more details</a></div>
+        <div class="agoda-cancel-text"><span style="color:#0f7a2b">Stay flexible!</span> <?= h($calculation['cancellation_policy'] ?? $quote['calculation']['cancellation_policy'] ?? 'Cancel for free before ' . date('j M Y', strtotime($checkIn))) ?>. Quickly edit your booking online - no added cost! <a href="#" style="color:#3264ff;font-weight:700">See more details</a></div>
         <div class="agoda-timeline">
           <div class="fill"></div>
           <div class="agoda-dot active"></div>
           <div class="agoda-dot next"></div>
           <div class="agoda-dot next"></div>
         </div>
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:#5f6368;margin-top:4px"><span>Today</span><span>12 Sep</span><span>Arrival</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:#5f6368;margin-top:4px"><span>Today</span><span><?= h(date('j M', strtotime($checkIn))) ?></span><span>Arrival</span></div>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-let paySeconds = 15*60+32;
+let paySeconds = <?= isset($quote['expires_at']) ? max(0, (int)$quote['expires_at'] - time()) : 15*60+32 ?>;
 function tickPay(){
   const el=document.getElementById('agodaPayCountdown');
   if(!el) return;

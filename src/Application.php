@@ -90,12 +90,11 @@ class Application extends BaseApplication
         ]);
         $csrf->skipCheckCallback(function ($request) {
             $path = $request->getPath();
+            // Exact matches only — str_contains is fragile (e.g. /my-login would bypass). Only these legacy endpoints skip CSRF.
             if (
-                str_contains($path, 'login') ||
-                str_contains($path, 'logout') ||
-                str_contains($path, 'bookingpage-02') || 
-                str_contains($path, 'contact/submit') ||
-                str_contains($path, 'api/')
+                $path === '/login' ||
+                $path === '/logout' ||
+                $path === '/contact/submit'
             ) {
                 return true;
             }
@@ -103,6 +102,17 @@ class Application extends BaseApplication
         });
 
         $middlewareQueue->add($csrf);
+
+        // Security headers — HSTS, X-Frame-Options, etc. (prod hardening)
+        $middlewareQueue->add(function ($request, $handler) {
+            $response = $handler->handle($request);
+            return $response
+                ->withHeader('X-Frame-Options', 'SAMEORIGIN')
+                ->withHeader('X-Content-Type-Options', 'nosniff')
+                ->withHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
+                ->withHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
+                ->withHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+        });
 
         return $middlewareQueue;
     }

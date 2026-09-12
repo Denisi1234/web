@@ -1,5 +1,17 @@
 <?php
 echo $this->Html->css('/assets/css/search-spacing.css');
+?>
+<style>
+/* Hotel-detail search — desktop 90% correct, mobile deleted per request */
+.nav-mobile-chip{display:none}
+.nav-mobile-sheet{display:none}
+@media(max-width:767px){
+  #nav_search_wrapper{display:none !important}
+  .nav-mobile-chip{display:none !important}
+  .nav-mobile-sheet{display:none !important}
+}
+</style>
+<?php
 $today = date('Y-m-d');
 $navCheckIn = !empty($queryParams['checkIn']) ? $queryParams['checkIn'] : date('Y-m-d', strtotime('+7 days'));
 if (strtotime($navCheckIn) < strtotime($today)) {
@@ -185,6 +197,32 @@ $navDest = $queryParams['destination'] ?? ($queryParams['q'] ?? 'Dar es Salaam')
                             </div>
                         </div>
                     </form>
+                    <!-- Mobile too-clean chip (replaces 3-pod row) -->
+                    <div class="nav-mobile-chip" id="nav_mobile_chip" role="button" tabindex="0" aria-label="Open search" onclick="openNavMobileSheet()" onkeydown="if(event.key==='Enter'||event.key===' ') {event.preventDefault(); openNavMobileSheet();}">
+                        <span class="nav-mobile-chip-icon" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
+                        <span class="nav-mobile-chip-text" id="nav_chip_text"><?= h($navDest) ?> • <?= date('j M', strtotime($navCheckIn)) ?>–<?= date('j M', strtotime($navCheckOut)) ?> • <?= (int)($queryParams['adults'] ?? 2) ?> guests</span>
+                        <span class="nav-mobile-chip-chevron" aria-hidden="true"><i class="fa-solid fa-sliders"></i></span>
+                    </div>
+                    <!-- Mobile bottom sheet -->
+                    <div class="nav-mobile-sheet" id="nav_mobile_sheet" role="dialog" aria-modal="true" aria-label="Search stays" onclick="if(event.target===this) closeNavMobileSheet()">
+                        <div class="nav-mobile-sheet-inner">
+                            <div class="sheet-drag" aria-hidden="true"><span></span></div>
+                            <div class="sheet-header">
+                                <span class="sheet-header-title">Search stays</span>
+                                <button type="button" onclick="closeNavMobileSheet()" aria-label="Close search" style="width:36px;height:36px;border-radius:50%;border:1px solid #E5E7EB;background:#fff;display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div class="sheet-body" id="nav_sheet_body"></div>
+                        </div>
+                    </div>
+                    <script>
+                    function openNavMobileSheet(){ var s=document.getElementById('nav_mobile_sheet'); var c=document.getElementById('nav_search_container'); var b=document.getElementById('nav_sheet_body'); if(c&&b&&!b.contains(c)){ b.appendChild(c); c.style.display='flex'; } if(s) s.classList.add('open'); document.body.style.overflow='hidden'; }
+                    function closeNavMobileSheet(){ var s=document.getElementById('nav_mobile_sheet'); var c=document.getElementById('nav_search_container'); var f=document.getElementById('nav_search_form'); if(c&&f){ if(!f.contains(c)) f.appendChild(c); c.style.display=''; } if(s) s.classList.remove('open'); document.body.style.overflow=''; }
+                    // keep chip text in sync
+                    document.addEventListener('DOMContentLoaded', function(){
+                      var d=document.getElementById('nav_dest_input'), chip=document.getElementById('nav_chip_text');
+                      if(d&&chip){ d.addEventListener('input', function(){ chip.textContent=(d.value||'Where to?')+' • '+ (document.getElementById('nav_date_display')?.textContent||'')+' • '+(document.getElementById('nav_guest_display')?.textContent||''); }); }
+                    });
+                    </script>
 
                     <?= $this->Html->script('/assets/js/nav-search.js?v=' . filemtime(WWW_ROOT . 'assets/js/nav-search.js')); ?>
 <script>

@@ -36,21 +36,14 @@ return function (RouteBuilder $routes): void {
 
         // Host / Property Onboarding
         $builder->connect('/join-us', ['controller' => 'Pages', 'action' => 'joinUs']);
-        $builder->connect('/add-listing', ['controller' => 'Pages', 'action' => 'addListing']);
-        $builder->connect('/add-listing-step-02', ['controller' => 'Pages', 'action' => 'addListingStep02']);
-        $builder->connect('/add-listing-step-03', ['controller' => 'Pages', 'action' => 'addListingStep03']);
 
-        // Booking Checkout Flow (Modular BookingsController + Pages Aliases)
+        // Booking Checkout Flow — single canonical via BookingsController (Pages aliases removed to avoid duplicate indexing)
         $builder->connect('/booking-page', ['controller' => 'Bookings', 'action' => 'bookingPage']);
         $builder->connect('/bookingpage-02', ['controller' => 'Bookings', 'action' => 'bookingpage02']);
         $builder->connect('/bookingpage-03', ['controller' => 'Bookings', 'action' => 'bookingpage03']);
         $builder->connect('/bookingpage-success', ['controller' => 'Bookings', 'action' => 'bookingpageSuccess']);
         $builder->connect('/booking-payment', ['controller' => 'Bookings', 'action' => 'paymentPending']);
         $builder->connect('/booking-payment/status', ['controller' => 'Bookings', 'action' => 'paymentStatus'], ['_method' => 'GET']);
-        $builder->connect('/booking-page', ['controller' => 'Pages', 'action' => 'bookingPage']);
-        $builder->connect('/bookingpage-02', ['controller' => 'Pages', 'action' => 'bookingpage02']);
-        $builder->connect('/bookingpage-03', ['controller' => 'Pages', 'action' => 'bookingpage03']);
-        $builder->connect('/bookingpage-success', ['controller' => 'Pages', 'action' => 'bookingpageSuccess']);
 
         // User Account Dashboard (Modular AccountController)
         $builder->connect('/menu', ['controller' => 'Account', 'action' => 'menu']);
@@ -104,10 +97,7 @@ return function (RouteBuilder $routes): void {
         // Universal API Proxy Route (bridges frontend /api/* to backend microservice)
         $builder->connect('/api/**', ['controller' => 'Pages', 'action' => 'apiProxy']);
 
-        /*
-         * Fallback routes
-         */
+        // Fallback for static pages only — generic fallbacks removed to avoid duplicate indexing
         $builder->connect('/pages/*', 'Pages::display');
-        $builder->fallbacks();
     });
 };

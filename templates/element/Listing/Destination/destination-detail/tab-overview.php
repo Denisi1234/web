@@ -6,7 +6,7 @@
                 <h4 class="fs-5">Overview</h4>
             </div>
             <div class="card-body">
-                <p class="mb-0">Are you looking for a dreamy trip? Do you want to be lost in the joy of beautiful places led with snow? Well, we are here to take you to one of the best trips you have ever had on this amazing Canada 7 days itinerary. Canada is a place you wanna be. With spellbinding beauty that will capture your soul, Canada is one of the best and the craziest place you can ever visit. This trip will take you Toronto where you will get to witness the biggest waterfall in the world – the grand Niagara Falls. You will be amazed by its mammoth size which will provoke a thought that how small are we all on this planet and in this universe. The magical rainbows created as the water falls from a staggering height will touch your heart. The amazing stay in Canada comes with all the amenities that you could ever need in this package.</p>
+                <p class="mb-0">Discover Tanzania — from the Great Migration in the Serengeti and the Ngorongoro Crater to Zanzibar’s white-sand beaches and Kilimanjaro treks. This 5-day beach &amp; safari escape blends thrilling game drives (Serengeti, Tarangire), cultural Arusha, and pure Zanzibar relaxation — with hand-picked lodges, Swahili hospitality, and seamless transfers included.</p>
             </div>
         </div>
 
@@ -17,19 +17,19 @@
             <div class="card-body">
                 <ul class="row align-items-center p-0 g-3">
                     <li class="col-md-6">
-                        <i class="fa-solid fa-check text-success me-2"></i>A fantastic experience at the Niagara Falls
+                        <i class="fa-solid fa-check text-success me-2"></i>Thrilling Serengeti game drive — Big Five
                     </li>
                     <li class="col-md-6">
-                        <i class="fa-solid fa-check text-success me-2"></i>Wonderful experience at the Harborfront
+                        <i class="fa-solid fa-check text-success me-2"></i>Zanzibar beach relaxation &amp; turquoise waters
                     </li>
                     <li class="col-md-6">
-                        <i class="fa-solid fa-check text-success me-2"></i>Breathtaking views at the Night at Niagara Falls
+                        <i class="fa-solid fa-check text-success me-2"></i>Ngorongoro Crater — UNESCO natural wonder
                     </li>
                     <li class="col-md-6">
-                        <i class="fa-solid fa-check text-success me-2"></i>Splendid experiences with the City tours.
+                        <i class="fa-solid fa-check text-success me-2"></i>Mount Kilimanjaro views &amp; Arusha culture
                     </li>
                     <li class="col-md-6">
-                        <i class="fa-solid fa-check text-success me-2"></i>All led out world this music while asked.
+                        <i class="fa-solid fa-check text-success me-2"></i>Sunset dhow &amp; Stone Town heritage tour in Zanzibar
                     </li>
                 </ul>
             </div>

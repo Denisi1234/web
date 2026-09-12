@@ -39,6 +39,27 @@ $amenityOptions = [
 .fns-range{position:relative;height:6px;background:#E5E7EB;border-radius:9999px;margin:16px 0 6px;}
 .fns-range-fill{position:absolute;top:0;bottom:0;background:#2563EB;border-radius:9999px;}
 .fns-range thumb {}
+/* ── Mobile: bottom-sheet, 44px touch targets, safe-area ── */
+@media(max-width:991px){
+  #fnsFiltersModal .modal-dialog,
+  #fnsFiltersModal .modal-dialog.modal-dialog-scrollable{position:fixed;inset:auto 0 0 0;margin:0;max-width:none;width:100%;height:92vh;height:92dvh;max-height:92vh;max-height:92dvh;transform:none !important;display:flex;align-items:flex-end;pointer-events:none;}
+  #fnsFiltersModal.show .modal-dialog{pointer-events:auto;}
+  #fnsFiltersModal .modal-content{width:100%;height:92vh;height:92dvh;max-height:92vh;max-height:92dvh;border-radius:20px 20px 0 0;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 -12px 40px rgba(0,0,0,.18);pointer-events:auto;}
+  #fnsFiltersModal .modal-content::before{content:'';display:block;width:38px;height:4px;background:#E5E7EB;border-radius:9999px;margin:10px auto 0;flex-shrink:0;}
+  #fnsFiltersModal .modal-header{padding:2px 16px 10px;position:sticky;top:0;z-index:2;flex-shrink:0;}
+  #fnsFiltersModal .modal-header .btn-close{width:36px;height:36px;background-size:12px;opacity:.7;}
+  #fnsFiltersModal .modal-content > form{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+  #fnsFiltersModal .modal-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:0 16px 16px !important;min-height:0;}
+  #fnsFiltersModal .modal-body .container-fluid{padding-left:0 !important;padding-right:0 !important;}
+  #fnsFiltersModal .modal-body .row.g-4{--bs-gutter-x:0;--bs-gutter-y:16px;}
+  #fnsFiltersModal .modal-body .col-lg-6{flex:0 0 100%;max-width:100%;}
+  #fnsFiltersModal .modal-footer{position:sticky;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom)) !important;flex-shrink:0;gap:12px;}
+  #fnsFiltersModal .modal-footer .btn{min-height:48px;font-size:15px;font-weight:600;}
+  #fnsFiltersModal .modal-footer .btn-primary{flex:1;box-shadow:0 4px 12px rgba(37,99,235,.2);}
+  #fnsFiltersModal .form-control{height:48px;font-size:16px;border-radius:12px;}
+  #fnsFiltersModal label.btn{min-height:44px;display:inline-flex;align-items:center;}
+  #fnsFiltersModal .modal-backdrop.show{opacity:.38;backdrop-filter:blur(2px);}
+}
 </style>
 <div class="modal fade" id="fnsFiltersModal" tabindex="-1" aria-labelledby="fnsFiltersLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl" style="max-width:860px;">
