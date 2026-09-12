@@ -51,6 +51,13 @@ echo $this->Html->scriptBlock(json_encode($hotelListLd, JSON_UNESCAPED_SLASHES|J
 $this->Html->meta(['name'=>'format-detection','content'=>'telephone=no'], null, ['block'=>true]);
 ?>
 
+<!-- Mobile breadcrumb before header (requested) -->
+<nav aria-label="Breadcrumb" class="d-lg-none container-fluid px-3" style="max-width:100%;margin:0 auto;background:#f8f9fa;padding:8px 16px 6px;padding-left:calc(16px + env(safe-area-inset-left,0px));font-size:11px;line-height:1.2;border-bottom:1px solid #e8eaed;" itemscope itemtype="https://schema.org/BreadcrumbList">
+  <ol class="breadcrumb mb-0 py-0" style="background:transparent;font-size:11px;line-height:1;padding:0;--bs-breadcrumb-divider:'›';" itemscope itemtype="https://schema.org/BreadcrumbList">
+    <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="/" itemprop="item" style="color:#5f6368;text-decoration:none;"><span itemprop="name">Home</span></a><meta itemprop="position" content="1"></li>
+    <li class="breadcrumb-item active" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><span itemprop="name"><?= h($queryParams['city'] ?? $queryParams['destination'] ?? 'Tanzania') ?> Hotels</span><meta itemprop="position" content="2"></li>
+  </ol>
+</nav>
 <!-- ── Retained Header (do not modify) ── -->
 <?= $this->element('navbar') ?>
 
@@ -83,8 +90,8 @@ $lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
   <a href="<?= h($lodgeUrl) ?>" role="tab" class="<?= $isLodge ? 'active' : '' ?>" <?= $isLodge ? 'aria-selected="true"' : '' ?>>Lodge</a>
 </div>
 <!-- ── Split styles moved to google-travel-home.css ── -->
-<!-- Breadcrumb (ultra-compact) -->
-<nav aria-label="Breadcrumb" class="container-fluid px-3 px-lg-4" style="max-width:100%;margin:0 auto;background:#f8f9fa;padding-top:4px;padding-bottom:4px;">
+<!-- Breadcrumb (ultra-compact) desktop only — mobile uses top duplicate before header -->
+<nav aria-label="Breadcrumb" class="d-none d-lg-block container-fluid px-3 px-lg-4" style="max-width:100%;margin:0 auto;background:#f8f9fa;padding-top:4px;padding-bottom:4px;">
   <ol class="breadcrumb mb-0 py-0" style="background:transparent;font-size:11px;line-height:1;padding:0;--bs-breadcrumb-divider:'›';" itemscope itemtype="https://schema.org/BreadcrumbList">
     <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="/" itemprop="item" style="color:#5f6368;text-decoration:none;"><span itemprop="name">Home</span></a><meta itemprop="position" content="1"></li>
     <li class="breadcrumb-item active" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><span itemprop="name"><?= h($queryParams['city'] ?? $queryParams['destination'] ?? 'Tanzania') ?> Hotels</span><meta itemprop="position" content="2"></li>
@@ -189,15 +196,7 @@ $lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
     </div>
 </main>
 
-<!-- Mobile Floating Map / List Toggle — peek sheet (safe-area aware, avoids gesture-bar overlap) -->
-<div class="d-lg-none gh-mob-toggle-wrap position-fixed start-50 translate-middle-x" style="z-index:1040; bottom:calc(16px + env(safe-area-inset-bottom, 0px));">
-    <button type="button" id="gh_mob_toggle" onclick="ghToggleMobileView()"
-        class="btn btn-dark shadow-lg rounded-pill px-4 py-2 fw-bold d-inline-flex align-items-center gap-2 border border-2 border-white"
-        style="font-size:14px; background:#202124; min-height:44px; box-shadow:0 4px 20px rgba(0,0,0,.24);">
-        <i class="fa-solid fa-map-location-dot" id="gh_mob_icon" style="color:#fbbc04;"></i>
-        <span id="gh_mob_text">View Map</span>
-    </button>
-</div>
+<!-- Mobile Floating Map / List Toggle — removed per request -->
 <!-- Mobile bottom sheet peek — shows list over map -->
 <div class="gh-mobile-sheet d-lg-none" id="gh_mobile_sheet" aria-hidden="true">
     <div class="gh-sheet-handle" id="gh_sheet_handle"><span></span></div>
