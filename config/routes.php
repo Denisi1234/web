@@ -44,6 +44,7 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/bookingpage-success', ['controller' => 'Bookings', 'action' => 'bookingpageSuccess']);
         $builder->connect('/booking-payment', ['controller' => 'Bookings', 'action' => 'paymentPending']);
         $builder->connect('/booking-payment/status', ['controller' => 'Bookings', 'action' => 'paymentStatus'], ['_method' => 'GET']);
+        $builder->connect('/booking-payment/dispatch', ['controller' => 'Bookings', 'action' => 'paymentDispatch'], ['_method' => 'POST']);
 
         // User Account Dashboard (Modular AccountController)
         $builder->connect('/menu', ['controller' => 'Account', 'action' => 'menu']);
@@ -60,7 +61,13 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/my-wishlists', ['controller' => 'Account', 'action' => 'myWishlists']);
         $builder->connect('/favourites', ['controller' => 'Account', 'action' => 'myWishlists']);
         $builder->connect('/favorites', ['controller' => 'Account', 'action' => 'myWishlists']);
+        $builder->connect('/wishlist', ['controller' => 'Account', 'action' => 'wishlistAdd'], ['_method' => 'POST']);
+        $builder->connect('/wishlist/{id}', ['controller' => 'Account', 'action' => 'wishlistRemove'], ['pass' => ['id']], ['_method' => 'DELETE']);
+        $builder->connect('/wishlist-lists', ['controller' => 'Account', 'action' => 'wishlistLists'], ['_method' => 'GET']);
+        $builder->connect('/wishlist-lists', ['controller' => 'Account', 'action' => 'wishlistListCreate'], ['_method' => 'POST']);
         $builder->connect('/recently-viewed', ['controller' => 'Account', 'action' => 'recentlyViewed']);
+        $builder->connect('/recently-viewed/clear', ['controller' => 'Account', 'action' => 'recentlyViewedClear'], ['_method' => ['POST', 'DELETE']]);
+        $builder->connect('/recently-viewed/remove/{id}', ['controller' => 'Account', 'action' => 'recentlyViewedRemove'], ['pass' => ['id']], ['_method' => ['POST', 'DELETE']]);
         $builder->connect('/search-preferences', ['controller' => 'Account', 'action' => 'searchPreferences']);
         $builder->connect('/notifications', ['controller' => 'Account', 'action' => 'notifications']);
         $builder->connect('/language-and-currency', ['controller' => 'Account', 'action' => 'languageAndCurrency']);
@@ -93,6 +100,16 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/contact', ['controller' => 'Pages', 'action' => 'contactV1']);
         $builder->connect('/contact-v1', ['controller' => 'Pages', 'action' => 'contactV1']);
         $builder->connect('/contact/submit', ['controller' => 'Contact', 'action' => 'submit'], ['_method' => 'POST']);
+
+        // Host / Owner Portal — adapted to web + mobile (admin_owner_portal/index.php:12 → HostController)
+        $builder->connect('/host', ['controller' => 'Host', 'action' => 'dashboard']);
+        $builder->connect('/host/dashboard', ['controller' => 'Host', 'action' => 'dashboard']);
+        $builder->connect('/host/listings', ['controller' => 'Host', 'action' => 'listings']);
+        $builder->connect('/host/listings/add', ['controller' => 'Host', 'action' => 'create']);
+        $builder->connect('/host/bookings', ['controller' => 'Host', 'action' => 'bookings']);
+        $builder->connect('/host/calendar/{id}', ['controller' => 'Host', 'action' => 'calendar'], ['pass'=>['id'],'id'=>'\d+']);
+        $builder->connect('/host/earnings', ['controller' => 'Host', 'action' => 'earnings']);
+        $builder->connect('/owner', ['controller' => 'Host', 'action' => 'dashboard']);
 
         // Universal API Proxy Route (bridges frontend /api/* to backend microservice)
         $builder->connect('/api/**', ['controller' => 'Pages', 'action' => 'apiProxy']);

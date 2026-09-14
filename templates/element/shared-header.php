@@ -26,6 +26,10 @@ $navUserInitial = !empty($effectiveUser['first_name'])
 $navUserName = !empty($effectiveUser['first_name']) 
     ? $effectiveUser['first_name'] 
     : (!empty($effectiveUser['name']) ? explode(' ', trim($effectiveUser['name']))[0] : 'Traveler');
+
+$navAvatarBg = $effectiveUser['avatar_bg'] ?? $effectiveUser['avatar'] ?? '#f0f9ff';
+$navAvatarColor = $effectiveUser['avatar_color'] ?? '#0284c7';
+if (!str_starts_with($navAvatarBg, '#') && !str_starts_with($navAvatarBg, 'rgb')) $navAvatarBg = '#f0f9ff';
 ?>
 <?= $this->Html->css('/assets/css/navbar.css?v=' . filemtime(WWW_ROOT . 'assets/css/navbar.css')); ?>
 <?= $this->Html->css('/assets/css/shared-header-mobile.css') ?>
@@ -94,7 +98,7 @@ $navUserName = !empty($effectiveUser['first_name'])
 
                     <!-- User Account Dropdown -->
                     <div class="position-relative" id="nav_user_menu_wrapper">
-                        <button type="button" class="border-0 bg-transparent p-0 d-flex align-items-center justify-content-center" id="nav_user_btn" onclick="toggleNavUserDropdown(event)" style="width: 38px; height: 38px; border-radius: 8px; border: 1.5px solid #0284c7 !important; background-color: #f0f9ff; color: #0284c7; font-weight: 800; font-size: 16px; transition: all 0.15s ease;">
+                        <button type="button" class="border-0 bg-transparent p-0 d-flex align-items-center justify-content-center" id="nav_user_btn" onclick="toggleNavUserDropdown(event)" style="width: 38px; height: 38px; border-radius: 8px; border: 1.5px solid <?= h($navAvatarColor) ?> !important; background-color: <?= h($navAvatarBg) ?>; color: <?= h($navAvatarColor) ?>; font-weight: 800; font-size: 16px; transition: all 0.15s ease;">
                             <?= htmlspecialchars($navUserInitial); ?>
                         </button>
 
@@ -144,6 +148,15 @@ $navUserName = !empty($effectiveUser['first_name'])
                                     <span>Language and currency</span>
                                 </a>
 
+                                <div class="trivago-user-sec-title">Hosting</div>
+                                <a href="<?= $this->Url->build('/host/dashboard'); ?>" class="trivago-user-item" style="color:#2563EB;font-weight:700">
+                                    <i class="fa-solid fa-hotel trivago-user-item-icon" style="color:#2563EB"></i>
+                                    <span>Host Dashboard</span>
+                                </a>
+                                <a href="<?= $this->Url->build('/join-us'); ?>" class="trivago-user-item">
+                                    <i class="fa-solid fa-plus trivago-user-item-icon"></i>
+                                    <span>List your property</span>
+                                </a>
                                 <div class="trivago-user-sec-title">Support</div>
                                 <a href="<?= $this->Url->build('/help-center'); ?>" class="trivago-user-item">
                                     <i class="fa-regular fa-circle-question trivago-user-item-icon"></i>

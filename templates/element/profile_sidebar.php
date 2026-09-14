@@ -78,6 +78,18 @@ $menuItems = [
         'label' => 'Language and currency',
     ],
     [
+        'id' => 'host-dashboard',
+        'url' => '/host/dashboard',
+        'icon' => 'fa-solid fa-hotel',
+        'label' => 'Host Dashboard',
+    ],
+    [
+        'id' => 'host-listings',
+        'url' => '/host/listings',
+        'icon' => 'fa-solid fa-list',
+        'label' => 'My Properties',
+    ],
+    [
         'id' => 'help-center',
         'url' => '/help-center',
         'icon' => 'fa-regular fa-circle-question',
