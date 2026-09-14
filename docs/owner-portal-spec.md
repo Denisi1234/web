@@ -43,3 +43,4 @@ Single source: `fastnet_backend` Laravel API. All three shells consume same cont
 - P2 listings `add-room.php:52` dashed `#135846` → `r12 #e8eaed`, mobile `add_property.dart:350`
 - P3 bookings/earnings unify
 - P4 QA lint `php -l`, `flutter analyze`
+- P-next B-Unify SSO: portal `page-login.php:18` `POST /api/login` shares Bearer via `HostController::beforeFilter` → `/login` guard; portal phased to `302 /host/dashboard` (keep `admin_owner_portal/.env BACKEND_API_URL` bridge).

@@ -30,6 +30,19 @@ class HostController extends AppController
         return $token !== '' ? ['Authorization' => 'Bearer ' . $token] : [];
     }
 
+    public function beforeFilter(\Cake\Event\EventInterface $event)
+    {
+        parent::beforeFilter($event);
+        // Require login for all host actions — portal page-login.php:18 POST /api/login → Bearer
+        $token = trim((string)$this->getRequest()->getSession()->read('auth_token'));
+        $user = $this->getRequest()->getSession()->read('User');
+        if ($token === '' || empty($user)) {
+            $this->Flash->error(__('Please sign in to access Host Dashboard.'));
+            $this->redirect('/login');
+            return;
+        }
+    }
+
     public function dashboard()
     {
         $headers = $this->hostHeaders();
