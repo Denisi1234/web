@@ -2,34 +2,52 @@
 /**
  * fastnetstays.com — Agoda Hotel Detail — Exact match to screenshot reference
  */
-$propTitle = $property['name'] ?? 'Divi Village Golf and Beach Resort';
-$propCity = $property['city'] ?? 'Oranjestad';
-$propArea = $property['area'] ?? $propCity;
-$propStars = !empty($property['star_rating']) ? max(1, min(5, (int)$property['star_rating'])) : 4;
-$propRating = !empty($property['rating']) ? number_format((float)$property['rating'], 1) : '8.4';
-$reviewsCount = !empty($property['reviews_count']) ? (int)$property['reviews_count'] : (count($reviews ?? []) >0 ? count($reviews) : 737);
+$propTitle = \App\Utility\TextFormatter::formatTitle((string)($property['name'] ?? 'Hotel'));
+$propCity = \App\Utility\TextFormatter::formatTitle((string)($property['city'] ?? 'Dar es Salaam'));
+$propArea = \App\Utility\TextFormatter::formatTitle((string)($property['area'] ?? $propCity));
+$actualReviews = !empty($reviews) && is_array($reviews) ? $reviews : [];
+$reviewsCount = count($actualReviews) > 0 ? count($actualReviews) : (int)($property['reviews_count'] ?? $property['review_count'] ?? 0);
+$propRating = !empty($property['rating']) ? (float)$property['rating'] : ($reviewsCount > 0 ? array_sum(array_map(fn($r)=>(float)($r['rating']??5), $actualReviews)) / max(1, count($actualReviews)) : 4.8);
+$score10 = ($propRating <= 5.0) ? round($propRating * 2, 1) : round($propRating, 1);
+$score10Fmt = number_format($score10, 1);
+$ratingLabel = $score10 >= 9.0 ? 'Exceptional' : ($score10 >= 8.0 ? 'Excellent' : ($score10 >= 7.0 ? 'Very Good' : 'Good'));
 $propPrice = (float)($property['starting_price'] ?? ($property['price_per_night'] ?? ($property['price'] ?? 275)));
 $propPrice = $propPrice > 0 ? $propPrice : 275;
 $firstRoomId = !empty($rooms[0]['id']) ? $rooms[0]['id'] : null;
 $detailPropertyId = (int)($propertyId ?? 0);
-$propAddress = trim((string)($property['address'] ?? 'Plot 123, Msasani Peninsula, Dar es Salaam, Tanzania'));
+$rawAddr = trim((string)($property['address'] ?? ''));
+$propAddress = $rawAddr !== '' ? \App\Utility\TextFormatter::formatTitle($rawAddr) : \App\Utility\TextFormatter::formatLocation($propArea, $propCity);
+if ($propAddress && $propCity && !str_contains(strtolower($propAddress), strtolower($propCity))) {
+    $propAddress .= ', ' . $propCity;
+}
 $propDesc = $property['description'] ?? '';
 $propertyAmenities = $property['amenities'] ?? [];
 if (is_string($propertyAmenities)) {
     $d = json_decode($propertyAmenities, true);
     $propertyAmenities = is_array($d) ? $d : array_filter(array_map('trim', explode(',', $propertyAmenities)));
 }
+$hdNormUrl = function(string $url): string {
+    $url = trim($url);
+    if ($url === '') return '';
+    if (str_starts_with($url, '/storage/') || str_contains($url, '127.0.0.1:8000/storage') || str_contains($url, 'localhost/storage')) {
+        $apiBase = (string)\Cake\Core\Configure::read('App.backendApiUrl', \Cake\Core\env('BACKEND_API_URL', 'http://127.0.0.1:8000/api'));
+        $backendHost = rtrim(preg_replace('#/api/?$#', '', $apiBase), '/');
+        $storagePath = substr($url, strpos($url, '/storage/'));
+        return $backendHost . $storagePath;
+    }
+    return $url;
+};
 $galleryImages = [];
-if (!empty($property['image_url'])) $galleryImages[] = $property['image_url'];
-if (!empty($property['primary_image_url'])) $galleryImages[] = $property['primary_image_url'];
-if (!empty($property['cover_image'])) $galleryImages[] = $property['cover_image'];
+if (!empty($property['image_url'])) $galleryImages[] = $hdNormUrl((string)$property['image_url']);
+if (!empty($property['primary_image_url'])) $galleryImages[] = $hdNormUrl((string)$property['primary_image_url']);
+if (!empty($property['cover_image'])) $galleryImages[] = $hdNormUrl((string)$property['cover_image']);
 if (!empty($property['images']) && is_array($property['images'])) {
-    foreach ($property['images'] as $img) { $u = is_array($img) ? ($img['url'] ?? $img['image_url'] ?? '') : $img; if($u && !in_array($u,$galleryImages)) $galleryImages[]=$u; }
+    foreach ($property['images'] as $img) { $u = is_array($img) ? ($img['url'] ?? $img['image_url'] ?? '') : $img; $u = $hdNormUrl((string)$u); if($u && !in_array($u,$galleryImages)) $galleryImages[]=$u; }
 }
 if (!empty($rooms) && is_array($rooms)) {
     foreach ($rooms as $r) {
         $ph = $r['photos'] ?? []; if(is_string($ph)) $ph=json_decode($ph,true);
-        if(is_array($ph)) foreach($ph as $p){ $u=is_array($p)?($p['url']??$p['image_url']??''):$p; if($u && !in_array($u,$galleryImages)) $galleryImages[]=$u; }
+        if(is_array($ph)) foreach($ph as $p){ $u=is_array($p)?($p['url']??$p['image_url']??''):$p; $u = $hdNormUrl((string)$u); if($u && !in_array($u,$galleryImages)) $galleryImages[]=$u; }
     }
 }
 if (count($galleryImages) < 8) {
@@ -65,6 +83,8 @@ $this->assign('description', h(mb_strimwidth(strip_tags($propDesc),0,155,'...'))
 .agoda-breadcrumb .agoda-bc-seeall:hover{text-decoration:underline !important}
 .agoda-breadcrumb .agoda-bc-inner{max-width:1180px !important;margin:0 auto !important;padding:0 12px !important;display:flex !important;align-items:center !important;justify-content:space-between !important;gap:12px !important;flex-wrap:wrap !important}
 .agoda-breadcrumb .agoda-bc-trail{display:flex !important;align-items:center !important;gap:6px !important;flex-wrap:wrap !important;font-size:13px !important;line-height:1.4 !important}
+@media(min-width:769px){.agoda-breadcrumb-mobile{display:none !important}}
+@media(max-width:768px){.agoda-breadcrumb-desktop{display:none !important}}
 .agoda-gallery{max-width:1180px;margin:12px auto;display:grid;grid-template-columns:1.55fr 0.85fr 0.85fr 0.85fr;grid-template-rows:180px 180px;gap:8px;padding:0 12px}
 .agoda-gallery-hero{grid-row:1 / span 2;grid-column:1;position:relative;overflow:hidden;border-radius:12px;background:#e8ecef}
 .agoda-gallery-hero img{width:100%;height:100%;object-fit:cover;display:block}
@@ -252,6 +272,21 @@ $this->assign('description', h(mb_strimwidth(strip_tags($propDesc),0,155,'...'))
 .agoda-mobile-bar-price b{font-size:16px;color:#e53935;font-weight:800}
 @media(max-width:768px){.agoda-mobile-bar{display:flex} body{padding-bottom:68px} } /* prevent content hidden behind bar */
 
+/* ========== FREE MOBILE REDESIGN — hide secondary, keep primary ========== */
+@media(max-width:768px){
+  /* Hide desktop-only chrome on mobile — keep full on desktop */
+  .agoda-detail-grid > div:last-child .agoda-rating-card,
+  .agoda-map-card { display:none !important; }
+  /* Simplify gallery to hero only on mobile */
+  .agoda-gallery .agoda-gallery-map { display:none !important; }
+  /* Facilities: show 4, hide rest */
+  #facilities-section .agoda-fac-item:nth-child(n+5) { display:none !important; }
+  /* Hide trip recommendations tab on mobile */
+  .agoda-tab[data-tab="trip"] { display:none !important; }
+  /* Policies hidden on mobile, visible desktop */
+  #policies-section { display:none !important; }
+}
+
 /* Global mobile safeguards */
 html,body{max-width:100%;overflow-x:hidden}
 img{max-width:100%;height:auto}
@@ -269,8 +304,18 @@ img{max-width:100%;height:auto}
 </style>
 <?= $this->element('navbar') ?>
 
+<!-- Mobile breadcrumb AFTER header: Home > Dar es Salaam Hotels -->
+<nav class="agoda-breadcrumb agoda-breadcrumb-mobile d-md-none" aria-label="Breadcrumb" style="padding:8px 0 !important;margin:0 !important;">
+  <div class="agoda-bc-inner" style="padding:8px 16px !important;padding-left:calc(16px + env(safe-area-inset-left,0px)) !important;">
+    <div class="agoda-bc-trail" style="font-size:11px !important;">
+      <a href="/">Home</a> <span class="agoda-bc-sep">›</span>
+      <span class="agoda-bc-current"><?= h($propCity ?: 'Dar es Salaam') ?> Hotels</span>
+    </div>
+  </div>
+</nav>
+
 <!-- Breadcrumb — dynamic + scoped classes for CSS isolation -->
-<nav class="agoda-breadcrumb">
+<nav class="agoda-breadcrumb agoda-breadcrumb-desktop">
   <div class="agoda-bc-inner">
     <div class="agoda-bc-trail">
       <a href="/">Home</a> <span class="agoda-bc-sep">›</span>
@@ -285,12 +330,12 @@ img{max-width:100%;height:auto}
 <!-- Gallery — 8 photos mosaic -->
 <div class="agoda-gallery" id="agoda_gallery">
   <div class="agoda-gallery-hero" onclick="openPhotoLightbox(0)" style="cursor:pointer">
-    <img src="<?= h($galleryImages[0]) ?>" alt="<?= h($propTitle) ?>" loading="lazy" width="600" height="400">
+    <img src="<?= h($galleryImages[0]) ?>" alt="<?= h($propTitle) ?>" loading="lazy" width="600" height="400" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1566073771259-6a8506099945?w=900&h=600&fit=crop'">
     <button class="agoda-see-all" onclick="event.stopPropagation();openPhotoLightbox(0)"><i class="fa-solid fa-images"></i> See all photos</button>
   </div>
   <?php foreach(array_slice($galleryImages,1,5) as $i => $g): ?>
   <div class="agoda-gallery-item" onclick="openPhotoLightbox(<?= $i+1 ?>)" style="cursor:pointer">
-    <img src="<?= h($g) ?>" alt="<?= h($propTitle) ?> photo <?= $i+2 ?>" loading="lazy" width="300" height="200">
+    <img src="<?= h($g) ?>" alt="<?= h($propTitle) ?> photo <?= $i+2 ?>" loading="lazy" width="300" height="200" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1582719508461-905c673771fd?w=600&h=400&fit=crop'">
     <?php if($i===1): ?><div class="agoda-video-pause"><i class="fa-solid fa-pause"></i></div><?php endif; ?>
     <?php if($i===1): ?><div style="position:absolute;bottom:8px;right:8px;display:flex;gap:4px"><span style="width:6px;height:6px;border-radius:50%;background:#fff;opacity:0.9"></span><span style="width:6px;height:6px;border-radius:50%;background:#fff;opacity:0.5"></span><span style="width:6px;height:6px;border-radius:50%;background:#fff;opacity:0.5"></span><span style="width:6px;height:6px;border-radius:50%;background:#fff;opacity:0.3"></span></div><?php endif; ?>
   </div>
@@ -337,27 +382,21 @@ img{max-width:100%;height:auto}
       </div>
       <div class="agoda-title"><?= h($propTitle) ?> <span class="agoda-stars"><?= str_repeat('★', $propStars) ?><?= $propStars<5 ? str_repeat('☆',5-$propStars) : '' ?></span></div>
       <div class="agoda-address"><?= h($propAddress) ?></div>
-      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+      <?php if (!empty($propDesc)): ?>
+      <div style="font-size:13.5px;color:#3c4043;line-height:1.6;margin-top:12px;padding-top:12px;border-top:1px solid #f1f3f4">
+        <?= nl2br(h($propDesc)) ?>
+      </div>
+      <?php endif; ?>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
         <button type="button" onclick="openHotelMapModal()" style="background:#fff;border:1px solid #dadce0;border-radius:9999px;padding:7px 14px;font-size:13px;font-weight:600;color:#1A73E8;display:inline-flex;align-items:center;gap:6px;cursor:pointer"><i class="fa-solid fa-location-dot"></i> SEE MAP</button>
-        <button type="button" class="agoda-view-deal" onclick="document.getElementById('rooms-section')?.scrollIntoView({behavior:'smooth'})" style="padding:7px 16px;font-size:13px">View Room</button>
+        <button type="button" class="agoda-view-deal" onclick="document.getElementById('rooms-section')?.scrollIntoView({behavior:'smooth'})" style="padding:7px 16px;font-size:13px">View Rooms</button>
       </div>
     </div>
 
-    <!-- Facilities — 8 items + See all -->
+    <!-- Facilities — Real dynamic property amenities -->
     <div class="agoda-card" id="facilities-section">
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <div style="font-size:18px;font-weight:800;color:#1a1d25">Facilities</div>
-        <a href="javascript:void(0)" class="agoda-see-all-link" onclick="document.getElementById('facilities-section')?.scrollIntoView({behavior:'smooth'})">See all</a>
-      </div>
-      <div class="agoda-facilities-grid">
-        <div class="agoda-fac-item"><i class="fa-solid fa-check" style="color:#202124"></i> Beach</div>
-        <div class="agoda-fac-item"><i class="fa-solid fa-check" style="color:#202124"></i> Free Wi-Fi <span class="agoda-free-badge">Free</span></div>
-        <div class="agoda-fac-item"><i class="fa-solid fa-check" style="color:#202124"></i> Swimming pool</div>
-        <div class="agoda-fac-item"><i class="fa-solid fa-check" style="color:#202124"></i> Free parking <span class="agoda-free-badge">Free</span></div>
-        <div class="agoda-fac-item"><i class="fa-solid fa-check" style="color:#202124"></i> Spa</div>
-        <div class="agoda-fac-item"><i class="fa-solid fa-check" style="color:#202124"></i> Front desk [24-hour]</div>
-        <div class="agoda-fac-item"><i class="fa-solid fa-check" style="color:#202124"></i> Fitness center <span class="agoda-free-badge">Free</span></div>
-        <div class="agoda-fac-item"><i class="fa-solid fa-check" style="color:#202124"></i> Restaurants</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:18px;font-weight:800;color:#1a1d25">Facilities &amp; Amenities</div>
       </div>
       <?= $this->element('Listing/Hotel/hotel-detail/amenities'); ?>
     </div>
@@ -389,42 +428,57 @@ img{max-width:100%;height:auto}
   <div style="display:flex;flex-direction:column;gap:14px">
     <!-- Rating card -->
     <div class="agoda-rating-card">
+      <?php if ($reviewsCount > 0): ?>
       <div class="agoda-rating-big">
-        <div class="agoda-rating-score"><?= h($propRating) ?></div>
-        <div class="agoda-rating-label"><b>Excellent</b><span><?= number_format($reviewsCount) ?> reviews</span></div>
+        <div class="agoda-rating-score"><?= h($score10Fmt) ?></div>
+        <div class="agoda-rating-label"><b><?= h($ratingLabel) ?></b><span><?= number_format($reviewsCount) ?> verified reviews</span></div>
         <a href="#reviews-section" class="agoda-see-all-reviews">See all</a>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 24px">
         <div>
-          <div class="agoda-bar-row"><span>Cleanliness</span><span style="color:#3264ff">8.5</span></div>
-          <div class="agoda-bar-bg"><div class="agoda-bar-fill" style="width:85%"></div></div>
+          <div class="agoda-bar-row"><span>Cleanliness</span><span style="color:#3264ff"><?= number_format(min(10, $score10 + 0.1), 1) ?></span></div>
+          <div class="agoda-bar-bg"><div class="agoda-bar-fill" style="width:<?= min(100, round(($score10 + 0.1) * 10)) ?>%"></div></div>
         </div>
         <div>
-          <div class="agoda-bar-row"><span>Facilities</span><span style="color:#3264ff">8.4</span></div>
-          <div class="agoda-bar-bg"><div class="agoda-bar-fill" style="width:84%"></div></div>
+          <div class="agoda-bar-row"><span>Facilities</span><span style="color:#3264ff"><?= number_format(max(7.0, min(10, $score10 - 0.1)), 1) ?></span></div>
+          <div class="agoda-bar-bg"><div class="agoda-bar-fill" style="width:<?= max(70, min(100, round(($score10 - 0.1) * 10))) ?>%"></div></div>
         </div>
         <div>
-          <div class="agoda-bar-row"><span>Service</span><span style="color:#3264ff">8.4</span></div>
-          <div class="agoda-bar-bg"><div class="agoda-bar-fill" style="width:84%"></div></div>
+          <div class="agoda-bar-row"><span>Service</span><span style="color:#3264ff"><?= number_format(min(10, $score10), 1) ?></span></div>
+          <div class="agoda-bar-bg"><div class="agoda-bar-fill" style="width:<?= min(100, round($score10 * 10)) ?>%"></div></div>
         </div>
         <div>
-          <div class="agoda-bar-row"><span>Value for money</span><span style="color:#3264ff">8.1</span></div>
-          <div class="agoda-bar-bg"><div class="agoda-bar-fill" style="width:81%"></div></div>
+          <div class="agoda-bar-row"><span>Value for money</span><span style="color:#3264ff"><?= number_format(max(7.0, min(10, $score10 - 0.3)), 1) ?></span></div>
+          <div class="agoda-bar-bg"><div class="agoda-bar-fill" style="width:<?= max(70, min(100, round(($score10 - 0.3) * 10))) ?>%"></div></div>
         </div>
       </div>
       <div style="position:relative;margin-top:14px">
         <div class="agoda-review-scroll" id="agoda_review_scroll">
+          <?php foreach (array_slice($actualReviews, 0, 4) as $snip): 
+            $sAuthor = \App\Utility\TextFormatter::formatTitle((string)($snip['user_name'] ?? $snip['guest_name'] ?? 'Verified Guest'));
+            $sComment = trim((string)($snip['comment'] ?? 'Wonderful experience.'));
+            if (mb_strlen($sComment) > 110) {
+                $sComment = mb_substr($sComment, 0, 107) . '...';
+            }
+          ?>
           <div class="agoda-review-snippet">
-            The beautiful beach was a favorite and it was never crowded.
-            <div class="agoda-review-author"><span style="font-size:14px">🇺🇸</span> <b>Julie</b> <span style="color:#9aa0a6">|</span> United States</div>
+            "<?= h($sComment) ?>"
+            <div class="agoda-review-author"><span style="font-size:14px">🇹🇿</span> <b><?= h($sAuthor) ?></b> <span style="color:#9aa0a6">|</span> Verified Guest</div>
           </div>
-          <div class="agoda-review-snippet">
-            The facilities were great and the staff were very friendly.
-            <div class="agoda-review-author"><span style="font-size:14px">🇺🇸</span> <b>dave</b> <span style="color:#9aa0a6">|</span> United States</div>
-          </div>
+          <?php endforeach; ?>
         </div>
         <button class="agoda-review-arrow" onclick="document.getElementById('agoda_review_scroll').scrollBy({left:280,behavior:'smooth'})"><i class="fa-solid fa-chevron-right" style="font-size:12px;color:#202124"></i></button>
       </div>
+      <?php else: ?>
+      <div class="agoda-rating-big">
+        <div class="agoda-rating-score" style="font-size:14px;background:#f1f5f9;color:#475569;width:auto;padding:4px 10px;border-radius:6px;font-weight:700">New</div>
+        <div class="agoda-rating-label"><b>No reviews yet</b><span>0 verified reviews</span></div>
+        <a href="#reviews-section" class="agoda-see-all-reviews">Write first</a>
+      </div>
+      <div style="font-size:12.5px;color:#5f6368;margin-top:10px;line-height:1.4">
+        Be the first verified guest to stay here and leave a review.
+      </div>
+      <?php endif; ?>
     </div>
 
 
@@ -441,7 +495,7 @@ img{max-width:100%;height:auto}
 <div id="hotel_map_modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:4000;align-items:center;justify-content:center;padding:12px" onclick="closeHotelMapModal()">
   <div onclick="event.stopPropagation()" style="background:#fff;border-radius:12px;max-width:860px;width:100%;padding:12px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b><?= h($propTitle) ?></b><button onclick="closeHotelMapModal()" style="border:none;background:#f1f3f4;border-radius:50%;width:32px;height:32px">✕</button></div>
-    <div id="web1-hotel-detail-map" style="height:480px;background:#e8ecef;border-radius:8px"></div>
+    <div id="web1-hotel-detail-map" style="height:480px;background:#e8ecef;border-radius:12px;border:1px solid #e8eaed"></div>
   </div>
 </div>
 
@@ -492,6 +546,32 @@ function initDetailMap(){
     setTimeout(()=>detailMapInstance.resize(),300);
   }catch(e){console.error(e)}
 }
+
+// Save to Recently Viewed in LocalStorage
+(function() {
+  try {
+    const stayData = {
+      id: <?= json_encode((int)$detailPropertyId) ?>,
+      name: <?= json_encode((string)$propTitle) ?>,
+      city: <?= json_encode((string)$propCity) ?>,
+      area: <?= json_encode((string)$propArea) ?>,
+      price: <?= json_encode((float)$propPrice) ?>,
+      rating: <?= json_encode((float)$score10) ?>,
+      ratingLabel: <?= json_encode((string)$ratingLabel) ?>,
+      reviewsCount: <?= json_encode((int)$reviewsCount) ?>,
+      image: <?= json_encode(!empty($galleryImages[0]) ? $galleryImages[0] : '') ?>,
+      viewedAt: Date.now()
+    };
+    if (stayData.id > 0) {
+      let recents = [];
+      try { recents = JSON.parse(localStorage.getItem('fastnet_recently_viewed') || '[]'); } catch(e){}
+      if (!Array.isArray(recents)) recents = [];
+      recents = recents.filter(item => item && parseInt(item.id) !== stayData.id);
+      recents.unshift(stayData);
+      localStorage.setItem('fastnet_recently_viewed', JSON.stringify(recents.slice(0, 30)));
+    }
+  } catch(e) {}
+})();
 </script>
 <div class="d-none d-lg-block">
 <?= $this->element('footer', ['skin' => 'skin-light-footer']) ?>

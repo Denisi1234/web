@@ -20,7 +20,7 @@ class FastnetApiClient
     protected string $baseUrl;
     protected int $timeout;
 
-    public function __construct(?string $baseUrl = null, int $timeout = 10)
+    public function __construct(?string $baseUrl = null, int $timeout = 6)
     {
         $this->timeout = $timeout;
         $this->baseUrl = $baseUrl ?: (string)Configure::read(
@@ -32,7 +32,7 @@ class FastnetApiClient
         $this->http = new Client([
             'timeout' => $this->timeout,
             'headers' => [
-                'Accept' => 'application/json',
+                'Accept'     => 'application/json',
                 'User-Agent' => 'FastNetStays/1.0 (CakePHP 5; fastnetstays.com)'
             ]
         ]);
@@ -94,7 +94,7 @@ class FastnetApiClient
         ];
 
         $attempts = 0;
-        $maxAttempts = 3;
+        $maxAttempts = 2;
         while ($attempts < $maxAttempts) {
             try {
                 if (strtoupper($method) === 'POST') {
@@ -126,7 +126,7 @@ class FastnetApiClient
                 $attempts++;
                 $isTimeout = str_contains($e->getMessage(), 'timeout') || str_contains($e->getMessage(), 'timed out') || str_contains($e->getMessage(), 'cURL');
                 if ($isTimeout && $attempts < $maxAttempts) {
-                    usleep(200000 * $attempts); // 200ms, 400ms backoff
+                    usleep(100000 * $attempts); // 100ms backoff
                     continue;
                 }
                 Log::error(sprintf('[FastnetApiClient] %s %s failed after %d attempts: %s', $method, $url, $attempts, $e->getMessage()));

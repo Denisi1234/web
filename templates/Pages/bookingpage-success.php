@@ -28,6 +28,13 @@ $propCity = $queryParams['property_city'] ?: ($property['city'] ?? '');
 <!-- Include Navbar -->
 <?= $this->Html->css('/assets/css/google-travel-layout.css') ?>
 <?= $this->Html->css('/assets/css/google-travel-home.css') ?>
+<style>
+/* Phase 4 — receipt parity with mobile receipt_screen.dart + tokens r16 shadow F8FAFC */
+.booking-success-card{border:1px solid #e8eaed !important;border-radius:16px !important;box-shadow:0 6px 16px rgba(0,0,0,0.05) !important;overflow:hidden}
+.booking-success-watermark{background:#9ca3af;color:#fff;font-size:9px;font-weight:700;letter-spacing:0.08em;padding:4px 8px;text-align:center}
+.booking-success-qr{width:96px;height:96px;background:#fff;border:1px solid #e8eaed;border-radius:10px;display:flex;align-items:center;justify-content:center}
+@media(max-width:768px){.booking-success-card{border-radius:22px !important} .booking-success-watermark{font-size:8px}}
+</style>
 <?= $this->element('navbar') ?>
 <nav aria-label="Breadcrumb" class="container-fluid px-2 px-lg-2" style="max-width:100%;margin:0 auto;background:#f8f9fa;">
   <ol class="breadcrumb mb-0 py-1" style="background:transparent;font-size:12px;line-height:1.2;--bs-breadcrumb-divider:'›';" itemscope itemtype="https://schema.org/BreadcrumbList">
@@ -43,19 +50,20 @@ $propCity = $queryParams['property_city'] ?: ($property['city'] ?? '');
 
 		<div class="row align-items-start justify-content-center">
 			<div class="col-xl-10 col-lg-11 col-md-12">
-				<div class="card mb-3 border border-slate-200 shadow-sm rounded-3">
+				<div class="card mb-3 booking-success-card">
 					<div class="card-body px-xl-5 px-lg-4 py-lg-5 py-4 px-3">
 
 						<div class="d-flex align-items-center justify-content-center mb-3">
-							<div class="square--80 circle text-light bg-success d-flex align-items-center justify-content-center">
-								<i class="fa-solid fa-check-double fs-1"></i>
+							<div style="width:72px;height:72px;border-radius:50%;background:#EBF5FF;border:1px solid #dbeafe;display:flex;align-items:center;justify-content:center">
+								<i class="fa-solid fa-check fs-2" style="color:#2563EB"></i>
 							</div>
 						</div>
 						<div class="d-flex align-items-center justify-content-center flex-column text-center mb-4">
-							<h2 class="mb-1 fw-bold text-slate-900">Your Booking Was Confirmed Successfully!</h2>
-							<p class="text-md text-slate-600 mb-0">Booking Reference: <span class="text-orange-600 font-bold fs-5"><?= h($reference) ?></span></p>
-							<p class="text-xs text-slate-500">A confirmation receipt has been generated for your stay.</p>
+							<h2 class="mb-1 fw-bold" style="color:#1a1d25;font-size:22px">Your Booking Was Confirmed Successfully!</h2>
+							<p class="mb-0" style="color:#5f6368;font-size:14px">Booking Reference: <span style="color:#C2410C;font-weight:800;font-size:18px"><?= h($reference) ?></span></p>
+							<p style="color:#9aa0a6;font-size:12px" class="mb-0">A confirmation receipt has been generated for your stay.</p>
 						</div>
+						<div class="booking-success-watermark mb-3">fastnetstays.com &nbsp; fastnetstays.com &nbsp; fastnetstays.com &nbsp; fastnetstays.com &nbsp; fastnetstays.com</div>
 
 						<div class="d-flex align-items-center justify-content-center flex-column mb-4">
 							<div class="border br-dashed full-width rounded-3 p-4 bg-slate-50">
@@ -122,9 +130,9 @@ $propCity = $queryParams['property_city'] ?: ($property['city'] ?? '');
 						</div>
 
 						<div class="text-center d-flex align-items-center justify-content-center flex-wrap gap-2">
-							<a href="<?= $this->Url->build('/'); ?>" class="btn btn-md btn-light-seegreen fw-bold rounded-full px-4">Browse More Stays</a>
-							<a href="<?= $this->Url->build('/my-booking'); ?>" class="btn btn-md btn-primary fw-bold rounded-full px-4">View My Bookings</a>
-							<button type="button" data-bs-toggle="modal" data-bs-target="#invoice" class="btn btn-md btn-light-primary fw-bold rounded-full px-4">
+							<a href="<?= $this->Url->build('/'); ?>" class="btn fw-bold rounded-full px-4" style="background:#fff;border:1px solid #e8eaed;border-radius:30px;padding:10px 20px;color:#1a1d25">Browse More Stays</a>
+							<a href="<?= $this->Url->build('/my-booking'); ?>" class="btn fw-bold rounded-full px-4" style="background:#2563EB;color:#fff;border-radius:30px;padding:10px 20px;box-shadow:0 4px 12px rgba(37,99,235,0.18)">View My Bookings</a>
+							<button type="button" data-bs-toggle="modal" data-bs-target="#invoice" class="btn fw-bold rounded-full px-4" style="background:#F8FAFC;border:1px solid #e8eaed;border-radius:30px;padding:10px 20px;color:#2563EB">
 								<i class="fa-solid fa-receipt me-1"></i>View Invoice Receipt
 							</button>
 						</div>

@@ -2,13 +2,14 @@
     Tokens: #1A73E8 primary / #2563EB active / #E5E7EB border / #1F2937 text / #6B7280 secondary | Elevation 0 4px 20px rgba(0,0,0,.08) -> 0 8px 30px rgba(0,0,0,.12) | Fonts: Inter 400/500/600 + Google Sans */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Google+Sans:wght@400;500&family=Roboto:wght@400;500&display=swap');
 
-/* ── Mobile tabs (index.php:17-23) — offset below fixed 64px header ── */
+/* ── Mobile tabs (index.php:17-23) — offset below fixed header + search bar ── */
 .gh-m-tabs{display:none;background:#fff;border-bottom:1px solid #e8eaed;overflow-x:auto;scrollbar-width:none}
 .gh-m-tabs::-webkit-scrollbar{display:none}
 .gh-m-tabs a{flex:0 0 auto;padding:12px 16px;font-size:14px;font-weight:500;color:#5f6368;text-decoration:none;border-bottom:2px solid transparent;white-space:nowrap;font-family:'Google Sans',Roboto,sans-serif}
 .gh-m-tabs a.active{color:#1a73e8;border-bottom-color:#1a73e8}
-@media(max-width:767px){.gh-m-tabs{display:flex;position:sticky;top:58px;z-index:850}}
-@media(max-width:575px){.gh-m-tabs{top:58px}}
+/* header(58px) + search bar(~52px) = 110px so tabs sit below search, not on top of it */
+@media(max-width:767px){.gh-m-tabs{display:flex;position:sticky;top:110px;z-index:849}}
+@media(max-width:575px){.gh-m-tabs{top:110px}}
 
 /* ── Split 50/50 desktop — independent scroll (index.php:32-67) — fixed header aware ── */
 .gh-split-container{align-items:stretch}
@@ -18,10 +19,10 @@
   /* header is fixed → cancel body padding, use flex offset */
   body{padding-top:0 !important}
   #main-wrapper{height:100vh;overflow:hidden;display:flex;flex-direction:column;padding-top:64px;box-sizing:border-box}
-  .gh-split-container{flex:1;overflow:hidden;min-height:0;height:calc(100vh - 64px);padding-left:16px !important;padding-right:16px !important}
+  .gh-split-container{flex:1;overflow:hidden;min-height:0;height:calc(100vh - 64px);padding-left:0 !important;padding-right:0 !important}
   .gh-split-container>.container-fluid,.gh-split-container .row{flex:1;overflow:hidden;min-height:0;height:100%}
-  #gh_list_col{display:flex;flex-direction:column;overflow:hidden;height:100%;min-height:0;padding-right:4px}
-  #gh_map_col{padding-left:4px}
+  #gh_list_col{display:flex;flex-direction:column;overflow:hidden;height:100%;min-height:0;padding-right:2px}
+  #gh_map_col{padding-left:2px}
   .gh-left-fixed{flex:0 0 auto;background:#fff;z-index:5;border-right:1px solid #f1f3f4}
   .gh-left-fixed .gh-sb-wrap,.gh-left-fixed .gh-chips-wrap{position:relative !important;top:0 !important}
   .gh-left-fixed .gh-sb-wrap{padding:6px 0 4px !important;border-bottom:none !important}
@@ -134,19 +135,18 @@
 @media(max-width:991px){
   .gh-split-container{min-height:auto !important;height:auto !important}
   #gh_list_col{height:auto !important}
-  .gh-left-scroll{height:auto !important;min-height:0 !important;padding-bottom:calc(88px + env(safe-area-inset-bottom, 0px)) !important}
+  .gh-left-scroll{height:auto !important;min-height:0 !important;padding-left:calc(12px + env(safe-area-inset-left, 0px)) !important;padding-right:calc(12px + env(safe-area-inset-right, 0px)) !important;padding-bottom:calc(88px + env(safe-area-inset-bottom, 0px)) !important}
   .gh-index-footer-wrap .footer-bottom{padding-top:8px;padding-bottom:calc(10px + env(safe-area-inset-bottom, 0px))}
 }
-/* Breadcrumb mobile — sticky below header+tabs, not clipped */
+/* Breadcrumb mobile — sticky below header+tabs, not clipped (excludes index stacks which manage their own order/visibility) */
 @media(max-width:991px){
-  nav[aria-label="Breadcrumb"]{position:sticky !important;top:96px !important;z-index:790 !important;background:#f8f9fa !important;display:block !important;visibility:visible !important;opacity:1 !important;overflow:visible !important;overflow-x:auto !important;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:10px 16px 10px !important; padding-left:calc(20px + env(safe-area-inset-left, 0px)) !important;padding-right:16px !important;margin:0 !important;min-height:36px !important;box-sizing:border-box !important}
-  nav[aria-label="Breadcrumb"] .breadcrumb{display:flex !important;flex-wrap:nowrap !important;gap:8px !important;min-width:max-content !important;align-items:center !important}
-  nav[aria-label="Breadcrumb"] .breadcrumb-item{flex:0 0 auto !important;white-space:nowrap !important;display:inline-flex !important;align-items:center !important}
+  nav[aria-label="Breadcrumb"]:not(#gh_mobile_breadcrumb):not(#gh_desktop_breadcrumb){position:sticky !important;top:96px !important;z-index:790 !important;background:#f8f9fa !important;display:block !important;visibility:visible !important;opacity:1 !important;overflow:visible !important;overflow-x:auto !important;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:10px 16px 10px !important; padding-left:calc(20px + env(safe-area-inset-left, 0px)) !important;padding-right:16px !important;margin:0 !important;min-height:36px !important;box-sizing:border-box !important}
+  nav[aria-label="Breadcrumb"]:not(#gh_mobile_breadcrumb):not(#gh_desktop_breadcrumb) .breadcrumb{display:flex !important;flex-wrap:nowrap !important;gap:8px !important;min-width:max-content !important;align-items:center !important}
+  nav[aria-label="Breadcrumb"]:not(#gh_mobile_breadcrumb):not(#gh_desktop_breadcrumb) .breadcrumb-item{flex:0 0 auto !important;white-space:nowrap !important;display:inline-flex !important;align-items:center !important}
 }
-  nav[aria-label="Breadcrumb"]::-webkit-scrollbar{display:none}
-  nav[aria-label="Breadcrumb"] .breadcrumb{flex-wrap:nowrap !important;white-space:nowrap !important;gap:6px}
-  nav[aria-label="Breadcrumb"] .breadcrumb-item{flex:0 0 auto;white-space:nowrap}
-}
+nav[aria-label="Breadcrumb"]::-webkit-scrollbar{display:none}
+nav[aria-label="Breadcrumb"] .breadcrumb{flex-wrap:nowrap !important;white-space:nowrap !important;gap:6px}
+nav[aria-label="Breadcrumb"] .breadcrumb-item{flex:0 0 auto;white-space:nowrap}
 @media(max-width:575px){
   nav[aria-label="Breadcrumb"]{padding-left:calc(12px + env(safe-area-inset-left, 0px)) !important;padding-right:12px !important}
 }
@@ -160,12 +160,12 @@
 .gh-mobile-sheet{display:none}
 .gh-mobile-carousel{display:none}
 @media(max-width:991px){
-  .gh-mobile-sheet{position:fixed;left:0;right:0;bottom:0;z-index:1035;background:#fff;border-radius:16px 16px 0 0;box-shadow:0 -8px 32px rgba(0,0,0,.18);max-height:85vh;display:flex;flex-direction:column;transform:translateY(55%);transition:transform .35s cubic-bezier(.32,.72,0,1)}
-  .gh-mobile-sheet.open{transform:translateY(0)}
+  .gh-mobile-sheet{position:fixed;left:0;right:0;bottom:0;z-index:1035;background:#fff;border-radius:16px 16px 0 0;box-shadow:0 -8px 32px rgba(0,0,0,.18);max-height:85vh;display:flex;flex-direction:column;transform:translateY(110%);visibility:hidden;pointer-events:none;transition:transform .35s cubic-bezier(.32,.72,0,1),visibility .35s}
+  .gh-mobile-sheet.open{transform:translateY(0);visibility:visible;pointer-events:auto}
   .gh-mobile-sheet.peek{transform:translateY(55%)}
   .gh-sheet-handle{display:flex;justify-content:center;padding:10px 0 6px;cursor:grab;touch-action:none}
   .gh-sheet-handle span{width:36px;height:4px;background:#dadce0;border-radius:2px;display:block}
-  .gh-sheet-scroll{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:0 12px 16px}
+  .gh-sheet-scroll{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:0 12px calc(16px + env(safe-area-inset-bottom, 0px))}
   .gh-mobile-carousel{position:fixed;left:0;right:0;bottom:72px;z-index:1034;display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:0 12px 8px}
   .gh-mobile-carousel::-webkit-scrollbar{display:none}
   .gh-mobile-carousel .gh-card{flex:0 0 78vw;max-width:320px;scroll-snap-align:start}
@@ -343,9 +343,9 @@
   .gh-mobile-handle span{width:36px;height:4px;background:#dadce0;border-radius:2px;display:block}
   .gh-chips-wrap{transition:top .22s ease}
 }
-/* ── SPEC OVERRIDES: new enterprise pill + chips handle new classes in split layout ── */
-.gh-left-fixed .fns-search-wrap,.gh-left-fixed .fns-chips-wrap{position:relative !important;top:0 !important;margin-top:0 !important}
+/* ── SPEC OVERRIDES: new enterprise pill + chips handle new classes in split layout (desktop only — mobile keeps its own sticky) ── */
 @media(min-width:992px){
+.gh-left-fixed .fns-search-wrap,.gh-left-fixed .fns-chips-wrap{position:relative !important;top:0 !important;margin-top:0 !important}
   .gh-left-fixed .fns-search-wrap{padding:10px 12px 8px !important;border-bottom:none !important;margin-top:0 !important}
   .gh-left-fixed .fns-chips-wrap{padding:6px 12px 8px !important;border-bottom:1px solid #E5E7EB}
   .gh-left-fixed .fns-pill{min-height:56px !important}

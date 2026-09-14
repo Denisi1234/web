@@ -47,20 +47,20 @@ $this->assign('description', 'Create a FastNet Stays account to save stays, get 
 									<div class="form py-2">
 										<div class="form-group">
 											<label class="form-label">Full Name</label>
-											<input type="text" id="signup-name" class="form-control" placeholder="John Doe" required>
+											<input type="text" id="signup-name" class="form-control" placeholder="" required>
 										</div>
 										<div class="form-group">
 											<label class="form-label">Email Address</label>
-											<input type="email" id="signup-email" class="form-control" placeholder="name@example.com" required>
+											<input type="email" id="signup-email" class="form-control" placeholder="" required>
 										</div>
 										<div class="form-group">
 											<label class="form-label">Phone Number (Optional)</label>
-											<input type="text" id="signup-phone" class="form-control" placeholder="+255 700 000 000">
+											<input type="text" id="signup-phone" class="form-control" placeholder="">
 										</div>
 										<div class="form-group">
 											<label class="form-label">Enter Password</label>
 											<div class="position-relative">
-												<input type="password" class="form-control" id="signup-password" name="password" placeholder="Min 8 characters" required>
+												<input type="password" class="form-control" id="signup-password" name="password" placeholder="" required>
 												<span class="fa-solid fa-eye toggle-password position-absolute top-50 end-0 translate-middle-y me-3" onclick="let p=document.getElementById('signup-password'); p.type = p.type==='password'?'text':'password';"></span>
 											</div>
 										</div>
@@ -169,4 +169,4 @@ $this->assign('description', 'Create a FastNet Stays account to save stays, get 
 	</div>
 </section>
 </main>
-<?= $this->element('footer', ['skin' => 'skin-light-footer']) ?>
+<div class="d-none d-md-block"><?= $this->element('footer', ['skin' => 'skin-light-footer']) ?></div>

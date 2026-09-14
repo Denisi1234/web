@@ -240,6 +240,18 @@
 <!-- Floating Toast -->
 <div id="trivago-toast"></div>
 
-<?= $this->Html->script('/assets/js/profile.js'); ?>
+<script>
+// Fallback toggle if profile.js fails or cached — ensures dropdowns always work
+if (typeof toggleSettingRow !== 'function') {
+  window.toggleSettingRow = function(rowId){
+    const row=document.getElementById(rowId);
+    if(!row) return;
+    const wasOpen=row.classList.contains('open');
+    document.querySelectorAll('.trivago-setting-row').forEach(r=>{ if(r.id!==rowId) r.classList.remove('open'); });
+    if(wasOpen) row.classList.remove('open'); else row.classList.add('open');
+  };
+}
+</script>
+<?= $this->Html->script('/assets/js/profile.js?v=' . filemtime(WWW_ROOT . 'assets/js/profile.js')); ?>
 </main>
 <?= $this->element('footer', ['skin' => 'skin-light-footer']) ?>

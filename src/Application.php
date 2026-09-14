@@ -94,7 +94,23 @@ class Application extends BaseApplication
             if (
                 $path === '/login' ||
                 $path === '/logout' ||
-                $path === '/contact/submit'
+                $path === '/contact/submit' ||
+                $path === '/bookingpage-02' ||
+                $path === '/bookingpage-03' ||
+                $path === '/booking-page' ||
+                $path === '/booking-payment/dispatch' ||
+                $path === '/booking-payment/status' ||
+                $path === '/my-profile' ||
+                $path === '/security' ||
+                $path === '/my-booking/find' ||
+                $path === '/my-booking/cancel' ||
+                $path === '/recently-viewed/clear' ||
+                str_starts_with($path, '/recently-viewed/remove') ||
+                $path === '/wishlist' ||
+                str_starts_with($path, '/wishlist/') ||
+                $path === '/wishlist-lists' ||
+                $path === '/api/bookings/create' ||
+                str_starts_with($path, '/api/')
             ) {
                 return true;
             }

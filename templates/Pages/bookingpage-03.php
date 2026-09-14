@@ -31,17 +31,17 @@ $holderName = trim(($queryParams['first_name'] ?? '') . ' ' . ($queryParams['las
 .agoda-steps{display:flex;align-items:center;gap:0;flex:1;max-width:620px;margin:0 24px}
 .agoda-step{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;white-space:nowrap}
 .agoda-step .num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:1px solid #dadce0;background:#fff;color:#5f6368}
-.agoda-step.done .num{background:#1a73e8;color:#fff;border-color:#1a73e8}
-.agoda-step.active .num{background:#1a73e8;color:#fff;border-color:#1a73e8}
+.agoda-step.done .num{background:#2563EB;color:#fff;border-color:#2563EB}
+.agoda-step.active .num{background:#2563EB;color:#fff;border-color:#2563EB}
 .agoda-step span{color:#5f6368}
-.agoda-step.active span{color:#1a73e8}
-.agoda-step.done span{color:#1a73e8}
+.agoda-step.active span{color:#2563EB}
+.agoda-step.done span{color:#2563EB}
 .agoda-step-line{flex:1;height:2px;background:#e8eaed;margin:0 8px;border-radius:1px}
-.agoda-step-line.filled{background:#1a73e8}
+.agoda-step-line.filled{background:#2563EB}
 .agoda-timer-bar{background:#fef3e8;border-bottom:1px solid #fde8cc;padding:10px 16px;text-align:center;font-size:13px;color:#202124;display:flex;align-items:center;justify-content:center;gap:8px}
 .agoda-timer-bar b{color:#e53935;font-weight:700;display:flex;align-items:center;gap:6px}
 .agoda-pay-wrap{max-width:1180px;margin:14px auto;padding:0 16px;display:grid;grid-template-columns:1fr 360px;gap:16px;align-items:start}
-.agoda-card{background:#fff;border:1px solid #e0e6ef;border-radius:10px;overflow:hidden}
+.agoda-card{background:#fff;border:1px solid #e8eaed;border-radius:16px;overflow:hidden;box-shadow:0 6px 16px rgba(0,0,0,0.05)}
 .agoda-card-pad{padding:16px}
 .agoda-pay-title{font-size:18px;font-weight:800;color:#202124;margin:0}
 .agoda-pay-sub{font-size:12px;color:#1a73e8;display:flex;align-items:center;gap:4px;margin-top:4px}
@@ -56,7 +56,7 @@ $holderName = trim(($queryParams['first_name'] ?? '') . ' ' . ($queryParams['las
 .agoda-field{position:relative;margin-bottom:14px}
 .agoda-field label{position:absolute;top:-8px;left:10px;background:#fff;padding:0 6px;font-size:11px;color:#137333;font-weight:600}
 .agoda-field label.req{color:#137333}
-.agoda-input{width:100%;height:42px;border:1px solid #137333;border-radius:8px;padding:0 12px;font-size:13px;color:#202124;background:#fff;outline:none}
+.agoda-input{width:100%;height:44px;border:1px solid #137333;border-radius:12px;padding:0 12px;font-size:13px;color:#202124;background:#fff;outline:none;transition:border-color 150ms ease,box-shadow 150ms ease}
 .agoda-input::placeholder{color:#9aa0a6}
 .agoda-input-card{border-color:#dadce0}
 .agoda-input-card:focus{border-color:#1a73e8;box-shadow:0 0 0 2px rgba(26,115,232,0.15)}
@@ -79,11 +79,11 @@ $holderName = trim(($queryParams['first_name'] ?? '') . ' ' . ($queryParams['las
 .agoda-hurry-red{font-size:12px;color:#c0392b;text-align:right;margin:10px 0 6px}
 .agoda-email-note{font-size:13px;color:#202124;display:flex;align-items:center;gap:6px}
 .agoda-email-note b{color:#202124}
-.agoda-book-btn{background:#1a73e8;color:#fff;border:none;border-radius:24px;padding:12px 24px;font-size:14px;font-weight:800;width:100%;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
-.agoda-book-btn:hover{background:#1557b0}
+.agoda-book-btn{background:#2563EB;color:#fff;border:none;border-radius:30px;padding:14px 24px;font-size:15px;font-weight:800;width:100%;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 12px rgba(37,99,235,0.18)}
+.agoda-book-btn:hover{background:#1d4ed8}
 .agoda-flexi{font-size:12px;color:#0f7a2b;text-align:center;font-weight:600;margin-top:6px}
 /* Right */
-.agoda-side-card{background:#fff;border:1px solid #e0e6ef;border-radius:10px;overflow:hidden;margin-bottom:12px}
+.agoda-side-card{background:#fff;border:1px solid #e8eaed;border-radius:16px;overflow:hidden;margin-bottom:12px;box-shadow:0 4px 12px rgba(0,0,0,0.04)}
 .agoda-side-head{padding:14px 16px;display:flex;justify-content:space-between;gap:8px}
 .agoda-side-title{font-size:15px;font-weight:800;color:#202124;line-height:1.3}
 .agoda-side-sub{font-size:12px;color:#5f6368;margin-top:4px}
@@ -191,29 +191,35 @@ $holderName = trim(($queryParams['first_name'] ?? '') . ' ' . ($queryParams['las
         <input type="hidden" name="quote_id" value="<?= h($quoteId) ?>">
         <input type="hidden" name="check_in" value="<?= h($checkIn) ?>">
         <input type="hidden" name="check_out" value="<?= h($checkOut) ?>">
+        <!-- Guest info forwarded from Customer Information step -->
+        <input type="hidden" name="first_name" value="<?= h($queryParams['first_name'] ?? '') ?>">
+        <input type="hidden" name="last_name" value="<?= h($queryParams['last_name'] ?? '') ?>">
+        <input type="hidden" name="email" value="<?= h($queryParams['email'] ?? $guestEmail) ?>">
+        <input type="hidden" name="phone" value="<?= h($queryParams['phone'] ?? '') ?>">
+        <input type="hidden" name="special_requests" value="<?= h($queryParams['special_notes'] ?? $queryParams['special_requests'] ?? '') ?>">
 
         <!-- Unified payment methods — all in one section -->
         <div style="padding:12px 16px">
           <div style="font-size:12px;font-weight:800;color:#202124;margin-bottom:10px">Select payment method</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <label class="agoda-pay-option" data-method="card" style="border:2px solid #1a73e8;background:#eef3ff;border-radius:8px;padding:10px 10px;display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="radio" name="pay_method" value="card" checked style="accent-color:#1a73e8"><span style="font-size:13px;font-weight:700;color:#1a73e8">Credit/debit card</span>
+            <label class="agoda-pay-option" data-method="card" style="border:2px solid #2563EB;background:#F0F3FF;border-radius:12px;padding:10px 10px;display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="radio" name="payment_method" value="card" checked style="accent-color:#2563EB"><span style="font-size:13px;font-weight:700;color:#2563EB">Credit/debit card</span>
               <span style="margin-left:auto;display:flex;gap:4px;align-items:center">
                 <img src="<?= $this->Url->build('/assets/img/visa-logo.png') ?>" alt="VISA" style="height:18px;border:1px solid #e8eaed;border-radius:3px;background:#fff;padding:1px 3px">
                 <img src="<?= $this->Url->build('/assets/img/mastercard-logo.png') ?>" alt="Mcard" style="height:18px;border:1px solid #e8eaed;border-radius:3px;background:#fff;padding:1px 3px">
               </span>
             </label>
-            <label class="agoda-pay-option" data-method="vodacom" style="border:1px solid #e8eaed;background:#fff;border-radius:8px;padding:10px 10px;display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="radio" name="pay_method" value="vodacom" style="accent-color:#e60000"><img src="<?= $this->Url->build('/assets/img/vodacom-logo.png') ?>" alt="M-Pesa" style="height:18px;max-width:48px;object-fit:contain"><span style="font-size:12px;font-weight:700;color:#202124">M-Pesa</span>
+            <label class="agoda-pay-option" data-method="vodacom" style="border:1px solid #e8eaed;background:#fff;border-radius:12px;padding:10px 10px;display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="radio" name="payment_method" value="vodacom" style="accent-color:#e60000"><img src="<?= $this->Url->build('/assets/img/vodacom-logo.png') ?>" alt="M-Pesa" style="height:18px;max-width:48px;object-fit:contain"><span style="font-size:12px;font-weight:700;color:#202124">M-Pesa</span>
             </label>
-            <label class="agoda-pay-option" data-method="tigo" style="border:1px solid #e8eaed;background:#fff;border-radius:8px;padding:10px 10px;display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="radio" name="pay_method" value="tigo" style="accent-color:#0033a0"><img src="<?= $this->Url->build('/assets/img/tigo-pesa-logo.jpg') ?>" alt="Tigo" style="height:18px;max-width:48px;object-fit:contain"><span style="font-size:12px;font-weight:700;color:#202124">Tigo Pesa</span>
+            <label class="agoda-pay-option" data-method="tigo" style="border:1px solid #e8eaed;background:#fff;border-radius:12px;padding:10px 10px;display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="radio" name="payment_method" value="tigo" style="accent-color:#0033a0"><img src="<?= $this->Url->build('/assets/img/tigo-pesa-logo.jpg') ?>" alt="Tigo" style="height:18px;max-width:48px;object-fit:contain"><span style="font-size:12px;font-weight:700;color:#202124">Tigo Pesa</span>
             </label>
-            <label class="agoda-pay-option" data-method="airtel" style="border:1px solid #e8eaed;background:#fff;border-radius:8px;padding:10px 10px;display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="radio" name="pay_method" value="airtel" style="accent-color:#ff0000"><img src="<?= $this->Url->build('/assets/img/airtel-logo.png') ?>" alt="Airtel" style="height:18px;max-width:48px;object-fit:contain"><span style="font-size:12px;font-weight:700;color:#202124">Airtel Money</span>
+            <label class="agoda-pay-option" data-method="airtel" style="border:1px solid #e8eaed;background:#fff;border-radius:12px;padding:10px 10px;display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="radio" name="payment_method" value="airtel" style="accent-color:#ff0000"><img src="<?= $this->Url->build('/assets/img/airtel-logo.png') ?>" alt="Airtel" style="height:18px;max-width:48px;object-fit:contain"><span style="font-size:12px;font-weight:700;color:#202124">Airtel Money</span>
             </label>
-            <label class="agoda-pay-option" data-method="halotel" style="border:1px solid #e8eaed;background:#fff;border-radius:8px;padding:10px 10px;display:flex;align-items:center;gap:8px;cursor:pointer;grid-column:span 2;justify-content:center">
-              <input type="radio" name="pay_method" value="halotel" style="accent-color:#ff6600"><img src="<?= $this->Url->build('/assets/img/halotel-logo.jpg') ?>" alt="Halo" style="height:18px;max-width:48px;object-fit:contain"><span style="font-size:12px;font-weight:700;color:#202124">HaloPesa</span>
+            <label class="agoda-pay-option" data-method="halotel" style="border:1px solid #e8eaed;background:#fff;border-radius:12px;padding:10px 10px;display:flex;align-items:center;gap:8px;cursor:pointer;grid-column:span 2;justify-content:center">
+              <input type="radio" name="payment_method" value="halotel" style="accent-color:#ff6600"><img src="<?= $this->Url->build('/assets/img/halotel-logo.jpg') ?>" alt="Halo" style="height:18px;max-width:48px;object-fit:contain"><span style="font-size:12px;font-weight:700;color:#202124">HaloPesa</span>
             </label>
           </div>
         </div>
@@ -344,7 +350,7 @@ function tickPay(){
 }
 tickPay();
 function updatePayUI(){
-  const sel=document.querySelector('[name=pay_method]:checked')?.value || 'card';
+  const sel=document.querySelector('[name=payment_method]:checked')?.value || 'card';
   const cardSec=document.getElementById('cardFormSection');
   const momoSec=document.getElementById('momoFormSection');
   const isCard=sel==='card';
@@ -356,8 +362,8 @@ function updatePayUI(){
   // highlight selected option
   document.querySelectorAll('.agoda-pay-option').forEach(l=>{
     const isSel=l.querySelector('input')?.value===sel;
-    l.style.border=isSel?'2px solid #1a73e8':'1px solid #e8eaed';
-    l.style.background=isSel?'#eef3ff':'#fff';
+    l.style.border=isSel?'2px solid #2563EB':'1px solid #e8eaed';
+    l.style.background=isSel?'#F0F3FF':'#fff';
   });
   // update momo hint/logo
   if(!isCard){
@@ -376,10 +382,10 @@ function updatePayUI(){
     if(lg && logos[sel]){lg.src=logos[sel]; lg.style.display='inline-block';}
   }
 }
-document.querySelectorAll('[name=pay_method]').forEach(r=>{r.addEventListener('change',updatePayUI)});
+document.querySelectorAll('[name=payment_method]').forEach(r=>{r.addEventListener('change',updatePayUI)});
 document.addEventListener('DOMContentLoaded',updatePayUI);
 document.getElementById('agodaPaymentForm')?.addEventListener('submit',function(e){
-  const payMethod=this.querySelector('[name=pay_method]:checked')?.value || 'card';
+  const payMethod=this.querySelector('[name=payment_method]:checked')?.value || 'card';
   if(payMethod==='card'){
     const holder=this.querySelector('[name=card_holder]');
     const num=this.querySelector('[name=card_number]');

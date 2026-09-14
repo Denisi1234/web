@@ -85,7 +85,8 @@ $toggleAmen = function(string $key) use ($buildUrl, $amenList): string {
 /* Mobile handle */
 .fns-chips-handle{display:none;}
 @media(max-width:991px){
-  .fns-chips-wrap{top:64px;padding:0 16px 0;background:#fff;}
+  /* Single sticky bar on mobile: sits BELOW search bar (header 64px + search bar ~52px = 116px) */
+  .fns-chips-wrap{top:116px;padding:0 16px 0;background:#fff;}
   .fns-chips-wrap .container-fluid{padding-left:0 !important;padding-right:0 !important;}
   .fns-chip{padding:10px 14px;font-size:13.5px;min-height:44px;height:44px;gap:8px;scroll-snap-align:start;}
   .fns-chip i{font-size:12px !important;}
@@ -94,6 +95,19 @@ $toggleAmen = function(string $key) use ($buildUrl, $amenList): string {
   .fns-chips-handle span{width:40px;height:5px;background:#E5E7EB;border-radius:9999px;display:block;}
   .fns-price-pop{position:fixed !important;left:12px !important;right:12px !important;top:auto !important;bottom:calc(12px + env(safe-area-inset-bottom)) !important;width:auto !important;max-width:none !important;border-radius:20px;max-height:82vh;max-height:82dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
   .fns-scroll-btn{display:none !important;}
+  .fns-chips-outer::after{right:0 !important;}
+}
+@media(max-width:575px){
+  /* Header shrinks to 58px + search bar ~52px = chips at 110px */
+  .fns-chips-wrap{top:110px !important;}
+}
+/* Mobile UX: Google shows ~4 chips (All filters, Price, Offers, Guest rating).
+   Hide property-type / extra-rating / amenity chips on phones — still available in All filters modal. */
+@media(max-width:767px){
+  .fns-chip[data-filter="property_type"]{display:none !important;}
+  .fns-chip[data-filter="amenities"]{display:none !important;}
+  .fns-chip[data-filter="rating"][data-value="4.5"],
+  .fns-chip[data-filter="rating"][data-value="3.5"]{display:none !important;}
 }
 @media(max-width:380px){
   .fns-chip{padding:9px 12px;font-size:12.5px;min-height:38px;}

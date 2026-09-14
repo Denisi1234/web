@@ -13,8 +13,8 @@ $destinationItems = !empty($properties) ? $properties : [];
 <?php else: ?>
     <?php foreach ($destinationItems as $item): 
         $propId = $item['id'];
-        $title = $item['name'] ?? 'FastNet Stays Lodge';
-        $city = $item['city'] ?? ($item['area'] ?? ($selectedDest ?? 'Tanzania'));
+        $title = \App\Utility\TextFormatter::formatTitle((string)($item['name'] ?? 'FastNet Stays Lodge'));
+        $city = \App\Utility\TextFormatter::formatTitle((string)($item['city'] ?? ($item['area'] ?? ($selectedDest ?? 'Tanzania'))));
         $price = number_format((float)($item['price_per_night'] ?? ($item['starting_price'] ?? 150000)));
         
         // Image parsing

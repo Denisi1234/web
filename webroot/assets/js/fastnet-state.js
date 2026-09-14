@@ -93,6 +93,7 @@ function buildUrl(params){
 }
 let _abort=null;
 let _lastFetchUrl='';
+let _lastSuccessUrl='';
 function showShimmer(on){
   const cards=document.getElementById('gh-cards-container');
   const shim=document.getElementById('gh-shimmer-container');
@@ -101,12 +102,12 @@ function showShimmer(on){
   const btn=document.getElementById('fns_search_btn');
   const chip=document.getElementById('fns_shimmer_chips');
   if(on){
-    if(cards&&shim){ cards.style.opacity='0.55'; cards.setAttribute('aria-busy','true'); shim.style.display='block'; shim.setAttribute('aria-hidden','false'); if(chip) chip.classList.add('show'); }
+    if(cards&&shim){ cards.style.display='none'; cards.setAttribute('aria-busy','true'); shim.style.display='block'; shim.setAttribute('aria-hidden','false'); if(chip) chip.classList.add('show'); }
     if(section) section.setAttribute('aria-busy','true');
     if(btn){ btn.setAttribute('aria-busy','true'); btn.disabled=true; }
     if(bar){ bar.style.transition='width 0.25s ease'; bar.style.width='45%'; }
   } else {
-    if(cards&&shim){ cards.style.opacity=''; cards.setAttribute('aria-busy','false'); shim.style.display='none'; shim.setAttribute('aria-hidden','true'); if(chip) chip.classList.remove('show'); }
+    if(cards&&shim){ cards.style.display=''; cards.setAttribute('aria-busy','false'); shim.style.display='none'; shim.setAttribute('aria-hidden','true'); if(chip) chip.classList.remove('show'); }
     if(section) section.setAttribute('aria-busy','false');
     if(btn){ btn.setAttribute('aria-busy','false'); btn.disabled=false; }
     if(bar){ bar.style.width='100%'; setTimeout(()=>{bar.style.width='0%'; bar.style.transition='width 0.3s ease';}, 260); }
@@ -116,7 +117,8 @@ async function hydrate(url){
   if(_abort) _abort.abort();
   _abort=new AbortController();
   const fetchUrl = url + (url.includes('?')?'&':'?') + 'format=json';
-  if(_lastFetchUrl===fetchUrl) return;
+  // only skip if last successful fetch was same URL
+  if(_lastSuccessUrl===fetchUrl) return;
   _lastFetchUrl=fetchUrl;
   const t0=Date.now();
   showShimmer(true);
@@ -126,7 +128,21 @@ async function hydrate(url){
     const data=await res.json();
     if(data.html){
       const container=document.getElementById('gh-cards-container');
-      if(container) container.innerHTML=data.html;
+      const shimEl=document.getElementById('gh-shimmer-container');
+      if(container){
+        // data.html contains both #gh-shimmer-container and #gh-cards-container from element rendering;
+        // extract only the cards inner content to avoid nested duplicate IDs
+        let htmlToInject=data.html;
+        try{
+          const tmp=document.createElement('div');
+          tmp.innerHTML=data.html;
+          const inner=tmp.querySelector('#gh-cards-container');
+          if(inner){
+            htmlToInject=inner.innerHTML;
+          }
+        }catch(e){}
+        container.innerHTML=htmlToInject;
+      }
     }
     if(data.markers){
       if(window._ghMap && typeof window.ghRefreshMarkers==='function'){
@@ -135,12 +151,19 @@ async function hydrate(url){
         window.dispatchEvent(new CustomEvent('fastnet:markers-update', {detail:data.markers}));
       }
     }
+    _lastSuccessUrl=fetchUrl;
     refreshDetailLinks();
     // ensure results count header live region announces
     const live=document.getElementById('gh_results_live');
     if(live && data.totalCount!==undefined) live.textContent=data.totalCount + ' stays';
+    return data;
   }catch(e){
-    if(e.name!=='AbortError') console.warn('[FastNetState] hydrate failed',e);
+    if(e.name!=='AbortError'){
+      console.warn('[FastNetState] hydrate failed',e);
+      _lastSuccessUrl='';
+    } else {
+      _lastSuccessUrl='';
+    }
   }finally{
     const elapsed=Date.now()-t0;
     const minShow=380;

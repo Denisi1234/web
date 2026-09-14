@@ -130,12 +130,25 @@ async function renderWishlistPage() {
     emptyState.classList.add('d-none');
     countLabel.textContent = `Showing ${displayProps.length} saved ${displayProps.length === 1 ? 'stay' : 'stays'}`;
 
+    function fmtTitle(str) {
+        if (!str) return '';
+        const minor = ['es', 'la', 'de', 'and', 'the', 'of', 'in', 'on', 'at', 'to', 'for', 'with', 'by'];
+        let s = str.replace(/,(\S)/g, ', $1').replace(/\s+/g, ' ').trim();
+        return s.split(' ').map((w, idx) => {
+            const l = w.toLowerCase();
+            return (idx > 0 && minor.includes(l)) ? l : (l.charAt(0).toUpperCase() + l.slice(1));
+        }).join(' ')
+        .replace(/\bdar\s+es\s+salam\b/gi, 'Dar es Salaam')
+        .replace(/\bdar\s+es\s+salaam\b/gi, 'Dar es Salaam')
+        .replace(/\bwi\s*[- ]?\s*fi\b/gi, 'Wi-Fi');
+    }
+
     let html = '';
     displayProps.forEach(item => {
         const id = item.id;
-        const name = item.name || 'FastNet Lodge';
-        const city = item.city || 'Tanzania';
-        const area = item.area || city;
+        const name = fmtTitle(item.name || 'FastNet Lodge');
+        const city = fmtTitle(item.city || 'Dar es Salaam');
+        const area = fmtTitle(item.area || city);
         const price = item.starting_price || item.price_per_night || item.price || 70000;
         const stars = Math.max(1, Math.min(5, parseInt(item.star_rating || 4)));
         const rating = item.rating ? parseFloat(item.rating).toFixed(1) : '4.8';

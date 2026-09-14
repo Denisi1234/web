@@ -9,10 +9,24 @@
  *           [icon amenity] [icon amenity] [icon amenity]
  *                                         [View prices ▶]
  */
+if (!function_exists('ghNormalizeImgUrl')) {
+    function ghNormalizeImgUrl(string $url): string {
+        $url = trim($url);
+        if ($url === '') return '';
+        // If image points to local or relative storage in production, resolve with configured backend host
+        if (str_starts_with($url, '/storage/') || str_contains($url, '127.0.0.1:8000/storage') || str_contains($url, 'localhost/storage')) {
+            $apiBase = (string)\Cake\Core\Configure::read('App.backendApiUrl', \Cake\Core\env('BACKEND_API_URL', 'http://127.0.0.1:8000/api'));
+            $backendHost = rtrim(preg_replace('#/api/?$#', '', $apiBase), '/');
+            $storagePath = substr($url, strpos($url, '/storage/'));
+            return $backendHost . $storagePath;
+        }
+        return $url;
+    }
+}
 if (!function_exists('ghPropImage2')) {
     function ghPropImage2(array $p): string {
         foreach (['image_url','primary_image_url','cover_image','thumbnail'] as $k) {
-            if (!empty($p[$k])) return $p[$k];
+            if (!empty($p[$k])) return ghNormalizeImgUrl((string)$p[$k]);
         }
         return '';
     }
@@ -26,7 +40,7 @@ if (!function_exists('ghPropImages')) {
         if (is_array($raw)) {
             foreach ($raw as $it) {
                 $u = is_array($it) ? ($it['url'] ?? $it['image_url'] ?? $it['src'] ?? '') : (string)$it;
-                $u = trim($u);
+                $u = ghNormalizeImgUrl($u);
                 if ($u !== '' && !in_array($u, $out, true)) $out[] = $u;
                 if (count($out) >= 8) break;
             }
@@ -34,7 +48,10 @@ if (!function_exists('ghPropImages')) {
         // fallback single fields if no gallery
         if (empty($out)) {
             foreach (['primary_image_url','image_url','cover_image','thumbnail'] as $k) {
-                if (!empty($p[$k]) && !in_array($p[$k], $out, true)) $out[] = $p[$k];
+                if (!empty($p[$k])) {
+                    $u = ghNormalizeImgUrl((string)$p[$k]);
+                    if ($u !== '' && !in_array($u, $out, true)) $out[] = $u;
+                }
             }
         }
         return $out;
@@ -74,7 +91,7 @@ if (!function_exists('ghPropImages')) {
     <?php foreach ($properties as $idx => $prop):
         if (!is_array($prop)) continue;
         $propId = $prop['id'] ?? 0;
-        $title  = $prop['name'] ?? '';
+        $title  = \App\Utility\TextFormatter::formatTitle((string)($prop['name'] ?? 'Hotel'));
 
         // Rating — "4.0 ★ (158)" format
         $ratingRaw    = !empty($prop['reviews_avg_rating']) ? (float)$prop['reviews_avg_rating'] : (!empty($prop['rating']) ? (float)$prop['rating'] : null);
@@ -101,10 +118,13 @@ if (!function_exists('ghPropImages')) {
         $totalPrice = $price * $nightsForPrice;
         $totalLabel = $price > 0 ? $currency . number_format($totalPrice) : '';
 
-        // Location
-        $area    = $prop['area'] ?? ($prop['address'] ?? '');
-        $city    = $prop['city'] ?? '';
-        $locText = trim(implode(', ', array_filter([ucwords($area), ucwords($city)])));
+        // Real coords? Coord-less cards must not render the Dar fallback tile (identical maps look broken).
+        $rawLat = $prop['latitude'] ?? ($prop['lat'] ?? null);
+        $rawLng = $prop['longitude'] ?? ($prop['lng'] ?? null);
+        $hasRealCoords = is_numeric($rawLat) && is_numeric($rawLng) && ((float)$rawLat != 0.0 || (float)$rawLng != 0.0);
+
+        // Location formatting
+        $locText = \App\Utility\TextFormatter::formatLocation((string)($prop['area'] ?? ''), (string)($prop['city'] ?? ''));
 
         // Amenity detection (from raw amenities string/array + specific fields)
         $amenRaw = $prop['amenities'] ?? [];
@@ -157,7 +177,7 @@ if (!function_exists('ghPropImages')) {
         $detailUrl  = $this->Url->build('/hotel-detail/' . $propId . (!empty($cleanQP) ? '?' . http_build_query($cleanQP) : ''));
     ?>
     <div
-        class="gh-card"
+        class="gh-card<?= $hasRealCoords ? '' : ' gh-no-map' ?>"
         id="gh-card-<?= $propId ?>"
         data-property-id="<?= $propId ?>"
         onclick="window.location='<?= $detailUrl ?>'"
@@ -171,7 +191,7 @@ if (!function_exists('ghPropImages')) {
             <?php if ($isSlider): ?>
                 <div class="gh-card-track" id="gh-track-<?= $propId ?>">
                     <?php foreach ($cardImgs as $ci => $u): ?>
-                        <img src="<?= str_starts_with($u,'http') ? h($u) : $this->Url->build('/'.h($u)) ?>" alt="<?= h($title) ?> photo <?= $ci+1 ?>" loading="<?= $ci===0?'eager':'lazy' ?>" draggable="false">
+                        <img src="<?= str_starts_with($u,'http') ? h($u) : $this->Url->build('/'.h($u)) ?>" alt="<?= h($title) ?> photo <?= $ci+1 ?>" loading="<?= $ci===0?'eager':'lazy' ?>" draggable="false" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop'">
                     <?php endforeach; ?>
                 </div>
                 <button type="button" class="gh-card-nav gh-card-prev" onclick="event.stopPropagation();ghSlide(<?= $propId ?>,-1)" aria-label="Previous image">‹</button>
@@ -179,7 +199,7 @@ if (!function_exists('ghPropImages')) {
             <?php else: ?>
                 <?php $img = $cardImgs[0] ?? ghPropImage2($prop); ?>
                 <?php if ($img !== ''): ?>
-                    <img src="<?= str_starts_with($img,'http') ? h($img) : $this->Url->build('/'.h($img)) ?>" alt="<?= h($title) ?>" loading="lazy">
+                    <img src="<?= str_starts_with($img,'http') ? h($img) : $this->Url->build('/'.h($img)) ?>" alt="<?= h($title) ?>" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop'">
                 <?php else: ?>
                     <div class="gh-card-no-photo"><div><i class="fa-solid fa-image" style="font-size:30px;color:#bdbdbd;"></i><br>No photo</div></div>
                 <?php endif; ?>
@@ -200,11 +220,17 @@ if (!function_exists('ghPropImages')) {
                 <div class="gh-card-dots"><div class="gh-card-dot a"></div><div class="gh-card-dot"></div><div class="gh-card-dot"></div><div class="gh-card-dot"></div><div class="gh-card-dot"></div></div>
             <?php endif; ?>
         </div>
-        <!-- Mobile mini-map with blue price pill (visible only ≤767px) — real Mapbox static map -->
+        <!-- Mobile mini-map with blue price pill (visible only ≤767px) — only when real coordinates exist -->
+        <?php
+            $mlat = (float)($prop['latitude'] ?? ($prop['lat'] ?? 0));
+            $mlng = (float)($prop['longitude'] ?? ($prop['lng'] ?? 0));
+            // Only render map tile if property has real coordinates (not 0,0 or the generic fallback)
+            $hasRealCoords = ($mlat !== 0.0 || $mlng !== 0.0)
+                && !($mlat === -6.7725 && $mlng === 39.245); // skip generic Dar fallback
+        ?>
+        <?php if ($hasRealCoords): ?>
         <div class="gh-card-map-mobile" aria-hidden="true">
             <?php
-                $mlat = (float)($prop['latitude'] ?? ($prop['lat'] ?? -6.7725));
-                $mlng = (float)($prop['longitude'] ?? ($prop['lng'] ?? 39.245));
                 $mapService = new \App\Service\MapService();
                 $mapImg = $mapService->getStaticMapUrl($mlat, $mlng, 13, 300, 300);
                 $svgFallback = $mapService->getSvgFallbackUrl(300, 300);
@@ -212,6 +238,7 @@ if (!function_exists('ghPropImages')) {
             <img src="<?= h($mapImg) ?>" alt="Map location" loading="lazy" onerror="this.onerror=null;this.src='<?= $svgFallback ?>';">
             <span class="gh-card-map-price" data-nightly="<?= h($priceLabel) ?>" data-total="<?= h($totalLabel) ?>"><?= h($priceLabel) ?></span>
         </div>
+        <?php endif; ?>
         </div>
 
         <!-- ── Info body ── -->
@@ -262,12 +289,17 @@ if (!function_exists('ghPropImages')) {
                     <a href="<?= $detailUrl ?>" class="gh-btn-prices" onclick="event.stopPropagation()">View prices</a>
                 <?php endif; ?>
             </div>
-            <!-- Mobile: blue Show details button (was View map link) -->
+            <!-- Mobile: price + Show details (price visible so users know cost before tapping) -->
             <div class="gh-card-viewmap">
-                <a href="<?= $detailUrl ?>" class="gh-btn-prices" onclick="event.stopPropagation()" style="flex:1;justify-content:center;min-height:44px;font-size:14px;font-weight:600;">
+                <?php if ($priceLabel !== ''): ?>
+                <div style="display:flex;flex-direction:column;line-height:1.2;min-width:0;">
+                    <span class="gh-hotel-price" style="display:inline-block !important;font-size:15px;font-weight:700;color:#202124;" data-nightly="<?= h($priceLabel) ?>" data-total="<?= h($totalLabel) ?>" data-nights="<?= (int)$nightsForPrice ?>"><?= h($priceLabel) ?><span class="gh-price-night" style="font-size:11px;font-weight:400;color:#5f6368;">/night</span></span>
+                </div>
+                <?php endif; ?>
+                <a href="<?= $detailUrl ?>" class="gh-btn-prices" onclick="event.stopPropagation()" style="<?= $priceLabel!=='' ? 'flex:0 0 auto;' : 'flex:1;justify-content:center;' ?>min-height:44px;font-size:14px;font-weight:600;touch-action:manipulation;">
                     Show details
                 </a>
-                <button type="button" class="gh-viewmap-bm" onclick="event.stopPropagation();ghBookmark(<?= $propId ?>,this)" aria-label="Save" style="width:44px;height:44px;border:1px solid #dadce0;border-radius:50%;background:#fff;"><i class="fa-regular fa-bookmark"></i></button>
+                <button type="button" class="gh-viewmap-bm" onclick="event.stopPropagation();ghBookmark(<?= $propId ?>,this)" aria-label="Save" style="width:44px;height:44px;border:1px solid #dadce0;border-radius:50%;background:#fff;touch-action:manipulation;"><i class="fa-regular fa-bookmark"></i></button>
             </div>
         </div>
     </div>
@@ -359,21 +391,8 @@ window.ghSlide = function(propId, dir){ var cur = window._ghSlideIdx[propId] || 
   window.ghTriggerShimmer=show;
   window.fnsTriggerShimmer=show;
   window.ghHideShimmer=hide;
-  // OTA-style refresh feel: show shimmer on every hard reload / F5 (not just once per session) — like Booking/Agoda
-  var _shimmerTimer=null;
-  function showRefreshShimmer(){
-    show();
-    clearTimeout(_shimmerTimer);
-    _shimmerTimer=setTimeout(hide, 850);
-  }
-  // instant on DOM ready
-  document.addEventListener('DOMContentLoaded', function(){ showRefreshShimmer(); });
-  // if script loads after DOM (fast refresh), show immediately
-  if(document.readyState !== 'loading'){ showRefreshShimmer(); }
-  // bfcache restore (back/forward, pull-to-refresh) → show again
-  window.addEventListener('pageshow', function(e){ if(e.persisted){ showRefreshShimmer(); } });
-  // also tie to beforeunload visual (optional) — ensures spinner on leaving
-  window.addEventListener('beforeunload', function(){ try{ show(); }catch(e){} });
+  // No skeleton on initial load: server already rendered real cards. Shimmer only
+  // during AJAX transitions (fastnet:shimmer-show from FastNetState.hydrate).
   // fail-safe: hide after 8s if network hangs
   var t=null;
   window.addEventListener('fastnet:shimmer-show', function(){ clearTimeout(t); show(); t=setTimeout(hide,8000); });

@@ -13,12 +13,14 @@
 
 
 
-	// Carousel
-	$('.main-carousel').flickity({
-		// options
-		cellAlign: 'center',
-		contain: true
-	});
+	// Carousel — guard if flickity not loaded (defer order)
+	if ($.fn.flickity) {
+		$('.main-carousel').flickity({
+			// options
+			cellAlign: 'center',
+			contain: true
+		});
+	}
 
 
 	// Tooltip

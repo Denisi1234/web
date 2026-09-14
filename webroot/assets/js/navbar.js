@@ -21,36 +21,42 @@ async function toggleWishlist(propertyId, btnEl) {
     const id = parseInt(propertyId);
     let ids = getGlobalWishlistIds();
     const isSaved = ids.includes(id);
-    const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+    const csrf = document.querySelector('meta[name="csrfToken"]')?.content || '';
+    // instant loading feedback on heart
+    const icon = btnEl ? btnEl.querySelector('i') : null;
+    const origIcon = icon ? icon.className : '';
+    if (icon) { icon.className = 'fa-solid fa-spinner fa-spin text-danger'; }
+    if (btnEl) btnEl.disabled = true;
 
     if (isSaved) {
         ids = ids.filter(item => item !== id);
         saveGlobalWishlistIds(ids);
-        showWishlistToast('Removed from saved stays');
-
-        if (token) {
-            try {
-                fetch('http://127.0.0.1:8000/api/wishlist/' + id, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
-                });
-            } catch(e) {}
-        }
+        showWishlistToast('Removing...');
+        try {
+            await fetch('/wishlist/' + id, {
+                method: 'DELETE',
+                headers: { 'X-CSRF-Token': csrf, 'Accept': 'application/json' },
+                credentials: 'same-origin'
+            });
+            showWishlistToast('Removed from saved stays');
+        } catch(e) { showWishlistToast('Removed (local)'); }
     } else {
         ids.push(id);
         saveGlobalWishlistIds(ids);
-        showWishlistToast('Saved to your Wishlist! ❤️');
-
-        if (token) {
-            try {
-                fetch('http://127.0.0.1:8000/api/wishlist', {
-                    method: 'POST',
-                    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    body: JSON.stringify({ property_id: id })
-                });
-            } catch(e) {}
-        }
+        showWishlistToast('Saving...');
+        try {
+            await fetch('/wishlist', {
+                method: 'POST',
+                headers: { 'X-CSRF-Token': csrf, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ property_id: id })
+            });
+            showWishlistToast('Saved to your Wishlist! ❤️');
+        } catch(e) { showWishlistToast('Saved (local) ❤️'); }
     }
+    syncWishlistButtons();
+    if (btnEl) btnEl.disabled = false;
+    // icon restored by syncWishlistButtons
 }
 
 function syncWishlistButtons() {

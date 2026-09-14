@@ -40,7 +40,7 @@ main article + article { margin-top: var(--fn-card-gap); }
 }
 @media(min-width:992px){
     main > .container-fluid { padding-left:4px !important; padding-right:4px !important; }
-    main .row { --bs-gutter-x:8px; --bs-gutter-y:8px; }
+    main .row { --bs-gutter-x:4px; --bs-gutter-y:8px; }
 }
 
 
@@ -53,27 +53,27 @@ main article + article { margin-top: var(--fn-card-gap); }
     display: inline-flex;
     align-items: center;
     gap: 0;
-    background: #ffffff;
-    border: 1px solid #dadce0;
+    background: #1a73e8;
+    border: 1px solid #1a73e8;
     border-radius: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.18);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.22), 0 1px 3px rgba(0,0,0,0.18);
     cursor: pointer;
     position: relative;
-    transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .15s;
+    transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .15s, background .15s;
     font-family: 'Google Sans', Roboto, -apple-system, sans-serif;
     white-space: nowrap;
     overflow: hidden;
     z-index: 10;
     /* Caret/arrow at bottom center */
 }
-/* Triangle pointer at bottom */
+/* Triangle pointer at bottom — solid to match blue pill */
 .gh-map-marker::after {
     content: '';
     position: absolute;
     bottom: -8px; left: 50%; transform: translateX(-50%);
     border-left: 7px solid transparent;
     border-right: 7px solid transparent;
-    border-top: 8px solid rgba(0,0,0,0.2);
+    border-top: 8px solid rgba(26,115,232,0.9);
     transition: border-top-color .15s;
 }
 .gh-map-marker::before {
@@ -82,17 +82,17 @@ main article + article { margin-top: var(--fn-card-gap); }
     bottom: -6px; left: 50%; transform: translateX(-50%);
     border-left: 6px solid transparent;
     border-right: 6px solid transparent;
-    border-top: 6px solid #ffffff;
+    border-top: 6px solid #1a73e8;
     z-index: 1;
     transition: border-top-color .15s;
 }
 
-/* Left: FastNet own — blue circle with hotel icon (not Google red) */
+/* Left: white circle with blue icon — solid blue pill like mobile card price */
 .gh-mm-icon {
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background: #0466c8;   /* FastNet primary blue — own style */
+    background: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -100,27 +100,27 @@ main article + article { margin-top: var(--fn-card-gap); }
     margin: 3px 0 3px 3px;
 }
 .gh-mm-icon i {
-    color: #ffffff;
+    color: #1a73e8;
     font-size: 10px;
 }
 
-/* Right: price text — screenshot 12px 700, TSH */
+/* Right: price text — solid white on blue (same as mobile .gh-card-map-price) */
 .gh-mm-price {
     font-size: 12px;
     font-weight: 700;
-    color: #202124;
+    color: #ffffff;
     padding: 6px 10px 6px 7px;
     line-height: 1;
     letter-spacing: -0.01em;
 }
 
-/* Hover / active — Google Travel: solid #1a73e8 white text scale 1.08 */
+/* Hover / active — slightly darker + scale, same solid */
 .gh-map-marker:hover,
 .gh-map-marker.active {
     transform: scale(1.08);
-    background: #1a73e8;
-    border-color: #1a73e8;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.28);
+    background: #1557d0;
+    border-color: #1557d0;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.32);
     z-index: 9999 !important;
 }
 .gh-map-marker:hover .gh-mm-price,
@@ -128,9 +128,11 @@ main article + article { margin-top: var(--fn-card-gap); }
 .gh-map-marker:hover .gh-mm-icon,
 .gh-map-marker.active .gh-mm-icon { background: #fff; }
 .gh-map-marker:hover .gh-mm-icon i,
-.gh-map-marker.active .gh-mm-icon i { color: #1a73e8; }
+.gh-map-marker.active .gh-mm-icon i { color: #1557d0; }
 .gh-map-marker:hover::before,
-.gh-map-marker.active::before { border-top-color: #1a73e8; }
+.gh-map-marker.active::before { border-top-color: #1557d0; }
+.gh-map-marker:hover::after,
+.gh-map-marker.active::after { border-top-color: rgba(21,87,208,0.9); }
 /* FastNet cluster pill — blue */
 .gh-map-marker.gh-cluster {
     background:#1a73e8;
@@ -141,10 +143,10 @@ main article + article { margin-top: var(--fn-card-gap); }
 .gh-map-marker.gh-cluster .gh-mm-icon { background:#fff; color:#1a73e8; }
 .gh-map-marker.gh-cluster .gh-mm-icon i { color:#1a73e8; }
 .gh-map-marker.active::after {
-    border-top-color: rgba(0,0,0,0.28);
+    border-top-color: rgba(21,87,208,0.9);
 }
 .gh-map-marker.active::before {
-    border-top-color: #ffffff;
+    border-top-color: #1557d0;
 }
 
 /* Pulse animation for "Update list" button */
@@ -179,5 +181,10 @@ main article + article { margin-top: var(--fn-card-gap); }
     margin-right:0;
 }
 @media(min-width:992px){
-    .gh-map-sticky { padding-left:4px; }
+    .gh-map-sticky { padding-left:0 !important; }
+}
+/* Kill tap delay on booking CTAs and tap targets (harmless with width=device-width viewport, helps older WebViews) */
+.gh-btn-prices, .gh-btn-details, .fns-cta, .fns-btn-apply, .agoda-view-deal,
+.fns-step-btn, .fns-chip, .gh-card, .hs-search-btn, .trivago-apply-btn, .trivago-round-btn, .agoda-next-btn {
+    touch-action: manipulation;
 }

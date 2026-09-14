@@ -225,7 +225,7 @@ class PagesController extends AppController
             'children'=> $children,
             'rooms'   => $rooms,
         ];
-        if ($propertyType !== '') $apiPayload['property_type'] = $propertyType;
+        // property_type handled locally solid with name fallback — do not forward to API (API type field is null for seeded data)
         if (!empty($currentAmenities)) $apiPayload['amenities'] = implode(',', $currentAmenities);
         if ($selectedRating !== '') $apiPayload['rating'] = $selectedRating;
         if ($freeCancel) $apiPayload['free_cancellation'] = 1;
@@ -280,14 +280,26 @@ class PagesController extends AppController
         
         // ── Demo preview: one product with full gallery + map pin for visual QA (shown when API empty, even in prod, via ?demo=1) ──
         $isDemoPreview = isset($input['demo']) && $input['demo'] !== '0' && $input['demo'] !== 'false';
-        // Always provide at least one real-looking product when API returns nothing so map + card can be seen
+        // Demo hotel adapts to requested city for solid professional demo — Arusha query never shows Dar es Salaam
+        $demoCity = ($destination !== '' && strtolower($destination) !== 'tanzania') ? $destination : 'Dar es Salaam';
+        $demoCoords = [
+            'dar es salaam' => [-6.7760, 39.2828, 'Msasani Peninsula'],
+            'arusha' => [-3.3869, 36.6829, 'Sekei'],
+            'zanzibar' => [-6.1659, 39.1996, 'Stone Town'],
+            'dodoma' => [-6.1730, 35.7416, 'Central'],
+            'mwanza' => [-2.5167, 32.9000, 'Capri Point'],
+            'kilimanjaro' => [-3.0674, 37.3556, 'Moshi'],
+            'serengeti' => [-2.3333, 34.8333, 'Seronera'],
+        ];
+        $demoKey = strtolower(trim($demoCity));
+        $demoLatLng = $demoCoords[$demoKey] ?? $demoCoords['dar es salaam'];
         $demoHotel = [
             'id' => 1,
-            'name' => 'The Serena Hotel Dar es Salaam',
-            'city' => 'Dar es Salaam',
-            'area' => 'Msasani Peninsula',
-            'address' => 'Plot 123, Msasani Peninsula, Dar es Salaam, Tanzania',
-            'latitude' => -6.7760, 'longitude' => 39.2828, 'lat' => -6.7760, 'lng' => 39.2828,
+            'name' => 'The Serena Hotel ' . $demoCity,
+            'city' => $demoCity,
+            'area' => $demoLatLng[2],
+            'address' => 'Plot 123, ' . $demoLatLng[2] . ', ' . $demoCity . ', Tanzania',
+            'latitude' => $demoLatLng[0], 'longitude' => $demoLatLng[1], 'lat' => $demoLatLng[0], 'lng' => $demoLatLng[1],
             'star_rating' => 5,
             'rating' => 4.7, 'reviews_avg_rating' => 4.7,
             'review_count' => 285, 'reviews_count' => 285,
@@ -306,23 +318,21 @@ class PagesController extends AppController
                 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop',
             ],
             'amenities' => ['WiFi', 'Pool', 'Fitness Center', 'Restaurant', 'Breakfast', 'Air conditioning', 'Free parking', 'Pet-friendly', 'Spa', 'Room service'],
-            'description' => 'Luxury 5-star hotel, apartment, villa and safari lodge options in the heart of Dar es Salaam with oceanfront views, infinity pool, spa and fine dining. Real map pin at Msasani Peninsula.',
-            'property_type' => 'Hotel',
+            'description' => 'Luxury 5-star hotel, apartment, villa and safari lodge options in the heart of ' . $demoCity . ' with oceanfront views, infinity pool, spa and fine dining. Real map pin at ' . $demoLatLng[2] . '.',
+            'property_type' => ($propertyType !== '' ? $propertyType : 'Hotel'),
             'free_cancellation' => true,
         ];
 
         if (empty($properties)) {
             if ($isDemoPreview || Configure::read('debug')) {
-                // Demo mode or debug: show full gallery + map
+                // Demo mode or debug only: show full gallery + map
                 $properties = [$demoHotel];
                 if ($isDemoPreview) {
                     $searchErrors[] = 'Demo preview: showing one real hotel with full gallery and map pin. Remove ?demo=1 to see live data.';
                 }
             } else {
-                // Prod without demo flag: still show one preview so app never looks empty, but keep warning minimal
-                $properties = [$demoHotel];
-                // Optional: comment next line to hide warning in prod
-                // $searchErrors[] = 'Showing preview stay — connect backend for live inventory.';
+                // Prod real: no fake — empty stays shows "No stays found" (real backend empty)
+                $properties = [];
             }
             // If debug true and not demo, expand to 6 for fuller grid QA
             if (Configure::read('debug') && !$isDemoPreview && count($properties) === 1) {
@@ -358,6 +368,30 @@ class PagesController extends AppController
             }
         }
 
+        // SOLID professional city filter — Arusha only returns Arusha (exact city match, no "like" leakage)
+        if ($destination !== '' && strtolower($destination) !== 'tanzania') {
+            $destNorm = strtolower(trim($destination));
+            $destSlug = preg_replace('/[^a-z0-9]/', '', $destNorm);
+            $properties = array_values(array_filter($properties, function ($p) use ($destNorm, $destSlug) {
+                $city = strtolower(trim((string)($p['city'] ?? '')));
+                $cityFirst = trim(explode(',', $city)[0]);
+                $citySlug = preg_replace('/[^a-z0-9]/', '', $cityFirst);
+                // Dar es Salaam typo tolerance: "dar es salam" vs "dar es salaam" both map to dar
+                $isDarDest = str_contains($destSlug, 'dar');
+                $isDarCity = str_contains($citySlug, 'dar');
+                if ($isDarDest && $isDarCity) return true;
+                if ($isDarDest !== $isDarCity) return false;
+                if ($cityFirst === $destNorm) return true;
+                if ($citySlug === $destSlug) return true;
+                // fallback: area field exact match
+                $area = strtolower(trim((string)($p['area'] ?? '')));
+                $areaFirst = trim(explode(',', $area)[0]);
+                $areaSlug = preg_replace('/[^a-z0-9]/', '', $areaFirst);
+                if ($areaFirst === $destNorm || $areaSlug === $destSlug) return true;
+                return false;
+            }));
+        }
+
         // Client-side amenity filter
         if (!empty($currentAmenities)) {
             $properties = array_values(array_filter($properties, function ($prop) use ($currentAmenities) {
@@ -389,14 +423,18 @@ class PagesController extends AppController
         if ($freeCancel) {
             $properties = array_values(array_filter($properties, fn($p) => !empty($p['free_cancellation']) || (!empty($p['cancellation_policy']) && stripos((string)$p['cancellation_policy'], 'free') !== false)));
         }
-        // Property type filter (spec: Hotel, Resort, Apartment, Safari Lodge, Villa)
+        // Property type filter — solid exact, with fallback to name when type field missing (API has null)
         if ($propertyType !== '') {
-            $properties = array_values(array_filter($properties, function($p) use ($propertyType){
-                $pt = strtolower((string)($p['property_type'] ?? ($p['type'] ?? '')));
-                $needle = strtolower($propertyType);
-                // allow partial match: "Safari Lodge" should match description/type
-                $hay = strtolower(($p['property_type'] ?? '') . ' ' . ($p['type'] ?? '') . ' ' . ($p['description'] ?? '') . ' ' . ($p['name'] ?? ''));
-                return str_contains($hay, $needle) || $pt === $needle;
+            $needle = strtolower(trim($propertyType));
+            $properties = array_values(array_filter($properties, function($p) use ($needle){
+                $pt = strtolower(trim((string)($p['property_type'] ?? ($p['type'] ?? ''))));
+                if ($pt !== '') return $pt === $needle;
+                // type missing — infer from name (sunrise lodge → Safari Lodge)
+                $name = strtolower((string)($p['name'] ?? ''));
+                if ($needle === 'safari lodge' && str_contains($name, 'lodge')) return true;
+                if ($needle === 'apartment' && str_contains($name, 'apartment')) return true;
+                if ($needle === 'hotel' && (str_contains($name, 'hotel') || str_contains($name, 'lodge'))) return true;
+                return false;
             }));
         }
         // Extended filters (meals/payment/neighborhood) — soft filter if mock data lacks fields
@@ -425,10 +463,15 @@ class PagesController extends AppController
             return $this->response->withType('application/json')->withStringBody((string)json_encode($payload));
         }
 
+        $session = $this->getRequest()->getSession();
+        $recentStays = $session->read('recently_viewed_stays') ?? [];
+        if (!is_array($recentStays)) $recentStays = [];
+
         $this->set(compact(
             'properties', 'queryParams', 'totalCount', 'searchErrors',
             'destination', 'currentAmenities', 'minPrice', 'maxPrice',
-            'selectedRating', 'freeCancel', 'sortBy', 'mapboxToken', 'mapboxStyle'
+            'selectedRating', 'freeCancel', 'sortBy', 'mapboxToken', 'mapboxStyle',
+            'recentStays'
         ));
         return $this->render('/Pages/index');
     }

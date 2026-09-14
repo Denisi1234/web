@@ -25,7 +25,51 @@ $this->assign('title', 'Your favourites - FastNet Stays');
                     <div class="trivago-lists-counter" id="listsCounter">2/20 lists</div>
                 </div>
 
-                <!-- Favourite Lists Container -->
+                <div id="savedStaysSection" class="mb-4">
+                <?php if (!empty($wishlists)): ?>
+                    <h3 style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:12px;font-family:'Google Sans',sans-serif;">Saved stays</h3>
+                    <div class="row g-3" id="savedStaysGrid">
+                        <?php foreach ($wishlists as $w): 
+                            $img = $w['image_url'] ?? $w['primary_image_url'] ?? 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop';
+                            $propTitle = \App\Utility\TextFormatter::formatTitle((string)($w['name'] ?? 'Stay'));
+                            $propCity = \App\Utility\TextFormatter::formatTitle((string)($w['city'] ?? 'Tanzania'));
+                            $priceVal = (float)($w['price_per_night'] ?? ($w['price'] ?? 0));
+                            $wId = (int)($w['id'] ?? 0);
+                        ?>
+                        <div class="col-md-6" id="wishlist_card_<?= $wId ?>">
+                            <div class="card h-100 shadow-sm border-0" style="border:1px solid #e8eaed !important;border-radius:12px;overflow:hidden;background:#fff;">
+                                <div style="position:relative;height:160px;background:#e5e7eb;overflow:hidden;">
+                                    <img src="<?= h($img) ?>" style="height:100%;object-fit:cover;width:100%;display:block;" alt="<?= h($propTitle) ?>" onerror="this.src='https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop'">
+                                    <span style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.92);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.15);"><i class="fa-solid fa-heart text-danger" style="font-size:14px;"></i></span>
+                                </div>
+                                <div class="p-3 d-flex flex-column justify-content-between" style="flex:1;">
+                                    <div>
+                                        <div style="font-weight:700;color:#202124;font-size:15px;font-family:'Google Sans',sans-serif;"><?= h($propTitle) ?></div>
+                                        <div style="font-size:12.5px;color:#5f6368;margin-top:2px;"><i class="fa-solid fa-location-dot" style="color:#1a73e8;font-size:11px;"></i> <?= h($propCity) ?></div>
+                                        <?php if ($priceVal > 0): ?>
+                                        <div style="font-size:13px;font-weight:700;color:#202124;margin-top:6px;">TSh <?= number_format($priceVal) ?> <span style="font-size:11px;font-weight:400;color:#5f6368;">/ night</span></div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2 mt-3 pt-2 border-top">
+                                        <a href="<?= $this->Url->build('/hotel-detail/' . $wId) ?>" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold" style="font-size:12px;">View Stay</a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold" style="font-size:12px;" onclick="removeWishlist(<?= $wId ?>)"><i class="fa-solid fa-trash-can me-1"></i>Remove</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="alert alert-info py-2" style="font-size:13px;border-radius:8px;">No favourites yet — tap ♡ on any stay to save.</div>
+                <?php endif; ?>
+                </div>
+
+                <!-- Loading indicator — visible during silent fetch, not silent waiting -->
+                <div id="favLoading" style="display:none;align-items:center;gap:10px;padding:14px 0;color:#64748b;font-size:13px">
+                    <span class="spinner-border spinner-border-sm" style="width:16px;height:16px;border-width:2px;color:#007fad"></span>
+                    <span>Loading your favourites...</span>
+                </div>
+                <!-- Favourite Lists Container (local custom lists) -->
                 <div class="fav-lists-grid" id="favouriteListsContainer">
                     <!-- Cards will be populated dynamically via JavaScript -->
                 </div>

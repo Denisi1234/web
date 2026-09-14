@@ -40,11 +40,11 @@ $this->assign('description', 'Sign in to FastNet Stays to manage bookings, favou
 									<div id="login-alert-box"></div>
 									<div class="form py-2">
 										<div class="form-floating mb-3">
-											<input type="email" id="login-email" class="form-control" placeholder="name@example.com" required>
+											<input type="email" id="login-email" class="form-control" placeholder=" " required>
 											<label>Email Address</label>
 										</div>
 										<div class="form-floating mb-3 position-relative">
-											<input type="password" id="login-password" class="form-control pe-5" placeholder="Password" required>
+											<input type="password" id="login-password" class="form-control pe-5" placeholder=" " required>
 											<label>Password</label>
 											<span class="position-absolute top-50 end-0 translate-middle-y me-3 cursor-pointer text-slate-500 hover:text-slate-800" onclick="togglePasswordVisibility('login-password', this)">
 												<i class="fa-solid fa-eye fs-6"></i>
@@ -172,4 +172,4 @@ $this->assign('description', 'Sign in to FastNet Stays to manage bookings, favou
 	</div>
 </section>
 </main>
-<?= $this->element('footer', ['skin' => 'skin-light-footer']) ?>
+<div class="d-none d-md-block"><?= $this->element('footer', ['skin' => 'skin-light-footer']) ?></div>

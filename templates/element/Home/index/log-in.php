@@ -11,11 +11,11 @@
                     <div id="modal-login-alert"></div>
                     <form id="modal-login-form">
                         <div class="form-floating mb-3">
-                            <input type="email" id="modal-login-email" class="form-control" placeholder="name@example.com" required>
+                            <input type="email" id="modal-login-email" class="form-control" placeholder=" " required>
                             <label>Email Address</label>
                         </div>
                         <div class="form-floating mb-3 position-relative">
-                            <input type="password" id="modal-login-password" class="form-control pe-5" placeholder="Password" required>
+                            <input type="password" id="modal-login-password" class="form-control pe-5" placeholder=" " required>
                             <label>Password</label>
                             <span class="position-absolute top-50 end-0 translate-middle-y me-3 cursor-pointer text-slate-500 hover:text-slate-800" style="z-index: 10;" onclick="togglePasswordVisibility('modal-login-password', this)">
                                 <i class="fa-solid fa-eye fs-6"></i>

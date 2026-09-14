@@ -5,19 +5,20 @@
  */
 $propId = (int)($queryParams['property_id'] ?? ($property['id'] ?? 0));
 $roomId = (int)($queryParams['room_id'] ?? ($room['id'] ?? 51));
-$propTitle = $property['name'] ?? 'Divi Village Golf and Beach Resort';
-$propCity = $property['city'] ?? 'Dar es Salaam';
-$propArea = $property['area'] ?? 'Msasani';
-$propCountry = $property['country'] ?? 'Tanzania';
+$propTitle = \App\Utility\TextFormatter::formatTitle((string)($property['name'] ?? 'Hotel'));
+$propCity = \App\Utility\TextFormatter::formatTitle((string)($property['city'] ?? 'Dar es Salaam'));
+$propArea = \App\Utility\TextFormatter::formatTitle((string)($property['area'] ?? $propCity));
+$propCountry = \App\Utility\TextFormatter::formatTitle((string)($property['country'] ?? 'Tanzania'));
 $propStars = !empty($property['star_rating']) ? max(1, min(5, (int)$property['star_rating'])) : 4;
-$propAddressShort = $property['address'] ?? 'Msasani Peninsula, Dar es Salaam, Tanzania';
+$rawAddr = trim((string)($property['address'] ?? ''));
+$propAddressShort = $rawAddr !== '' ? \App\Utility\TextFormatter::formatTitle($rawAddr) : \App\Utility\TextFormatter::formatLocation($propArea, $propCity);
 $propRating = $property['rating'] ?? 8.4;
 $propReviews = $property['review_count'] ?? $property['reviews_count'] ?? 737;
 
-$roomTitle = $room['name'] ?? ($room['room_number'] ?? 'Golf Villa One Bedroom');
-$roomSize = $room['size'] ?? $room['area'] ?? '78 m²';
+$roomTitle = \App\Utility\TextFormatter::formatTitle((string)($room['name'] ?? ($room['room_number'] ?? 'Standard Room')));
+$roomSize = $room['size'] ?? $room['area'] ?? $room['room_size'] ?? '78 m²';
 $roomMax = $room['max_occupancy'] ?? $room['max_adults'] ?? 2;
-$bed = $room['bed_configuration'] ?? '1 king bed and 1 sofa bed';
+$bed = \App\Utility\TextFormatter::formatTitle((string)($room['bed_configuration'] ?? '1 King Bed'));
 $adults = max(1, (int)($queryParams['adults'] ?? ($room['max_adults'] ?? 2)));
 $children = (int)($queryParams['children'] ?? ($room['max_children'] ?? 0));
 $guests = $adults + $children;
@@ -70,12 +71,14 @@ if (empty($prefillFirstName) && !empty($userProfile['name'])) {
 $prefillEmail = $userProfile['email'] ?? '';
 $prefillPhone = $userProfile['phone'] ?? '';
 $prefillFullName = trim($prefillFirstName . ' ' . $prefillLastName);
+$hasPrefill = !empty($prefillFirstName) && !empty($prefillEmail) && !empty($prefillPhone);
+$leadEditDisplay = $hasPrefill ? 'none' : 'block';
 
 $this->assign('title', 'Customer information | fastnetstays.com');
 ?>
 <style>
 /* Agoda Checkout — exact to screenshot */
-.agoda-checkout-header{background:#fff;border-bottom:1px solid #e8eaed;min-height:64px;display:flex;align-items:center;position:sticky;top:0;z-index:100;margin-top:16px;padding:14px 0}
+.agoda-checkout-header{background:#fff;border-bottom:1px solid #e8eaed;min-height:64px;display:flex;align-items:center;position:sticky;top:0;z-index:100;padding:14px 0}
 .agoda-checkout-header-inner{max-width:1180px;margin:0 auto;padding:0 16px;width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px}
 .agoda-logo{font-size:22px;font-weight:800;letter-spacing:-0.02em;display:flex;align-items:center;gap:4px;text-decoration:none!important}
 .agoda-logo .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
@@ -83,26 +86,26 @@ $this->assign('title', 'Customer information | fastnetstays.com');
 .agoda-steps{display:flex;align-items:center;gap:0;flex:1;max-width:560px;margin:0 24px}
 .agoda-step{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;white-space:nowrap}
 .agoda-step .num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:1px solid #dadce0;background:#fff;color:#5f6368}
-.agoda-step.active .num{background:#1a73e8;color:#fff;border-color:#1a73e8}
-.agoda-step.done .num{background:#1a73e8;color:#fff;border-color:#1a73e8}
+.agoda-step.active .num{background:#2563EB;color:#fff;border-color:#2563EB}
+.agoda-step.done .num{background:#2563EB;color:#fff;border-color:#2563EB}
 .agoda-step span{color:#5f6368}
-.agoda-step.active span{color:#1a73e8}
+.agoda-step.active span{color:#2563EB}
 .agoda-step-line{flex:1;height:2px;background:#e8eaed;margin:0 8px;border-radius:1px}
-.agoda-step-line.filled{background:#1a73e8}
+.agoda-step-line.filled{background:#2563EB}
 .agoda-user{font-size:13px;color:#202124;display:flex;align-items:center;gap:8px;white-space:nowrap}
 .agoda-user .avatar{width:32px;height:32px;border-radius:50%;background:#7c6af0;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
 .agoda-timer-bar{background:#fef3e8;border-bottom:1px solid #fde8cc;padding:10px 16px;text-align:center;font-size:13px;color:#202124;display:flex;align-items:center;justify-content:center;gap:8px}
 .agoda-timer-bar b{color:#e53935;font-weight:700;display:flex;align-items:center;gap:6px}
 .agoda-checkout-wrap{max-width:1180px;margin:14px auto;padding:0 16px;display:grid;grid-template-columns:1fr 360px;gap:16px;align-items:start}
-.agoda-card{background:#fff;border:1px solid #e0e6ef;border-radius:10px;padding:16px}
+.agoda-card{background:#fff;border:1px solid #e8eaed;border-radius:16px;padding:16px;box-shadow:0 6px 16px rgba(0,0,0,0.05)}
 .agoda-card-title{font-size:16px;font-weight:800;color:#202124;margin:0 0 10px}
 .agoda-welcome{display:flex;align-items:center;gap:12px;font-size:13px;color:#202124}
 .agoda-welcome .icon{width:44px;height:32px;background:#3576f6;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:2px}
-.agoda-lead-card{background:#eef3ff;border-radius:8px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:8px 16px}
+.agoda-lead-card{background:#F8FAFC;border:1px solid #e8eaed;border-radius:14px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:8px 16px}
 .agoda-lead-name{font-size:14px;font-weight:700;color:#202124;display:flex;align-items:center;gap:6px}
 .agoda-lead-meta{font-size:13px;color:#202124}
 .agoda-edit{color:#3264ff;font-size:13px;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:4px;align-self:end}
-.agoda-pref-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;background:#eef3ff;border-radius:8px;padding:14px 16px}
+.agoda-pref-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;background:#F8FAFC;border:1px solid #e8eaed;border-radius:14px;padding:14px 16px}
 .agoda-pref-col b{font-size:13px;color:#202124;display:block;margin-bottom:8px}
 .agoda-radio{display:flex;align-items:center;gap:8px;font-size:13px;color:#202124;margin:8px 0}
 .agoda-radio input{width:18px;height:18px;accent-color:#1a73e8}
@@ -112,10 +115,10 @@ $this->assign('title', 'Customer information | fastnetstays.com');
 .agoda-benefit .free-badge{background:#0f7a2b;color:#fff;font-size:11px;font-weight:800;padding:4px 8px;border-radius:4px}
 .agoda-quote{font-size:13px;color:#5f6368;background:#f8f9fa;border-radius:8px;padding:10px 12px;margin-top:10px}
 .agoda-urgent{font-size:12px;color:#c0392b;text-align:center;margin-top:8px}
-.agoda-next-btn{background:#1a73e8;color:#fff;border:none;border-radius:24px;padding:12px 24px;font-size:14px;font-weight:800;width:100%;cursor:pointer;letter-spacing:0.02em}
-.agoda-next-btn:hover{background:#1557b0}
+.agoda-next-btn{background:#2563EB;color:#fff;border:none;border-radius:30px;padding:14px 24px;font-size:15px;font-weight:800;width:100%;cursor:pointer;letter-spacing:0.02em;box-shadow:0 4px 12px rgba(37,99,235,0.18);transition:background 150ms ease}
+.agoda-next-btn:hover{background:#1d4ed8}
 .agoda-not-charged{font-size:12px;color:#0f7a2b;text-align:center;font-weight:600;margin-top:6px}
-.agoda-side-card{background:#fff;border:1px solid #e0e6ef;border-radius:10px;overflow:hidden}
+.agoda-side-card{background:#fff;border:1px solid #e8eaed;border-radius:16px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.04)}
 .agoda-side-card-inner{padding:14px}
 .agoda-dates{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:#202124;padding:12px 14px;border-bottom:1px solid #f1f3f4}
 .agoda-dates b{font-size:14px;color:#202124}
@@ -125,7 +128,7 @@ $this->assign('title', 'Customer information | fastnetstays.com');
 .agoda-stars{color:#e67e22;font-size:11px}
 .agoda-rating{font-size:13px;color:#202124}
 .agoda-rating b{color:#0d4a7a}
-.agoda-room-box{background:#eef3ff;border-radius:10px;padding:12px;display:flex;gap:12px}
+.agoda-room-box{background:#F8FAFC;border:1px solid #e8eaed;border-radius:14px;padding:12px;display:flex;gap:12px}
 .agoda-room-thumb{width:72px;height:72px;border-radius:8px;object-fit:cover;flex:0 0 72px}
 .agoda-room-title{font-size:13px;font-weight:700;color:#202124}
 .agoda-room-meta{font-size:12px;color:#202124;line-height:1.6}
@@ -134,10 +137,10 @@ $this->assign('title', 'Customer information | fastnetstays.com');
 .agoda-green-banner{background:#e6f4ea;border:1px solid #c8e6c9;border-radius:8px;padding:10px 12px;font-size:12px;color:#202124;display:flex;gap:8px;align-items:center}
 .agoda-green-banner b{color:#137333}
 .agoda-pink-banner{background:#fdecea;border:1px solid #f5c6cb;border-radius:8px;padding:10px 12px;font-size:12px;color:#7d2e2e;display:flex;gap:8px;align-items:center}
-.agoda-input{width:100%;height:40px;border:1px solid #dadce0;border-radius:6px;padding:0 10px;font-size:13px}
-.agoda-input:focus{outline:none;border-color:#1a73e8;box-shadow:0 0 0 2px rgba(26,115,232,0.15)}
+.agoda-input{width:100%;height:44px;border:1px solid #dadce0;border-radius:12px;padding:0 12px;font-size:13px;transition:border-color 150ms ease,box-shadow 150ms ease}
+.agoda-input:focus{outline:none;border-color:#2563EB;box-shadow:0 0 0 2px rgba(37,99,235,0.15)}
 @media(max-width:992px){
-  .agoda-checkout-header{height:auto;padding:10px 0;margin-top:8px}
+  .agoda-checkout-header{height:auto;padding:10px 0}
   .agoda-checkout-header-inner{flex-wrap:wrap;gap:10px}
   .agoda-steps{order:3;max-width:none;width:100%;margin:0;justify-content:space-between}
   .agoda-checkout-wrap{grid-template-columns:1fr;gap:12px;padding:0 12px}
@@ -212,6 +215,20 @@ $this->assign('title', 'Customer information | fastnetstays.com');
 </div>
 <div class="agoda-timer-bar">This price is guaranteed for... <b><i class="fa-regular fa-clock"></i> <span id="agodaCountdown">00:18:35</span></b></div>
 
+<?php if (!empty($quoteError) && empty($quote['is_fallback'] ?? false) || !empty($quote['_fallback'] ?? false) && !empty($quoteError)): ?>
+  <div style="max-width:1180px;margin:14px auto 0;padding:0 16px">
+    <div style="background:#fff3cd;border:1px solid #ffe69c;color:#664d03;padding:10px 14px;border-radius:8px;font-size:13px;display:flex;gap:8px;align-items:center">
+      <i class="fa-solid fa-circle-info"></i>
+      <span>
+        <?php if (!empty($quote['_fallback'])): ?>
+          Booking quote generated locally. Live price will be confirmed on payment.
+        <?php else: ?>
+          <?= h($quoteError) ?>
+        <?php endif; ?>
+      </span>
+    </div>
+  </div>
+  <?php endif; ?>
 <div class="agoda-checkout-wrap">
   <!-- LEFT -->
   <div style="display:flex;flex-direction:column;gap:12px">
@@ -219,7 +236,7 @@ $this->assign('title', 'Customer information | fastnetstays.com');
       <div class="agoda-welcome"><span class="icon"><i class="fa-regular fa-user"></i></span> <span>Welcome, <?= h($prefillFirstName ?: 'Guest') ?> ! (Not <?= h($prefillFirstName ?: 'Guest') ?> ? <a href="#" class="agoda-link">Sign out</a>)</span></div>
     </div>
 
-    <form id="agodaCheckoutForm" action="<?= $this->Url->build('/bookingpage-03') ?>" method="GET" style="display:flex;flex-direction:column;gap:12px">
+    <form id="agodaCheckoutForm" action="<?= $this->Url->build('/bookingpage-03') ?>" method="GET" style="display:flex;flex-direction:column;gap:12px" novalidate>
       <input type="hidden" name="property_id" value="<?= h($propId) ?>">
       <input type="hidden" name="room_id" value="<?= h($roomId) ?>">
       <input type="hidden" name="checkIn" value="<?= h($checkIn) ?>">
@@ -228,27 +245,34 @@ $this->assign('title', 'Customer information | fastnetstays.com');
       <input type="hidden" name="children" value="<?= h($children) ?>">
       <input type="hidden" name="rooms" value="<?= h($rooms) ?>">
       <input type="hidden" name="quote_id" value="<?= h($quote['quote_id'] ?? '') ?>">
+      <!-- Preserve city/destination for fallback reconstruction -->
+      <input type="hidden" name="city" value="<?= h($queryParams['city'] ?? $queryParams['destination'] ?? '') ?>">
+      <input type="hidden" name="price" value="<?= h($queryParams['price'] ?? $pricePerNight) ?>">
 
       <div class="agoda-card">
-        <div class="agoda-card-title">Who's the lead guest?</div>
-        <div class="agoda-lead-card">
+        <div class="agoda-card-title">Who's the lead guest? <span style="color:#e53935;font-size:12px;font-weight:600">* required</span></div>
+        <div class="agoda-lead-card" id="leadSummaryCard" style="<?= $hasPrefill ? '' : 'opacity:0.6' ?>">
           <div>
-            <div class="agoda-lead-name"><i class="fa-solid fa-circle-user" style="color:#5f6368"></i> <?= h($prefillFullName) ?></div>
-            <div class="agoda-lead-meta" style="margin-top:6px"><?= h($prefillEmail) ?></div>
+            <div class="agoda-lead-name"><i class="fa-solid fa-circle-user" style="color:#5f6368"></i> <span id="leadDisplayName"><?= h($prefillFullName ?: 'Please enter your details below') ?></span></div>
+            <div class="agoda-lead-meta" id="leadDisplayEmail" style="margin-top:6px"><?= h($prefillEmail ?: 'Email required') ?></div>
           </div>
-          <div class="agoda-lead-meta">Tanzania <?= h($prefillPhone) ?></div>
-          <a href="javascript:void(0)" class="agoda-edit" onclick="toggleLeadEdit()"><i class="fa-regular fa-pen-to-square"></i> Edit</a>
+          <div class="agoda-lead-meta" id="leadDisplayPhone">Tanzania <?= h($prefillPhone ?: 'Phone required') ?></div>
+          <a href="javascript:void(0)" class="agoda-edit" onclick="toggleLeadEdit()"><i class="fa-regular fa-pen-to-square"></i> <?= $hasPrefill ? 'Edit' : 'Enter details' ?></a>
         </div>
-        <div id="leadEditFields" style="display:none;margin-top:14px">
+        <?php if (!$hasPrefill): ?>
+        <div style="background:#fef3e8;border:1px solid #fde8cc;border-radius:6px;padding:8px 10px;font-size:12px;color:#664d03;margin-top:10px;display:flex;gap:6px;align-items:center"><i class="fa-solid fa-triangle-exclamation"></i> Please fill in customer information below to continue.</div>
+        <?php endif; ?>
+        <div id="leadEditFields" style="display:<?= $leadEditDisplay ?>;margin-top:14px">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div><label style="font-size:12px;font-weight:600;color:#475569">First name</label><input class="agoda-input" name="first_name" value="<?= h($prefillFirstName) ?>"></div>
-            <div><label style="font-size:12px;font-weight:600;color:#475569">Last name</label><input class="agoda-input" name="last_name" value="<?= h($prefillLastName) ?>"></div>
+            <div><label style="font-size:12px;font-weight:600;color:#475569">First name <span style="color:#e53935">*</span></label><input class="agoda-input" id="inputFirstName" name="first_name" value="<?= h($prefillFirstName) ?>" required autocomplete="given-name" placeholder="e.g. John"><div class="field-error" data-for="first_name" style="font-size:11px;color:#c0392b;display:none;margin-top:4px">First name is required</div></div>
+            <div><label style="font-size:12px;font-weight:600;color:#475569">Last name <span style="color:#e53935">*</span></label><input class="agoda-input" id="inputLastName" name="last_name" value="<?= h($prefillLastName) ?>" required autocomplete="family-name" placeholder="e.g. Doe"><div class="field-error" data-for="last_name" style="font-size:11px;color:#c0392b;display:none;margin-top:4px">Last name is required</div></div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
-            <div><label style="font-size:12px;font-weight:600;color:#475569">Email</label><input class="agoda-input" type="email" name="email" value="<?= h($prefillEmail) ?>"></div>
-            <div><label style="font-size:12px;font-weight:600;color:#475569">Phone</label><input class="agoda-input" name="phone" value="<?= h($prefillPhone) ?>"></div>
+            <div><label style="font-size:12px;font-weight:600;color:#475569">Email <span style="color:#e53935">*</span></label><input class="agoda-input" id="inputEmail" type="email" name="email" value="<?= h($prefillEmail) ?>" required autocomplete="email" placeholder="you@example.com"><div class="field-error" data-for="email" style="font-size:11px;color:#c0392b;display:none;margin-top:4px">Valid email is required</div></div>
+            <div><label style="font-size:12px;font-weight:600;color:#475569">Phone <span style="color:#e53935">*</span></label><input class="agoda-input" id="inputPhone" name="phone" type="tel" value="<?= h($prefillPhone) ?>" required autocomplete="tel" placeholder="255 712 345 678" pattern="[\d\s\+\-]{7,20}"><div class="field-error" data-for="phone" style="font-size:11px;color:#c0392b;display:none;margin-top:4px">Phone is required</div></div>
           </div>
         </div>
+        <div id="customerFormError" style="display:none;background:#fdecea;border:1px solid #f5c6cb;color:#7d2e2e;padding:8px 10px;border-radius:6px;font-size:12px;margin-top:10px"></div>
       </div>
 
       <div class="agoda-card">
@@ -308,7 +332,7 @@ $this->assign('title', 'Customer information | fastnetstays.com');
     <div class="agoda-side-card">
       <div class="agoda-side-card-inner">
         <div class="agoda-hotel-row">
-          <img class="agoda-hotel-thumb" src="<?= h($img) ?>" alt="<?= h($propTitle) ?>">
+          <img class="agoda-hotel-thumb" src="<?= h($img) ?>" alt="<?= h($propTitle) ?>" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1566073771259-6a8506099945?w=200&h=200&fit=crop'">
           <div>
             <div class="agoda-hotel-title"><?= h($propTitle) ?></div>
             <div class="agoda-stars"><?= str_repeat('★', $propStars) ?></div>
@@ -324,7 +348,7 @@ $this->assign('title', 'Customer information | fastnetstays.com');
     <div class="agoda-side-card">
       <div class="agoda-side-card-inner">
         <div class="agoda-room-box">
-          <img class="agoda-room-thumb" src="<?= h($roomImg) ?>" alt="<?= h($roomTitle) ?>">
+          <img class="agoda-room-thumb" src="<?= h($roomImg) ?>" alt="<?= h($roomTitle) ?>" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=200&h=200&fit=crop'">
           <div>
             <div class="agoda-room-title">1 x <?= h($roomTitle) ?></div>
             <div class="agoda-room-meta">Size:<?= h($roomSize) ?><br>Max:<?= h($roomMax) ?> adults<br><?= h($bed) ?></div>
@@ -361,43 +385,102 @@ function tickAgoda(){
   el.textContent=h+':'+m+':'+sec;
   setTimeout(tickAgoda,1000);
 }
-tickAgoda();
 function toggleLeadEdit(){const e=document.getElementById('leadEditFields');e.style.display=(e.style.display==='none'||e.style.display==='')?'block':'none'}
 function toggleExtraPrefs(ev){ev.preventDefault();const e=document.getElementById('extraPrefs');e.style.display=e.style.display==='none'?'block':'none'}
-// Ensure NEXT button always navigates even if browser validation quirks
+function validateCustomerInfo(){
+  const getVal = (sel)=> document.querySelector(sel)?.value.trim() || '';
+  const fn=getVal('#inputFirstName'), ln=getVal('#inputLastName'), em=getVal('#inputEmail'), ph=getVal('#inputPhone');
+  let valid=true;
+  const errors=[];
+  const setErr = (key, show)=>{
+    const el=document.querySelector('.field-error[data-for="'+key+'"]');
+    if(el) el.style.display=show?'block':'none';
+    const inp=document.querySelector('[name="'+key+'"]');
+    if(inp) inp.style.borderColor=show?'#c0392b':'#dadce0';
+  };
+  // First name
+  if(!fn){ setErr('first_name', true); valid=false; errors.push('First name is required'); } else setErr('first_name', false);
+  if(!ln){ setErr('last_name', true); valid=false; errors.push('Last name is required'); } else setErr('last_name', false);
+  const emailOk=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em);
+  if(!em || !emailOk){ setErr('email', true); valid=false; if(!em) errors.push('Email is required'); else errors.push('Valid email is required'); } else setErr('email', false);
+  if(!ph){ setErr('phone', true); valid=false; errors.push('Phone is required'); } else setErr('phone', false);
+  const errBox=document.getElementById('customerFormError');
+  if(!valid){
+    if(errBox){ errBox.style.display='block'; errBox.textContent=errors.join(' • '); }
+    // Ensure edit section visible so user can fix
+    const edit=document.getElementById('leadEditFields');
+    if(edit && (edit.style.display==='none'||edit.style.display==='')) edit.style.display='block';
+  } else {
+    if(errBox){ errBox.style.display='none'; }
+  }
+  return valid;
+}
+function updateLeadPreview(){
+  const fn=document.getElementById('inputFirstName')?.value.trim()||'';
+  const ln=document.getElementById('inputLastName')?.value.trim()||'';
+  const em=document.getElementById('inputEmail')?.value.trim()||'';
+  const ph=document.getElementById('inputPhone')?.value.trim()||'';
+  const nameEl=document.getElementById('leadDisplayName');
+  const emailEl=document.getElementById('leadDisplayEmail');
+  const phoneEl=document.getElementById('leadDisplayPhone');
+  if(nameEl) nameEl.textContent=(fn+' '+ln).trim() || 'Please enter your details below';
+  if(emailEl) emailEl.textContent=em || 'Email required';
+  if(phoneEl) phoneEl.textContent= ph ? ('Tanzania '+ph) : 'Phone required';
+}
 document.addEventListener('DOMContentLoaded',()=>{
   const form=document.getElementById('agodaCheckoutForm');
   if(form){
-    form.addEventListener('submit', (ev)=>{
-      // Allow submit — hidden fields are now optional, no required block
-      // If custom validation needed, handle here
+    // Live preview update
+    ['#inputFirstName','#inputLastName','#inputEmail','#inputPhone'].forEach(sel=>{
+      const el=document.querySelector(sel);
+      if(el) el.addEventListener('input', updateLeadPreview);
     });
-    // Fallback click handler for NEXT button (bypass any residual required issues)
+    updateLeadPreview();
+    form.addEventListener('submit', (ev)=>{
+      if(!validateCustomerInfo()){
+        ev.preventDefault();
+        ev.stopPropagation();
+        // scroll to error
+        document.getElementById('leadEditFields')?.scrollIntoView({behavior:'smooth', block:'center'});
+        return false;
+      }
+      // Disable button to prevent double click
+      const btn=form.querySelector('.agoda-next-btn');
+      if(btn){ btn.disabled=true; btn.textContent='Processing…'; btn.style.opacity='0.7'; }
+    });
     const nextBtn=form.querySelector('.agoda-next-btn');
     if(nextBtn){
+      // Remove old fallback that forced navigation on invalid; we now block properly
       nextBtn.addEventListener('click', (e)=>{
-        // Let native submit happen first; if prevented, force navigation
-        setTimeout(()=>{
-          if(form.checkValidity && !form.checkValidity()){
-            // If still invalid, force navigation with current params
-            const fd=new FormData(form);
-            const qs=new URLSearchParams(fd).toString();
-            window.location.href=form.action+'?'+qs;
-          }
-        }, 100);
+        // Trigger form submit validation; if invalid, prevent
+        // No auto-force navigation — handled by submit handler
       });
     }
+  }
+  // Restore visual edit open if any field invalid on load
+  const anyEmpty = !document.getElementById('inputFirstName')?.value.trim() || !document.getElementById('inputEmail')?.value.trim();
+  if(anyEmpty){
+    const edit=document.getElementById('leadEditFields');
+    if(edit) edit.style.display='block';
   }
 });
 document.addEventListener('DOMContentLoaded',()=>{
   try{
     const u=JSON.parse(localStorage.getItem('user')||localStorage.getItem('fastnet_user')||'null');
     if(u){
+      let changed=false;
       if(u.name && !document.querySelector('[name=first_name]')?.value){
         const parts=u.name.split(' ');
-        const fn=document.querySelector('[name=first_name]'); if(fn) fn.value=parts[0]||'';
-        const ln=document.querySelector('[name=last_name]'); if(ln) ln.value=parts.slice(1).join(' ')||'';
+        const fn=document.querySelector('[name=first_name]'); if(fn){ fn.value=parts[0]||''; changed=true; }
+        const ln=document.querySelector('[name=last_name]'); if(ln){ ln.value=parts.slice(1).join(' ')||''; changed=true; }
       }
+      if(u.email && !document.querySelector('[name=email]')?.value){
+        const e=document.querySelector('[name=email]'); if(e){ e.value=u.email; changed=true; }
+      }
+      if(u.phone && !document.querySelector('[name=phone]')?.value){
+        const p=document.querySelector('[name=phone]'); if(p){ p.value=u.phone; changed=true; }
+      }
+      if(changed) updateLeadPreview();
     }
   }catch(e){}
 });

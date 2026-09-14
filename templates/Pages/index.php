@@ -51,13 +51,6 @@ echo $this->Html->scriptBlock(json_encode($hotelListLd, JSON_UNESCAPED_SLASHES|J
 $this->Html->meta(['name'=>'format-detection','content'=>'telephone=no'], null, ['block'=>true]);
 ?>
 
-<!-- Mobile breadcrumb before header (requested) -->
-<nav aria-label="Breadcrumb" class="d-lg-none container-fluid px-3" style="max-width:100%;margin:0 auto;background:#f8f9fa;padding:8px 16px 6px;padding-left:calc(16px + env(safe-area-inset-left,0px));font-size:11px;line-height:1.2;border-bottom:1px solid #e8eaed;" itemscope itemtype="https://schema.org/BreadcrumbList">
-  <ol class="breadcrumb mb-0 py-0" style="background:transparent;font-size:11px;line-height:1;padding:0;--bs-breadcrumb-divider:'›';" itemscope itemtype="https://schema.org/BreadcrumbList">
-    <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="/" itemprop="item" style="color:#5f6368;text-decoration:none;"><span itemprop="name">Home</span></a><meta itemprop="position" content="1"></li>
-    <li class="breadcrumb-item active" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><span itemprop="name"><?= h($queryParams['city'] ?? $queryParams['destination'] ?? 'Tanzania') ?> Hotels</span><meta itemprop="position" content="2"></li>
-  </ol>
-</nav>
 <!-- ── Retained Header (do not modify) ── -->
 <?= $this->element('navbar') ?>
 
@@ -83,15 +76,47 @@ $homeUrl = $buildTabUrl(['property_type'=>'']);
 $hotelsUrl = $buildTabUrl(['property_type'=>'']);
 $lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
 ?>
-<div class="gh-m-tabs" role="tablist" aria-label="Travel types">
-  <a href="<?= h($apartmentUrl) ?>" role="tab" class="<?= $isApartment ? 'active' : '' ?>" <?= $isApartment ? 'aria-selected="true"' : '' ?>>Apartment</a>
-  <a href="<?= h($homeUrl) ?>" role="tab" class="<?= $isHome ? 'active' : '' ?>" <?= $isHome ? 'aria-selected="true"' : '' ?>>Home</a>
-  <a href="<?= h($hotelsUrl) ?>" role="tab" class="<?= $isHotels ? 'active' : '' ?>" <?= $isHotels ? 'aria-selected="true"' : '' ?>>Hotels</a>
-  <a href="<?= h($lodgeUrl) ?>" role="tab" class="<?= $isLodge ? 'active' : '' ?>" <?= $isLodge ? 'aria-selected="true"' : '' ?>>Lodge</a>
+<!-- Mobile stack: header → breadcrumb (Home > Dar es Salaam Hotels) → tabs. Single wrapper guarantees visual order. -->
+<div id="gh_mobile_stack">
+  <nav id="gh_mobile_breadcrumb" aria-label="Breadcrumb" itemscope itemtype="https://schema.org/BreadcrumbList">
+    <ol class="breadcrumb mb-0 py-0" itemscope itemtype="https://schema.org/BreadcrumbList">
+      <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="/" itemprop="item"><span itemprop="name">Home</span></a><meta itemprop="position" content="1"></li>
+      <li class="breadcrumb-item active" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><span itemprop="name"><?= h($queryParams['city'] ?? $queryParams['destination'] ?? 'Dar es Salaam') ?> Hotels</span><meta itemprop="position" content="2"></li>
+    </ol>
+  </nav>
+  <div class="gh-m-tabs gh-m-tabs-in-stack" role="tablist" aria-label="Travel types">
+    <a href="<?= h($apartmentUrl) ?>" role="tab" class="<?= $isApartment ? 'active' : '' ?>" <?= $isApartment ? 'aria-selected="true"' : '' ?>>Apartment</a>
+    <a href="<?= h($homeUrl) ?>" role="tab" class="<?= $isHome ? 'active' : '' ?>" <?= $isHome ? 'aria-selected="true"' : '' ?>>Home</a>
+    <a href="<?= h($hotelsUrl) ?>" role="tab" class="<?= $isHotels ? 'active' : '' ?>" <?= $isHotels ? 'aria-selected="true"' : '' ?>>Hotels</a>
+    <a href="<?= h($lodgeUrl) ?>" role="tab" class="<?= $isLodge ? 'active' : '' ?>" <?= $isLodge ? 'aria-selected="true"' : '' ?>>Lodge</a>
+  </div>
 </div>
+<style>
+#gh_mobile_stack{display:none}
+#gh_mobile_breadcrumb{background:#f8f9fa;border-bottom:1px solid #e8eaed;padding:8px 16px 6px;padding-left:calc(16px + env(safe-area-inset-left,0px));font-size:11px;line-height:1.2}
+#gh_mobile_breadcrumb .breadcrumb{background:transparent;font-size:11px;line-height:1;padding:0;--bs-breadcrumb-divider:'›';margin:0;flex-wrap:nowrap;white-space:nowrap;overflow:hidden}
+#gh_mobile_breadcrumb .breadcrumb-item a{color:#5f6368;text-decoration:none}
+#gh_mobile_breadcrumb .breadcrumb-item.active{color:#5f6368;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:991px){
+  /* Single static stack: header → breadcrumb → tabs scroll away together; only filter chips stay sticky */
+  #gh_mobile_stack{display:block !important;position:static !important;top:auto !important;z-index:auto !important}
+  #gh_mobile_stack #gh_mobile_breadcrumb{display:block !important;position:static !important;top:auto !important;z-index:auto !important}
+  #gh_mobile_stack .gh-m-tabs{display:flex !important;position:static !important;top:auto !important;z-index:auto !important}
+  #gh_desktop_breadcrumb{display:none !important}
+  /* Legacy theme (style.css) puts 80px padding on every <section> — reset for the split layout */
+  .gh-split-container section.gh-left-fixed{padding-top:0 !important;padding-bottom:0 !important}
+  .gh-split-container section.gh-left-scroll{padding-top:0 !important}
+}
+@media(min-width:992px){
+  #gh_mobile_stack{display:none !important}
+  /* Desktop: same legacy-theme reset as mobile — prevents style.css 80px section gap leaking into split layout */
+  .gh-split-container section.gh-left-fixed{padding-top:0 !important;padding-bottom:0 !important}
+  .gh-split-container section.gh-left-scroll{padding-top:0 !important}
+}
+</style>
 <!-- ── Split styles moved to google-travel-home.css ── -->
-<!-- Breadcrumb (ultra-compact) desktop only — mobile uses top duplicate before header -->
-<nav aria-label="Breadcrumb" class="d-none d-lg-block container-fluid px-3 px-lg-4" style="max-width:100%;margin:0 auto;background:#f8f9fa;padding-top:4px;padding-bottom:4px;">
+<!-- Breadcrumb (ultra-compact) desktop only — mobile uses #gh_mobile_breadcrumb AFTER header, BEFORE tabs -->
+<nav id="gh_desktop_breadcrumb" aria-label="Breadcrumb" aria-hidden="true" class="d-none d-lg-block container-fluid px-3 px-lg-4" style="max-width:100%;margin:0 auto;background:#f8f9fa;padding-top:4px;padding-bottom:4px;">
   <ol class="breadcrumb mb-0 py-0" style="background:transparent;font-size:11px;line-height:1;padding:0;--bs-breadcrumb-divider:'›';" itemscope itemtype="https://schema.org/BreadcrumbList">
     <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="/" itemprop="item" style="color:#5f6368;text-decoration:none;"><span itemprop="name">Home</span></a><meta itemprop="position" content="1"></li>
     <li class="breadcrumb-item active" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><span itemprop="name"><?= h($queryParams['city'] ?? $queryParams['destination'] ?? 'Tanzania') ?> Hotels</span><meta itemprop="position" content="2"></li>
@@ -99,8 +124,10 @@ $lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
 </nav>
 <!-- ── Split Screen: HALF — LEFT (search+chips+list scroll) + RIGHT (map full-height from header) ── -->
 <main id="main-content" class="gh-split-container" style="background:#f8f9fa; min-height:85vh; margin-top:0;" role="main" aria-label="Hotel search results">
-    <div class="container-fluid px-3 px-lg-4" style="max-width:100%; margin:0 auto; height:100%; padding-top:0;">
-        <div class="row g-2 g-lg-3 position-relative" style="height:100%; margin-top:0; padding-top:0;">
+    <!-- 4px gutters — close to zero as requested -->
+    <div class="container-fluid px-0" style="max-width:100%; margin:0 auto; height:100%; padding-top:0; padding-left:4px !important; padding-right:4px !important;">
+        <!-- 4px close to zero — g-0 + explicit gutter to avoid Bootstrap 16px -->
+        <div class="row g-0 position-relative" style="height:100%; margin-top:0; padding-top:0; --bs-gutter-x:4px; --bs-gutter-y:4px;">
 
             <!-- ══ LEFT PANE: HALF screen — search+chips fixed + list scrolls ══ -->
             <div class="col-xl-6 col-lg-6 col-md-12 pe-lg-1" id="gh_list_col">
@@ -109,13 +136,14 @@ $lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
                     <?= $this->element('Home/gh-search-bar') ?>
                     <?= $this->element('Home/gh-filter-chips') ?>
                 </section>
-                <section class="gh-left-scroll pt-1 pb-0 pe-1" aria-label="Stays list" aria-live="polite" aria-busy="false" id="gh_results_section">
+                <!-- Removed Bootstrap pt-1 pb-0 pe-1: gh-left-scroll CSS fully manages its own padding -->
+                <section class="gh-left-scroll" aria-label="Stays list" aria-live="polite" aria-busy="false" id="gh_results_section">
 
-                    <!-- Search warnings / notices (hardened) -->
+                    <!-- Search warnings / notices (hardened) — auto-dismiss to avoid blocking results -->
                     <?php if (!empty($searchErrors)): ?>
-                        <div class="alert alert-warning d-flex align-items-start gap-2 mb-3 rounded-3" role="alert" style="font-size:13.5px;">
+                        <div class="alert alert-warning d-flex align-items-start gap-2 mb-3 rounded-3" role="alert" style="font-size:13.5px;position:relative;" id="fns_search_alert">
                             <i class="fa-solid fa-circle-info mt-1 flex-shrink-0"></i>
-                            <div>
+                            <div style="flex:1;">
                                 <strong>Search updated</strong>
                                 <ul class="mb-0 ps-3 mt-1">
                                     <?php foreach ($searchErrors as $err): ?>
@@ -123,7 +151,9 @@ $lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
                                     <?php endforeach; ?>
                                 </ul>
                             </div>
+                            <button type="button" class="btn-close" style="font-size:11px;flex-shrink:0;" aria-label="Dismiss" onclick="this.closest('#fns_search_alert').style.display='none'"></button>
                         </div>
+                        <script>try{setTimeout(function(){var el=document.getElementById('fns_search_alert'); if(el) el.style.display='none';}, 6000);}catch(e){}</script>
                     <?php endif; ?>
 
                     <!-- Results count header: "near Mikocheni, Dar es Salaam · 118 results" + info icon — EXACT screenshot -->
@@ -197,13 +227,13 @@ $lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
 </main>
 
 <!-- Mobile Floating Map / List Toggle — removed per request -->
-<!-- Mobile bottom sheet peek — shows list over map -->
-<div class="gh-mobile-sheet d-lg-none" id="gh_mobile_sheet" aria-hidden="true">
+<!-- Mobile bottom sheet — hidden until a map marker is tapped (populated by gh-home-map.js) -->
+<div class="gh-mobile-sheet d-lg-none" id="gh_mobile_sheet" aria-hidden="true" style="display:none !important;">
     <div class="gh-sheet-handle" id="gh_sheet_handle"><span></span></div>
     <div class="gh-sheet-scroll" id="gh_sheet_scroll"></div>
 </div>
-<!-- Mobile horizontal carousel anchored bottom when viewing map -->
-<div class="gh-mobile-carousel d-lg-none" id="gh_mobile_carousel" aria-hidden="true"></div>
+<!-- Mobile horizontal carousel — hidden until map is active -->
+<div class="gh-mobile-carousel d-lg-none" id="gh_mobile_carousel" aria-hidden="true" style="display:none !important;"></div>
 
 <!-- Filters Modal -->
 <?= $this->element('Home/gh-filters-modal') ?>

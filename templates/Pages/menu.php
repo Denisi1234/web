@@ -7,18 +7,6 @@ $this->assign('title', 'Menu - FastNet Stays');
 <?= $this->Html->css('/assets/css/google-travel-layout.css') ?>
 <?= $this->Html->css('/assets/css/google-travel-home.css') ?>
 <?= $this->element('navbar') ?>
-<div class="gh-m-tabs" role="tablist" aria-label="Travel types">
-  <a href="/?explore=1" role="tab">Explore</a>
-  <a href="/?homes=1" role="tab">Homes</a>
-  <a href="/" role="tab" class="active" aria-selected="true">Hotels</a>
-  <a href="/?destination=Vacation" role="tab">Vacation rentals</a>
-</div>
-<nav aria-label="Breadcrumb" class="container-fluid px-2 px-lg-2" style="max-width:100%;margin:0 auto;background:#f8f9fa;">
-  <ol class="breadcrumb mb-0 py-1" style="background:transparent;font-size:12px;line-height:1.2;--bs-breadcrumb-divider:'›';" itemscope itemtype="https://schema.org/BreadcrumbList">
-    <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="/" itemprop="item" style="color:#5f6368;text-decoration:none;"><span itemprop="name">Home</span></a><meta itemprop="position" content="1"></li>
-    <li class="breadcrumb-item active" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><span itemprop="name">Menu</span><meta itemprop="position" content="2"></li>
-  </ol>
-</nav>
 <main id="main-content" style="background:#f8f9fa;min-height:85vh;" role="main">
     <script>
         // Only visible on mobile/tablet viewports; redirect desktop to /my-profile
@@ -40,14 +28,6 @@ $this->assign('title', 'Menu - FastNet Stays');
     }
     * {
         box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-    }
-    body {
-        background-color: #ffffff;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        color: #0f172a;
-        -webkit-tap-highlight-color: transparent;
     }
     .trivago-menu-page {
         max-width: 540px;
@@ -129,6 +109,7 @@ $this->assign('title', 'Menu - FastNet Stays');
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        flex-grow: 1;
     }
     .trivago-user-name {
         font-size: 16.5px;
@@ -179,7 +160,7 @@ $this->assign('title', 'Menu - FastNet Stays');
         background-color: #f8fafc;
         color: #007fad;
     }
-    .trivago-nav-item i {
+    .trivago-nav-item i.trivago-nav-icon {
         width: 24px;
         font-size: 20px;
         color: #1e293b;
@@ -187,16 +168,25 @@ $this->assign('title', 'Menu - FastNet Stays');
         flex-shrink: 0;
         transition: color 0.12s ease;
     }
-    .trivago-nav-item:hover i {
+    .trivago-nav-item:hover i.trivago-nav-icon {
         color: #007fad;
     }
     .trivago-nav-item span {
         flex-grow: 1;
         line-height: 1.3;
     }
+    .trivago-nav-chevron {
+        font-size: 14px;
+        color: #94a3b8;
+        flex-shrink: 0;
+        margin-left: auto;
+        transition: color 0.12s ease, transform 0.12s ease;
+    }
+    .trivago-nav-item:hover .trivago-nav-chevron {
+        color: #007fad;
+        transform: translateX(2px);
+    }
     </style>
-</head>
-<body>
 
 <div class="trivago-menu-page">
     <!-- Top Bar with Left Chevron & Menu Title -->
@@ -223,18 +213,21 @@ $this->assign('title', 'Menu - FastNet Stays');
             <div class="trivago-user-name"><?= htmlspecialchars($userName); ?></div>
             <div class="trivago-user-email"><?= htmlspecialchars($userEmail); ?></div>
         </div>
+        <i class="fa-solid fa-chevron-right trivago-nav-chevron"></i>
     </a>
 
     <!-- Account Section -->
     <div class="trivago-section-title">Account</div>
     <div class="trivago-nav-list">
         <a href="<?= $this->Url->build('/my-profile'); ?>" class="trivago-nav-item">
-            <i class="fa-regular fa-circle-user"></i>
+            <i class="fa-regular fa-circle-user trivago-nav-icon"></i>
             <span>Personal info</span>
+            <i class="fa-solid fa-chevron-right trivago-nav-chevron"></i>
         </a>
         <a href="<?= $this->Url->build('/security'); ?>" class="trivago-nav-item">
-            <i class="fa-solid fa-lock"></i>
+            <i class="fa-solid fa-lock trivago-nav-icon"></i>
             <span>Account security</span>
+            <i class="fa-solid fa-chevron-right trivago-nav-chevron"></i>
         </a>
     </div>
 
@@ -242,16 +235,19 @@ $this->assign('title', 'Menu - FastNet Stays');
     <div class="trivago-section-title">Trips</div>
     <div class="trivago-nav-list">
         <a href="<?= $this->Url->build('/my-wishlists'); ?>" class="trivago-nav-item">
-            <i class="fa-regular fa-heart"></i>
+            <i class="fa-regular fa-heart trivago-nav-icon"></i>
             <span>Favourites</span>
+            <i class="fa-solid fa-chevron-right trivago-nav-chevron"></i>
         </a>
         <a href="<?= $this->Url->build('/recently-viewed'); ?>" class="trivago-nav-item">
-            <i class="fa-solid fa-clock-rotate-left"></i>
+            <i class="fa-solid fa-clock-rotate-left trivago-nav-icon"></i>
             <span>Recently viewed</span>
+            <i class="fa-solid fa-chevron-right trivago-nav-chevron"></i>
         </a>
         <a href="<?= $this->Url->build('/my-booking'); ?>" class="trivago-nav-item">
-            <i class="fa-solid fa-suitcase"></i>
+            <i class="fa-solid fa-suitcase trivago-nav-icon"></i>
             <span>Bookings</span>
+            <i class="fa-solid fa-chevron-right trivago-nav-chevron"></i>
         </a>
     </div>
 
@@ -259,20 +255,24 @@ $this->assign('title', 'Menu - FastNet Stays');
     <div class="trivago-section-title">Preferences</div>
     <div class="trivago-nav-list">
         <a href="<?= $this->Url->build('/search-preferences'); ?>" class="trivago-nav-item">
-            <i class="fa-solid fa-magnifying-glass"></i>
+            <i class="fa-solid fa-magnifying-glass trivago-nav-icon"></i>
             <span>Search preferences</span>
+            <i class="fa-solid fa-chevron-right trivago-nav-chevron"></i>
         </a>
         <a href="<?= $this->Url->build('/notifications'); ?>" class="trivago-nav-item">
-            <i class="fa-regular fa-bell"></i>
+            <i class="fa-regular fa-bell trivago-nav-icon"></i>
             <span>Notifications</span>
+            <i class="fa-solid fa-chevron-right trivago-nav-chevron"></i>
         </a>
         <a href="<?= $this->Url->build('/language-and-currency'); ?>" class="trivago-nav-item">
-            <i class="fa-solid fa-globe"></i>
+            <i class="fa-solid fa-globe trivago-nav-icon"></i>
             <span>Language and currency</span>
+            <i class="fa-solid fa-chevron-right trivago-nav-chevron"></i>
         </a>
         <a href="<?= $this->Url->build('/help-center'); ?>" class="trivago-nav-item">
-            <i class="fa-regular fa-circle-question"></i>
+            <i class="fa-regular fa-circle-question trivago-nav-icon"></i>
             <span>Help and support</span>
+            <i class="fa-solid fa-chevron-right trivago-nav-chevron"></i>
         </a>
     </div>
 </div>

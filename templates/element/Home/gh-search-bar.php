@@ -139,9 +139,10 @@ $mSummary = h($destVal ?: 'All Tanzanian Destinations') . ' • ' . date('M j', 
 .fns-mobile-chip-chevron{width:32px;height:32px;border-radius:50%;background:#F9FAFB;color:var(--fns-text-sec);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;}
 .fns-sheet-backdrop{display:none;position:fixed;inset:0;background:rgba(17,24,39,.38);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);z-index:2999;opacity:0;transition:opacity .22s;}
 .fns-sheet-backdrop.open{display:block;opacity:1;}
-.fns-mobile-sheet{position:fixed;left:0;right:0;bottom:0;z-index:3000;background:#fff;display:flex;flex-direction:column;overscroll-behavior:contain;border-radius:20px 20px 0 0;box-shadow:0 -12px 40px rgba(0,0,0,.18);max-height:94vh;max-height:94dvh;transform:translateY(100%);transition:transform .34s cubic-bezier(.32,.72,0,1);pointer-events:none;visibility:hidden;}
-@media (min-width:768px) and (max-width:991px){.fns-mobile-sheet{left:50%;right:auto;width:min(640px,92vw);transform:translateX(-50%) translateY(100%);border-radius:20px;bottom:16px;max-height:86vh;max-height:86dvh} .fns-mobile-sheet.open{transform:translateX(-50%) translateY(0)} .fns-sheet-backdrop{backdrop-filter:blur(4px)}}
-@media (max-width:767px) and (orientation:landscape){.fns-mobile-sheet{max-height:92dvh} .fns-sheet-step{padding:10px 12px}}
+@media(max-width:991px){.fns-sheet-backdrop{display:none !important;} .fns-sheet-header{padding-top:calc(10px + env(safe-area-inset-top, 0px));}}
+.fns-mobile-sheet{position:fixed;inset:0;top:0;left:0;right:0;bottom:0;z-index:3000;background:#fff;display:flex;flex-direction:column;overscroll-behavior:contain;border-radius:0;box-shadow:none;width:100%;height:100vh;height:100dvh;max-height:none;transform:translateY(100%);transition:transform .34s cubic-bezier(.32,.72,0,1);pointer-events:none;visibility:hidden;}
+@media (min-width:768px) and (max-width:991px){.fns-mobile-sheet{left:0;right:0;width:100%;transform:translateY(100%);border-radius:0;bottom:0;max-height:none;height:100vh;height:100dvh} .fns-mobile-sheet.open{transform:translateY(0)} .fns-sheet-backdrop{display:none}}
+@media (max-width:767px) and (orientation:landscape){.fns-sheet-step{padding:10px 12px}}
 .fns-mobile-sheet.open{transform:translateY(0);pointer-events:auto;visibility:visible;}
 .fns-sheet-drag{width:100%;display:flex;justify-content:center;padding:10px 0 6px;cursor:grab;touch-action:none;flex-shrink:0;}
 .fns-sheet-drag span{width:38px;height:4px;background:#E5E7EB;border-radius:9999px;display:block;}
@@ -200,7 +201,8 @@ $mSummary = h($destVal ?: 'All Tanzanian Destinations') . ' • ' . date('M j', 
 .fns-sheet-footer .fns-btn-reset{min-height:48px;padding:0 18px;font-size:14px;}
 /* ── Responsive ── */
 @media(max-width:991px){
-  .fns-search-wrap{top:56px;padding:0;background:#fff;border-bottom:1px solid #E5E7EB;position:sticky;z-index:902;}
+  /* UX: search chip scrolls away on mobile; only filter chips stay sticky under fixed header */
+  .fns-search-wrap{position:static !important;top:auto !important;padding:0;background:#fff;border-bottom:1px solid #E5E7EB;z-index:auto;}
   .fns-search-wrap .container-fluid:first-child{padding-left:16px !important;padding-right:16px !important;}
   .fns-pill{display:none !important;}
   .fns-divider{display:none !important;}
@@ -210,8 +212,7 @@ $mSummary = h($destVal ?: 'All Tanzanian Destinations') . ' • ' . date('M j', 
   .fns-mobile-chip{display:flex !important;height:56px;padding:8px 16px;box-shadow:0 4px 20px rgba(0,0,0,.08);border-color:#E5E7EB;background:#fff;}
   .fns-mobile-chip.hidden{display:none !important;}
   .fns-pill-mobile-hidden{display:none !important;}
-  /* filter chips stay below chip */
-  #fns_chips_wrap{top:68px !important;}
+  /* chips wrap top is managed by gh-filter-chips.php — do NOT override here */
   /* reduce desktop-only spacing */
   .gh-left-fixed .fns-search-wrap{padding:0 !important;}
 }
@@ -252,6 +253,7 @@ $mSummary = h($destVal ?: 'All Tanzanian Destinations') . ' • ' . date('M j', 
           <!-- Destination popover -->
           <div class="fns-pop fns-pop-dest" id="fns_pop_dest" role="dialog" aria-label="Destination suggestions" onclick="event.stopPropagation()">
             <div id="fns_dd_popular"></div>
+            <div id="fns_dd_mbx"></div>
             <div id="fns_dd_recent" class="fns-recent"></div>
           </div>
         </div>
@@ -435,12 +437,12 @@ var _calOff=0, _picking='ci', _ddIdx=-1;
 
 // ── Popular Tanzanian Destinations (spec) ──
 var POPULAR=[
-  {id:'arusha', label:'Arusha', sub:'Gateway to Serengeti & Ngorongoro', icon:'fa-mountain-sun'},
-  {id:'zanzibar', label:'Zanzibar', sub:'Stone Town & Beaches', icon:'fa-umbrella-beach'},
-  {id:'dar', label:'Dar es Salaam', sub:'Commercial capital', icon:'fa-city'},
-  {id:'kilimanjaro', label:'Kilimanjaro', sub:'Mount Kilimanjaro region', icon:'fa-mountain'},
-  {id:'serengeti', label:'Serengeti', sub:'National Park', icon:'fa-paw'},
-  {id:'mwanza', label:'Mwanza', sub:'Lake Victoria', icon:'fa-water'}
+  {id:'arusha', label:'Arusha', sub:'Gateway to Serengeti & Ngorongoro', icon:'fa-mountain-sun', lat:-3.3869, lng:36.6829},
+  {id:'zanzibar', label:'Zanzibar', sub:'Stone Town & Beaches', icon:'fa-umbrella-beach', lat:-6.1659, lng:39.1996},
+  {id:'dar', label:'Dar es Salaam', sub:'Commercial capital', icon:'fa-city', lat:-6.7924, lng:39.2083},
+  {id:'kilimanjaro', label:'Kilimanjaro', sub:'Mount Kilimanjaro region', icon:'fa-mountain', lat:-3.0674, lng:37.3556},
+  {id:'serengeti', label:'Serengeti', sub:'National Park', icon:'fa-paw', lat:-2.3333, lng:34.8333},
+  {id:'mwanza', label:'Mwanza', sub:'Lake Victoria', icon:'fa-water', lat:-2.5167, lng:32.9}
 ];
 var RECENT_KEY='fns_recent_searches';
 function getRecent(){ try{return JSON.parse(localStorage.getItem(RECENT_KEY)||'[]');}catch(e){return [];} }
@@ -460,7 +462,7 @@ function renderDest(q){
   if(filtered.length===0) html+='<div style="padding:10px 16px;color:var(--fns-text-sec);font-size:13px;">No matches — try Arusha, Zanzibar, …</div>';
   filtered.forEach(function(p,i){
     var active=i===_ddIdx?' highlight':'';
-    html+='<div class="fns-dd-item'+active+'" data-value="'+p.label+'" data-idx="'+i+'" onclick="fnsPickDest(\''+p.label.replace(/'/g,"\\'")+'\')" onmouseenter="fnsHlDest('+i+')"><span class="fns-dd-icon"><i class="fa-solid '+p.icon+'"></i></span><span><div class="fns-dd-label">'+p.label+'</div><div class="fns-dd-sub">'+p.sub+'</div></span></div>';
+    html+='<div class="fns-dd-item'+active+'" data-value="'+p.label+'" data-idx="'+i+'" onclick="fnsPickDest(\''+p.label.replace(/'/g,"\\'")+'\','+p.lat+','+p.lng+')" onmouseenter="fnsHlDest('+i+')"><span class="fns-dd-icon"><i class="fa-solid '+p.icon+'"></i></span><span><div class="fns-dd-label">'+p.label+'</div><div class="fns-dd-sub">'+p.sub+'</div></span></div>';
   });
   popularEl.innerHTML=html;
   // recent
@@ -474,27 +476,121 @@ function renderDest(q){
     recentEl.innerHTML=rh;
   } else recentEl.innerHTML='';
   // also sync mobile list (thumb-friendly 56px rows)
-  var mList=document.getElementById('fns_m_list');
-  if(mList){
-    if(window.innerWidth<=991 || document.getElementById('fns_mobile_sheet').classList.contains('open')){
-      var mh=''; filtered.forEach(function(p){ mh+='<div class="fns-dd-item mob" role="option" tabindex="0" onclick="fnsPickDest(\''+p.label.replace(/'/g,"\\'")+'\');fnsSheetGo(\'when\');" onkeydown="if(event.key===\'Enter\') this.click()"><span class="fns-dd-icon" aria-hidden="true"><i class="fa-solid '+p.icon+'"></i></span><span><div class="fns-dd-label">'+p.label+'</div><div class="fns-dd-sub">'+p.sub+'</div></span><span style="margin-left:auto;color:#9CA3AF;"><i class="fa-solid fa-chevron-right" style="font-size:11px;"></i></span></div>'; });
-      if(recent.length){
-        mh+='<div class="fns-dd-section" style="margin-top:8px;">Recent</div>';
-        recent.forEach(function(r){ mh+='<div class="fns-dd-item mob" role="option" tabindex="0" onclick="fnsPickDest(\''+r.replace(/'/g,"\\'")+'\');fnsSheetGo(\'when\');" onkeydown="if(event.key===\'Enter\') this.click()"><span class="fns-dd-icon" aria-hidden="true"><i class="fa-solid fa-clock-rotate-left"></i></span><span><div class="fns-dd-label">'+r+'</div><div class="fns-dd-sub">Recent search</div></span></div>'; });
-      }
-      if(!filtered.length && !recent.length) mh='<div style="padding:16px;color:var(--fns-text-sec);font-size:14px;text-align:center;">No matches — try Arusha, Zanzibar, Mwanza</div>';
-      mList.innerHTML=mh;
-    }
-  }
+  syncMobileList(ql, filtered, recent);
+  // live Mapbox autocomplete for real Tanzanian areas (debounced, cached)
+  fnsMbxSuggest(ql);
 }
-window.fnsPickDest=function(val){
+// ── Real Mapbox autocomplete (Tanzania-only) ──
+var _mbxCache={}, _mbxResults=[], _mbxQ='', _mbxT=null, _mbxAbort=null;
+var _mbxSession=(function(){ try{ if(window.crypto&&crypto.randomUUID) return crypto.randomUUID(); }catch(e){} return 'fns-'+Date.now()+'-'+Math.floor(Math.random()*1e6); })();
+function mbxToken(){ return window.MAPBOX_TOKEN || window.DEFAULT_MAPBOX_TOKEN || ''; }
+function escHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function mbxCtx(f, prefix){ var c=f.context||[]; for(var i=0;i<c.length;i++){ if(c[i].id&&c[i].id.indexOf(prefix)===0) return c[i].text; } return null; }
+// Backend filters by city-level name, so map exact POI coords but search its parent city.
+function mbxCityName(f){
+  var t=f.place_type||[];
+  if(t.indexOf('country')!==-1) return '';
+  if(t.indexOf('place')!==-1||t.indexOf('region')!==-1) return f.text||'';
+  return mbxCtx(f,'place')||mbxCtx(f,'region')||f.text||'';
+}
+function mbxIcon(f){
+  var t=(f.place_type||[]).join(' ');
+  if(t.indexOf('poi')!==-1) return 'fa-location-dot';
+  if(t.indexOf('address')!==-1) return 'fa-house';
+  if(t.indexOf('neighborhood')!==-1||t.indexOf('locality')!==-1) return 'fa-map-pin';
+  return 'fa-city';
+}
+function mbxSub(f){
+  var parts=String(f.place_name||'').split(',');
+  parts.shift();
+  var rest=parts.join(',').trim();
+  return rest||'Tanzania';
+}
+function renderMbx(){
+  var box=document.getElementById('fns_dd_mbx');
+  if(!box) return;
+  if(_mbxResults.length && _mbxQ){
+    var h='<div class="fns-dd-section"><i class="fa-solid fa-location-dot" style="margin-right:6px;"></i>Real places</div>';
+    _mbxResults.forEach(function(f,i){
+      h+='<div class="fns-dd-item" onclick="fnsPickMbx('+i+')"><span class="fns-dd-icon"><i class="fa-solid '+mbxIcon(f)+'"></i></span><span><div class="fns-dd-label">'+escHtml(f.text)+'</div><div class="fns-dd-sub">'+escHtml(mbxSub(f))+'</div></span></div>';
+    });
+    box.innerHTML=h;
+  } else box.innerHTML='';
+}
+function syncMobileList(ql, filtered, recent){
+  var mList=document.getElementById('fns_m_list');
+  if(!mList) return;
+  if(!(window.innerWidth<=991 || document.getElementById('fns_mobile_sheet').classList.contains('open'))) return;
+  var mh='';
+  if(_mbxQ===ql && _mbxResults.length){
+    mh+='<div class="fns-dd-section">Real places</div>';
+    _mbxResults.forEach(function(f,i){
+      mh+='<div class="fns-dd-item mob" role="option" tabindex="0" onclick="fnsPickMbx('+i+');fnsSheetGo(\'when\');" onkeydown="if(event.key===\'Enter\') this.click()"><span class="fns-dd-icon" aria-hidden="true"><i class="fa-solid '+mbxIcon(f)+'"></i></span><span><div class="fns-dd-label">'+escHtml(f.text)+'</div><div class="fns-dd-sub">'+escHtml(mbxSub(f))+'</div></span><span style="margin-left:auto;color:#9CA3AF;"><i class="fa-solid fa-chevron-right" style="font-size:11px;"></i></span></div>';
+    });
+  }
+  filtered.forEach(function(p){ mh+='<div class="fns-dd-item mob" role="option" tabindex="0" onclick="fnsPickDest(\''+p.label.replace(/'/g,"\\'")+'\','+p.lat+','+p.lng+');fnsSheetGo(\'when\');" onkeydown="if(event.key===\'Enter\') this.click()"><span class="fns-dd-icon" aria-hidden="true"><i class="fa-solid '+p.icon+'"></i></span><span><div class="fns-dd-label">'+p.label+'</div><div class="fns-dd-sub">'+p.sub+'</div></span><span style="margin-left:auto;color:#9CA3AF;"><i class="fa-solid fa-chevron-right" style="font-size:11px;"></i></span></div>'; });
+  if(recent.length){
+    mh+='<div class="fns-dd-section" style="margin-top:8px;">Recent</div>';
+    recent.forEach(function(r){ mh+='<div class="fns-dd-item mob" role="option" tabindex="0" onclick="fnsPickDest(\''+r.replace(/'/g,"\\'")+'\');fnsSheetGo(\'when\');" onkeydown="if(event.key===\'Enter\') this.click()"><span class="fns-dd-icon" aria-hidden="true"><i class="fa-solid fa-clock-rotate-left"></i></span><span><div class="fns-dd-label">'+r+'</div><div class="fns-dd-sub">Recent search</div></span></div>'; });
+  }
+  if(!filtered.length && !recent.length && !(_mbxQ===ql && _mbxResults.length)) mh='<div style="padding:16px;color:var(--fns-text-sec);font-size:14px;text-align:center;">No matches — try Arusha, Zanzibar, Mwanza</div>';
+  mList.innerHTML=mh;
+}
+function fnsMbxSuggest(ql){
+  clearTimeout(_mbxT);
+  if(_mbxAbort){ try{_mbxAbort.abort();}catch(e){} _mbxAbort=null; }
+  if(!ql || ql.length<2 || !mbxToken()){ _mbxResults=[]; _mbxQ=''; renderMbx(); return; }
+  if(_mbxCache[ql]){
+    _mbxResults=_mbxCache[ql]; _mbxQ=ql; renderMbx();
+    syncMobileList(ql,
+      POPULAR.filter(function(p){ return p.label.toLowerCase().indexOf(ql)!==-1 || p.sub.toLowerCase().indexOf(ql)!==-1; }),
+      getRecent());
+    return;
+  }
+  _mbxT=setTimeout(function(){
+    var curQ=ql;
+    var box=document.getElementById('fns_dd_mbx');
+    var popOpen=false;
+    try{ popOpen=document.getElementById('fns_pop_dest').classList.contains('open'); }catch(e){}
+    if(box && popOpen) box.innerHTML='<div style="padding:10px 16px;color:var(--fns-text-sec);font-size:13px;"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:6px;"></i>Searching real places…</div>';
+    try{ _mbxAbort=new AbortController(); }catch(e){ _mbxAbort=null; }
+    var params='country=tz&limit=6&types=place,locality,neighborhood,address,poi&language=en&bbox=28.85,-11.75,40.5,-0.95&session_token='+encodeURIComponent(_mbxSession)+'&access_token='+encodeURIComponent(mbxToken());
+    fetch('https://api.mapbox.com/geocoding/v5/mapbox.places/'+encodeURIComponent(q)+'.json?'+params, {signal:_mbxAbort?_mbxAbort.signal:undefined})
+      .then(function(r){ if(!r.ok) throw new Error('geo '+r.status); return r.json(); })
+      .then(function(d){
+        // ignore stale responses if the user kept typing
+        var nowD=document.getElementById('gh_dest')?document.getElementById('gh_dest').value:'';
+        var nowM=document.getElementById('fns_m_input')?document.getElementById('fns_m_input').value:'';
+        if(nowD.toLowerCase().trim()!==curQ && nowM.toLowerCase().trim()!==curQ) return;
+        var feats=(d&&d.features)||[];
+        _mbxCache[curQ]=feats; _mbxResults=feats; _mbxQ=curQ;
+        renderMbx();
+        syncMobileList(curQ,
+          POPULAR.filter(function(p){ return p.label.toLowerCase().indexOf(curQ)!==-1 || p.sub.toLowerCase().indexOf(curQ)!==-1; }),
+          getRecent());
+      })
+      .catch(function(e){ if(e&&e.name==='AbortError') return; renderMbx(); });
+  }, 250);
+}
+window.fnsPickMbx=function(i){
+  var f=_mbxResults[i]; if(!f) return;
+  var city=mbxCityName(f);
+  var lng=(f.center&&f.center.length>1)?f.center[0]:null;
+  var lat=(f.center&&f.center.length>1)?f.center[1]:null;
+  fnsPickDest(city, lat, lng);
+  if(window.innerWidth<=991 && typeof fnsSheetGo==='function'){ try{ fnsSheetGo('when'); }catch(e){} }
+};
+window.fnsPickDest=function(val, lat, lng){
   document.getElementById('gh_dest').value=val;
   document.getElementById('gh_city').value=val;
   document.getElementById('fns_m_input').value=val;
+  var latEl=document.getElementById('gh_lat'), lngEl=document.getElementById('gh_lng');
+  if(latEl) latEl.value=(lat!==undefined&&lat!==null&&lat!=='')?lat:'';
+  if(lngEl) lngEl.value=(lng!==undefined&&lng!==null&&lng!=='')?lng:'';
   pushRecent(val);
   fnsClosePopovers();
   document.getElementById('fns_m_where_val').textContent=val;
-  if(window.FastNetState) FastNetState.replaceState({city:val, destination:val});
+  if(window.FastNetState) FastNetState.replaceState({city:val, destination:val, lat:(lat||''), lng:(lng||'')});
   updateClear();
 };
 window.fnsHlDest=function(i){ _ddIdx=i; renderDest(document.getElementById('gh_dest').value); };
@@ -530,12 +626,13 @@ window.fnsDestInput=function(v){
   _ddIdx=-1;
   renderDest(v);
   document.getElementById('gh_city').value=v;
-  if(window.FastNetState) FastNetState.replaceState({city:v, destination:v});
+  document.getElementById('gh_lat').value=''; document.getElementById('gh_lng').value='';
+  if(window.FastNetState) FastNetState.replaceState({city:v, destination:v, lat:'', lng:''});
   var pop=document.getElementById('fns_pop_dest');
   if(pop && !pop.classList.contains('open')){ pop.classList.add('open'); document.getElementById('fns_seg_where').setAttribute('aria-expanded','true');}
 };
 window.fnsDestKey=function(e){
-  var items=document.querySelectorAll('#fns_dd_popular .fns-dd-item, #fns_dd_recent .fns-dd-item');
+  var items=document.querySelectorAll('#fns_dd_popular .fns-dd-item, #fns_dd_mbx .fns-dd-item, #fns_dd_recent .fns-dd-item');
   if(e.key==='ArrowDown'){ e.preventDefault(); _ddIdx=Math.min(_ddIdx+1, items.length-1); renderDest(e.target.value); items[_ddIdx]?.scrollIntoView({block:'nearest'});}
   else if(e.key==='ArrowUp'){ e.preventDefault(); _ddIdx=Math.max(_ddIdx-1,0); renderDest(e.target.value);}
   else if(e.key==='Enter'){ e.preventDefault(); if(_ddIdx>=0 && items[_ddIdx]){ items[_ddIdx].click(); } else { fnsClosePopovers(); document.getElementById('gh_search_form').requestSubmit(); } }
@@ -545,13 +642,19 @@ window.fnsDestClear=function(){
   document.getElementById('gh_dest').value='';
   document.getElementById('gh_city').value='';
   document.getElementById('fns_m_input').value='';
+  document.getElementById('gh_lat').value=''; document.getElementById('gh_lng').value='';
   updateClear(); renderDest('');
   document.getElementById('gh_dest').focus();
-  if(window.FastNetState) FastNetState.replaceState({city:'', destination:''});
+  if(window.FastNetState) FastNetState.replaceState({city:'', destination:'', lat:'', lng:''});
 };
 
 // ── Date helpers ──
 function syncDate(){
+  // auto-correct: checkout must be after checkin
+  if(_co <= _ci){
+    var c=new Date(_ci+'T00:00:00'); c.setDate(c.getDate()+1);
+    _co=c.toISOString().slice(0,10);
+  }
   document.getElementById('gh_ci').value=_ci; document.getElementById('gh_co').value=_co;
   document.getElementById('gh_ci_legacy').value=_ci; document.getElementById('gh_co_legacy').value=_co;
   var fmt=function(s){ try{return new Date(s+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});}catch(e){return s;}};
@@ -620,7 +723,12 @@ function renderMonth(gid,tid,yr,mo){
       });
       el.addEventListener('mouseleave', function(){ document.querySelectorAll('.fns-day.preview').forEach(function(e){e.classList.remove('preview');}); });
       el.addEventListener('click', function(){
-        if(_picking==='ci' || s<=_ci){ _ci=s; _picking='co'; }
+        if(_picking==='ci' || s<=_ci){
+          _ci=s;
+          // if new check-in is on/after checkout, bump checkout to next day
+          if(_co <= _ci){ var c=new Date(s+'T00:00:00'); c.setDate(c.getDate()+1); _co=c.toISOString().slice(0,10); }
+          _picking='co';
+        }
         else { _co=s; _picking='ci'; document.getElementById('fns_pop_cal').classList.remove('open'); fnsCloseSegActive(); if(window.FastNetState) window.FastNetState.pushState({checkin:_ci, checkout:_co, checkIn:_ci, checkOut:_co});}
         syncDate(); renderCal();
       });
@@ -738,10 +846,11 @@ window.fnsAccToggle=function(step){
 };
 window.fnsMDestInput=function(v){
   document.getElementById('gh_dest').value=v; document.getElementById('gh_city').value=v;
+  document.getElementById('gh_lat').value=''; document.getElementById('gh_lng').value='';
   updateClear(); renderDest(v);
-  if(window.FastNetState) FastNetState.replaceState({city:v, destination:v});
+  if(window.FastNetState) FastNetState.replaceState({city:v, destination:v, lat:'', lng:''});
 };
-window.fnsMClear=function(){ document.getElementById('fns_m_input').value=''; document.getElementById('gh_dest').value=''; document.getElementById('gh_city').value=''; updateClear(); renderDest(''); if(window.FastNetState) FastNetState.replaceState({city:'', destination:''}); };
+window.fnsMClear=function(){ document.getElementById('fns_m_input').value=''; document.getElementById('gh_dest').value=''; document.getElementById('gh_city').value=''; document.getElementById('gh_lat').value=''; document.getElementById('gh_lng').value=''; updateClear(); renderDest(''); if(window.FastNetState) FastNetState.replaceState({city:'', destination:'', lat:'', lng:''}); };
 function renderMobileCal(){
   var grid=document.getElementById('fns_m_grid'); if(!grid) return;
   grid.innerHTML='';
@@ -769,7 +878,11 @@ function renderMobileCal(){
         el.addEventListener('click', function(){
           // haptic
           if(navigator.vibrate) try{ navigator.vibrate(12); }catch(e){}
-          if(_picking==='ci' || s<=_ci){ _ci=s; _picking='co'; }
+          if(_picking==='ci' || s<=_ci){
+            _ci=s;
+            if(_co <= _ci){ var c=new Date(s+'T00:00:00'); c.setDate(c.getDate()+1); _co=c.toISOString().slice(0,10); }
+            _picking='co';
+          }
           else { _co=s; _picking='ci'; }
           syncDate(); renderMobileCal(); renderCal();
         });
@@ -794,11 +907,10 @@ window.fnsClearAllMobile=function(){
 window.fnsMobileSearch=function(){
   document.getElementById('gh_city').value=document.getElementById('fns_m_input').value || document.getElementById('gh_dest').value;
   var v=document.getElementById('gh_city').value; if(v) pushRecent(v);
+  // ensure dates are valid before push
+  if(_co <= _ci){ var c=new Date(_ci+'T00:00:00'); c.setDate(c.getDate()+1); _co=c.toISOString().slice(0,10); }
   fnsCloseMobile();
   if(window.FastNetState) window.FastNetState.pushState({city:v, destination:v, checkin:_ci, checkout:_co, checkIn:_ci, checkOut:_co, adults:String(_ad), children:String(_ch), rooms:String(_rm)});
-  // trigger skeleton then submit via FastNetState hydrate or form
-  if(typeof ghTriggerShimmer==='function') ghTriggerShimmer();
-  document.getElementById('gh_search_form').requestSubmit();
 };
 
 // Global close handlers

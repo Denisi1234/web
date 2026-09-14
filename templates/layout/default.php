@@ -32,8 +32,12 @@
         <link rel="preconnect" href="https://api.mapbox.com" crossorigin>
         <link rel="preconnect" href="https://api.fastnetstays.com" crossorigin>
         <link rel="dns-prefetch" href="https://images.unsplash.com">
+        <?php if (!in_array($this->getRequest()->getParam('controller'), ['Account'], true)): ?>
         <link rel="preload" href="/assets/css/google-travel-layout.css" as="style">
         <link rel="preload" href="/assets/css/google-travel-cards.css" as="style">
+        <?php else: ?>
+        <link rel="preload" href="/assets/css/google-travel-layout.css" as="style">
+        <?php endif; ?>
         <meta http-equiv="x-dns-prefetch-control" content="on">
         <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
         <meta name="bingbot" content="index, follow, max-media-preview:large" />
@@ -182,13 +186,17 @@
         ]); ?>
 
         <?= $this->Html->css('/assets/css/ui-tokens.css') ?>
+        <?= $this->Html->css('/assets/css/app-loader.css') ?>
         <?= $this->fetch('meta') ?>
         <?= $this->fetch('css') ?>
         <?= $this->Html->css('/assets/css/site-spacing.css') ?>
 
+        <!-- Universal App Loader Engine -->
+        <?= $this->Html->script('/assets/js/app-loader.js') ?>
+
         <!-- Mapbox GL JS — production CSS & JS -->
         <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css" rel="stylesheet">
-        <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js"></script>
+        <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js" defer></script>
         <?= $this->Html->script('/assets/js/fastnet-map-core.js') ?>
 
         <script>
@@ -275,12 +283,8 @@
     </head>
 
     <body>
-        <a href="#main-content" class="skip-link visually-hidden-focusable" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">Skip to main content</a>
-        <div id="preloader" aria-hidden="true">
-            <div class="preloader"><span></span><span></span></div>
-        </div>
-        <style>@media (prefers-reduced-motion: reduce){#preloader{display:none!important}}</style>
-        <script>(function(){var p=document.getElementById('preloader');if(!p)return;if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){p.style.display='none';return}function h(){p.style.opacity='0';p.style.transition='opacity 200ms';setTimeout(function(){p.style.display='none'},200)}document.addEventListener('DOMContentLoaded',function(){setTimeout(h,500)});window.addEventListener('load',h);})();</script>
+        <!-- Universal Shared App Loader & Background Task Indicator -->
+        <?= $this->element('app-loader') ?>
 
         <div id="main-wrapper">
 

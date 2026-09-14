@@ -34,12 +34,16 @@ $bookingsList = !empty($userBookings) ? $userBookings : [
 <?php foreach ($bookingsList as $b): 
     $bId = $b['id'] ?? rand(100, 999);
     $bRef = $b['reference'] ?? ($b['booking_code'] ?? ('FN-' . $bId));
-    $bProp = $b['property_name'] ?? ($b['property']['name'] ?? ($b['room']['property']['name'] ?? 'FastNet Lodge'));
-    $bCity = $b['city'] ?? ($b['property']['city'] ?? ($b['room']['property']['city'] ?? 'Tanzania'));
-    $bRoom = $b['room_name'] ?? ($b['room']['room_number'] ?? 'Standard Room');
+    $rawProp = $b['property_name'] ?? ($b['property']['name'] ?? ($b['room']['property']['name'] ?? 'FastNet Lodge'));
+    $bProp = \App\Utility\TextFormatter::formatTitle((string)$rawProp);
+    $rawCity = $b['city'] ?? ($b['property']['city'] ?? ($b['room']['property']['city'] ?? 'Tanzania'));
+    $bCity = \App\Utility\TextFormatter::formatTitle((string)$rawCity);
+    $rawRoom = $b['room_name'] ?? ($b['room']['room_number'] ?? 'Standard Room');
+    $bRoom = \App\Utility\TextFormatter::formatTitle((string)$rawRoom);
     $bCheckIn = !empty($b['check_in']) ? date('D, d M Y', strtotime($b['check_in'])) : 'Upcoming';
     $bCheckOut = !empty($b['check_out']) ? date('D, d M Y', strtotime($b['check_out'])) : 'Upcoming';
-    $bGuest = $b['guest_name'] ?? ($b['guest']['name'] ?? 'Guest Traveler');
+    $rawGuest = $b['guest_name'] ?? ($b['guest']['name'] ?? 'Guest Traveler');
+    $bGuest = \App\Utility\TextFormatter::formatTitle((string)$rawGuest);
     $bAmount = (float)($b['total_amount'] ?? ($b['total_price'] ?? 70000));
     $bStatus = strtolower($b['status'] ?? 'confirmed');
 ?>

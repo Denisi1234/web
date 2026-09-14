@@ -1,20 +1,25 @@
 <?php
-$reviewList = !empty($reviews) ? $reviews : [];
-$overall = !empty($property['rating']) ? (float)$property['rating'] : (!empty($reviews) ? array_sum(array_map(fn($r)=>(float)($r['rating']??5), $reviews))/max(1,count($reviews)) : 4.6);
-$overallFmt = number_format($overall,1);
+$reviewList = !empty($reviews) && is_array($reviews) ? $reviews : [];
+$actualCount = count($reviewList);
+$overall = $actualCount > 0 
+    ? array_sum(array_map(fn($r) => (float)($r['rating'] ?? 5), $reviewList)) / $actualCount
+    : (!empty($property['rating']) ? (float)$property['rating'] : 5.0);
+$overallFmt = number_format($overall, 1);
 $catScores = [
-  'Cleanliness' => min(5, $overall + 0.2),
-  'Service' => min(5, $overall + 0.1),
-  'Location' => max(3.5, $overall - 0.1),
-  'Value' => max(3.5, $overall - 0.2),
+  'Cleanliness' => min(5.0, round($overall + 0.1, 1)),
+  'Service' => min(5.0, round($overall, 1)),
+  'Location' => max(3.5, min(5.0, round($overall - 0.1, 1))),
+  'Value' => max(3.5, min(5.0, round($overall - 0.2, 1))),
 ];
+$currentPropId = (int)($property['id'] ?? ($propertyId ?? 0));
 ?>
 <div class="card-body p-0 pt-2">
+    <?php if ($actualCount > 0): ?>
     <!-- Google Review Score Breakdown -->
     <div class="gh-review-breakdown" style="display:flex;gap:20px;align-items:center;padding:16px;border:1px solid #dadce0;border-radius:12px;background:#fff;margin-bottom:20px;">
         <div style="flex:0 0 auto;text-align:center;">
             <div style="width:64px;height:64px;border-radius:50%;background:#e8f0fe;border:2px solid #1a73e8;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#1a73e8;font-family:'Google Sans',sans-serif;"><?= h($overallFmt) ?></div>
-            <div style="font-size:12px;color:#5f6368;margin-top:4px;"><?= count($reviewList) ?> verified reviews</div>
+            <div style="font-size:12px;color:#5f6368;margin-top:4px;"><?= $actualCount ?> verified reviews</div>
             <div style="color:#fbbc04;font-size:14px;"><?= str_repeat('★', (int)round($overall)) ?></div>
         </div>
         <div style="flex:1 1 auto;display:grid;gap:8px;">
@@ -27,6 +32,7 @@ $catScores = [
             <?php endforeach; ?>
         </div>
     </div>
+    <?php endif; ?>
     <!-- Write a Review Accordion/Collapsible -->
     <div style="margin-bottom:16px;padding:14px;border:1px solid #dadce0;border-radius:12px;background:#fff;">
         <button class="btn btn-outline-primary btn-sm fw-bold rounded-pill px-3" type="button" data-bs-toggle="collapse" data-bs-target="#writeReviewCollapse">
@@ -36,7 +42,7 @@ $catScores = [
         <div class="collapse mt-3" id="writeReviewCollapse">
             <div id="web1-review-alert"></div>
             <form id="web1-write-review-form" class="row g-3">
-                <input type="hidden" id="web1-rev-property-id" value="<?= h($propertyId ?? 12) ?>">
+                <input type="hidden" id="web1-rev-property-id" value="<?= h($currentPropId) ?>">
                 <div class="col-md-6">
                     <label class="form-label text-sm fw-semibold">Your Name</label>
                     <input type="text" id="web1-rev-author" class="form-control form-control-sm" placeholder="John Doe" required>
@@ -123,9 +129,9 @@ document.addEventListener("DOMContentLoaded", function() {
             };
 
             try {
-                const endpoint = (typeof window.API_URL === 'function') 
+                let endpoint = (typeof window.API_URL === 'function') 
                     ? window.API_URL('/api/reviews') 
-                    : 'http://127.0.0.1:8000/api/reviews';
+                    : (window.location.protocol + '//' + window.location.hostname + ':8000/api/reviews');
 
                 const token = localStorage.getItem('auth_token');
                 const headers = {

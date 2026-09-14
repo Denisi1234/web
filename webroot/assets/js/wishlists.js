@@ -42,10 +42,42 @@ const hotelIllustrationSvg = `
 </svg>
 `;
 
-const defaultLists = [
-    { id: 'next_stay', name: 'Your next stay', count: 0 },
-    { id: 'demi', name: 'DEMI', count: 0 }
-];
+async function fetchRealLists() {
+    try {
+        const token = localStorage.getItem('auth_token') || '';
+        const headers = { 'Accept': 'application/json' };
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        
+        const r = await fetch('/wishlist-lists', { headers: headers, credentials: 'same-origin' });
+        if (r.ok) {
+            const j = await r.json();
+            if (Array.isArray(j) && j.length > 0) {
+                return j.map(x => ({ id: x.id, name: x.name, count: x.count || 0 }));
+            }
+        }
+    } catch(e) {}
+
+    // Fallback to direct backend API if available
+    try {
+        const token = localStorage.getItem('auth_token') || '';
+        const apiHost = (typeof window.FASTNET_API_URL === 'string' && window.FASTNET_API_URL)
+            ? window.FASTNET_API_URL
+            : (window.location.protocol + '//' + window.location.hostname + ':8000');
+        
+        const headers = { 'Accept': 'application/json' };
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+
+        const r = await fetch(apiHost + '/api/wishlist-lists', { headers: headers });
+        if (r.ok) {
+            const j = await r.json();
+            if (Array.isArray(j) && j.length > 0) {
+                return j.map(x => ({ id: x.id, name: x.name, count: x.count || 0 }));
+            }
+        }
+    } catch(e) {}
+
+    return null;
+}
 
 function getStoredLists() {
     try {
@@ -55,7 +87,10 @@ function getStoredLists() {
             if (Array.isArray(parsed) && parsed.length > 0) return parsed;
         }
     } catch(e) {}
-    return defaultLists;
+    return [
+        { id: 'next_stay', name: 'Your next stay', count: 0 },
+        { id: 'zanzibar', name: 'Zanzibar Stays', count: 0 }
+    ];
 }
 
 function saveStoredLists(lists) {
@@ -64,8 +99,16 @@ function saveStoredLists(lists) {
     } catch(e) {}
 }
 
-function renderFavouritesGrid() {
-    const lists = getStoredLists();
+async function renderFavouritesGrid() {
+    const loader = document.getElementById('favLoading');
+    if (loader) loader.style.display = 'flex';
+    
+    let lists = await fetchRealLists();
+    if (!Array.isArray(lists) || lists.length === 0) {
+        lists = getStoredLists();
+    }
+    if (loader) loader.style.display = 'none';
+
     const container = document.getElementById('favouriteListsContainer');
     const counter = document.getElementById('listsCounter');
     
@@ -82,19 +125,18 @@ function renderFavouritesGrid() {
         card.innerHTML = `
             <div class="fav-card-visual">
                 ${hotelIllustrationSvg}
-                <button type="button" class="fav-card-share-btn" title="Share list" onclick="shareList(event, '${item.name.replace(/'/g, "\\'")}')">
+                <button type="button" class="fav-card-share-btn" title="Share list" onclick="shareList(event, '${String(item.name).replace(/'/g, "\\'")}')">
                     <i class="fa-solid fa-share-nodes"></i>
                 </button>
             </div>
             <div class="fav-card-title-row">
                 <span class="fav-card-name">${item.name}</span>
-                <span class="fav-card-stays">(${item.count} stays)</span>
+                <span class="fav-card-stays">(${item.count || 0} stays)</span>
             </div>
         `;
-        // Navigate on card click (excluding share button)
         card.addEventListener('click', (e) => {
             if (!e.target.closest('.fav-card-share-btn')) {
-                window.location.href = '<?= $this->Url->build('/hotel-list-01'); ?>';
+                window.location.href = '/?destination=' + encodeURIComponent(item.name);
             }
         });
         container.appendChild(card);
@@ -108,7 +150,7 @@ function openCreateListModal() {
         modal.classList.add('open');
         if (input) {
             input.value = '';
-            setTimeout(() => input.focus(), 50);
+            setTimeout(() => input.focus(), 60);
         }
     }
 }
@@ -118,28 +160,148 @@ function closeCreateListModal() {
     if (modal) modal.classList.remove('open');
 }
 
-function submitCreateList() {
+async function removeWishlist(pid) {
+    if (window.FastnetLoader && window.FastnetLoader.bar) {
+        window.FastnetLoader.bar.start();
+    }
+    const cardEl = document.getElementById('wishlist_card_' + pid);
+    if (cardEl) {
+        cardEl.style.opacity = '0.5';
+        cardEl.style.pointerEvents = 'none';
+    }
+
+    const csrf = document.querySelector('meta[name="csrfToken"]')?.content || '';
+    const token = localStorage.getItem('auth_token') || '';
+    const headers = { 
+        'X-CSRF-Token': csrf, 
+        'Accept': 'application/json' 
+    };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+
+    try {
+        const r = await fetch('/wishlist/' + pid, {
+            method: 'DELETE',
+            headers: headers,
+            credentials: 'same-origin'
+        });
+
+        // Also sync to direct backend API
+        const apiHost = (typeof window.FASTNET_API_URL === 'string' && window.FASTNET_API_URL)
+            ? window.FASTNET_API_URL
+            : (window.location.protocol + '//' + window.location.hostname + ':8000');
+        
+        await fetch(apiHost + '/api/wishlist/' + pid, {
+            method: 'DELETE',
+            headers: headers
+        }).catch(() => {});
+
+        if (cardEl) {
+            cardEl.style.transition = 'all 0.3s ease';
+            cardEl.style.transform = 'scale(0.9)';
+            cardEl.style.opacity = '0';
+            setTimeout(() => {
+                cardEl.remove();
+                // Check if any cards left
+                const grid = document.getElementById('savedStaysGrid');
+                if (grid && grid.children.length === 0) {
+                    const wrap = document.getElementById('savedStaysSection');
+                    if (wrap) wrap.innerHTML = '<div class="alert alert-info py-2" style="font-size:13px">No favourites yet — tap ♡ on any stay to save.</div>';
+                }
+            }, 300);
+        }
+
+        if (window.FastnetLoader && window.FastnetLoader.bar) {
+            window.FastnetLoader.bar.done();
+        }
+        showFavToast('Removed from favourites');
+    } catch(e) {
+        if (window.FastnetLoader && window.FastnetLoader.bar) {
+            window.FastnetLoader.bar.done();
+        }
+        if (cardEl) {
+            cardEl.style.opacity = '1';
+            cardEl.style.pointerEvents = 'auto';
+        }
+        showFavToast('Could not remove stay');
+    }
+}
+
+async function submitCreateList() {
     const input = document.getElementById('newListInput');
     const val = input ? input.value.trim() : '';
     if (!val) {
         showFavToast('Please enter a list name');
         return;
     }
-    const lists = getStoredLists();
-    if (lists.length >= 20) {
-        showFavToast('You have reached the limit of 20 lists');
-        closeCreateListModal();
-        return;
+    const btn = document.querySelector('#createListModal .trivago-btn-primary');
+    const origText = btn ? btn.innerText : 'Create';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Creating...';
     }
-    lists.push({
-        id: 'list_' + Date.now(),
-        name: val,
-        count: 0
-    });
-    saveStoredLists(lists);
-    renderFavouritesGrid();
-    closeCreateListModal();
-    showFavToast(`List "${val}" created`);
+    if (window.FastnetLoader && window.FastnetLoader.bar) {
+        window.FastnetLoader.bar.start();
+    }
+
+    const csrf = document.querySelector('meta[name="csrfToken"]')?.content || '';
+    const token = localStorage.getItem('auth_token') || '';
+    const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-CSRF-Token': csrf
+    };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+
+    try {
+        // 1. Post to CakePHP endpoint
+        const r = await fetch('/wishlist-lists', {
+            method: 'POST',
+            headers: headers,
+            credentials: 'same-origin',
+            body: JSON.stringify({ name: val })
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.message || 'Failed');
+
+        // 2. Direct backend sync
+        const apiHost = (typeof window.FASTNET_API_URL === 'string' && window.FASTNET_API_URL)
+            ? window.FASTNET_API_URL
+            : (window.location.protocol + '//' + window.location.hostname + ':8000');
+        
+        await fetch(apiHost + '/api/wishlist-lists', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({ name: val })
+        }).catch(() => {});
+
+        if (window.FastnetLoader && window.FastnetLoader.bar) {
+            window.FastnetLoader.bar.done();
+        }
+        showFavToast(`List "${val}" created in database`);
+        closeCreateListModal();
+        await renderFavouritesGrid();
+    } catch(e) {
+        // Local fallback if offline
+        const lists = getStoredLists();
+        if (lists.length >= 20) {
+            showFavToast('You have reached the limit of 20 lists');
+            closeCreateListModal();
+            return;
+        }
+        lists.unshift({ id: 'list_' + Date.now(), name: val, count: 0 });
+        saveStoredLists(lists);
+        await renderFavouritesGrid();
+        closeCreateListModal();
+        showFavToast(`List "${val}" created`);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = origText;
+        }
+        if (window.FastnetLoader && window.FastnetLoader.bar) {
+            window.FastnetLoader.bar.done();
+        }
+    }
 }
 
 function shareList(e, listName) {
@@ -153,15 +315,19 @@ function shareList(e, listName) {
 }
 
 function showFavToast(msg) {
-    const toast = document.getElementById('trivago-toast');
-    if (!toast) return;
+    let toast = document.getElementById('trivago-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'trivago-toast';
+        document.body.appendChild(toast);
+    }
     toast.innerText = msg;
     toast.style.display = 'block';
     setTimeout(() => { toast.style.opacity = '1'; }, 10);
     setTimeout(() => {
         toast.style.opacity = '0';
         setTimeout(() => { toast.style.display = 'none'; }, 250);
-    }, 2500);
+    }, 2800);
 }
 
 document.addEventListener('DOMContentLoaded', function() {

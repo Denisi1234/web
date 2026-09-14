@@ -82,3 +82,9 @@
 @media(max-width:991px){
   .gh-index-footer-wrap{margin-left:0;margin-right:0;padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px))}
 }
+/* Hide entire footer section on mobile */
+@media(max-width:767px){
+  .footer,
+  .footer-compact,
+  .gh-index-footer-wrap{display:none !important}
+}

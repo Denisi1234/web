@@ -189,6 +189,29 @@ class StaysController extends AppController
             $rooms = $property['rooms'];
         }
 
+        // Record in Recently Viewed Session
+        try {
+            $session = $this->getRequest()->getSession();
+            $recent = $session->read('recently_viewed_stays') ?? [];
+            if (!is_array($recent)) $recent = [];
+            // filter out existing entry with same id
+            $recent = array_values(array_filter($recent, fn($item) => (int)($item['id'] ?? 0) !== $propertyId));
+            $coverImg = !empty($galleryImages[0]) ? $galleryImages[0] : ($property['image_url'] ?? ($property['primary_image_url'] ?? ''));
+            array_unshift($recent, [
+                'id' => $propertyId,
+                'name' => $propTitle ?? ($property['name'] ?? 'Stay'),
+                'city' => $propCity ?? ($property['city'] ?? 'Tanzania'),
+                'area' => $propArea ?? ($property['area'] ?? ''),
+                'price_per_night' => $propPrice ?? ($property['price_per_night'] ?? 85000),
+                'rating' => $propRating ?? ($property['rating'] ?? 4.8),
+                'reviews_count' => $reviewsCount ?? ($property['reviews_count'] ?? 0),
+                'image_url' => $coverImg,
+                'viewed_at' => time(),
+            ]);
+            // keep up to 20 recent stays
+            $session->write('recently_viewed_stays', array_slice($recent, 0, 20));
+        } catch (\Throwable $e) {}
+
         $reviews = [];
         $reviewsData = $this->apiClient->get('/properties/' . $propertyId . '/reviews', [
             'page' => $queryParams['page'] ?? 1,
