@@ -117,11 +117,14 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/host/profile', ['controller' => 'Host', 'action' => 'profile']);
         $builder->connect('/owner', ['controller' => 'Host', 'action' => 'dashboard']);
 
-        // Admin Portal — working things only (admin_owner_portal ecom-customers/chart-* etc → AdminOwnerController)
+        // Admin Portal — working things only (admin_owner_portal + fastnet_admin_portal → AdminOwnerController)
         $builder->connect('/admin', ['controller' => 'AdminOwner', 'action' => 'dashboard']);
         $builder->connect('/admin/dashboard', ['controller' => 'AdminOwner', 'action' => 'dashboard']);
         $builder->connect('/admin/owners', ['controller' => 'AdminOwner', 'action' => 'owners']);
         $builder->connect('/admin/lodges', ['controller' => 'AdminOwner', 'action' => 'lodges']);
+        $builder->connect('/admin/bookings', ['controller' => 'AdminOwner', 'action' => 'bookings']);
+        $builder->connect('/admin/staff', ['controller' => 'AdminOwner', 'action' => 'staff']);
+        $builder->connect('/admin/requests', ['controller' => 'AdminOwner', 'action' => 'lodgeRequests']);
         $builder->connect('/admin/finance', ['controller' => 'AdminOwner', 'action' => 'financeOverview']);
         $builder->connect('/admin/finance/ledger', ['controller' => 'AdminOwner', 'action' => 'financeLedger']);
         $builder->connect('/admin/finance/payouts', ['controller' => 'AdminOwner', 'action' => 'payouts']);

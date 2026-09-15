@@ -328,4 +328,174 @@ class AdminOwnerController extends AppController
         }
         return $this->redirect(['action' => 'owners']);
     }
+
+    // ---- Ported from fastnet_admin_portal (real working) ----
+
+    public function bookings()
+    {
+        if ($r = $this->requireAdmin()) return $r;
+        $headers = $this->hostHeaders();
+        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
+
+        if ($this->getRequest()->is(['post','patch'])) {
+            $data = (array)$this->getRequest()->getData();
+            $bid = trim((string)($data['booking_id'] ?? ''));
+            $status = trim((string)($data['status'] ?? ''));
+            if ($bid !== '' && $status !== '') {
+                // fastnet_admin_portal: PATCH /admin/bookings/{id}/status — backend may use admin/bookings
+                $res = $this->apiClient->patch('/admin/bookings/' . $bid . '/status', ['status' => $status], $headers);
+                if (empty($res) || !empty($res['_status'])) {
+                    // Fallback to bookings status
+                    $res2 = $this->apiClient->patch('/bookings/' . $bid . '/status', ['status' => $status], $headers);
+                    $res = $res2 ?? $res;
+                }
+                if (!empty($res['_status']) && (int)$res['_status'] >= 400) {
+                    $this->Flash->error(__($res['message'] ?? 'Could not update booking.'));
+                } else if ($res !== null) {
+                    $this->Flash->success(__('Booking status updated.'));
+                    return $this->redirect(['action' => 'bookings']);
+                }
+            }
+        }
+
+        $q = $this->getRequest()->getQueryParams();
+        $search = trim((string)($q['search'] ?? ''));
+        $status = trim((string)($q['status'] ?? ''));
+
+        $res = $this->apiClient->get('/admin/bookings', [], $headers);
+        $bookings = $res['data'] ?? (isset($res[0]) ? $res : []);
+        if (!is_array($bookings)) $bookings = [];
+        // Fallback to generic bookings
+        if (empty($bookings) && !empty($res['_status'])) {
+            $r2 = $this->apiClient->get('/bookings', [], $headers);
+            $bookings = $r2['data'] ?? (isset($r2[0]) ? $r2 : []);
+            if (!is_array($bookings)) $bookings = [];
+        }
+
+        // Search/status filter (client-side mirror fastnet_admin_portal bookings_screen.dart)
+        if ($search !== '') {
+            $low = strtolower($search);
+            $bookings = array_values(array_filter($bookings, fn($b) => str_contains(strtolower(json_encode($b)), $low)));
+        }
+        if ($status !== '' && $status !== 'all') {
+            $bookings = array_values(array_filter($bookings, fn($b) => strtolower((string)($b['status'] ?? $b['payment_status'] ?? '')) === strtolower($status)));
+        }
+
+        $this->set(compact('userProfile', 'bookings', 'search', 'status'));
+    }
+
+    public function staff()
+    {
+        if ($r = $this->requireAdmin()) return $r;
+        $headers = $this->hostHeaders();
+        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
+
+        if ($this->getRequest()->is('post')) {
+            $data = (array)$this->getRequest()->getData();
+            $action = trim((string)($data['action'] ?? ''));
+            if ($action === 'add' || $action === 'update') {
+                $payload = [
+                    'name' => trim((string)($data['name'] ?? '')),
+                    'role' => trim((string)($data['role'] ?? 'Receptionist')),
+                    'phone' => trim((string)($data['phone'] ?? '')),
+                ];
+                if ($payload['name'] === '' || $payload['phone'] === '') {
+                    $this->Flash->error(__('Name and phone are required.'));
+                } else {
+                    if ($action === 'update' && !empty($data['staff_id'])) {
+                        $sid = trim((string)$data['staff_id']);
+                        $res = $this->apiClient->patch('/staff/' . $sid, $payload, $headers);
+                        if (!empty($res['_status']) && (int)$res['_status'] >= 400) {
+                            $this->Flash->error(__($res['message'] ?? 'Could not update staff.'));
+                        } else {
+                            $this->Flash->success(__('Staff updated.'));
+                            return $this->redirect(['action' => 'staff']);
+                        }
+                    } else {
+                        $res = $this->apiClient->post('/staff', $payload, $headers);
+                        if (!empty($res['_status']) && (int)$res['_status'] >= 400) {
+                            $this->Flash->error(__($res['message'] ?? 'Could not add staff.'));
+                        } else {
+                            $this->Flash->success(__('Staff added.'));
+                            return $this->redirect(['action' => 'staff']);
+                        }
+                    }
+                }
+            } elseif ($action === 'delete' && !empty($data['staff_id'])) {
+                $sid = trim((string)$data['staff_id']);
+                $res = $this->apiClient->delete('/staff/' . $sid, $headers);
+                if (!empty($res['_status']) && (int)$res['_status'] >= 400) {
+                    $this->Flash->error(__($res['message'] ?? 'Could not delete staff.'));
+                } else {
+                    $this->Flash->success(__('Staff deleted.'));
+                    return $this->redirect(['action' => 'staff']);
+                }
+            }
+        }
+
+        $res = $this->apiClient->get('/staff', [], $headers);
+        $staff = $res['data'] ?? (isset($res[0]) ? $res : []);
+        if (!is_array($staff)) $staff = [];
+
+        $this->set(compact('userProfile', 'staff'));
+    }
+
+    public function lodgeRequests()
+    {
+        if ($r = $this->requireAdmin()) return $r;
+        $headers = $this->hostHeaders();
+        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
+
+        if ($this->getRequest()->is(['post','patch'])) {
+            $data = (array)$this->getRequest()->getData();
+            $rid = trim((string)($data['request_id'] ?? ''));
+            $status = trim((string)($data['status'] ?? ''));
+            if ($rid !== '' && $status !== '') {
+                // Real PATCH if backend supports; fallback to local optimistic not needed
+                $res = $this->apiClient->patch('/lodge-requests/' . $rid . '/status', ['status' => $status], $headers);
+                if (empty($res) || !empty($res['_status'])) {
+                    // Try alternative
+                    $res2 = $this->apiClient->patch('/lodge-requests/' . $rid, ['status' => $status], $headers);
+                    $res = $res2 ?? $res;
+                }
+                if (!empty($res['_status']) && (int)$res['_status'] >= 400) {
+                    $this->Flash->error(__($res['message'] ?? 'Could not update request.'));
+                } else if ($res !== null) {
+                    $this->Flash->success(__('Request updated.'));
+                    return $this->redirect(['action' => 'lodgeRequests']);
+                } else {
+                    $this->Flash->error(__('Lodge requests update not yet supported by backend — showing local.'));
+                }
+            }
+        }
+
+        $q = $this->getRequest()->getQueryParams();
+        $search = trim((string)($q['search'] ?? ''));
+        $status = trim((string)($q['status'] ?? ''));
+        $type = trim((string)($q['type'] ?? ''));
+
+        $res = $this->apiClient->get('/lodge-requests', [], $headers);
+        $requests = $res['data'] ?? (isset($res[0]) ? $res : []);
+        if (!is_array($requests)) $requests = [];
+
+        if ($search !== '') {
+            $low = strtolower($search);
+            $requests = array_values(array_filter($requests, fn($r) => str_contains(strtolower(json_encode($r)), $low)));
+        }
+        if ($status !== '' && $status !== 'all') {
+            $requests = array_values(array_filter($requests, fn($r) => strtolower((string)($r['status'] ?? '')) === strtolower($status)));
+        }
+        if ($type !== '' && $type !== 'all') {
+            $requests = array_values(array_filter($requests, fn($r) => strtolower((string)($r['type'] ?? $r['room_type'] ?? '')) === strtolower($type)));
+        }
+
+        // Dynamic type options for filter
+        $typeOptions = ['all'];
+        foreach ($requests as $r) {
+            $t = trim((string)($r['type'] ?? $r['room_type'] ?? ''));
+            if ($t !== '' && !in_array($t, $typeOptions)) $typeOptions[] = $t;
+        }
+
+        $this->set(compact('userProfile', 'requests', 'search', 'status', 'type', 'typeOptions'));
+    }
 }

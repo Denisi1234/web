@@ -150,6 +150,24 @@ $menuItems = [
         'label' => 'Payouts',
     ],
     [
+        'id' => 'admin-bookings',
+        'url' => '/admin/bookings',
+        'icon' => 'fa-solid fa-calendar-check',
+        'label' => 'Admin Bookings',
+    ],
+    [
+        'id' => 'admin-staff',
+        'url' => '/admin/staff',
+        'icon' => 'fa-solid fa-users-gear',
+        'label' => 'Staff',
+    ],
+    [
+        'id' => 'admin-requests',
+        'url' => '/admin/requests',
+        'icon' => 'fa-solid fa-clipboard-question',
+        'label' => 'Lodge Requests',
+    ],
+    [
         'id' => 'admin-support',
         'url' => '/admin/support',
         'icon' => 'fa-solid fa-headset',

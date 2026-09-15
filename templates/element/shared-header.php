@@ -171,6 +171,18 @@ if (!str_starts_with($navAvatarBg, '#') && !str_starts_with($navAvatarBg, 'rgb')
                                     <i class="fa-solid fa-gauge trivago-user-item-icon"></i>
                                     <span>Admin Dashboard</span>
                                 </a>
+                                <a href="<?= $this->Url->build('/admin/bookings'); ?>" class="trivago-user-item">
+                                    <i class="fa-solid fa-calendar-check trivago-user-item-icon"></i>
+                                    <span>Admin Bookings</span>
+                                </a>
+                                <a href="<?= $this->Url->build('/admin/staff'); ?>" class="trivago-user-item">
+                                    <i class="fa-solid fa-users-gear trivago-user-item-icon"></i>
+                                    <span>Staff</span>
+                                </a>
+                                <a href="<?= $this->Url->build('/admin/requests'); ?>" class="trivago-user-item">
+                                    <i class="fa-solid fa-clipboard-question trivago-user-item-icon"></i>
+                                    <span>Requests</span>
+                                </a>
                                 <?php endif; ?>
                                 <a href="<?= $this->Url->build('/join-us'); ?>" class="trivago-user-item">
                                     <i class="fa-solid fa-plus trivago-user-item-icon"></i>
