@@ -109,7 +109,26 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/host/bookings', ['controller' => 'Host', 'action' => 'bookings']);
         $builder->connect('/host/calendar/{id}', ['controller' => 'Host', 'action' => 'calendar'], ['pass'=>['id'],'id'=>'\d+']);
         $builder->connect('/host/earnings', ['controller' => 'Host', 'action' => 'earnings']);
+        $builder->connect('/host/rooms', ['controller' => 'Host', 'action' => 'rooms']);
+        $builder->connect('/host/rooms/add', ['controller' => 'Host', 'action' => 'addRoom']);
+        $builder->connect('/host/rooms/{id}', ['controller' => 'Host', 'action' => 'editRoom'], ['pass'=>['id'],'id'=>'\d+']);
+        $builder->connect('/host/lodge/{id}/edit', ['controller' => 'Host', 'action' => 'editLodge'], ['pass'=>['id'],'id'=>'\d+']);
+        $builder->connect('/host/onboarding', ['controller' => 'Host', 'action' => 'onboarding']);
+        $builder->connect('/host/profile', ['controller' => 'Host', 'action' => 'profile']);
         $builder->connect('/owner', ['controller' => 'Host', 'action' => 'dashboard']);
+
+        // Admin Portal — working things only (admin_owner_portal ecom-customers/chart-* etc → AdminOwnerController)
+        $builder->connect('/admin', ['controller' => 'AdminOwner', 'action' => 'dashboard']);
+        $builder->connect('/admin/dashboard', ['controller' => 'AdminOwner', 'action' => 'dashboard']);
+        $builder->connect('/admin/owners', ['controller' => 'AdminOwner', 'action' => 'owners']);
+        $builder->connect('/admin/lodges', ['controller' => 'AdminOwner', 'action' => 'lodges']);
+        $builder->connect('/admin/finance', ['controller' => 'AdminOwner', 'action' => 'financeOverview']);
+        $builder->connect('/admin/finance/ledger', ['controller' => 'AdminOwner', 'action' => 'financeLedger']);
+        $builder->connect('/admin/finance/payouts', ['controller' => 'AdminOwner', 'action' => 'payouts']);
+        $builder->connect('/admin/support', ['controller' => 'AdminOwner', 'action' => 'support']);
+        $builder->connect('/admin/reviews', ['controller' => 'AdminOwner', 'action' => 'reviews']);
+        $builder->connect('/admin/verification/{type}/{id}', ['controller' => 'AdminOwner', 'action' => 'verify'], ['pass'=>['type','id'],'type'=>'owner|lodge|property']);
+        $builder->connect('/admin_owner', ['controller' => 'AdminOwner', 'action' => 'dashboard']);
 
         // Universal API Proxy Route (bridges frontend /api/* to backend microservice)
         $builder->connect('/api/**', ['controller' => 'Pages', 'action' => 'apiProxy']);

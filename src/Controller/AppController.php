@@ -12,6 +12,7 @@ use Cake\Event\EventInterface;
  */
 class AppController extends Controller
 {
+   
     public function initialize(): void
     {
         parent::initialize();

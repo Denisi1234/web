@@ -27,6 +27,12 @@ $activeMap = [
 if (isset($activeMap[$active])) {
     $active = $activeMap[$active];
 }
+// Role gating for sidebar — only show host/admin if role matches (no breakup for guest)
+$__sess = $this->getRequest()->getSession();
+$__eff = !empty($userProfile) ? $userProfile : $__sess->read('User');
+$__role = strtolower((string)($__eff['role'] ?? ''));
+$__isAdmin = $__role === 'admin';
+$__isOwner = $__role === 'owner';
 
 $menuItems = [
     [
@@ -90,12 +96,78 @@ $menuItems = [
         'label' => 'My Properties',
     ],
     [
+        'id' => 'host-rooms',
+        'url' => '/host/rooms',
+        'icon' => 'fa-solid fa-bed',
+        'label' => 'My Rooms',
+    ],
+    [
+        'id' => 'host-onboarding',
+        'url' => '/host/onboarding',
+        'icon' => 'fa-solid fa-plus',
+        'label' => 'Onboard Lodge',
+    ],
+    [
+        'id' => 'host-profile',
+        'url' => '/host/profile',
+        'icon' => 'fa-regular fa-circle-user',
+        'label' => 'Host Profile',
+    ],
+    [
+        'id' => 'admin-dashboard',
+        'url' => '/admin/dashboard',
+        'icon' => 'fa-solid fa-gauge',
+        'label' => 'Admin Dashboard',
+    ],
+    [
+        'id' => 'admin-owners',
+        'url' => '/admin/owners',
+        'icon' => 'fa-solid fa-user-check',
+        'label' => 'Verify Owners',
+    ],
+    [
+        'id' => 'admin-lodges',
+        'url' => '/admin/lodges',
+        'icon' => 'fa-solid fa-house-circle-check',
+        'label' => 'Verify Lodges',
+    ],
+    [
+        'id' => 'admin-finance',
+        'url' => '/admin/finance',
+        'icon' => 'fa-solid fa-chart-line',
+        'label' => 'Finance Overview',
+    ],
+    [
+        'id' => 'admin-ledger',
+        'url' => '/admin/finance/ledger',
+        'icon' => 'fa-solid fa-file-invoice-dollar',
+        'label' => 'Ledger',
+    ],
+    [
+        'id' => 'admin-payouts',
+        'url' => '/admin/finance/payouts',
+        'icon' => 'fa-solid fa-money-bill-transfer',
+        'label' => 'Payouts',
+    ],
+    [
+        'id' => 'admin-support',
+        'url' => '/admin/support',
+        'icon' => 'fa-solid fa-headset',
+        'label' => 'Support',
+    ],
+    [
         'id' => 'help-center',
         'url' => '/help-center',
         'icon' => 'fa-regular fa-circle-question',
         'label' => 'Help and support',
     ],
 ];
+// Filter by role — no breakup for guest (hide host/admin)
+$menuItems = array_values(array_filter($menuItems, function($it) use ($__isAdmin, $__isOwner) {
+    if (str_starts_with($it['id'], 'host-')) return $__isOwner || $__isAdmin;
+    if (str_starts_with($it['id'], 'admin-')) return $__isAdmin;
+    return true;
+}));
 ?>
 
 <style>

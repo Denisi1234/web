@@ -59,7 +59,9 @@ class FastnetApiClient
      */
     public function post(string $endpoint, array $data = [], array $headers = []): ?array
     {
-        return $this->request('POST', $endpoint, $data, $headers);
+        $res = $this->request('POST', $endpoint, $data, $headers);
+        $this->clearPropertiesCache();
+        return $res;
     }
 
     /**
@@ -67,7 +69,16 @@ class FastnetApiClient
      */
     public function put(string $endpoint, array $data = [], array $headers = []): ?array
     {
-        return $this->request('PUT', $endpoint, $data, $headers);
+        $res = $this->request('PUT', $endpoint, $data, $headers);
+        $this->clearPropertiesCache();
+        return $res;
+    }
+
+    public function patch(string $endpoint, array $data = [], array $headers = []): ?array
+    {
+        $res = $this->request('PATCH', $endpoint, $data, $headers);
+        $this->clearPropertiesCache();
+        return $res;
     }
 
     public function delete(string $endpoint, array $headers = []): ?array
@@ -83,9 +94,10 @@ class FastnetApiClient
         $url = $this->baseUrl . '/' . ltrim($endpoint, '/');
         $isGet = strtoupper($method) === 'GET';
         $cacheKey = null;
-        // Per-route cache for safe GETs (60s) — /properties, /map-config
+        // Per-route cache for safe GETs (60s) — /properties, /map-config — include Authorization to avoid cross-role poisoning
         if ($isGet && (str_contains($endpoint, '/properties') || str_contains($endpoint, '/map-config'))) {
-            $cacheKey = 'fastnet_api_' . md5($method . $endpoint . json_encode($data));
+            $authHash = isset($headers['Authorization']) ? sha1((string)$headers['Authorization']) : 'guest';
+            $cacheKey = 'fastnet_api_' . md5($method . $endpoint . json_encode($data) . '|' . $authHash);
             $cached = \Cake\Cache\Cache::read($cacheKey, 'default');
             if (is_array($cached)) return $cached;
         }
@@ -101,6 +113,8 @@ class FastnetApiClient
                     $response = $this->http->post($url, $data, $options);
                 } elseif (strtoupper($method) === 'PUT') {
                     $response = $this->http->put($url, $data, $options);
+                } elseif (strtoupper($method) === 'PATCH') {
+                    $response = $this->http->patch($url, $data, $options);
                 } elseif (strtoupper($method) === 'DELETE') {
                     $response = $this->http->delete($url, $options);
                 } else {
@@ -134,5 +148,14 @@ class FastnetApiClient
             }
         }
         return null;
+    }
+
+    private function clearPropertiesCache(): void
+    {
+        try {
+            \Cake\Cache\Cache::clear(false, 'default');
+        } catch (\Throwable $e) {
+            // ignore
+        }
     }
 }

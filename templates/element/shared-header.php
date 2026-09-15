@@ -18,6 +18,9 @@ $isLoggedOut = (bool)$session->read('is_logged_out');
 $sessionUser = $session->read('User');
 $effectiveUser = !empty($userProfile) ? $userProfile : $sessionUser;
 $isUserLoggedIn = !$isLoggedOut && !empty($effectiveUser) && (!empty($effectiveUser['id']) || !empty($effectiveUser['email']) || !empty($effectiveUser['name']));
+$userRole = strtolower((string)($effectiveUser['role'] ?? $sessionUser['role'] ?? ''));
+$isAdmin = $userRole === 'admin';
+$isOwner = $userRole === 'owner';
 
 $navUserInitial = !empty($effectiveUser['first_name']) 
     ? strtoupper(substr(trim($effectiveUser['first_name']), 0, 1)) 
@@ -149,10 +152,26 @@ if (!str_starts_with($navAvatarBg, '#') && !str_starts_with($navAvatarBg, 'rgb')
                                 </a>
 
                                 <div class="trivago-user-sec-title">Hosting</div>
+                                <?php if ($isOwner || $isAdmin): ?>
                                 <a href="<?= $this->Url->build('/host/dashboard'); ?>" class="trivago-user-item" style="color:#2563EB;font-weight:700">
                                     <i class="fa-solid fa-hotel trivago-user-item-icon" style="color:#2563EB"></i>
                                     <span>Host Dashboard</span>
                                 </a>
+                                <a href="<?= $this->Url->build('/host/rooms'); ?>" class="trivago-user-item">
+                                    <i class="fa-solid fa-bed trivago-user-item-icon"></i>
+                                    <span>My Rooms</span>
+                                </a>
+                                <a href="<?= $this->Url->build('/host/profile'); ?>" class="trivago-user-item">
+                                    <i class="fa-regular fa-circle-user trivago-user-item-icon"></i>
+                                    <span>Host Profile</span>
+                                </a>
+                                <?php endif; ?>
+                                <?php if ($isAdmin): ?>
+                                <a href="<?= $this->Url->build('/admin/dashboard'); ?>" class="trivago-user-item">
+                                    <i class="fa-solid fa-gauge trivago-user-item-icon"></i>
+                                    <span>Admin Dashboard</span>
+                                </a>
+                                <?php endif; ?>
                                 <a href="<?= $this->Url->build('/join-us'); ?>" class="trivago-user-item">
                                     <i class="fa-solid fa-plus trivago-user-item-icon"></i>
                                     <span>List your property</span>
