@@ -1,0 +1,163 @@
+/* carbon-polish.css — IBM Carbon v11 (White theme) polish layer for FastNetStays
+ * ROLE SPLIT:
+ * - Baymard = UX structure (what/where: split-view, search prominence, filters, list info) — already in templates
+ * - Carbon = visual polish (how it looks: color tokens, productive type, spacing scale, focus, motion)
+ * Loaded AFTER ui-tokens.css so Carbon tokens win for color/type/focus without changing Baymard layout.
+ * Reference: https://carbondesignsystem.com — White theme, productive type set, IBM Plex Sans
+ */
+
+:root {
+  /* ── Carbon core color tokens (White theme) ── */
+  --cds-blue-60: #0f62fe;
+  --cds-blue-70: #0043ce;
+  --cds-blue-60-hover: #0353e9;
+  --cds-blue-80-active: #002d9c;
+  --cds-blue-20-tag: #d0e2ff;
+  --cds-blue-10-highlight: #edf5ff;
+  --cds-gray-100: #161616;
+  --cds-gray-70: #525252;
+  --cds-gray-60: #6f6f6f;
+  --cds-gray-50: #8d8d8d;
+  --cds-gray-30: #c6c6c6;
+  --cds-gray-20: #e0e0e0;
+  --cds-gray-10: #f4f4f4;
+  --cds-white: #ffffff;
+  --cds-red-60: #da1e28;
+  --cds-red-10: #fff1f1;
+  --cds-green-50: #24a148;
+  --cds-green-10: #defbe6;
+  --cds-focus: #0f62fe;
+  --cds-border-subtle: #e0e0e0;
+  --cds-border-strong: #8d8d8d;
+  --cds-field-01: #f4f4f4;
+  --cds-layer-01: #f4f4f4;
+
+  /* ── Carbon spacing scale (rem → px) ── */
+  --cds-spacing-01: 0.125rem; /* 2 */
+  --cds-spacing-02: 0.25rem;  /* 4 */
+  --cds-spacing-03: 0.5rem;   /* 8 */
+  --cds-spacing-04: 0.75rem;  /* 12 */
+  --cds-spacing-05: 1rem;     /* 16 */
+  --cds-spacing-06: 1.5rem;   /* 24 */
+  --cds-spacing-07: 2rem;     /* 32 */
+  --cds-spacing-08: 2.5rem;   /* 40 */
+  --cds-spacing-09: 3rem;     /* 48 */
+
+  /* ── Map Carbon onto existing FastNet vars (polish, not layout change) ──
+     MUST override --fns-blue too: gh-search-bar.php inline <style> redefines
+     :root{--fns-blue:#1A73E8} in <body> which beats <head> without this. */
+  --fns-blue: var(--cds-blue-60) !important;
+  --fns-blue-active: var(--cds-blue-60) !important;
+  --fns-primary: var(--cds-blue-60) !important;
+  --fns-primary-hover: var(--cds-blue-60-hover) !important;
+  --fns-primary-active: var(--cds-blue-80-active) !important;
+  --fns-focus: var(--cds-focus);
+  --fns-focus-ring: 0 0 0 2px var(--cds-white), 0 0 0 4px var(--cds-focus);
+  --fns-text: var(--cds-gray-100);
+  --fns-text-sec: var(--cds-gray-70);
+  --fns-input-border: var(--cds-gray-30);
+  --fns-border: var(--cds-border-subtle);
+  --fns-bg: var(--cds-gray-10);
+}
+
+/* ── Carbon productive type: IBM Plex Sans first, Inter/Google Sans fallback ──
+   !important needed: google-travel-*.css + inline <style> set Inter with equal specificity */
+html body, body {
+  font-family: 'IBM Plex Sans', 'Inter', 'Google Sans', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+  color: var(--cds-gray-100) !important;
+  background: var(--cds-white) !important;
+}
+/* Productive scale: body-compact-01 14/18, body-01 14/20, label 12/16, heading-compact 14/18 600 */
+.fns-seg-label, .fns-dd-section, .gh-results-count-row {
+  letter-spacing: 0.02em;
+}
+.fns-seg-value, .fns-chip, .gh-hotel-name, .gh-hotel-price {
+  letter-spacing: 0;
+}
+
+/* ── Carbon focus: 2px solid blue + white offset, always visible ── */
+a:focus-visible, button:focus-visible, input:focus-visible,
+.fns-seg:focus-visible, .fns-chip:focus-visible, .fns-cta:focus-visible {
+  outline: 2px solid var(--cds-focus) !important;
+  outline-offset: 2px !important;
+  box-shadow: none !important;
+}
+
+/* ── Carbon buttons: primary blue-60, secondary gray-80, danger red-60 ── */
+.fns-cta, .btn-primary, .fns-btn-apply, .gh-btn-prices {
+  background: var(--cds-blue-60) !important;
+  border-color: var(--cds-blue-60) !important;
+  color: #fff !important;
+}
+.fns-cta:hover, .btn-primary:hover, .fns-btn-apply:hover, .gh-btn-prices:hover {
+  background: var(--cds-blue-60-hover) !important;
+  border-color: var(--cds-blue-60-hover) !important;
+}
+.fns-cta:active, .btn-primary:active, .fns-btn-apply:active {
+  background: var(--cds-blue-80-active) !important;
+  border-color: var(--cds-blue-80-active) !important;
+}
+.btn-outline-primary, .gh-btn-details {
+  border-color: var(--cds-blue-60) !important;
+  color: var(--cds-blue-60) !important;
+}
+.btn-outline-primary:hover, .gh-btn-details:hover {
+  background: var(--cds-blue-60) !important;
+  color: #fff !important;
+}
+/* Carbon disabled: gray-30 bg, gray-50 text */
+.btn:disabled, .fns-cta:disabled, .fns-step-btn:disabled {
+  background: var(--cds-gray-30) !important;
+  border-color: var(--cds-gray-30) !important;
+  color: var(--cds-gray-50) !important;
+  cursor: not-allowed !important;
+}
+
+/* ── Carbon chips/tags: active = blue-10 bg + blue-60 text + blue-60 border ── */
+.fns-chip.active {
+  background: var(--cds-blue-10-highlight) !important;
+  border-color: var(--cds-blue-60) !important;
+  color: var(--cds-blue-70) !important;
+}
+.fns-chip {
+  border-color: var(--cds-gray-30) !important;
+  color: var(--cds-gray-100) !important;
+}
+
+/* ── Carbon fields: border-bottom emphasis on focus, helper/error colors ── */
+.form-control:focus, input:focus, textarea:focus {
+  border-color: var(--cds-focus) !important;
+  box-shadow: inset 0 -2px 0 var(--cds-focus) !important;
+  outline: none !important;
+}
+.form-control::placeholder, input::placeholder {
+  color: rgba(22, 22, 22, 0.4) !important; /* Carbon text-placeholder */
+}
+.text-error, .invalid-feedback { color: var(--cds-red-60) !important; }
+.text-success { color: var(--cds-green-50) !important; }
+
+/* ── Carbon notifications: left-border 3px, layer bg ── */
+.alert-warning { border-left: 3px solid var(--cds-blue-60) !important; }
+.alert-danger { border-left: 3px solid var(--cds-red-60) !important; background: var(--cds-red-10) !important; }
+.alert-success { border-left: 3px solid var(--cds-green-50) !important; background: var(--cds-green-10) !important; }
+
+/* ── Carbon motion: subtle, respects reduced-motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* ── Skip link (global, all pages): visible on keyboard focus only ── */
+.cds-skip-link {
+  position: absolute !important; top: -48px !important; left: 12px !important; z-index: 9999 !important;
+  background: #0f62fe !important; color: #fff !important;
+  padding: 10px 16px !important; border-radius: 0 0 4px 4px !important;
+  font-size: 14px !important; font-weight: 600 !important; text-decoration: none !important;
+  transition: top .15s ease !important;
+}
+.cds-skip-link:focus-visible { top: 0 !important; outline: 2px solid #fff !important; outline-offset: -2px !important; }
+
+/* ── Carbon layer: cards use layer-01 on gray-10 bg for hierarchy ── */
+.gh-card, .card {
+  border: 1px solid var(--cds-border-subtle) !important;
+}
+.gh-split-container, .fns-sheet-step { background: var(--cds-gray-10) !important; }

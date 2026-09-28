@@ -161,6 +161,8 @@ async function hydrate(url){
     if(e.name!=='AbortError'){
       console.warn('[FastNetState] hydrate failed',e);
       _lastSuccessUrl='';
+      // Mature UI: tell the user stale results are shown (old cards stay mounted) instead of failing silently
+      if(typeof window.fnsToast==='function') window.fnsToast('Couldn’t refresh results — showing saved list.');
     } else {
       _lastSuccessUrl='';
     }
@@ -349,7 +351,7 @@ document.addEventListener('DOMContentLoaded', function(){
   if(!document.getElementById('fastnet-progress')){
     const bar=document.createElement('div');
     bar.id='fastnet-progress';
-    bar.style.cssText='position:fixed;top:0;left:0;height:2px;width:0;background:#2563EB;z-index:9999;transition:width .3s ease;';
+    bar.style.cssText='position:fixed;top:0;left:0;height:2px;width:0;background:#0f62fe;z-index:9999;transition:width .3s ease;';
     document.body.appendChild(bar);
   }
   const form=document.getElementById('gh_search_form');

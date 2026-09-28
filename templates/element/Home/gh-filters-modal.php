@@ -35,9 +35,9 @@ $amenityOptions = [
 #fnsFiltersModal .modal-footer{position:sticky;bottom:0;background:#fff;border-top:1px solid #E5E7EB;z-index:2;}
 .fns-hist{display:flex;align-items:flex-end;gap:3px;height:56px;margin:10px 0 12px;}
 .fns-hist-bar{flex:1;background:#E5E7EB;border-radius:3px 3px 0 0;min-width:3px;}
-.fns-hist-bar.active{background:#2563EB;}
+.fns-hist-bar.active{background:#0f62fe;}
 .fns-range{position:relative;height:6px;background:#E5E7EB;border-radius:9999px;margin:16px 0 6px;}
-.fns-range-fill{position:absolute;top:0;bottom:0;background:#2563EB;border-radius:9999px;}
+.fns-range-fill{position:absolute;top:0;bottom:0;background:#0f62fe;border-radius:9999px;}
 .fns-range thumb {}
 /* ── Mobile: bottom-sheet, 44px touch targets, safe-area ── */
 @media(max-width:991px){
@@ -55,7 +55,7 @@ $amenityOptions = [
   #fnsFiltersModal .modal-body .col-lg-6{flex:0 0 100%;max-width:100%;}
   #fnsFiltersModal .modal-footer{position:sticky;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom)) !important;flex-shrink:0;gap:12px;}
   #fnsFiltersModal .modal-footer .btn{min-height:48px;font-size:15px;font-weight:600;}
-  #fnsFiltersModal .modal-footer .btn-primary{flex:1;box-shadow:0 4px 12px rgba(37,99,235,.2);}
+  #fnsFiltersModal .modal-footer .btn-primary{flex:1;box-shadow:0 4px 12px rgba(15,98,254,.2);}
   #fnsFiltersModal .form-control{height:48px;font-size:16px;border-radius:12px;}
   #fnsFiltersModal label.btn{min-height:44px;display:inline-flex;align-items:center;}
   #fnsFiltersModal .modal-backdrop.show{opacity:.38;backdrop-filter:blur(2px);}
@@ -65,7 +65,7 @@ $amenityOptions = [
   <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl" style="max-width:860px;">
     <div class="modal-content rounded-4 overflow-hidden" style="font-family:'Inter','Google Sans',Roboto,sans-serif;">
       <div class="modal-header px-4 py-3">
-        <h5 class="modal-title fw-bold" id="fnsFiltersLabel" style="color:#1F2937;font-size:18px;"><i class="fa-solid fa-sliders me-2" style="color:#2563EB;"></i>All filters</h5>
+        <h5 class="modal-title fw-bold" id="fnsFiltersLabel" style="color:#1F2937;font-size:18px;"><i class="fa-solid fa-sliders me-2" style="color:#0f62fe;"></i>All filters</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <form action="<?= $this->Url->build('/') ?>" method="GET" id="fns_filter_form" onsubmit="if(window.fnsTriggerShimmer) fnsTriggerShimmer();">
@@ -101,17 +101,17 @@ $amenityOptions = [
                 <div class="mb-4 pb-4 border-bottom" style="border-color:#E5E7EB !important;">
                   <h6 class="fw-bold mb-2" style="color:#1F2937;font-size:15px;">Payment options</h6>
                   <div class="d-grid gap-2">
-                    <label class="d-flex align-items-center gap-3 p-3 border rounded-3" style="border-color:<?= $payment==='azampay'?'#2563EB':'#E5E7EB' ?> !important;background:<?= $payment==='azampay'?'#EFF6FF':'#fff' ?>;cursor:pointer;">
-                      <input type="radio" name="payment" value="azampay" <?= $payment==='azampay'?'checked':'' ?> style="accent-color:#2563EB;">
+                    <label class="d-flex align-items-center gap-3 p-3 border rounded-3" style="border-color:<?= $payment==='azampay'?'#0f62fe':'#E5E7EB' ?> !important;background:<?= $payment==='azampay'?'#edf5ff':'#fff' ?>;cursor:pointer;">
+                      <input type="radio" name="payment" value="azampay" <?= $payment==='azampay'?'checked':'' ?> style="accent-color:#0f62fe;">
                       <span style="flex:1;"><span class="fw-semibold" style="color:#1F2937;">Pay Online via AzamPay</span><br><span style="font-size:12px;color:#6B7280;">M-Pesa, Tigo Pesa, Airtel Money — instant confirmation</span></span>
                       <span style="display:flex;gap:4px;align-items:center;"><img src="/assets/img/airtel-logo.png" alt="" style="height:16px;width:auto;object-fit:contain;opacity:.9;" onerror="this.style.display='none'"><span style="font-size:10px;font-weight:700;background:#FF6B00;color:#fff;border-radius:4px;padding:2px 4px;">AzamPay</span></span>
                     </label>
-                    <label class="d-flex align-items-center gap-3 p-3 border rounded-3" style="border-color:<?= $payment==='pay_at_property'?'#2563EB':'#E5E7EB' ?> !important;background:<?= $payment==='pay_at_property'?'#EFF6FF':'#fff' ?>;cursor:pointer;">
-                      <input type="radio" name="payment" value="pay_at_property" <?= $payment==='pay_at_property'?'checked':'' ?> style="accent-color:#2563EB;">
+                    <label class="d-flex align-items-center gap-3 p-3 border rounded-3" style="border-color:<?= $payment==='pay_at_property'?'#0f62fe':'#E5E7EB' ?> !important;background:<?= $payment==='pay_at_property'?'#edf5ff':'#fff' ?>;cursor:pointer;">
+                      <input type="radio" name="payment" value="pay_at_property" <?= $payment==='pay_at_property'?'checked':'' ?> style="accent-color:#0f62fe;">
                       <span style="flex:1;"><span class="fw-semibold" style="color:#1F2937;">Pay at Property</span><br><span style="font-size:12px;color:#6B7280;">Reserve now, pay when you stay</span></span>
                       <i class="fa-solid fa-house" style="color:#6B7280;"></i>
                     </label>
-                    <label class="d-flex align-items-center gap-2" style="font-size:13px;color:#6B7280;cursor:pointer;"><input type="radio" name="payment" value="" <?= $payment===''?'checked':'' ?> style="accent-color:#2563EB;"> Any payment method</label>
+                    <label class="d-flex align-items-center gap-2" style="font-size:13px;color:#6B7280;cursor:pointer;"><input type="radio" name="payment" value="" <?= $payment===''?'checked':'' ?> style="accent-color:#0f62fe;"> Any payment method</label>
                   </div>
                 </div>
                 <!-- Meals -->
@@ -119,11 +119,11 @@ $amenityOptions = [
                   <h6 class="fw-bold mb-2" style="color:#1F2937;font-size:15px;">Meals</h6>
                   <div class="d-flex flex-wrap gap-2">
                     <?php foreach(['breakfast'=>'Breakfast included','all_inclusive'=>'All-inclusive','self_catering'=>'Self-catering'] as $k=>$lbl): ?>
-                    <label class="btn rounded-pill px-3 py-2 <?= $meals===$k?'btn-primary':'btn-outline-secondary' ?>" style="<?= $meals===$k?'background:#2563EB;border-color:#2563EB;':'' ?>font-size:13px;font-weight:600;cursor:pointer;">
+                    <label class="btn rounded-pill px-3 py-2 <?= $meals===$k?'btn-primary':'btn-outline-secondary' ?>" style="<?= $meals===$k?'background:#0f62fe;border-color:#0f62fe;':'' ?>font-size:13px;font-weight:600;cursor:pointer;">
                       <input type="radio" name="meals" value="<?= $k ?>" class="d-none" <?= $meals===$k?'checked':'' ?>> <?= h($lbl) ?>
                     </label>
                     <?php endforeach; ?>
-                    <label class="btn rounded-pill px-3 py-2 <?= $meals===''?'btn-primary':'btn-outline-secondary' ?>" style="<?= $meals===''?'background:#2563EB;border-color:#2563EB;':'' ?>font-size:13px;font-weight:600;cursor:pointer;">
+                    <label class="btn rounded-pill px-3 py-2 <?= $meals===''?'btn-primary':'btn-outline-secondary' ?>" style="<?= $meals===''?'background:#0f62fe;border-color:#0f62fe;':'' ?>font-size:13px;font-weight:600;cursor:pointer;">
                       <input type="radio" name="meals" value="" class="d-none" <?= $meals===''?'checked':'' ?>> Any
                     </label>
                   </div>
@@ -135,12 +135,12 @@ $amenityOptions = [
                     <?php foreach(['city_center'=>'Near city center (≤2 km)','airport'=>'Near airport (≤10 km)','beachfront'=>'Beachfront','quiet_area'=>'Quiet area'] as $k=>$lbl):
                         $active = $neighborhood===$k;
                     ?>
-                    <label class="d-flex align-items-center gap-2 p-2 border rounded-3" style="border-color:<?= $active?'#2563EB':'#E5E7EB' ?>;background:<?= $active?'#EFF6FF':'#fff' ?>;cursor:pointer;font-size:13px;">
-                      <input type="radio" name="neighborhood" value="<?= $k ?>" <?= $active?'checked':'' ?> style="accent-color:#2563EB;">
+                    <label class="d-flex align-items-center gap-2 p-2 border rounded-3" style="border-color:<?= $active?'#0f62fe':'#E5E7EB' ?>;background:<?= $active?'#edf5ff':'#fff' ?>;cursor:pointer;font-size:13px;">
+                      <input type="radio" name="neighborhood" value="<?= $k ?>" <?= $active?'checked':'' ?> style="accent-color:#0f62fe;">
                       <span style="color:#1F2937;font-weight:500;"><?= h($lbl) ?></span>
                     </label>
                     <?php endforeach; ?>
-                    <label class="d-flex align-items-center gap-2" style="font-size:13px;color:#6B7280;cursor:pointer;"><input type="radio" name="neighborhood" value="" <?= $neighborhood===''?'checked':'' ?> style="accent-color:#2563EB;"> Any location</label>
+                    <label class="d-flex align-items-center gap-2" style="font-size:13px;color:#6B7280;cursor:pointer;"><input type="radio" name="neighborhood" value="" <?= $neighborhood===''?'checked':'' ?> style="accent-color:#0f62fe;"> Any location</label>
                   </div>
                 </div>
               </div>
@@ -153,11 +153,11 @@ $amenityOptions = [
                     <?php foreach(['Hotel','Resort','Apartment','Safari Lodge','Villa'] as $t):
                         $active = $propType===$t;
                     ?>
-                    <label class="btn rounded-pill px-3 py-2 <?= $active?'btn-primary':'btn-outline-secondary' ?>" style="<?= $active?'background:#2563EB;border-color:#2563EB;':'' ?>font-size:13px;font-weight:600;cursor:pointer;">
+                    <label class="btn rounded-pill px-3 py-2 <?= $active?'btn-primary':'btn-outline-secondary' ?>" style="<?= $active?'background:#0f62fe;border-color:#0f62fe;':'' ?>font-size:13px;font-weight:600;cursor:pointer;">
                       <input type="radio" name="property_type" value="<?= h($t) ?>" class="d-none" <?= $active?'checked':'' ?>> <?= h($t) ?>
                     </label>
                     <?php endforeach; ?>
-                    <label class="btn rounded-pill px-3 py-2 <?= $propType===''?'btn-primary':'btn-outline-secondary' ?>" style="<?= $propType===''?'background:#2563EB;border-color:#2563EB;':'' ?>font-size:13px;font-weight:600;cursor:pointer;">
+                    <label class="btn rounded-pill px-3 py-2 <?= $propType===''?'btn-primary':'btn-outline-secondary' ?>" style="<?= $propType===''?'background:#0f62fe;border-color:#0f62fe;':'' ?>font-size:13px;font-weight:600;cursor:pointer;">
                       <input type="radio" name="property_type" value="" class="d-none" <?= $propType===''?'checked':'' ?>> Any
                     </label>
                   </div>
@@ -173,9 +173,9 @@ $amenityOptions = [
                         $isChecked = in_array($opt['key'], $selectedAmenities, true) || in_array(strtolower($opt['key']), array_map('strtolower',$selectedAmenities), true);
                     ?>
                     <div class="col-6">
-                      <label class="d-flex align-items-center gap-2 p-2 border rounded-3 h-100" style="border-color:<?= $isChecked?'#2563EB':'#E5E7EB' ?>;background:<?= $isChecked?'#EFF6FF':'#fff' ?>;cursor:pointer;transition:all .15s;">
-                        <input type="checkbox" name="amenities[]" value="<?= h($opt['key']) ?>" <?= $isChecked?'checked':'' ?> style="accent-color:#2563EB;">
-                        <i class="fa-solid <?= $opt['icon'] ?>" style="font-size:13px;color:#2563EB;width:16px;text-align:center;"></i>
+                      <label class="d-flex align-items-center gap-2 p-2 border rounded-3 h-100" style="border-color:<?= $isChecked?'#0f62fe':'#E5E7EB' ?>;background:<?= $isChecked?'#edf5ff':'#fff' ?>;cursor:pointer;transition:all .15s;">
+                        <input type="checkbox" name="amenities[]" value="<?= h($opt['key']) ?>" <?= $isChecked?'checked':'' ?> style="accent-color:#0f62fe;">
+                        <i class="fa-solid <?= $opt['icon'] ?>" style="font-size:13px;color:#0f62fe;width:16px;text-align:center;"></i>
                         <span style="font-size:13px;color:#1F2937;font-weight:500;"><?= h($opt['label']) ?></span>
                       </label>
                     </div>
@@ -187,7 +187,7 @@ $amenityOptions = [
                   <h6 class="fw-bold mb-2" style="color:#1F2937;font-size:15px;">Guest rating</h6>
                   <div class="d-flex flex-wrap gap-2">
                     <?php foreach(['4.5'=>'Exceptional (4.5+)','4.0'=>'Very good (4.0+)','3.5'=>'Good (3.5+)'] as $val=>$lbl): ?>
-                    <label class="btn rounded-pill px-3 py-2 <?= $selectedRating===$val?'btn-primary':'btn-outline-secondary' ?>" style="<?= $selectedRating===$val?'background:#2563EB;border-color:#2563EB;':'' ?>font-size:13px;font-weight:600;cursor:pointer;">
+                    <label class="btn rounded-pill px-3 py-2 <?= $selectedRating===$val?'btn-primary':'btn-outline-secondary' ?>" style="<?= $selectedRating===$val?'background:#0f62fe;border-color:#0f62fe;':'' ?>font-size:13px;font-weight:600;cursor:pointer;">
                       <input type="radio" name="rating" value="<?= $val ?>" class="d-none" <?= $selectedRating===$val?'checked':'' ?>> <?= h($lbl) ?>
                     </label>
                     <?php endforeach; ?>
@@ -199,7 +199,7 @@ $amenityOptions = [
                 <!-- Booking flexibility -->
                 <div>
                   <h6 class="fw-bold mb-2" style="color:#1F2937;font-size:15px;">Booking flexibility</h6>
-                  <label class="d-flex align-items-center justify-content-between p-3 border rounded-3" style="border-color:<?= $freeCancel?'#2563EB':'#E5E7EB' ?>;background:<?= $freeCancel?'#EFF6FF':'#fff' ?>;cursor:pointer;">
+                  <label class="d-flex align-items-center justify-content-between p-3 border rounded-3" style="border-color:<?= $freeCancel?'#0f62fe':'#E5E7EB' ?>;background:<?= $freeCancel?'#edf5ff':'#fff' ?>;cursor:pointer;">
                     <span>
                       <span style="font-weight:600;color:#1F2937;font-size:14px;">Free cancellation only</span><br>
                       <span style="font-size:12px;color:#6B7280;">Show only stays with free cancellation</span>
@@ -216,7 +216,7 @@ $amenityOptions = [
           <a href="<?= $this->Url->build('/' . (!empty($qp['city']??$qp['destination']??'') ? '?city='.urlencode($qp['city']??$qp['destination']??'') . (!empty($qp['checkin']??$qp['checkIn']??'') ? '&checkin='.urlencode($qp['checkin']??$qp['checkIn']??'') : '') . (!empty($qp['checkout']??$qp['checkOut']??'') ? '&checkout='.urlencode($qp['checkout']??$qp['checkOut']??'') : '') . '&adults='.(int)($qp['adults']??2) : '')) ?>" class="btn btn-link text-decoration-none fw-semibold" style="color:#6B7280;" onclick="event.preventDefault(); document.getElementById('fns_filter_form').reset(); document.getElementById('fns_mdl_min').value=''; document.getElementById('fns_mdl_max').value=''; document.getElementById('fns_mdl_min_legacy').value=''; document.getElementById('fns_mdl_max_legacy').value=''; if(window.FastNetState) { FastNetState.pushState({price_min:'',price_max:'',min_price:'',max_price:'',amenities:'',rating:'',free_cancellation:'',property_type:'',payment:'',meals:'',neighborhood:''}); bootstrap.Modal.getInstance(document.getElementById('fnsFiltersModal')).hide(); } else window.location.href=this.href;">Reset</a>
           <div class="d-flex gap-2">
             <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold" style="background:#2563EB;border-color:#2563EB;">Show <?= (int)$totalCount ?> properties</button>
+            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold" style="background:#0f62fe;border-color:#0f62fe;">Show <?= (int)$totalCount ?> properties</button>
           </div>
         </div>
       </form>

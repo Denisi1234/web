@@ -103,11 +103,12 @@ if (!function_exists('ghPropImages')) {
         $propType = !empty($prop['property_type']) ? ucfirst($prop['property_type']) : '';
         $starLabel = $stars > 0 ? $stars . '-star hotel' : ($propType ?: '');
 
-        // Price — nightly vs stay total (real logic: total = nightly * nights)
+        // Price — base nightly rate; stay total = nightly × nights × rooms (matches backend BookingCalculationService:
+        // subtotal = nightly×nights×qty, VAT 0%, +1% AzamPay fee at checkout). Never claim fees included.
         $price      = (int)($prop['customer_price_per_night'] ?? ($prop['price_per_night'] ?? ($prop['price'] ?? 0)));
         $currency   = ($price > 500) ? 'TSh ' : '$';
         $priceLabel = $price > 0 ? $currency . number_format($price) : '';
-        // nights for stay total
+        // nights × rooms for stay total
         $ciTmp = $queryParams['checkin'] ?? $queryParams['checkIn'] ?? null;
         $coTmp = $queryParams['checkout'] ?? $queryParams['checkOut'] ?? null;
         $nightsForPrice = 1;
@@ -115,8 +116,10 @@ if (!function_exists('ghPropImages')) {
             $tsCi = strtotime((string)$ciTmp); $tsCo = strtotime((string)$coTmp);
             if ($tsCi && $tsCo) $nightsForPrice = max(1, (int)round(($tsCo - $tsCi) / 86400));
         }
-        $totalPrice = $price * $nightsForPrice;
+        $roomsForPrice = max(1, (int)($queryParams['rooms'] ?? 1));
+        $totalPrice = $price * $nightsForPrice * $roomsForPrice;
         $totalLabel = $price > 0 ? $currency . number_format($totalPrice) : '';
+        $totalNightsLabel = $price > 0 ? $currency . number_format($totalPrice) . ' total for ' . $nightsForPrice . ' night' . ($nightsForPrice !== 1 ? 's' : '') . ($roomsForPrice > 1 ? ' · ' . $roomsForPrice . ' rooms' : '') : '';
 
         // Real coords? Coord-less cards must not render the Dar fallback tile (identical maps look broken).
         $rawLat = $prop['latitude'] ?? ($prop['lat'] ?? null);
@@ -243,13 +246,19 @@ if (!function_exists('ghPropImages')) {
 
         <!-- ── Info body ── -->
         <div class="gh-card-body">
-            <!-- Row 1: Name + Price -->
+            <!-- Row 1: Name + Price (Baymard: nightly + stay total + fee transparency) -->
             <div class="gh-name-price-row">
                 <a href="<?= $detailUrl ?>" class="gh-hotel-name" onclick="event.stopPropagation()">
                     <?= h($title) ?>
                 </a>
                 <?php if ($priceLabel !== ''): ?>
-                    <span class="gh-hotel-price" data-nightly="<?= h($priceLabel) ?>" data-total="<?= h($totalLabel) ?>" data-nights="<?= (int)$nightsForPrice ?>"><?= h($priceLabel) ?><span class="gh-price-night">/night</span></span>
+                    <span style="text-align:right;line-height:1.2;flex-shrink:0;">
+                        <span class="gh-hotel-price" data-nightly="<?= h($priceLabel) ?>" data-total="<?= h($totalLabel) ?>" data-nights="<?= (int)$nightsForPrice ?>" data-rooms="<?= (int)$roomsForPrice ?>"><?= h($priceLabel) ?><span class="gh-price-night">/night</span></span>
+                        <?php if ($nightsForPrice > 1 || $roomsForPrice > 1): ?>
+                            <span style="display:block;font-size:11.5px;font-weight:500;color:#525252;"><?= h($totalNightsLabel) ?></span>
+                        <?php endif; ?>
+                        <span style="display:block;font-size:10.5px;color:#6f6f6f;" title="1% AzamPay mobile-money fee is added at checkout">+1% mobile-money fee at checkout</span>
+                    </span>
                 <?php endif; ?>
             </div>
 
@@ -261,6 +270,8 @@ if (!function_exists('ghPropImages')) {
                         <span class="gh-rating-star">★</span>
                         <?php if ($reviewsCount > 0): ?>
                             <span class="gh-rating-count">(<?= number_format($reviewsCount) ?>)</span>
+                        <?php else: ?>
+                            <span class="gh-rating-count" style="background:#e6f4ea;color:#137333;border-radius:8px;padding:0 6px;font-size:11px;font-weight:600;">New</span>
                         <?php endif; ?>
                         <?php if ($starLabel !== ''): ?><span style="color:#5f6368; margin:0 4px;">·</span><span style="color:#5f6368; font-size:12.5px;"><?= h($starLabel) ?></span><?php endif; ?>
                     <?php elseif ($starLabel !== ''): ?>
@@ -305,13 +316,30 @@ if (!function_exists('ghPropImages')) {
     </div>
     <?php endforeach; ?>
 <?php else: ?>
-    <div class="gh-empty">
-        <div class="gh-empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
-        <h4>No stays found for "<?= h($queryParams['destination'] ?? $destination ?? 'your search') ?>"</h4>
-        <p>Try widening your map area, changing dates, or <a href="#" onclick="document.getElementById('trivagoFiltersModal')&&bootstrap.Modal.getOrCreateInstance(document.getElementById('trivagoFiltersModal')).show();return false;" style="color:#1a73e8;text-decoration:none;">clearing filters</a>. We found stays nearby for similar dates.</p>
-        <div class="gh-empty-actions">
-            <a href="<?= $this->Url->build(['?' => ['destination' => $queryParams['destination'] ?? 'Dar es Salaam']]) ?>" class="gh-empty-btn secondary"><i class="fa-solid fa-filter-circle-xmark"></i> Clear filters</a>
-            <a href="<?= $this->Url->build('/') ?>" class="gh-empty-btn primary"><i class="fa-solid fa-rotate"></i> Reset search</a>
+    <?php
+    // Baymard: empty state must preserve search (dates/guests) while clearing only filters
+    $clearQP = [];
+    foreach (['city','destination','checkin','checkout','checkIn','checkOut','adults','children','rooms','lat','lng'] as $k) {
+        if (isset($queryParams[$k]) && $queryParams[$k] !== '' && $queryParams[$k] !== null) $clearQP[$k] = $queryParams[$k];
+    }
+    if (empty($clearQP['destination']) && !empty($clearQP['city'])) $clearQP['destination'] = $clearQP['city'];
+    if (empty($clearQP['city']) && !empty($clearQP['destination'])) $clearQP['city'] = $clearQP['destination'];
+    $emptyDest = trim((string)($queryParams['destination'] ?? $queryParams['city'] ?? $destination ?? ''));
+    $emptyTitle = $emptyDest !== '' ? 'No stays found for "' . $emptyDest . '"' : 'No stays found in Tanzania';
+    $popularEmpty = ['Arusha','Zanzibar','Dar es Salaam','Kilimanjaro','Serengeti','Mwanza'];
+    ?>
+    <div class="gh-empty cds-empty" role="status" aria-live="polite">
+        <div class="cds-empty-icon" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></div>
+        <h4><?= h($emptyTitle) ?></h4>
+        <p>Try widening your map area, changing dates, or <a href="#" onclick="var m=document.getElementById('fnsFiltersModal'); if(m&&window.bootstrap) bootstrap.Modal.getOrCreateInstance(m).show();return false;" style="color:#0f62fe;text-decoration:none;">clearing filters</a>. Or explore popular Tanzanian destinations below.</p>
+        <div class="cds-empty-actions">
+            <a href="<?= $this->Url->build('/?' . http_build_query($clearQP)) ?>" class="cds-btn-secondary"><i class="fa-solid fa-filter-circle-xmark"></i> Clear filters</a>
+            <a href="<?= $this->Url->build('/') ?>" class="cds-btn-primary"><i class="fa-solid fa-rotate"></i> Reset search</a>
+        </div>
+        <div class="cds-popular" aria-label="Popular destinations">
+            <?php foreach ($popularEmpty as $pop): ?>
+                <a href="<?= $this->Url->build('/?city=' . rawurlencode($pop)) ?>"><?= h($pop) ?></a>
+            <?php endforeach; ?>
         </div>
     </div>
 <?php endif; ?>
@@ -320,13 +348,24 @@ if (!function_exists('ghPropImages')) {
 <script>
 function ghBookmark(propId, btn) {
     var icon = btn ? btn.querySelector('i') : null;
+    var wasActive = !!(icon && icon.classList.contains('fa-solid'));
     if (icon) {
-        var isActive = icon.classList.contains('fa-solid');
-        icon.className = isActive ? 'fa-regular fa-bookmark' : 'fa-solid fa-bookmark';
-        icon.style.color = isActive ? '' : '#fff';
+        icon.className = wasActive ? 'fa-regular fa-bookmark' : 'fa-solid fa-bookmark';
+        icon.style.color = wasActive ? '' : '#fff';
         if(navigator.vibrate) try{ navigator.vibrate(10);}catch(e){}
     }
-    if (typeof toggleWishlist === 'function') toggleWishlist(propId, btn);
+    // Mature UI: toggleWishlist is async + local-first — roll back optimistic icon if it rejects (e.g. storage blocked)
+    if (typeof toggleWishlist === 'function') {
+        try {
+            var r = toggleWishlist(propId, btn);
+            if (r && typeof r.catch === 'function') r.catch(function(){
+                if (icon) { icon.className = wasActive ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark'; icon.style.color = wasActive ? '#fff' : ''; }
+                if (typeof window.fnsToast === 'function') window.fnsToast('Couldn’t save — please try again.');
+            });
+        } catch(e) {
+            if (icon) { icon.className = wasActive ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark'; icon.style.color = wasActive ? '#fff' : ''; }
+        }
+    }
 }
 window.ghScrollToCard = function(propId) {
     var c = document.getElementById('gh-card-' + propId);

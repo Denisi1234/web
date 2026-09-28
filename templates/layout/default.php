@@ -23,12 +23,14 @@
         ?>
         <link rel="canonical" href="<?= h($canonUrl) ?>" />
         <link rel="alternate" hreflang="en-TZ" href="<?= h($canonUrl) ?>" />
-        <link rel="alternate" hreflang="sw-TZ" href="<?= h($canonUrl) ?>" />
+        <!-- sw-TZ omitted: no Swahili content ships yet — claiming it would mislead crawlers -->
         <link rel="alternate" hreflang="x-default" href="https://www.fastnetstays.com/" />
         <link rel="alternate" type="text/plain" href="https://www.fastnetstays.com/llms.txt" title="LLM Knowledge Graph" />
         <!-- Production: resource hints — fast LCP + CLS -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <!-- IBM Carbon productive type: IBM Plex Sans 400/500/600/700 -->
+        <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
         <link rel="preconnect" href="https://api.mapbox.com" crossorigin>
         <link rel="preconnect" href="https://api.fastnetstays.com" crossorigin>
         <link rel="dns-prefetch" href="https://images.unsplash.com">
@@ -60,7 +62,7 @@
         <!-- Favicon & Touch Icons for Google Search Snippet Logo -->
         <link rel="icon" type="image/png" sizes="32x32" href="<?= $this->Url->build('/assets/img/favicon.png'); ?>">
         <link rel="apple-touch-icon" sizes="180x180" href="<?= $this->Url->build('/assets/img/favicon.png'); ?>">
-        <meta name="theme-color" content="#1A73E8">
+        <meta name="theme-color" content="#0f62fe">
         <meta name="format-detection" content="telephone=no" />
 
         <!-- Google Rich Result Structured Data (Schema.org JSON-LD for Sitelinks & Brand Search) -->
@@ -168,28 +170,45 @@
         </script>
 
         <!-- CSS Files -->
-        <?= $this->Html->css([
+        <?php
+        // Home (Pages::index) is self-contained (split-view + Carbon) — skip plugin
+        // stylesheets it never uses (dropzone/flatpickr/flickity/lightbox/etc.) to cut render-blocking CSS.
+        $isHomePage = $this->getRequest()->getParam('controller') === 'Pages' && in_array($this->getRequest()->getParam('action'), ['index', 'display'], true);
+        $globalCss = [
             '/assets/css/bootstrap.min.css',
             '/assets/css/animation.css',
-            '/assets/css/dropzone.min.css',
-            '/assets/css/flatpickr.min.css',
-            '/assets/css/flickity.min.css',
-            '/assets/css/lightbox.min.css',
-            '/assets/css/magnifypopup.css',
-            '/assets/css/select2.min.css',
-            '/assets/css/rangeSlider.min.css',
-            '/assets/css/slick.css',
-            '/assets/css/prism.css',
+        ];
+        if (!$isHomePage) {
+            $globalCss = array_merge($globalCss, [
+                '/assets/css/dropzone.min.css',
+                '/assets/css/flatpickr.min.css',
+                '/assets/css/flickity.min.css',
+                '/assets/css/lightbox.min.css',
+                '/assets/css/magnifypopup.css',
+                '/assets/css/select2.min.css',
+                '/assets/css/rangeSlider.min.css',
+                '/assets/css/slick.css',
+                '/assets/css/prism.css',
+            ]);
+        }
+        $globalCss = array_merge($globalCss, [
             '/assets/css/bootstrap-icons.css',
             '/assets/css/fontawesome.css',
             '/assets/css/style.css',
-        ]); ?>
+        ]);
+        echo $this->Html->css($globalCss);
+        ?>
 
         <?= $this->Html->css('/assets/css/ui-tokens.css') ?>
         <?= $this->Html->css('/assets/css/app-loader.css') ?>
         <?= $this->fetch('meta') ?>
         <?= $this->fetch('css') ?>
         <?= $this->Html->css('/assets/css/site-spacing.css') ?>
+        <!-- IBM Carbon LAST so components win over page CSS (Baymard layout untouched) -->
+        <?= $this->Html->css('/assets/css/carbon-polish.css?v=' . filemtime(WWW_ROOT . 'assets/css/carbon-polish.css')) ?>
+        <?php if ($isHomePage): ?>
+        <?= $this->Html->css('/assets/css/carbon-home.css?v=' . filemtime(WWW_ROOT . 'assets/css/carbon-home.css')) ?>
+        <?php endif; ?>
 
         <!-- Universal App Loader Engine -->
         <?= $this->Html->script('/assets/js/app-loader.js') ?>
@@ -222,7 +241,7 @@
             window.MAPBOX_STYLE = <?= json_encode($layoutMapboxStyle) ?> || window.MAPBOX_STYLE || 'mapbox://styles/mapbox/streets-v12';
             var _isMapboxStyle = window.MAPBOX_STYLE && window.MAPBOX_STYLE.indexOf('mapbox://') === 0;
             if (!window.MAPBOX_TOKEN && _isMapboxStyle) {
-                window.MAPBOX_STYLE = 'https://demotiles.maplibre.org/style.json';
+                window.MAPBOX_STYLE = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
             }
             window.DEFAULT_MAPBOX_TOKEN = window.MAPBOX_TOKEN || '';
             if (window.MAPBOX_TOKEN && typeof mapboxgl !== 'undefined') {
@@ -283,6 +302,7 @@
     </head>
 
     <body>
+        <a href="#main-content" class="cds-skip-link">Skip to main content</a>
         <!-- Universal Shared App Loader & Background Task Indicator -->
         <?= $this->element('app-loader') ?>
 

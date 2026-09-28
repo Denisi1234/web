@@ -59,26 +59,26 @@ $toggleAmen = function(string $key) use ($buildUrl, $amenList): string {
 .fns-chips-row::-webkit-scrollbar{display:none;}
 .fns-chip{position:relative;display:inline-flex;align-items:center;gap:8px;padding:8px 12px;margin-right:0;border:1px solid #E5E7EB;border-radius:9999px;background:#fff;color:#1F2937;font-size:13px;font-weight:500;font-family:'Inter','Google Sans',Roboto,sans-serif;cursor:pointer;text-decoration:none !important;white-space:nowrap;flex-shrink:0;line-height:16px;transition:all .15s;height:36px;}
 .fns-chip:hover{border-color:#D1D5DB;background:#F9FAFB;box-shadow:0 1px 3px rgba(0,0,0,.06);}
-.fns-chip.active{background:#EFF6FF;border-color:#2563EB;color:#1D4ED8;box-shadow:0 1px 2px rgba(37,99,235,.12);}
-.fns-chip:focus-visible{outline:2px solid #2563EB;outline-offset:2px;}
+.fns-chip.active{background:#edf5ff;border-color:#0f62fe;color:#0043ce;box-shadow:0 1px 2px rgba(15,98,254,.12);}
+.fns-chip:focus-visible{outline:2px solid #0f62fe;outline-offset:2px;}
 .fns-chip-filters{font-weight:700;gap:8px;}
 .fns-chip-filters.active{background:#1F2937;border-color:#1F2937;color:#fff;}
 .fns-chip-filters .badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:9999px;background:#fff;color:#1F2937;font-size:11px;font-weight:700;margin-left:2px;}
 .fns-chip-filters.active .badge{background:#fff;color:#1F2937;}
 .fns-scroll-btn{position:absolute;right:0;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;border:1px solid #E5E7EB;background:#fff;color:#6B7280;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.08);z-index:3;transition:all .15s;}
 .fns-scroll-btn:hover{background:#F9FAFB;border-color:#D1D5DB;color:#1F2937;}
-.fns-scroll-btn:focus-visible{outline:2px solid #2563EB;outline-offset:2px;}
+.fns-scroll-btn:focus-visible{outline:2px solid #0f62fe;outline-offset:2px;}
 /* Price popover */
 .fns-price-pop{position:absolute;top:calc(100% + 10px);left:0;background:#fff;border:1px solid #E5E7EB;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.12);z-index:1200;padding:16px;width:340px;display:none;}
 .fns-price-pop.open{display:block;animation:fnsPopIn .16s ease;}
 .fns-price-hist{display:flex;align-items:flex-end;gap:2px;height:48px;margin:8px 0 12px;padding:0 2px;}
 .fns-price-bar{flex:1;background:#E5E7EB;border-radius:2px 2px 0 0;min-width:2px;}
-.fns-price-bar.active{background:#2563EB;}
+.fns-price-bar.active{background:#0f62fe;}
 .fns-range-wrap{position:relative;height:6px;background:#E5E7EB;border-radius:9999px;margin:18px 0 8px;}
-.fns-range-fill{position:absolute;top:0;bottom:0;background:#2563EB;border-radius:9999px;}
+.fns-range-fill{position:absolute;top:0;bottom:0;background:#0f62fe;border-radius:9999px;}
 .fns-range-input{position:absolute;top:-7px;width:100%;-webkit-appearance:none;appearance:none;background:transparent;pointer-events:none;}
-.fns-range-input::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid #2563EB;box-shadow:0 1px 4px rgba(0,0,0,.12);pointer-events:auto;cursor:pointer;}
-.fns-range-input::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid #2563EB;box-shadow:0 1px 4px rgba(0,0,0,.12);pointer-events:auto;cursor:pointer;}
+.fns-range-input::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid #0f62fe;box-shadow:0 1px 4px rgba(0,0,0,.12);pointer-events:auto;cursor:pointer;}
+.fns-range-input::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid #0f62fe;box-shadow:0 1px 4px rgba(0,0,0,.12);pointer-events:auto;cursor:pointer;}
 /* Rating dots etc */
 .fns-chip-rating .star{color:#F59E0B;font-size:12px;}
 .fns-chip-rating.active .star{color:#fff;}
@@ -102,10 +102,12 @@ $toggleAmen = function(string $key) use ($buildUrl, $amenList): string {
   .fns-chips-wrap{top:110px !important;}
 }
 /* Mobile UX: Google shows ~4 chips (All filters, Price, Offers, Guest rating).
-   Hide property-type / extra-rating / amenity chips on phones — still available in All filters modal. */
+   Baymard: keep promoted key filters visible to save a trip to the modal.
+   Show: Hotel, Apartment, Safari Lodge, 4.0+, Free-cancel, Free Wi-Fi. Hide rest (still in All filters modal). */
 @media(max-width:767px){
-  .fns-chip[data-filter="property_type"]{display:none !important;}
-  .fns-chip[data-filter="amenities"]{display:none !important;}
+  .fns-chip[data-filter="property_type"][data-value="Resort"],
+  .fns-chip[data-filter="property_type"][data-value="Villa"]{display:none !important;}
+  .fns-chip[data-filter="amenities"]:not([data-value="Wi-Fi"]){display:none !important;}
   .fns-chip[data-filter="rating"][data-value="4.5"],
   .fns-chip[data-filter="rating"][data-value="3.5"]{display:none !important;}
 }
@@ -116,10 +118,10 @@ $toggleAmen = function(string $key) use ($buildUrl, $amenList): string {
 
 <div class="fns-chips-wrap" id="fns_chips_wrap">
   <div class="container-fluid px-1 px-lg-2" style="max-width:100%;margin:0 auto;">
-    <!-- Track prices row — compact -->
-    <div style="display:flex;align-items:center;gap:8px;padding:4px 0 2px;font-size:13px;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A73E8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-      <span style="color:#1A73E8;font-weight:600;font-family:'Inter','Google Sans',Roboto,sans-serif;font-size:13px;">Track prices</span>
+    <!-- Track prices — Carbon Toggle -->
+    <div class="cds-toggle-track" style="display:flex;align-items:center;gap:8px;padding:4px 0 2px;font-size:13px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0f62fe" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+      <span class="cds-toggle-label" style="color:#161616;font-weight:600;font-family:'IBM Plex Sans','Inter',Roboto,sans-serif;font-size:13px;">Track prices</span>
       <button type="button" style="border:none;background:transparent;padding:0;line-height:0;" data-bs-toggle="tooltip" title="Get notified when prices drop" aria-label="About price tracking"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></button>
       <label style="position:relative;display:inline-block;width:38px;height:22px;margin-left:4px;"><input type="checkbox" id="fns_track_chk" style="display:none;" onchange="fnsTrackToggle(this.checked)" role="switch" aria-checked="false" aria-label="Track prices"><span style="position:absolute;inset:0;border-radius:9999px;background:#E5E7EB;transition:.2s;display:flex;align-items:center;justify-content:flex-end;padding-right:3px;" id="fns_track_slider"><span style="width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);display:block;"></span></span></label>
       <span id="fns_track_status" style="font-size:12px;color:#6B7280;">Off</span>
@@ -215,15 +217,85 @@ $toggleAmen = function(string $key) use ($buildUrl, $amenList): string {
 <script>
 (function(){
 'use strict';
-function fnsTrackToggle(on){
+function fnsDeviceId(){
+  try{
+    var k='fns_device_id', v=localStorage.getItem(k);
+    if(v) return v;
+    v = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('dev-'+Date.now()+'-'+Math.floor(Math.random()*1e9));
+    localStorage.setItem(k, v);
+    return v;
+  }catch(e){ return 'dev-anon'; }
+}
+function fnsTrackCity(){
+  try{
+    var u=new URL(window.location.href);
+    return u.searchParams.get('city') || u.searchParams.get('destination') || '';
+  }catch(e){ return ''; }
+}
+function fnsTrackPrice(){
+  var min=0;
+  document.querySelectorAll('.gh-hotel-price').forEach(function(el){
+    var t=(el.getAttribute('data-nightly')||el.textContent||'').replace(/[^0-9]/g,'');
+    var p=parseInt(t,10)||0;
+    if(p>0 && (min===0||p<min)) min=p;
+  });
+  return min;
+}
+function fnsTrackPaint(on){
   var slider=document.getElementById('fns_track_slider');
   var chk=document.getElementById('fns_track_chk');
   var lbl=document.getElementById('fns_track_status');
-  if(chk) chk.setAttribute('aria-checked', on?'true':'false');
+  if(chk){ chk.setAttribute('aria-checked', on?'true':'false'); if(chk.checked!==on) chk.checked=on; }
   if(lbl) lbl.textContent=on?'On':'Off';
-  if(slider){ slider.style.background=on?'#1A73E8':'#E5E7EB'; slider.style.justifyContent=on?'flex-start':'flex-end'; slider.style.paddingLeft=on?'3px':'0'; slider.style.paddingRight=on?'0':'3px'; }
+  if(slider){ slider.style.background=on?'#0f62fe':'#E5E7EB'; slider.style.justifyContent=on?'flex-start':'flex-end'; slider.style.paddingLeft=on?'3px':'0'; slider.style.paddingRight=on?'0':'3px'; }
+}
+function fnsTrackToggle(on, silent){
+  fnsTrackPaint(on);
+  // Real backend alert (POST /alerts via /api proxy) keyed by per-device id — never the shared guest bucket.
+  // localStorage stays as offline fallback so the toggle is never fake.
+  var city=fnsTrackCity(), price=fnsTrackPrice(), uid=fnsDeviceId();
+  var done=function(ok, serverId){
+    try{
+      if(on){ localStorage.setItem('gh_track_prices','1'); if(serverId) localStorage.setItem('gh_price_alert_id', serverId); }
+      else { localStorage.removeItem('gh_track_prices'); localStorage.removeItem('gh_price_alert_id'); }
+    }catch(e){}
+    if(!silent){
+      if(typeof window.fnsToast==='function') window.fnsToast(on ? (ok ? 'Price alert on for '+(city||'Tanzania')+'.' : 'Alert saved on this device. Will sync when online.') : 'Price tracking off.');
+      else if(typeof showWishlistToast==='function') showWishlistToast(on?'Price alert on.':'Price tracking off.');
+    }
+  };
+  if(on){
+    fetch('/api/alerts', {method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'}, body:JSON.stringify({user_id:uid, city:city||'Tanzania', current_price:price||0})})
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){ done(!!d, d && (d.alert ? d.alert.id : d.id)); })
+      .catch(function(){ done(false, null); });
+  } else {
+    var aid=null; try{ aid=localStorage.getItem('gh_price_alert_id'); }catch(e){}
+    if(aid){
+      fetch('/api/alerts/'+encodeURIComponent(aid)+'?user_id='+encodeURIComponent(uid), {method:'DELETE', headers:{'Accept':'application/json'}}).catch(function(){});
+    }
+    done(true, null);
+  }
 }
 window.fnsTrackToggle=fnsTrackToggle;
+document.addEventListener('DOMContentLoaded', function(){
+  // Restore: backend first (per-device), local flag as offline fallback
+  var local=false;
+  try{ local=localStorage.getItem('gh_track_prices')==='1'; }catch(e){}
+  if(local) fnsTrackPaint(true);
+  try{
+    fetch('/api/alerts?user_id='+encodeURIComponent(fnsDeviceId()), {headers:{'Accept':'application/json'}})
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){
+        var arr=(d&&(d.alerts||d.data))||[];
+        var city=(fnsTrackCity()||'').toLowerCase();
+        var live=arr.some(function(a){ return a && a.is_active!==false && (!city || String(a.city||'').toLowerCase()===city || !a.city); });
+        fnsTrackPaint(live || local);
+        if(live){ try{localStorage.setItem('gh_track_prices','1');}catch(e){} }
+      })
+      .catch(function(){});
+  }catch(e){}
+});
 // overflow fade & scroll btn
 function updFade(){
   var row=document.getElementById('fns_chips_row');

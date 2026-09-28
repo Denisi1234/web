@@ -172,7 +172,7 @@ $lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
             </div>
 
             <!-- ══ RIGHT PANE: HALF screen — map starts right after header, full height ── -->
-            <div class="col-xl-6 col-lg-6 d-none d-lg-block ps-lg-1" id="gh_map_col" aria-hidden="true">
+            <div class="col-xl-6 col-lg-6 d-none d-lg-block ps-lg-1" id="gh_map_col" role="complementary" aria-label="Hotel map">
                 <div class="gh-map-sticky">
                     <div class="gh-map-frame shadow-sm position-relative" style="background:#e8ecef; min-height:560px; height:100%; height:calc(100vh - 80px);">
 
@@ -194,28 +194,17 @@ $lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
                         <!-- Zoom Controls — UX: 44px targets, aria-labels + Recenter/Fullscreen (FastNet own) -->
                         <div class="position-absolute top-0 end-0 m-3 d-flex flex-column" style="z-index:20; border-radius:4px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.18);">
                             <button type="button" class="btn btn-white p-0 d-flex align-items-center justify-content-center bg-white border-0 border-bottom"
-                                style="width:36px; height:36px; font-size:18px; color:#5f6368; border-color:#dadce0 !important;"
+                                style="width:44px; height:44px; font-size:18px; color:#5f6368; border-color:#dadce0 !important;"
                                 onclick="if(window._ghMap) window._ghMap.zoomIn()" title="Zoom in" aria-label="Zoom in">+</button>
                             <button type="button" class="btn btn-white p-0 d-flex align-items-center justify-content-center bg-white border-0 border-bottom"
-                                style="width:36px; height:36px; font-size:20px; color:#5f6368; border-color:#dadce0 !important;"
+                                style="width:44px; height:44px; font-size:20px; color:#5f6368; border-color:#dadce0 !important;"
                                 onclick="if(window._ghMap) window._ghMap.zoomOut()" title="Zoom out" aria-label="Zoom out">−</button>
                             <button type="button" class="btn btn-white p-0 d-flex align-items-center justify-content-center bg-white border-0 border-bottom"
-                                style="width:36px; height:36px; font-size:14px; color:#5f6368; border-color:#dadce0 !important;"
+                                style="width:44px; height:44px; font-size:14px; color:#5f6368; border-color:#dadce0 !important;"
                                 onclick="if(window.ghRecenter) window.ghRecenter()" title="Recenter to all stays" aria-label="Recenter"><i class="fa-solid fa-crosshairs"></i></button>
                             <button type="button" class="btn btn-white p-0 d-flex align-items-center justify-content-center bg-white border-0"
-                                style="width:36px; height:36px; font-size:14px; color:#5f6368;"
+                                style="width:44px; height:44px; font-size:14px; color:#5f6368;"
                                 onclick="if(window.ghToggleFullscreen) window.ghToggleFullscreen()" title="Fullscreen" aria-label="Fullscreen"><i class="fa-solid fa-expand"></i></button>
-                        </div>
-
-
-
-                        <!-- Bottom Transit Toggle — UX: label + accessible range -->
-                        <div class="position-absolute bottom-0 start-50 translate-middle-x mb-3 bg-white rounded-pill shadow-sm border px-2 py-1 d-flex align-items-center gap-2" style="z-index:20; border-color:#dadce0 !important;" role="group" aria-label="Transit mode">
-                            <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-dark text-white" style="width:20px;height:20px;font-size:11px;" aria-hidden="true">✕</span>
-                            <i class="fa-solid fa-person-walking" style="font-size:13px;color:#5f6368" aria-hidden="true"></i>
-                            <span style="font-size:13px;font-weight:500;color:#202124" id="gh_transit_label">Off</span>
-                            <i class="fa-solid fa-caret-down" style="font-size:10px;color:#5f6368" aria-hidden="true"></i>
-                            <input type="range" min="0" max="100" value="30" style="width:70px; accent-color:#5f6368" aria-labelledby="gh_transit_label" aria-label="Transit distance">
                         </div>
 
                     </div>
@@ -226,7 +215,91 @@ $lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
     </div>
 </main>
 
-<!-- Mobile Floating Map / List Toggle — removed per request -->
+<!-- Recently viewed rail — renders only when session has stays (element self-guards on empty) -->
+<?= $this->element('Home/recently-viewed', ['recentStays' => $recentStays ?? []]) ?>
+
+<!-- Mobile Floating Map / List Toggle (Baymard: split-view must be discoverable on mobile) -->
+<button type="button" id="gh_mobile_map_toggle" class="d-lg-none" onclick="ghToggleMobileMap(true)" aria-label="Show map" aria-expanded="false" aria-controls="gh_mobile_map_wrap" style="position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:1500;background:#0f62fe;color:#fff;border:none;border-radius:9999px;padding:12px 20px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(15,98,254,.35);min-height:48px;touch-action:manipulation;font-family:'IBM Plex Sans','Inter','Google Sans',Roboto,sans-serif;">
+    <i class="fa-solid fa-map" aria-hidden="true"></i><span id="gh_mobile_map_label">Map · <?= number_format($totalCount ?? count($properties ?? [])) ?> stays</span>
+</button>
+<!-- Mobile fullscreen map overlay -->
+<div id="gh_mobile_map_wrap" class="d-lg-none" role="dialog" aria-modal="true" aria-label="Hotel map" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:2000;background:#e8ecef;">
+    <div id="gh-mobile-map" style="width:100%;height:100%;" role="application" aria-label="Map of hotels"></div>
+    <button type="button" onclick="ghToggleMobileMap(false)" aria-label="Show list" style="position:absolute;bottom:calc(20px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#fff;color:#1F2937;border:1px solid #E5E7EB;border-radius:9999px;padding:12px 20px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);min-height:48px;z-index:2001;">
+        <i class="fa-solid fa-list" aria-hidden="true"></i> List
+    </button>
+    <button type="button" id="gh_mobile_map_close" onclick="ghToggleMobileMap(false)" aria-label="Close map" style="position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;width:44px;height:44px;border-radius:50%;border:1px solid #E5E7EB;background:#fff;color:#1F2937;font-size:16px;z-index:2001;box-shadow:0 2px 8px rgba(0,0,0,.12);"><i class="fa-solid fa-xmark"></i></button>
+</div>
+<script>
+window._ghMobileMap = null;
+window.ghToggleMobileMap = function(open){
+  var wrap = document.getElementById('gh_mobile_map_wrap');
+  var toggle = document.getElementById('gh_mobile_map_toggle');
+  if(!wrap) return;
+  if(open){
+    wrap.style.display = 'block'; wrap.setAttribute('aria-hidden','false');
+    document.body.style.overflow = 'hidden';
+    if(toggle){ toggle.style.display = 'none'; toggle.setAttribute('aria-expanded','true'); }
+    // A11y: move focus into dialog (close button); Escape + return-focus handled below
+    setTimeout(function(){ var c=document.getElementById('gh_mobile_map_close'); if(c) c.focus({preventScroll:true}); }, 60);
+    // init mobile map once (reuse desktop cfg markers)
+    if(!window._ghMobileMap && typeof mapboxgl !== 'undefined'){
+      try{
+        var cfg = window._ghCfg || {markers: [], defaultLat: -6.7725, defaultLng: 39.2450, defaultZoom: 12};
+        var hasTok = window.MAPBOX_TOKEN && window.MAPBOX_TOKEN.indexOf('pk.') === 0;
+        var style = window.MAPBOX_STYLE || 'mapbox://styles/mapbox/streets-v12';
+        if(!hasTok || style.indexOf('mapbox://') !== 0) style = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
+        else mapboxgl.accessToken = window.MAPBOX_TOKEN;
+        var m = new mapboxgl.Map({container: 'gh-mobile-map', style: style, center: [cfg.defaultLng || 39.2450, cfg.defaultLat || -6.7725], zoom: cfg.defaultZoom || 12});
+        m.addControl(new mapboxgl.NavigationControl({showCompass: false}), 'top-right');
+        window._ghMobileMap = m;
+        m.on('load', function(){
+          (cfg.markers || []).slice(0, 200).forEach(function(mk){
+            var el = document.createElement('a');
+            el.href = '/hotel-detail/' + mk.id; el.className = 'gh-mm-price';
+            el.textContent = mk.label; el.style.cssText = 'background:#fff;border:1px solid #dadce0;border-radius:9999px;padding:6px 10px;font-size:12px;font-weight:700;color:#0f62fe;box-shadow:0 2px 8px rgba(0,0,0,.15);white-space:nowrap;text-decoration:none;display:inline-block;';
+            try{ new mapboxgl.Marker({element: el}).setLngLat([mk.lng, mk.lat]).addTo(m); }catch(e){}
+          });
+        });
+      }catch(e){ console.warn('mobile map', e); }
+    } else if(window._ghMobileMap){ try{ window._ghMobileMap.resize(); }catch(e){} }
+  } else {
+    wrap.style.display = 'none'; wrap.setAttribute('aria-hidden','true');
+    document.body.style.overflow = '';
+    if(toggle){ toggle.style.display = 'flex'; toggle.setAttribute('aria-expanded','false'); toggle.focus({preventScroll:true}); }
+  }
+};
+document.addEventListener('keydown', function(e){
+  if(e.key !== 'Escape') return;
+  var wrap = document.getElementById('gh_mobile_map_wrap');
+  if(wrap && wrap.style.display === 'block'){ e.preventDefault(); window.ghToggleMobileMap(false); }
+});
+// M-1: sticky offsets measured from fixed header (not hardcoded 64/116px) — survives wrapping/shrink
+window.ghSyncSticky = function(){
+  try{
+    var wrap = document.querySelector('.agoda-sticky-wrapper');
+    var hh = wrap ? wrap.offsetHeight : (window.innerWidth <= 575 ? 58 : 64);
+    var sw = document.getElementById('fns_search_wrap');
+    var cw = document.getElementById('fns_chips_wrap');
+    if(window.innerWidth >= 992){
+      if(sw) sw.style.top = hh + 'px';
+      if(cw) cw.style.top = (hh + (sw ? sw.offsetHeight : 68)) + 'px';
+    } else if(cw){
+      // mobile search chip scrolls away — chips stick directly under fixed header
+      cw.style.top = hh + 'px';
+    }
+  }catch(e){}
+};
+window.addEventListener('resize', function(){ if(window._ghStickyT) clearTimeout(window._ghStickyT); window._ghStickyT = setTimeout(window.ghSyncSticky, 150); });
+document.addEventListener('DOMContentLoaded', function(){ window.ghSyncSticky(); setTimeout(window.ghSyncSticky, 800); });
+if(document.fonts && document.fonts.ready){ document.fonts.ready.then(function(){ window.ghSyncSticky(); }); }
+// keep toggle count fresh after AJAX hydrate
+window.addEventListener('fastnet:shimmer-hide', function(){
+  var lbl = document.getElementById('gh_mobile_map_label');
+  var c = document.getElementById('gh_results_count');
+  if(lbl && c) lbl.textContent = 'Map · ' + c.textContent.replace(' results','') + ' stays';
+});
+</script>
 <!-- Mobile bottom sheet — hidden until a map marker is tapped (populated by gh-home-map.js) -->
 <div class="gh-mobile-sheet d-lg-none" id="gh_mobile_sheet" aria-hidden="true" style="display:none !important;">
     <div class="gh-sheet-handle" id="gh_sheet_handle"><span></span></div>
@@ -280,10 +353,10 @@ echo json_encode($markers, JSON_UNESCAPED_UNICODE);
 ?>
 </script>
 
-<!-- FastNetState — URL deep-linking engine (push/replaceState, popstate, AJAX hydration) -->
-<?= $this->Html->script('/assets/js/fastnet-state.js?v=' . filemtime(WWW_ROOT . 'assets/js/fastnet-state.js')) ?>
-<!-- Google Hotels Interactive Map Script — uses real Mapbox style/token from backend -->
-<?= $this->Html->script('/assets/js/gh-home-map.js?v=' . filemtime(WWW_ROOT . 'assets/js/gh-home-map.js')) ?>
+<!-- FastNetState — URL deep-linking engine (push/replaceState, popstate, AJAX hydration). Defer: not needed before first paint; inline init guards until DOMContentLoaded -->
+<?= $this->Html->script('/assets/js/fastnet-state.js?v=' . filemtime(WWW_ROOT . 'assets/js/fastnet-state.js'), ['defer' => true]) ?>
+<!-- Google Hotels Interactive Map Script — deferred, uses real Mapbox style/token from backend -->
+<?= $this->Html->script('/assets/js/gh-home-map.js?v=' . filemtime(WWW_ROOT . 'assets/js/gh-home-map.js'), ['defer' => true]) ?>
 
 <script>
 (function () {
@@ -337,9 +410,9 @@ echo json_encode($markers, JSON_UNESCAPED_UNICODE);
             el.dataset.fallbackShown='';
             el.style.display=''; el.style.background='';
         }
-        // gh-home-map.js now handles OSM fallback automatically when token missing — just ensure style is set
+        // gh-home-map.js now handles Carto fallback automatically when token missing — just ensure style is set
         if (!window.MAPBOX_TOKEN && !window.MAPBOX_STYLE) {
-            window.MAPBOX_STYLE = 'https://demotiles.maplibre.org/style.json';
+            window.MAPBOX_STYLE = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
         }
         if (typeof initGhHomeMap === 'function') {
             try{
@@ -399,5 +472,12 @@ echo json_encode($markers, JSON_UNESCAPED_UNICODE);
     window.addEventListener('error', function(e){ console.warn('index error', e.message); });
     window.addEventListener('unhandledrejection', function(e){ console.warn('promise', e.reason); });
 })();
+// ── Mature UI: single toast helper (polite live region #fns_toast) ──
+window.fnsToast = function(msg, ms){
+  var t = document.getElementById('fns_toast');
+  if(!t){ return; }
+  t.textContent = msg; t.style.display = 'block';
+  clearTimeout(t._t); t._t = setTimeout(function(){ t.style.display = 'none'; }, ms || 2800);
+};
 </script>
 <div id="fns_toast" role="status" aria-live="polite" aria-atomic="true" style="position:fixed;bottom:20px;bottom:calc(20px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:11px 18px;border-radius:9999px;font-size:13px;font-weight:500;display:none;z-index:4000;box-shadow:0 8px 30px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.12);max-width:min(92vw,420px);text-align:center;pointer-events:none;font-family:'Inter',Roboto,sans-serif"></div>

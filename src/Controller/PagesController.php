@@ -216,15 +216,21 @@ class PagesController extends AppController
             'lng'              => $input['lng'] ?? '',
         ];
 
-        // Fetch real properties from API — include filters for real production so Apartment/Lodge returns all matching
+        // Fetch real properties from API — empty destination = All Tanzania (omit q to fetch all, don't filter to zero)
+        $isAllTanzania = $destination === '' || strtolower($destination) === 'tanzania';
         $apiPayload = [
-            'q'       => $destination,
             'checkIn' => $queryParams['checkIn'],
             'checkOut'=> $queryParams['checkOut'],
             'adults'  => $adults,
             'children'=> $children,
             'rooms'   => $rooms,
         ];
+        if (!$isAllTanzania) $apiPayload['q'] = $destination;
+        // Sort forwarded — backend PropertySearchService: price_asc/price_desc/rating; omitted = Recommended (reviews_avg_rating DESC)
+        $sortMap = ['price_asc' => 'price_asc', 'price_desc' => 'price_desc', 'rating' => 'rating'];
+        if (!empty($sortMap[$sortBy])) $apiPayload['sort'] = $sortMap[$sortBy];
+        // Paginate server-side (backend max 100) — 48 fills list + map (client marker cap 60) without rendering everything
+        $apiPayload['per_page'] = 48;
         // property_type handled locally solid with name fallback — do not forward to API (API type field is null for seeded data)
         if (!empty($currentAmenities)) $apiPayload['amenities'] = implode(',', $currentAmenities);
         if ($selectedRating !== '') $apiPayload['rating'] = $selectedRating;
@@ -244,10 +250,10 @@ class PagesController extends AppController
         // ── Real Mapbox token from backend (server-side, no CORS race) ──
         // Backend exposes GET /api/map-config → { mapbox_token: "pk.XXX" }
         // Falls back to env MAPBOX_TOKEN / Configure App.mapboxToken for prod
-        // When no Mapbox token, fallback to free OSM style (demotiles) so map never shows "unavailable"
+        // When no Mapbox token, fallback to free Carto basemap (reliable, no key) so map never shows "unavailable"
         $mapboxToken = null;
         $mapboxStyle = (string)Configure::read('App.mapboxStyle', 'mapbox://styles/mapbox/streets-v12');
-        $osmFallbackStyle = 'https://demotiles.maplibre.org/style.json';
+        $osmFallbackStyle = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
         try {
             $cfg = $this->apiClient->get('/map-config');
             if (is_array($cfg)) {
@@ -369,26 +375,15 @@ class PagesController extends AppController
         }
 
         // SOLID professional city filter — Arusha only returns Arusha (exact city match, no "like" leakage)
+        // UX-2: canonical alias map lives in App\Utility\CityAliases (unit-tested) so misspells/short codes
+        // resolve (arusa→arusha, dsm→dar, znz→zanzibar, moshi→kilimanjaro) instead of zeroing results
         if ($destination !== '' && strtolower($destination) !== 'tanzania') {
-            $destNorm = strtolower(trim($destination));
-            $destSlug = preg_replace('/[^a-z0-9]/', '', $destNorm);
-            $properties = array_values(array_filter($properties, function ($p) use ($destNorm, $destSlug) {
-                $city = strtolower(trim((string)($p['city'] ?? '')));
-                $cityFirst = trim(explode(',', $city)[0]);
-                $citySlug = preg_replace('/[^a-z0-9]/', '', $cityFirst);
-                // Dar es Salaam typo tolerance: "dar es salam" vs "dar es salaam" both map to dar
-                $isDarDest = str_contains($destSlug, 'dar');
-                $isDarCity = str_contains($citySlug, 'dar');
-                if ($isDarDest && $isDarCity) return true;
-                if ($isDarDest !== $isDarCity) return false;
-                if ($cityFirst === $destNorm) return true;
-                if ($citySlug === $destSlug) return true;
-                // fallback: area field exact match
-                $area = strtolower(trim((string)($p['area'] ?? '')));
-                $areaFirst = trim(explode(',', $area)[0]);
-                $areaSlug = preg_replace('/[^a-z0-9]/', '', $areaFirst);
-                if ($areaFirst === $destNorm || $areaSlug === $destSlug) return true;
-                return false;
+            $properties = array_values(array_filter($properties, function ($p) use ($destination) {
+                return \App\Utility\CityAliases::matches(
+                    $destination,
+                    (string)($p['city'] ?? ''),
+                    (string)($p['area'] ?? '')
+                );
             }));
         }
 
@@ -445,12 +440,15 @@ class PagesController extends AppController
         }
 
         $totalCount = count($properties);
+        // Honest counts: backend paginator total (all hits) vs shown (page + local filters). Header shows "X of Y" when partial.
+        $totalHits = $this->staysService->lastTotal;
+        if ($totalHits !== null && $totalHits < $totalCount) $totalHits = $totalCount;
 
         // JSON hydration for FastNetState AJAX — ?format=json
         if (($this->getRequest()->getQuery('format') ?? '') === 'json') {
             $view = $this->createView($this->viewBuilder()->getClassName());
-            $view->set(['properties' => $properties, 'queryParams' => $queryParams, 'totalCount' => $totalCount, 'destination' => $destination]);
-            $html = $view->element('Home/gh-hotel-cards', ['properties' => $properties, 'queryParams' => $queryParams, 'totalCount' => $totalCount, 'destination' => $destination]);
+            $view->set(['properties' => $properties, 'queryParams' => $queryParams, 'totalCount' => $totalCount, 'totalHits' => $totalHits, 'destination' => $destination]);
+            $html = $view->element('Home/gh-hotel-cards', ['properties' => $properties, 'queryParams' => $queryParams, 'totalCount' => $totalCount, 'totalHits' => $totalHits, 'destination' => $destination]);
             $markers = [];
             foreach ($properties as $p) {
                 $lat = (float)($p['latitude'] ?? ($p['lat'] ?? 0));
@@ -459,7 +457,7 @@ class PagesController extends AppController
                 $price = (int)($p['customer_price_per_night'] ?? ($p['price_per_night'] ?? ($p['price'] ?? 0)));
                 $markers[] = ['id' => (int)($p['id'] ?? 0), 'lat' => $lat, 'lng' => $lng, 'label' => 'TSH ' . number_format($price), 'title' => $p['name'] ?? ''];
             }
-            $payload = ['html' => $html, 'markers' => $markers, 'totalCount' => $totalCount, 'queryParams' => $queryParams, 'mapboxToken' => $mapboxToken, 'mapboxStyle' => $mapboxStyle];
+            $payload = ['html' => $html, 'markers' => $markers, 'totalCount' => $totalCount, 'totalHits' => $totalHits, 'queryParams' => $queryParams, 'mapboxToken' => $mapboxToken, 'mapboxStyle' => $mapboxStyle];
             return $this->response->withType('application/json')->withStringBody((string)json_encode($payload));
         }
 
@@ -468,7 +466,7 @@ class PagesController extends AppController
         if (!is_array($recentStays)) $recentStays = [];
 
         $this->set(compact(
-            'properties', 'queryParams', 'totalCount', 'searchErrors',
+            'properties', 'queryParams', 'totalCount', 'totalHits', 'searchErrors',
             'destination', 'currentAmenities', 'minPrice', 'maxPrice',
             'selectedRating', 'freeCancel', 'sortBy', 'mapboxToken', 'mapboxStyle',
             'recentStays'
@@ -650,7 +648,8 @@ class PagesController extends AppController
         $apiPath = '/' . implode('/', $path);
         $method = strtolower($this->getRequest()->getMethod());
         // Whitelist — only safe read endpoints are proxied. Payment/booking writes must go via BookingsController.
-        $allowedGetPrefixes = ['/map-config', '/properties', '/rooms', '/destinations', '/auth/verify', '/user/personal-details', '/bookings/calculate'];
+        // /alerts is guest-safe: web sends a per-device user_id so backend buckets never mix strangers (no shared guest_user).
+        $allowedGetPrefixes = ['/map-config', '/properties', '/rooms', '/destinations', '/auth/verify', '/user/personal-details', '/bookings/calculate', '/alerts'];
         $blockedPrefixes = ['/payments/', '/bookings/create', '/bookings/calculate'];
         $isAllowed = false;
         foreach ($allowedGetPrefixes as $p) {
@@ -665,20 +664,25 @@ class PagesController extends AppController
         if (!$isAllowed) {
             return $this->response->withStatus(403)->withType('application/json')->withStringBody(json_encode(['error'=>'Proxy path not allowed']));
         }
-        // Simple per-IP rate limit: 60/min
+        // Simple per-IP rate limit: 60/min (expiry stored inline — Cache::write takes a config name, not a duration)
         $ip = $this->getRequest()->clientIp() ?? 'unknown';
         $cacheKey = 'api_proxy_rate_' . md5($ip . $apiPath);
-        $cnt = \Cake\Cache\Cache::read($cacheKey, 'default');
-        if ($cnt !== null && $cnt >= 60) {
+        $rate = \Cake\Cache\Cache::read($cacheKey, 'default');
+        $rateCount = (is_array($rate) && isset($rate['exp']) && $rate['exp'] > time()) ? (int)$rate['count'] : 0;
+        if ($rateCount >= 60) {
             return $this->response->withStatus(429)->withType('application/json')->withStringBody(json_encode(['error'=>'Rate limit exceeded']));
         }
-        \Cake\Cache\Cache::write($cacheKey, ($cnt ?? 0) + 1, \Cake\Cache\Cache::read($cacheKey) === null ? '+1 minute' : null);
+        \Cake\Cache\Cache::write($cacheKey, ['count' => $rateCount + 1, 'exp' => time() + 60]);
 
         $queryParams = $this->getRequest()->getQueryParams();
         $body = $this->getRequest()->getData();
 
         if ($method === 'post') {
             $data = $this->apiClient->post($apiPath, (array)$body);
+        } elseif ($method === 'delete') {
+            // Forward query string (e.g. /alerts/{id}?user_id=…) — backend scopes buckets by it
+            $delPath = $apiPath . ($queryParams ? '?' . http_build_query($queryParams) : '');
+            $data = $this->apiClient->delete($delPath);
         } else {
             $data = $this->apiClient->get($apiPath, $queryParams);
         }

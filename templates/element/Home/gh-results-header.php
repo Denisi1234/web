@@ -4,7 +4,11 @@
  * "near Dar es Salaam • 118 results" style subheader.
  */
 $count    = $totalCount ?? count($properties ?? []);
+$totalHits = $totalHits ?? null;
 $destName = !empty($queryParams['destination']) ? \App\Utility\TextFormatter::formatTitle((string)$queryParams['destination']) : 'Tanzania';
+// Honest count: "48 of 120 stays" when backend paginator reports more hits than shown
+$countLabel = number_format($count) . ' results';
+if ($totalHits !== null && $totalHits > $count) $countLabel = number_format($count) . ' of ' . number_format($totalHits) . ' stays';
 ?>
 <style>
 .gh-m-price-toggle { display:none; gap:8px; margin-top:8px; overflow-x:auto; scrollbar-width:none; }
@@ -20,8 +24,8 @@ $destName = !empty($queryParams['destination']) ? \App\Utility\TextFormatter::fo
 .gh-m-sort-menu-title { font-size:15px; font-weight:700; color:#202124; padding:0 20px 14px; border-bottom:1px solid #e8eaed; margin-bottom:6px; font-family:'Google Sans',Roboto,sans-serif; }
 .gh-m-sort-opt { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; font-size:14px; color:#202124; font-family:'Google Sans',Roboto,sans-serif; cursor:pointer; text-decoration:none; touch-action:manipulation; }
 .gh-m-sort-opt:active { background:#f8f9fa; }
-.gh-m-sort-opt.active { color:#1a73e8; font-weight:600; }
-.gh-m-sort-opt.active::after { content:'✓'; font-size:14px; color:#1a73e8; }
+.gh-m-sort-opt.active { color:#0f62fe; font-weight:600; }
+.gh-m-sort-opt.active::after { content:'✓'; font-size:14px; color:#0f62fe; }
 .gh-m-sort-backdrop { display:none; position:fixed; inset:0; z-index:1999; background:rgba(0,0,0,.4); }
 .gh-m-sort-backdrop.open { display:block; }
 @media(max-width:767px){
@@ -36,10 +40,10 @@ $destName = !empty($queryParams['destination']) ? \App\Utility\TextFormatter::fo
 <!-- Mobile sort backdrop -->
 <div class="gh-m-sort-backdrop" id="gh_sort_backdrop" onclick="ghCloseMobileSort()"></div>
 <!-- Mobile sort bottom sheet -->
-<div class="gh-m-sort-menu" id="gh_sort_menu" role="dialog" aria-modal="true" aria-label="Sort results">
+<div class="gh-m-sort-menu" id="gh_sort_menu" role="dialog" aria-modal="true" aria-label="Sort results" aria-hidden="true">
   <div class="gh-m-sort-menu-title">Sort by</div>
   <?php
-  $sortOpts = ['recommended'=>'Recommended','price_asc'=>'Price: low to high','price_desc'=>'Price: high to low','rating'=>'Highest rating'];
+  $sortOpts = ['recommended'=>'Recommended · top rated','price_asc'=>'Price: low to high','price_desc'=>'Price: high to low','rating'=>'Highest rating'];
   $currentSort = $queryParams['sort'] ?? 'recommended';
   foreach($sortOpts as $k=>$lbl):
     $p = $queryParams; $p['sort'] = $k; $url = '/?' . http_build_query($p);
@@ -48,9 +52,9 @@ $destName = !empty($queryParams['destination']) ? \App\Utility\TextFormatter::fo
   <?php endforeach; ?>
 </div>
 
-<div class="gh-results-count-row d-flex align-items-center justify-content-between mb-1 flex-wrap gap-2" style="border-bottom:1px solid #e8eaed; padding-bottom:8px;">
-    <div style="font-size:14px; color:#202124; font-family:'Google Sans',Roboto,sans-serif;">
-        <span class="gh-near-part" style="color:#202124;">near <?= h($destName) ?> <span style="color:#5f6368; margin:0 4px;">·</span></span><span id="gh_results_count" data-count="<?= (int)$count ?>" style="color:#202124;"><?= number_format($count) ?> results</span>
+<div class="gh-results-count-row cds-section-head d-flex align-items-center justify-content-between mb-1 flex-wrap gap-2" style="border-bottom:1px solid #e8eaed; padding-bottom:8px;">
+    <div style="font-size:14px; color:#161616; font-family:'IBM Plex Sans','Inter','Google Sans',Roboto,sans-serif;">
+        <span class="gh-near-part" style="color:#161616;">near <?= h($destName) ?> <span style="color:#525252; margin:0 4px;">·</span></span><span id="gh_results_count" data-count="<?= (int)$count ?>" <?= $totalHits !== null && $totalHits > $count ? 'data-total="' . (int)$totalHits . '"' : '' ?> style="color:#161616;"><?= h($countLabel) ?></span>
         <span style="color:#5f6368; margin-left:6px; display:inline-flex; vertical-align:middle;" title="About results"><i class="fa-regular fa-circle-question" style="font-size:12px;"></i></span>
         <?php if (!empty($queryParams['amenities'])): ?>
             <span class="badge ms-2" style="background:#e8f0fe; color:#1967d2; font-size:11px; font-weight:500; border-radius:12px; padding:2px 8px;">Filtered</span>
@@ -59,7 +63,7 @@ $destName = !empty($queryParams['destination']) ? \App\Utility\TextFormatter::fo
     <div class="d-flex align-items-center gap-2">
         <!-- Desktop sort — hidden on mobile -->
         <div class="dropdown d-none d-md-block">
-            <button type="button" class="btn btn-sm bg-white border d-inline-flex align-items-center gap-1" data-bs-toggle="dropdown" aria-expanded="false" style="font-size:13px; font-weight:500; color:#3c4043; border-color:#dadce0 !important; border-radius:18px; padding:4px 10px; font-family:'Google Sans',Roboto,sans-serif;">
+            <button type="button" class="btn btn-sm bg-white border d-inline-flex align-items-center gap-1" data-bs-toggle="dropdown" aria-expanded="false" title="Recommended sorts highest rated first" style="font-size:13px; font-weight:500; color:#3c4043; border-color:#dadce0 !important; border-radius:18px; padding:4px 10px; font-family:'Google Sans',Roboto,sans-serif;">
                 <?php $sortLabel = ['recommended'=>'Recommended','price_asc'=>'Price: low to high','price_desc'=>'Price: high to low','rating'=>'Highest rating'][($queryParams['sort'] ?? 'recommended')] ?? 'Recommended'; echo h($sortLabel); ?>
                 <i class="fa-solid fa-chevron-down" style="font-size:10px; color:#5f6368"></i>
             </button>
@@ -73,7 +77,7 @@ $destName = !empty($queryParams['destination']) ? \App\Utility\TextFormatter::fo
             </ul>
         </div>
         <!-- Mobile sort button — visible only on phones -->
-        <button type="button" class="gh-m-sort-btn d-md-none" onclick="ghOpenMobileSort()" aria-haspopup="dialog" aria-label="Sort results">
+        <button type="button" class="gh-m-sort-btn d-md-none" onclick="ghOpenMobileSort()" aria-haspopup="dialog" aria-expanded="false" aria-controls="gh_sort_menu" aria-label="Sort results">
             <i class="fa-solid fa-arrow-up-wide-short"></i>
             Sort
         </button>
@@ -114,17 +118,20 @@ $destName = !empty($queryParams['destination']) ? \App\Utility\TextFormatter::fo
     });
     // map markers (Mapbox pills)
     if(window._ghCfg && window._ghCfg.markers){
-      // markers label is nightly; stay mode shows total = nightly * nights
+      // markers label is nightly; stay mode shows total = nightly * nights * rooms (matches cards + checkout math)
       try{
         var nights = parseInt(document.getElementById('gh_results_count')?.getAttribute('data-nights')||'1',10)||1;
+        var roomsQ = 1;
+        try{ var uq = new URL(window.location.href); roomsQ = Math.max(1, parseInt(uq.searchParams.get('rooms')||'1',10)||1); }catch(e){}
         if(window.ghRefreshMarkers){
           // rebuild labels for stay mode
           var m = window._ghCfg.markers.map(function(x){
             var p = parseInt(String(x.label).replace(/[^0-9]/g,''))||0;
-            var lbl = mode===STAY && nights>1 ? (x.label.replace(String(p), String(p*nights))) : x.label;
+            var stay = p*nights*roomsQ;
+            var lbl = mode===STAY && (nights>1||roomsQ>1) ? (x.label.replace(String(p), String(stay))) : x.label;
             // keep original nightly in _orig
             if(!x._orig) x._orig=x.label;
-            x.label = mode===STAY ? x._orig.replace(String(p), String(p*nights)) : x._orig;
+            x.label = (mode===STAY && (nights>1||roomsQ>1)) ? x._orig.replace(String(p), String(stay)) : x._orig;
             return x;
           });
           // only refresh if mode switch needs visual (avoid full re-cluster flicker — just update DOM)
@@ -190,14 +197,16 @@ $destName = !empty($queryParams['destination']) ? \App\Utility\TextFormatter::fo
 })();
   window.ghOpenMobileSort = function(){
     var m=document.getElementById('gh_sort_menu'), b=document.getElementById('gh_sort_backdrop');
-    if(m) m.classList.add('open');
+    if(m){ m.classList.add('open'); m.setAttribute('aria-hidden','false'); }
     if(b) b.classList.add('open');
     document.body.style.overflow='hidden';
+    document.querySelectorAll('.gh-m-sort-btn').forEach(function(btn){ btn.setAttribute('aria-expanded','true'); });
   };
   window.ghCloseMobileSort = function(){
     var m=document.getElementById('gh_sort_menu'), b=document.getElementById('gh_sort_backdrop');
-    if(m) m.classList.remove('open');
+    if(m){ m.classList.remove('open'); m.setAttribute('aria-hidden','true'); }
     if(b) b.classList.remove('open');
     document.body.style.overflow='';
+    document.querySelectorAll('.gh-m-sort-btn').forEach(function(btn){ btn.setAttribute('aria-expanded','false'); });
   };
 </script>

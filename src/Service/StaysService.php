@@ -13,6 +13,9 @@ class StaysService
 {
     protected FastnetApiClient $apiClient;
 
+    /** Total hits from last paginated search (Laravel paginator `total`), null when backend omits it. */
+    public ?int $lastTotal = null;
+
     public function __construct(?FastnetApiClient $apiClient = null)
     {
         $this->apiClient = $apiClient ?: new FastnetApiClient();
@@ -99,7 +102,17 @@ class StaysService
     {
         $res = $this->apiClient->get('/properties', $params);
         if ($res === null || (!empty($res['_status']) && $res['_status'] >= 400)) {
+            $this->lastTotal = null;
             return [];
+        }
+
+        // Laravel paginator shape {data, total, per_page} — capture total hits for honest counts
+        if (isset($res['total']) && isset($res['data']) && is_array($res['data'])) {
+            $this->lastTotal = (int)$res['total'];
+        } elseif (isset($res['meta']['total'])) {
+            $this->lastTotal = (int)$res['meta']['total'];
+        } else {
+            $this->lastTotal = null;
         }
 
         $data = $res['data'] ?? ($res['items'] ?? $res);

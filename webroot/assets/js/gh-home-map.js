@@ -11,6 +11,7 @@
     var _sat     = false;
     var _cfg     = null;
     var _inited  = false;
+    var _fitted  = false;   // fit bounds only on first markers load — refreshes must not yank the map
 
     window.initGhHomeMap = function (cfg) {
         if (_inited) return;
@@ -195,6 +196,12 @@
     /* ─── Add markers — FastNet clustering: grid ~1km, +N pills, cap 60 ─── */
     function _addMarkers(markers) {
         if (!_map) return;
+        // clear stale "no stays" overlay once real markers arrive
+        try{
+            var mapEl = document.getElementById('gh-interactive-map');
+            var stale = mapEl && mapEl.querySelector('.gh-map-empty');
+            if (stale && markers && markers.length) stale.remove();
+        }catch(e){}
         var valid = markers.filter(function(m){ return m.lat && m.lng; });
         if(valid.length > 60) valid = valid.slice(0,60);
         // Grid clustering ~1km (0.009 deg)
@@ -238,11 +245,12 @@
             }
         });
 
-        // Fit all markers
-        if (markers.length > 1) {
+        // Fit all markers — first load only; filter refreshes keep the user's viewport
+        if (!_fitted && markers.length > 1) {
             var bounds = new mapboxgl.LngLatBounds();
             markers.forEach(function (m) { if (m.lat && m.lng) bounds.extend([m.lng, m.lat]); });
             _map.fitBounds(bounds, { padding: 56, maxZoom: 14, duration: 800 });
+            _fitted = true;
         }
     }
 

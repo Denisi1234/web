@@ -1,0 +1,245 @@
+/* carbon-home.css — IBM Carbon v11 components for FastNetStays home `/`
+ * Baymard layout kept (split-view, pill DOM, chip URLs, card hooks).
+ * Carbon applied via `cds-` classes + high-specificity overrides of .fns-*/.gh-*.
+ * Load LAST (after carbon-polish.css). White theme, productive type, IBM Plex Sans.
+ */
+
+/* ── 0a. UI-7: Carbon grays win over body-inline :root (gh-search-bar redefines vars in <body>) ── */
+:root {
+  --fns-text: #161616 !important;
+  --fns-text-sec: #525252 !important;
+  --fns-border: #e0e0e0 !important;
+  --fns-bg: #f4f4f4 !important;
+  --cds-focus: #0f62fe;
+}
+/* Hardcoded legacy grays in home templates → Carbon */
+.gh-card-body { color: #161616 !important; }
+.gh-rating-inline { color: #525252 !important; }
+
+/* ── 0b. UI-3: radius lock — tile 8px, tags 16px, buttons 4px, modal/popovers 8px ── */
+#fnsFiltersModal .modal-content { border-radius: 8px !important; overflow: hidden !important; }
+@media (max-width: 991px) {
+  #fnsFiltersModal .modal-content { border-radius: 8px 8px 0 0 !important; }
+}
+#fns_price_pop.fns-price-pop { border-radius: 8px !important; }
+
+/* ── 0. UI-2: single Carbon font stack (beats inline Inter/Google Sans; icons excluded) ── */
+.fns-seg-label, .fns-seg-value, .fns-seg-input,
+.fns-chip, .fns-dd-label, .fns-dd-sub, .fns-dd-section,
+.fns-preset, .fns-g-label, .fns-g-sub, .fns-step-val,
+.fns-cal-titles, .fns-cal-summary, .fns-btn-reset, .fns-btn-apply,
+.fns-sheet-header-title, .fns-sheet-tab, .fns-acc-title, .fns-acc-value,
+.fns-m-input, .fns-mobile-chip-text,
+.gh-hotel-name, .gh-hotel-price, .gh-price-night,
+.gh-rating-num, .gh-rating-count, .gh-am-item,
+.gh-results-count-row, .gh-m-sort-btn, .gh-m-sort-menu-title, .gh-m-sort-opt, .gh-m-price-pill,
+.cds-empty h4, .cds-empty p, .cds-empty .cds-btn-primary, .cds-empty .cds-btn-secondary, .cds-empty .cds-popular a {
+  font-family: 'IBM Plex Sans','Inter','Google Sans',Roboto,'Helvetica Neue',Arial,sans-serif !important;
+}
+
+/* ── 1. Search pill → Carbon Search tile ── */
+.fns-pill.cds-search-pill,
+.cds-search-pill#fns_pill {
+  background: #fff !important;
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 2px rgba(22,22,22,.06) !important;
+  height: 68px !important;
+}
+.cds-search-pill#fns_pill:hover { border-color: #8d8d8d !important; box-shadow: 0 2px 6px rgba(22,22,22,.1) !important; }
+.cds-search-pill#fns_pill:focus-within { border-color: #0f62fe !important; box-shadow: inset 0 -2px 0 #0f62fe !important; }
+.cds-search-pill .fns-seg { border-radius: 4px !important; }
+.cds-search-pill .fns-seg-label {
+  font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important;
+  font-size: 12px !important; font-weight: 400 !important;
+  letter-spacing: .32px !important; color: #525252 !important;
+}
+.cds-search-pill .fns-seg-value, .cds-search-pill .fns-seg-input {
+  font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important;
+  font-size: 14px !important; line-height: 18px !important; color: #161616 !important;
+}
+.cds-search-pill .fns-divider { background: #e0e0e0 !important; }
+.cds-search-pill .fns-cta {
+  background: #0f62fe !important; border-radius: 4px !important;
+  min-height: 48px !important; padding: 0 24px !important;
+  font-size: 15px !important; font-weight: 600 !important;
+  box-shadow: none !important;
+}
+.cds-search-pill .fns-cta:hover { background: #0353e9 !important; }
+.cds-search-pill .fns-cta:active { background: #002d9c !important; }
+.cds-search-pill .fns-nights-badge {
+  background: #edf5ff !important; border: 1px solid #d0e2ff !important;
+  color: #0043ce !important; border-radius: 12px !important;
+}
+/* Carbon popovers */
+.cds-search-pill .fns-pop {
+  border: 1px solid #e0e0e0 !important; border-radius: 8px !important;
+  box-shadow: 0 8px 24px rgba(22,22,22,.12) !important;
+}
+
+/* ── 2. Chips → Carbon Tags (applied directly to .fns-chip; .cds-tag optional) ── */
+.fns-chips-row .fns-chip {
+  background: #f4f4f4 !important; border: 1px solid #e0e0e0 !important;
+  border-radius: 16px !important; color: #161616 !important;
+  font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important;
+  font-size: 13px !important; font-weight: 400 !important;
+  min-height: 36px !important; padding: 6px 12px !important;
+}
+.fns-chips-row .fns-chip:hover { background: #e8e8e8 !important; border-color: #8d8d8d !important; }
+.fns-chips-row .fns-chip.active {
+  background: #edf5ff !important; border-color: #0f62fe !important; color: #0043ce !important;
+}
+.fns-chips-row .fns-chip-filters {
+  background: #161616 !important; border-color: #161616 !important; color: #fff !important;
+}
+.fns-chips-row .fns-chip-filters.active { background: #0f62fe !important; border-color: #0f62fe !important; }
+.fns-chips-row .fns-chip-filters .badge {
+  background: #fff !important; color: #161616 !important; border-radius: 10px !important;
+}
+/* Carbon Toggle for track prices */
+.cds-toggle-track { display: flex; align-items: center; gap: 8px; }
+.cds-toggle-track .cds-toggle-label { font-size: 13px; color: #161616; font-weight: 600; }
+.cds-toggle-track input[role="switch"] + span { border: 1px solid #8d8d8d !important; }
+
+/* ── 3. Cards → Carbon Clickable Tiles (applied to .gh-card directly) ── */
+#gh-cards-container .gh-card {
+  background: #fff !important; border: 1px solid #e0e0e0 !important;
+  border-radius: 8px !important; overflow: hidden !important;
+  box-shadow: none !important;
+  transition: box-shadow .15s ease, border-color .15s ease !important;
+}
+#gh-cards-container .gh-card:hover {
+  border-color: #8d8d8d !important; box-shadow: 0 4px 12px rgba(22,22,22,.1) !important;
+}
+/* UX-6: marker→card flash uses Carbon blue (overrides hotel-card.css/google-travel-cards.css #1a73e8) */
+#gh-cards-container .gh-card.map-hovered {
+  border-color: #0f62fe !important;
+  box-shadow: 0 0 0 2px #0f62fe, 0 8px 24px rgba(15,98,254,.25) !important;
+  transform: translateY(-2px);
+}
+.gh-card .gh-hotel-name {
+  font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important;
+  font-size: 16px !important; line-height: 22px !important; font-weight: 600 !important;
+  color: #161616 !important;
+}
+.gh-card .gh-hotel-price {
+  font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important;
+  font-size: 16px !important; font-weight: 600 !important; color: #161616 !important;
+}
+.gh-card .gh-price-night, .gh-card .gh-rating-count { color: #525252 !important; font-size: 12px !important; }
+.gh-card .gh-rating-num { color: #161616 !important; font-weight: 600 !important; }
+.gh-card .gh-am-item { color: #525252 !important; font-size: 12px !important; }
+.gh-card .gh-am-item i { color: #161616 !important; }
+.gh-card .gh-btn-prices {
+  background: #0f62fe !important; border: 1px solid #0f62fe !important; color: #fff !important;
+  border-radius: 4px !important; min-height: 44px !important; padding: 10px 20px !important;
+  font-size: 14px !important; font-weight: 600 !important;
+}
+.gh-card .gh-btn-prices:hover { background: #0353e9 !important; }
+.gh-card .gh-btn-details {
+  border: 1px solid #0f62fe !important; color: #0f62fe !important; background: #fff !important;
+  border-radius: 4px !important; min-height: 44px !important;
+}
+.gh-card .gh-btn-details:hover { background: #0f62fe !important; color: #fff !important; }
+
+/* ── 4. Results header → Carbon section header ── */
+.gh-results-count-row.cds-section-head { border-bottom: 1px solid #e0e0e0 !important; padding-bottom: 8px !important; }
+.cds-section-head #gh_results_count { font-weight: 600 !important; color: #161616 !important; }
+.cds-section-head .gh-near-part { color: #161616 !important; }
+
+/* ── 5. Carbon Empty state ── */
+.cds-empty {
+  background: #fff !important; border: 1px solid #e0e0e0 !important; border-radius: 8px !important;
+  padding: 40px 24px !important; text-align: center !important; margin-top: 16px !important;
+}
+.cds-empty .cds-empty-icon {
+  width: 48px; height: 48px; border-radius: 50%; background: #f4f4f4 !important;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: #525252 !important; font-size: 20px !important; margin-bottom: 16px !important;
+}
+.cds-empty h4 {
+  font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important;
+  font-size: 20px !important; line-height: 28px !important; font-weight: 400 !important;
+  color: #161616 !important; margin: 0 0 8px !important;
+}
+.cds-empty p { font-size: 14px !important; line-height: 20px !important; color: #525252 !important; max-width: 460px; margin: 0 auto 16px !important; }
+.cds-empty .cds-empty-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
+.cds-empty .cds-btn-primary {
+  background: #0f62fe !important; color: #fff !important; border: 1px solid #0f62fe !important;
+  border-radius: 4px !important; min-height: 48px !important; padding: 12px 24px !important;
+  font-size: 14px !important; font-weight: 600 !important; text-decoration: none !important;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.cds-empty .cds-btn-primary:hover { background: #0353e9 !important; }
+.cds-empty .cds-btn-secondary {
+  background: #fff !important; color: #0f62fe !important; border: 1px solid #0f62fe !important;
+  border-radius: 4px !important; min-height: 48px !important; padding: 12px 24px !important;
+  font-size: 14px !important; font-weight: 600 !important; text-decoration: none !important;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.cds-empty .cds-btn-secondary:hover { background: #edf5ff !important; }
+.cds-empty .cds-popular { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.cds-empty .cds-popular a {
+  background: #f4f4f4 !important; border: 1px solid #e0e0e0 !important; border-radius: 16px !important;
+  padding: 6px 12px !important; font-size: 13px !important; color: #161616 !important; text-decoration: none !important;
+}
+.cds-empty .cds-popular a:hover { border-color: #0f62fe !important; color: #0043ce !important; background: #edf5ff !important; }
+
+/* ── 8. Final polish: map pills, shimmer, empty icon → Carbon ── */
+.gh-map-marker {
+  background: #0f62fe !important; border-color: #0f62fe !important;
+  font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important;
+}
+.gh-map-marker::before { border-top-color: #0f62fe !important; }
+.gh-map-marker::after { border-top-color: rgba(15,98,254,.9) !important; }
+.gh-mm-icon i { color: #0f62fe !important; }
+.gh-map-marker.active, .gh-map-marker:active {
+  background: #0043ce !important; border-color: #0043ce !important;
+}
+.gh-shimmer { border-radius: 8px !important; border-color: #e0e0e0 !important; }
+.gh-shim-block { background: #f4f4f4 !important; }
+.cds-empty .cds-empty-icon { background: #edf5ff !important; color: #0f62fe !important; }
+.gh-m-sort-opt.active { color: #0f62fe !important; }
+.gh-m-sort-opt.active::after { color: #0f62fe !important; }
+.gh-m-price-pill.active { background: #edf5ff !important; border-color: #d0e2ff !important; color: #0043ce !important; }
+
+/* ── 7. UI-5: 44px Carbon touch targets (visuals unchanged) ── */
+.gh-card-nav {
+  width: 44px !important; height: 44px !important;
+  font-size: 20px !important;
+}
+.gh-card-dot {
+  width: 24px !important; height: 24px !important;
+  background: transparent !important; border: none !important;
+  box-shadow: none !important; padding: 0 !important;
+  position: relative !important; flex-shrink: 0 !important;
+}
+.gh-card-dot::after {
+  content: '' !important; position: absolute !important;
+  top: 50% !important; left: 50% !important;
+  transform: translate(-50%,-50%) !important;
+  width: 6px !important; height: 6px !important;
+  border-radius: 50% !important; background: rgba(255,255,255,.55) !important;
+}
+.gh-card-dot.a::after, .gh-card-dot.active::after { background: #fff !important; }
+
+/* ── 6. Carbon focus + motion ── */
+.cds-search-pill :focus-visible, .fns-chips-row .fns-chip:focus-visible,
+.gh-card :focus-visible, .cds-empty :focus-visible {
+  outline: 2px solid #0f62fe !important; outline-offset: 2px !important;
+}
+/* UI-6: price inputs had outline:none with zero replacement — give Carbon ring */
+#fns_price_min:focus-visible, #fns_price_max:focus-visible {
+  outline: 2px solid #0f62fe !important; outline-offset: 1px !important;
+  border-color: #0f62fe !important;
+}
+/* Inner text inputs use parent-container focus (Carbon field pattern) — suppress double ring */
+.cds-search-pill .fns-seg-input:focus-visible, .fns-m-input-wrap .fns-m-input:focus-visible {
+  outline: none !important; box-shadow: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cds-search-pill, .fns-chip, .gh-card { transition: none !important; }
+}
+@media (max-width: 991px) {
+  .cds-search-pill#fns_pill { height: auto !important; }
+}

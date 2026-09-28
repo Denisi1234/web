@@ -34,7 +34,7 @@ $mSummary = h($destVal ?: 'All Tanzanian Destinations') . ' • ' . date('M j', 
 ?>
 <style>
 /* ── SPEC DESIGN TOKENS ── */
-:root{--fns-blue:#1A73E8;--fns-blue-active:#2563EB;--fns-border:#E5E7EB;--fns-text:#1F2937;--fns-text-sec:#6B7280;--fns-bg:#FFFFFF;--fns-pill-shadow:0 4px 20px rgba(0,0,0,.08);--fns-pill-shadow-hover:0 8px 30px rgba(0,0,0,.12);}
+:root{--fns-blue:#0f62fe;--fns-blue-active:#0f62fe;--fns-border:#E5E7EB;--fns-text:#1F2937;--fns-text-sec:#6B7280;--fns-bg:#FFFFFF;--fns-pill-shadow:0 4px 20px rgba(0,0,0,.08);--fns-pill-shadow-hover:0 8px 30px rgba(0,0,0,.12);}
 *{scrollbar-width:thin}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;scroll-behavior:auto !important}}
 .fns-search-wrap{position:sticky;top:64px;z-index:910;background:transparent;padding:0;}
@@ -56,8 +56,8 @@ $mSummary = h($destVal ?: 'All Tanzanian Destinations') . ' • ' . date('M j', 
 .fns-seg-input::placeholder{color:#9CA3AF;font-weight:400;}
 .fns-divider{width:1px;align-self:center;height:32px;background:var(--fns-border);flex-shrink:0;}
 .fns-nights-badge{display:inline-flex;align-items:center;justify-content:center;min-height:20px;font-size:11px;font-weight:600;color:var(--fns-blue);background:#EFF6FF;border:1px solid #DBEAFE;border-radius:9999px;padding:0 8px;margin-left:8px;white-space:nowrap;line-height:1;}
-.fns-cta{flex:0 0 auto;align-self:center;display:inline-flex;align-items:center;gap:8px;background:var(--fns-blue);color:#fff;border:none;border-radius:9999px;padding:0 20px;height:44px;font-family:'Inter','Google Sans',Roboto,sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:transform .12s ease, filter .15s, background .15s;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.08);}
-.fns-cta:hover{filter:brightness(1.06);background:#1765CC;}
+.fns-cta{flex:0 0 auto;align-self:center;display:inline-flex;align-items:center;gap:8px;background:var(--fns-blue);color:#fff;border:none;border-radius:9999px;padding:0 24px;height:44px;min-height:48px;font-family:'Inter','Google Sans',Roboto,sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:transform .12s ease, filter .15s, background .15s;white-space:nowrap;box-shadow:0 4px 12px rgba(26,115,232,.3),0 1px 2px rgba(0,0,0,.08);}
+.fns-cta:hover{filter:brightness(1.06);background:#0353e9;}
 .fns-cta:active{transform:scale(.97);}
 .fns-cta:focus-visible{outline:2px solid var(--fns-blue-active);outline-offset:2px;}
 .fns-cta[aria-busy="true"]{pointer-events:none;opacity:.9}
@@ -129,7 +129,7 @@ $mSummary = h($destVal ?: 'All Tanzanian Destinations') . ' • ' . date('M j', 
 .fns-btn-reset{border:none;background:transparent;color:var(--fns-text-sec);font-size:13px;font-weight:600;cursor:pointer;padding:8px 12px;border-radius:9999px;}
 .fns-btn-reset:hover{background:#F9FAFB;}
 .fns-btn-apply{background:var(--fns-blue);color:#fff;border:none;border-radius:9999px;padding:9px 20px;font-size:14px;font-weight:600;cursor:pointer;}
-.fns-btn-apply:hover{background:#1765CC;}
+.fns-btn-apply:hover{background:#0353e9;}
 /* ── Mobile: enterprise-grade chip + bottom sheet (parity with desktop) ── */
 .fns-mobile-chip{display:none;position:relative;background:#fff;border:1px solid var(--fns-border);border-radius:9999px;box-shadow:var(--fns-pill-shadow);align-items:center;gap:10px;cursor:pointer;transition:box-shadow .18s, transform .12s;width:100%;}
 .fns-mobile-chip:hover{box-shadow:var(--fns-pill-shadow-hover);}
@@ -244,11 +244,11 @@ $mSummary = h($destVal ?: 'All Tanzanian Destinations') . ' • ' . date('M j', 
       <input type="hidden" name="children" id="gh_ch" value="<?= $children ?>">
       <input type="hidden" name="rooms" id="gh_rm" value="<?= $rooms ?>">
 
-      <div class="fns-pill" id="fns_pill" role="group" aria-label="Search stays">
+      <div class="fns-pill cds-search-pill" id="fns_pill" role="group" aria-label="Search stays">
         <!-- Where -->
-        <div class="fns-seg" id="fns_seg_where" role="combobox" aria-expanded="false" aria-haspopup="dialog" aria-controls="fns_pop_dest" tabindex="0" aria-label="Destination">
+        <div class="fns-seg" id="fns_seg_where" role="combobox" aria-expanded="false" aria-haspopup="listbox" aria-owns="fns_pop_dest" aria-controls="fns_pop_dest" tabindex="0" aria-label="Destination">
           <span class="fns-seg-label">Where to?</span>
-          <input type="text" id="gh_dest" name="destination" class="fns-seg-input" value="<?= h($destVal) ?>" placeholder="City, landmark, or hotel name" autocomplete="off" aria-autocomplete="list" aria-controls="fns_dd_list" aria-label="Destination input" onfocus="fnsDestFocus()" oninput="fnsDestInput(this.value)" onkeydown="fnsDestKey(event)">
+          <input type="text" id="gh_dest" name="destination" class="fns-seg-input" value="<?= h($destVal) ?>" placeholder="City, landmark, or hotel name" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="fns_pop_dest" aria-activedescendant="" aria-label="Destination input" onfocus="fnsDestFocus()" oninput="fnsDestInput(this.value)" onkeydown="fnsDestKey(event)">
           <button type="button" class="fns-clear" id="fns_clear" onclick="fnsDestClear()" aria-label="Clear destination" tabindex="-1"><i class="fa-solid fa-xmark" style="font-size:12px;"></i></button>
           <!-- Destination popover -->
           <div class="fns-pop fns-pop-dest" id="fns_pop_dest" role="dialog" aria-label="Destination suggestions" onclick="event.stopPropagation()">
@@ -435,16 +435,23 @@ var _ci='<?= h($checkIn) ?>', _co='<?= h($checkOut) ?>';
 var _ad=<?= $adults ?>, _ch=<?= $children ?>, _rm=<?= $rooms ?>;
 var _calOff=0, _picking='ci', _ddIdx=-1;
 
-// ── Popular Tanzanian Destinations (spec) ──
+// ── Popular Tanzanian Destinations (spec) + alias keys for typo/short-code tolerance ──
 var POPULAR=[
-  {id:'arusha', label:'Arusha', sub:'Gateway to Serengeti & Ngorongoro', icon:'fa-mountain-sun', lat:-3.3869, lng:36.6829},
-  {id:'zanzibar', label:'Zanzibar', sub:'Stone Town & Beaches', icon:'fa-umbrella-beach', lat:-6.1659, lng:39.1996},
-  {id:'dar', label:'Dar es Salaam', sub:'Commercial capital', icon:'fa-city', lat:-6.7924, lng:39.2083},
-  {id:'kilimanjaro', label:'Kilimanjaro', sub:'Mount Kilimanjaro region', icon:'fa-mountain', lat:-3.0674, lng:37.3556},
-  {id:'serengeti', label:'Serengeti', sub:'National Park', icon:'fa-paw', lat:-2.3333, lng:34.8333},
-  {id:'mwanza', label:'Mwanza', sub:'Lake Victoria', icon:'fa-water', lat:-2.5167, lng:32.9}
+  {id:'arusha', label:'Arusha', sub:'Gateway to Serengeti & Ngorongoro', icon:'fa-mountain-sun', lat:-3.3869, lng:36.6829, aka:'arusa arushatown'},
+  {id:'zanzibar', label:'Zanzibar', sub:'Stone Town & Beaches', icon:'fa-umbrella-beach', lat:-6.1659, lng:39.1996, aka:'znz stonetown zanzibartown'},
+  {id:'dar', label:'Dar es Salaam', sub:'Commercial capital', icon:'fa-city', lat:-6.7924, lng:39.2083, aka:'dsm daressalaam daressalam daresalaam'},
+  {id:'kilimanjaro', label:'Kilimanjaro', sub:'Mount Kilimanjaro region', icon:'fa-mountain', lat:-3.0674, lng:37.3556, aka:'moshi'},
+  {id:'serengeti', label:'Serengeti', sub:'National Park', icon:'fa-paw', lat:-2.3333, lng:34.8333, aka:'seronera'},
+  {id:'mwanza', label:'Mwanza', sub:'Lake Victoria', icon:'fa-water', lat:-2.5167, lng:32.9, aka:'lakevictoria'}
 ];
 var RECENT_KEY='fns_recent_searches';
+function fnsMatchPopular(p, ql, qslug){
+  if(!ql) return true;
+  if(p.label.toLowerCase().indexOf(ql)!==-1 || p.sub.toLowerCase().indexOf(ql)!==-1) return true;
+  if(p.aka && p.aka.indexOf(ql)!==-1) return true;
+  if(qslug && p.aka && p.aka.replace(/[^a-z0-9 ]/g,'').replace(/ /g,'').indexOf(qslug)!==-1) return true;
+  return false;
+}
 function getRecent(){ try{return JSON.parse(localStorage.getItem(RECENT_KEY)||'[]');}catch(e){return [];} }
 function pushRecent(val){
   if(!val || val==='All Tanzanian Destinations') return;
@@ -457,12 +464,15 @@ function renderDest(q){
   var recentEl=document.getElementById('fns_dd_recent');
   if(!popularEl) return;
   var ql=(q||'').toLowerCase().trim();
-  var filtered= POPULAR.filter(function(p){ return !ql || p.label.toLowerCase().indexOf(ql)!==-1 || p.sub.toLowerCase().indexOf(ql)!==-1; });
+  var qslug=ql.replace(/[^a-z0-9]/g,'');
+  var filtered= POPULAR.filter(function(p){ return fnsMatchPopular(p, ql, qslug); });
   var html='<div class="fns-dd-section"><i class="fa-solid fa-fire" style="margin-right:6px;"></i>Popular Tanzanian Destinations</div>';
   if(filtered.length===0) html+='<div style="padding:10px 16px;color:var(--fns-text-sec);font-size:13px;">No matches — try Arusha, Zanzibar, …</div>';
   filtered.forEach(function(p,i){
     var active=i===_ddIdx?' highlight':'';
-    html+='<div class="fns-dd-item'+active+'" data-value="'+p.label+'" data-idx="'+i+'" onclick="fnsPickDest(\''+p.label.replace(/'/g,"\\'")+'\','+p.lat+','+p.lng+')" onmouseenter="fnsHlDest('+i+')"><span class="fns-dd-icon"><i class="fa-solid '+p.icon+'"></i></span><span><div class="fns-dd-label">'+p.label+'</div><div class="fns-dd-sub">'+p.sub+'</div></span></div>';
+    var optId='fns-opt-'+i;
+    var sel=i===_ddIdx?' aria-selected="true"':' aria-selected="false"';
+    html+='<div class="fns-dd-item'+active+'" id="'+optId+'" role="option"'+sel+' data-value="'+p.label+'" data-idx="'+i+'" onclick="fnsPickDest(\''+p.label.replace(/'/g,"\\'")+'\','+p.lat+','+p.lng+')" onmouseenter="fnsHlDest('+i+')"><span class="fns-dd-icon"><i class="fa-solid '+p.icon+'"></i></span><span><div class="fns-dd-label">'+p.label+'</div><div class="fns-dd-sub">'+p.sub+'</div></span></div>';
   });
   popularEl.innerHTML=html;
   // recent
@@ -543,7 +553,7 @@ function fnsMbxSuggest(ql){
   if(_mbxCache[ql]){
     _mbxResults=_mbxCache[ql]; _mbxQ=ql; renderMbx();
     syncMobileList(ql,
-      POPULAR.filter(function(p){ return p.label.toLowerCase().indexOf(ql)!==-1 || p.sub.toLowerCase().indexOf(ql)!==-1; }),
+      POPULAR.filter(function(p){ return fnsMatchPopular(p, ql, ql.replace(/[^a-z0-9]/g,'')); }),
       getRecent());
     return;
   }
@@ -566,7 +576,7 @@ function fnsMbxSuggest(ql){
         _mbxCache[curQ]=feats; _mbxResults=feats; _mbxQ=curQ;
         renderMbx();
         syncMobileList(curQ,
-          POPULAR.filter(function(p){ return p.label.toLowerCase().indexOf(curQ)!==-1 || p.sub.toLowerCase().indexOf(curQ)!==-1; }),
+          POPULAR.filter(function(p){ return fnsMatchPopular(p, curQ, curQ.replace(/[^a-z0-9]/g,'')); }),
           getRecent());
       })
       .catch(function(e){ if(e&&e.name==='AbortError') return; renderMbx(); });
@@ -593,7 +603,18 @@ window.fnsPickDest=function(val, lat, lng){
   if(window.FastNetState) FastNetState.replaceState({city:val, destination:val, lat:(lat||''), lng:(lng||'')});
   updateClear();
 };
-window.fnsHlDest=function(i){ _ddIdx=i; renderDest(document.getElementById('gh_dest').value); };
+window.fnsHlDest=function(i){
+  // Hover highlight only — NEVER re-render here: renderDest() replaces innerHTML
+  // and destroys the node under the cursor before click fires (popular items felt unclickable).
+  _ddIdx=i;
+  var items=document.querySelectorAll('#fns_dd_popular .fns-dd-item, #fns_dd_mbx .fns-dd-item, #fns_dd_recent .fns-dd-item');
+  items.forEach(function(el, idx){
+    el.classList.toggle('highlight', idx===i);
+    el.setAttribute('aria-selected', idx===i ? 'true' : 'false');
+  });
+  var input=document.getElementById('gh_dest');
+  if(input && items[i]) input.setAttribute('aria-activedescendant', items[i].id || '');
+};
 
 function updateClear(){
   var v=document.getElementById('gh_dest').value.trim();
@@ -632,11 +653,13 @@ window.fnsDestInput=function(v){
   if(pop && !pop.classList.contains('open')){ pop.classList.add('open'); document.getElementById('fns_seg_where').setAttribute('aria-expanded','true');}
 };
 window.fnsDestKey=function(e){
-  var items=document.querySelectorAll('#fns_dd_popular .fns-dd-item, #fns_dd_mbx .fns-dd-item, #fns_dd_recent .fns-dd-item');
-  if(e.key==='ArrowDown'){ e.preventDefault(); _ddIdx=Math.min(_ddIdx+1, items.length-1); renderDest(e.target.value); items[_ddIdx]?.scrollIntoView({block:'nearest'});}
-  else if(e.key==='ArrowUp'){ e.preventDefault(); _ddIdx=Math.max(_ddIdx-1,0); renderDest(e.target.value);}
-  else if(e.key==='Enter'){ e.preventDefault(); if(_ddIdx>=0 && items[_ddIdx]){ items[_ddIdx].click(); } else { fnsClosePopovers(); document.getElementById('gh_search_form').requestSubmit(); } }
-  else if(e.key==='Escape'){ fnsClosePopovers(); }
+  var sel='#fns_dd_popular .fns-dd-item, #fns_dd_mbx .fns-dd-item, #fns_dd_recent .fns-dd-item';
+  var input=document.getElementById('gh_dest');
+  var fresh=function(){ return document.querySelectorAll(sel); };
+  if(e.key==='ArrowDown'){ e.preventDefault(); var n=fresh().length; _ddIdx=Math.min(_ddIdx+1, n-1); renderDest(e.target.value); var it=fresh(); it[_ddIdx]?.scrollIntoView({block:'nearest'}); if(input&&it[_ddIdx]){input.setAttribute('aria-activedescendant', it[_ddIdx].id || ''); input.setAttribute('aria-expanded','true');}}
+  else if(e.key==='ArrowUp'){ e.preventDefault(); _ddIdx=Math.max(_ddIdx-1,0); renderDest(e.target.value); var it2=fresh(); if(input&&it2[_ddIdx]) input.setAttribute('aria-activedescendant', it2[_ddIdx].id || '');}
+  else if(e.key==='Enter'){ e.preventDefault(); var cur=fresh(); if(_ddIdx>=0 && cur[_ddIdx]){ cur[_ddIdx].click(); } else { fnsClosePopovers(); document.getElementById('gh_search_form').requestSubmit(); } }
+  else if(e.key==='Escape'){ fnsClosePopovers(); if(input){input.setAttribute('aria-activedescendant',''); input.setAttribute('aria-expanded','false');} }
 };
 window.fnsDestClear=function(){
   document.getElementById('gh_dest').value='';
