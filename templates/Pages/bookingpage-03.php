@@ -1,5 +1,5 @@
 <?php
-$this->assign('title', 'Payment information | fastnetstays.com');
+$this->assign('title', 'Payment information');
 $propTitle = $property['name'] ?? 'Divi Village Golf and Beach Resort';
 $propCity = $property['city'] ?? 'Dar es Salaam';
 $propAddress = $property['address'] ?? 'Msasani Peninsula, Dar es Salaam, Tanzania';
@@ -12,6 +12,11 @@ $roomTitle = $room['name'] ?? 'Golf Villa One Bedroom Suite';
 $origPrice = (float)($calculation['original_price'] ?? $calculation['subtotal'] ?? 0);
 $roomPrice = (float)($calculation['subtotal'] ?? $calculation['room_price'] ?? 0);
 $taxes = (float)($calculation['taxes'] ?? 0);
+$azampayFee = (float)($calculation['azampay_fee'] ?? 0);
+// Quote 'taxes' already bundles backend VAT (0%) + AzamPay 1% — split honestly for display
+if ($azampayFee <= 0 && $taxes > 0) $azampayFee = $taxes;
+$baseTaxes = max(0, $taxes - $azampayFee);
+$roomsCount = max(1, (int)($queryParams['rooms'] ?? $quote['rooms'] ?? 1));
 $bookingFees = (float)($calculation['booking_fees'] ?? 0);
 $total = (float)($calculation['total_amount'] ?? 0);
 $saved = max(0, $origPrice - $total);
@@ -31,22 +36,22 @@ $holderName = trim(($queryParams['first_name'] ?? '') . ' ' . ($queryParams['las
 .agoda-steps{display:flex;align-items:center;gap:0;flex:1;max-width:620px;margin:0 24px}
 .agoda-step{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;white-space:nowrap}
 .agoda-step .num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:1px solid #dadce0;background:#fff;color:#5f6368}
-.agoda-step.done .num{background:#2563EB;color:#fff;border-color:#2563EB}
-.agoda-step.active .num{background:#2563EB;color:#fff;border-color:#2563EB}
+.agoda-step.done .num{background:#0f62fe;color:#fff;border-color:#0f62fe}
+.agoda-step.active .num{background:#0f62fe;color:#fff;border-color:#0f62fe}
 .agoda-step span{color:#5f6368}
-.agoda-step.active span{color:#2563EB}
-.agoda-step.done span{color:#2563EB}
+.agoda-step.active span{color:#0f62fe}
+.agoda-step.done span{color:#0f62fe}
 .agoda-step-line{flex:1;height:2px;background:#e8eaed;margin:0 8px;border-radius:1px}
-.agoda-step-line.filled{background:#2563EB}
+.agoda-step-line.filled{background:#0f62fe}
 .agoda-timer-bar{background:#fef3e8;border-bottom:1px solid #fde8cc;padding:10px 16px;text-align:center;font-size:13px;color:#202124;display:flex;align-items:center;justify-content:center;gap:8px}
 .agoda-timer-bar b{color:#e53935;font-weight:700;display:flex;align-items:center;gap:6px}
 .agoda-pay-wrap{max-width:1180px;margin:14px auto;padding:0 16px;display:grid;grid-template-columns:1fr 360px;gap:16px;align-items:start}
 .agoda-card{background:#fff;border:1px solid #e8eaed;border-radius:16px;overflow:hidden;box-shadow:0 6px 16px rgba(0,0,0,0.05)}
 .agoda-card-pad{padding:16px}
 .agoda-pay-title{font-size:18px;font-weight:800;color:#202124;margin:0}
-.agoda-pay-sub{font-size:12px;color:#1a73e8;display:flex;align-items:center;gap:4px;margin-top:4px}
-.agoda-pay-radio{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:#1a73e8}
-.agoda-pay-radio input{width:18px;height:18px;accent-color:#1a73e8}
+.agoda-pay-sub{font-size:12px;color:#0f62fe;display:flex;align-items:center;gap:4px;margin-top:4px}
+.agoda-pay-radio{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:#0f62fe}
+.agoda-pay-radio input{width:18px;height:18px;accent-color:#0f62fe}
 .agoda-card-icons{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .agoda-card-icons img{height:24px;border:1px solid #e8eaed;border-radius:4px;background:#fff;padding:2px 4px;object-fit:contain}
 .agoda-pay-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 16px 12px;border-bottom:none}
@@ -59,7 +64,7 @@ $holderName = trim(($queryParams['first_name'] ?? '') . ' ' . ($queryParams['las
 .agoda-input{width:100%;height:44px;border:1px solid #137333;border-radius:12px;padding:0 12px;font-size:13px;color:#202124;background:#fff;outline:none;transition:border-color 150ms ease,box-shadow 150ms ease}
 .agoda-input::placeholder{color:#9aa0a6}
 .agoda-input-card{border-color:#dadce0}
-.agoda-input-card:focus{border-color:#1a73e8;box-shadow:0 0 0 2px rgba(26,115,232,0.15)}
+.agoda-input-card:focus{border-color:#0f62fe;box-shadow:0 0 0 2px rgba(15,98,254,0.15)}
 .agoda-input-holder{border-color:#137333}
 .agoda-input-holder:focus{border-color:#137333}
 .agoda-input-icon{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#5f6368;font-size:13px}
@@ -73,14 +78,14 @@ $holderName = trim(($queryParams['first_name'] ?? '') . ' ' . ($queryParams['las
 .agoda-digital label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#202124}
 .agoda-digital input{width:18px;height:18px;accent-color:#5f6368}
 .agoda-checkbox{padding:12px 16px;font-size:12px;color:#5f6368;line-height:1.5;display:flex;gap:8px;align-items:flex-start}
-.agoda-checkbox input{width:18px;height:18px;accent-color:#1a73e8;flex:0 0 18px;margin-top:2px}
+.agoda-checkbox input{width:18px;height:18px;accent-color:#0f62fe;flex:0 0 18px;margin-top:2px}
 .agoda-terms{padding:0 16px 16px;font-size:12px;color:#5f6368}
-.agoda-terms a{color:#3264ff;font-weight:600;text-decoration:underline}
+.agoda-terms a{color:#0f62fe;font-weight:600;text-decoration:underline}
 .agoda-hurry-red{font-size:12px;color:#c0392b;text-align:right;margin:10px 0 6px}
 .agoda-email-note{font-size:13px;color:#202124;display:flex;align-items:center;gap:6px}
 .agoda-email-note b{color:#202124}
-.agoda-book-btn{background:#2563EB;color:#fff;border:none;border-radius:30px;padding:14px 24px;font-size:15px;font-weight:800;width:100%;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 12px rgba(37,99,235,0.18)}
-.agoda-book-btn:hover{background:#1d4ed8}
+.agoda-book-btn{background:#0f62fe;color:#fff;border:none;border-radius:30px;padding:14px 24px;font-size:15px;font-weight:800;width:100%;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 12px rgba(15,98,254,0.18)}
+.agoda-book-btn:hover{background:#0353e9}
 .agoda-flexi{font-size:12px;color:#0f7a2b;text-align:center;font-weight:600;margin-top:6px}
 /* Right */
 .agoda-side-card{background:#fff;border:1px solid #e8eaed;border-radius:16px;overflow:hidden;margin-bottom:12px;box-shadow:0 4px 12px rgba(0,0,0,0.04)}
@@ -202,8 +207,8 @@ $holderName = trim(($queryParams['first_name'] ?? '') . ' ' . ($queryParams['las
         <div style="padding:12px 16px">
           <div style="font-size:12px;font-weight:800;color:#202124;margin-bottom:10px">Select payment method</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <label class="agoda-pay-option" data-method="card" style="border:2px solid #2563EB;background:#F0F3FF;border-radius:12px;padding:10px 10px;display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="radio" name="payment_method" value="card" checked style="accent-color:#2563EB"><span style="font-size:13px;font-weight:700;color:#2563EB">Credit/debit card</span>
+            <label class="agoda-pay-option" data-method="card" style="border:2px solid #0f62fe;background:#F0F3FF;border-radius:12px;padding:10px 10px;display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="radio" name="payment_method" value="card" checked style="accent-color:#0f62fe"><span style="font-size:13px;font-weight:700;color:#0f62fe">Credit/debit card</span>
               <span style="margin-left:auto;display:flex;gap:4px;align-items:center">
                 <img src="<?= $this->Url->build('/assets/img/visa-logo.png') ?>" alt="VISA" style="height:18px;border:1px solid #e8eaed;border-radius:3px;background:#fff;padding:1px 3px">
                 <img src="<?= $this->Url->build('/assets/img/mastercard-logo.png') ?>" alt="Mcard" style="height:18px;border:1px solid #e8eaed;border-radius:3px;background:#fff;padding:1px 3px">
@@ -267,18 +272,17 @@ $holderName = trim(($queryParams['first_name'] ?? '') . ' ' . ($queryParams['las
               <span style="background:#fff;border:1px solid #dadce0;border-right:none;border-radius:6px 0 0 6px;padding:0 10px;height:42px;display:flex;align-items:center;font-size:13px;color:#5f6368;white-space:nowrap"><span id="momoPrefix">+255</span> <img id="momoLogo" src="" alt="" style="height:16px;margin-left:6px;display:none"></span>
               <input class="agoda-input" name="payment_phone" placeholder="712 345 678" style="border-radius:0 6px 6px 0;flex:1" inputmode="tel">
             </div>
-            <div style="font-size:11px;color:#5f6368;margin-top:6px">You'll receive a USSD push on your phone to approve the payment. <span id="momoHint" style="color:#1a73e8;font-weight:600"></span></div>
+            <div style="font-size:11px;color:#5f6368;margin-top:6px">You'll receive a USSD push on your phone to approve the payment. <span id="momoHint" style="color:#0f62fe;font-weight:600"></span></div>
           </div>
         </div>
         <div style="display:none"><button type="submit" id="hiddenSubmit">submit</button></div>
       </form>
 
       <div class="agoda-divider"></div>
-      <label class="agoda-checkbox"><input type="checkbox" checked> I agree to receive updates and promotions about Agoda and its affiliates or business partners via various channels, including WhatsApp. Opt out anytime. Read more in the Privacy Policy.</label>
-      <div class="agoda-terms">By proceeding with this booking, I agree to Agoda's <a href="#">Terms of Use</a> and <a href="#">Privacy Policy</a>.</div>
+      <label class="agoda-checkbox"><input type="checkbox" checked> I agree to receive updates and promotions about FastNet Stays via various channels, including WhatsApp. Opt out anytime. Read more in the Privacy Policy.</label>
+      <div class="agoda-terms">By proceeding with this booking, I agree to FastNet Stays' <a href="/terms-of-service">Terms of Use</a> and <a href="/privacy-policy">Privacy Policy</a>.</div>
     </div>
 
-    <div class="agoda-hurry-red">Hurry! Our last room for your dates at this price</div>
     <div class="agoda-email-note"><i class="fa-solid fa-envelope" style="color:#5f6368"></i> We'll send confirmation of your booking to <b><?= h($guestEmail) ?></b></div>
 
     <div class="agoda-card" style="padding:14px">
@@ -299,30 +303,30 @@ $holderName = trim(($queryParams['first_name'] ?? '') . ' ' . ($queryParams['las
       </div>
     </div>
 
-    <div class="agoda-pink"><i class="fa-solid fa-bell" style="color:#c0392b"></i> Hurry! Our last room for your dates at this price</div>
-
+    <?php if ($saved > 0): ?>
     <div class="agoda-green">
-      <div style="display:flex;gap:6px;align-items:center"><b>We price match.</b> Find it for less, and we'll match it! <i class="fa-regular fa-circle-question" style="color:#137333"></i></div>
-      <?php if ($saved > 0): ?><div style="margin-top:6px;color:#137333;font-weight:700">You saved USD <?= number_format($saved,2) ?> on this booking!</div><?php endif; ?>
+      <div style="display:flex;gap:6px;align-items:center"><i class="fa-solid fa-circle-check" style="color:#137333"></i><span>You saved <b>TSh <?= number_format($saved) ?></b> on this booking!</span></div>
     </div>
+    <?php endif; ?>
 
     <div class="agoda-side-card">
       <div class="agoda-price-card">
         <?php if ($offPercent > 0): ?><span class="agoda-off-badge"><?= $offPercent ?>% OFF TODAY</span><?php endif; ?>
         <div style="clear:both"></div>
-        <div class="agoda-price-row strike"><span>Original price (1 room x <?= h($nights) ?> nights)</span><span>USD <?= number_format($origPrice,2) ?></span></div>
-        <div class="agoda-price-row"><span>Room price (1 room x <?= h($nights) ?> nights)</span><span>USD <?= number_format($roomPrice,2) ?></span></div>
-        <div class="agoda-price-row"><span>Taxes and fees</span><span>USD <?= number_format($taxes,2) ?></span></div>
+        <?php if ($saved > 0): ?><div class="agoda-price-row strike"><span>Original price (<?= h($roomsCount) ?> room<?= $roomsCount!==1?'s':'' ?> x <?= h($nights) ?> nights)</span><span>TSh <?= number_format($origPrice) ?></span></div><?php endif; ?>
+        <div class="agoda-price-row"><span>Room price (<?= h($roomsCount) ?> room<?= $roomsCount!==1?'s':'' ?> x <?= h($nights) ?> nights)</span><span>TSh <?= number_format($roomPrice) ?></span></div>
+        <div class="agoda-price-row"><span>Mobile-money fee (1%)</span><span>TSh <?= number_format($azampayFee) ?></span></div>
+        <div class="agoda-price-row"><span>Taxes</span><span>TSh <?= number_format($baseTaxes) ?></span></div>
         <div class="agoda-price-row"><span style="color:#0f7a2b">Booking fees</span><span style="color:#0f7a2b">FREE</span></div>
-        <div class="agoda-price-total"><span style="font-size:13px;color:#202124;display:flex;align-items:center;gap:4px">Price <i class="fa-regular fa-circle-question" style="font-size:11px;color:#5f6368"></i></span><b>USD <?= number_format($total,2) ?></b></div>
-        <div class="agoda-included">Included in price: Taxes &amp; fees USD <?= number_format($taxes,2) ?> (incl. VAT &amp; service)</div>
+        <div class="agoda-price-total"><span style="font-size:13px;color:#202124;display:flex;align-items:center;gap:4px">Price <i class="fa-regular fa-circle-question" style="font-size:11px;color:#5f6368"></i></span><b>TSh <?= number_format($total) ?></b></div>
+        <div class="agoda-included">Includes 1% AzamPay processing fee · No VAT charged</div>
       </div>
     </div>
 
      <div class="agoda-side-card">
       <div class="agoda-cancel-card">
         <div class="agoda-cancel-title">How much will it cost to cancel?</div>
-        <div class="agoda-cancel-text"><span style="color:#0f7a2b">Stay flexible!</span> <?= h($calculation['cancellation_policy'] ?? $quote['calculation']['cancellation_policy'] ?? 'Cancel for free before ' . date('j M Y', strtotime($checkIn))) ?>. Quickly edit your booking online - no added cost! <a href="#" style="color:#3264ff;font-weight:700">See more details</a></div>
+        <div class="agoda-cancel-text"><span style="color:#0f7a2b">Stay flexible!</span> <?= h($calculation['cancellation_policy'] ?? $quote['calculation']['cancellation_policy'] ?? 'Cancel for free before ' . date('j M Y', strtotime($checkIn))) ?>. Quickly edit your booking online - no added cost! <a href="#" style="color:#0f62fe;font-weight:700">See more details</a></div>
         <div class="agoda-timeline">
           <div class="fill"></div>
           <div class="agoda-dot active"></div>
@@ -362,7 +366,7 @@ function updatePayUI(){
   // highlight selected option
   document.querySelectorAll('.agoda-pay-option').forEach(l=>{
     const isSel=l.querySelector('input')?.value===sel;
-    l.style.border=isSel?'2px solid #2563EB':'1px solid #e8eaed';
+    l.style.border=isSel?'2px solid #0f62fe':'1px solid #e8eaed';
     l.style.background=isSel?'#F0F3FF':'#fff';
   });
   // update momo hint/logo

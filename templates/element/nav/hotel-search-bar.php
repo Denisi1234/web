@@ -2,14 +2,11 @@
 echo $this->Html->css('/assets/css/search-spacing.css');
 ?>
 <style>
-/* Hotel-detail search — desktop 90% correct, mobile deleted per request */
+/* Header search — home-pill look (Carbon tokens in carbon-journey.css).
+   Desktop: compact pill with Where / Check-in / Check-out / Guests segments.
+   Mobile: floating chip + bottom sheet (same pattern as home fns-mobile-chip). */
 .nav-mobile-chip{display:none}
 .nav-mobile-sheet{display:none}
-@media(max-width:767px){
-  #nav_search_wrapper{display:none !important}
-  .nav-mobile-chip{display:none !important}
-  .nav-mobile-sheet{display:none !important}
-}
 </style>
 <?php
 $today = date('Y-m-d');
@@ -24,38 +21,48 @@ if (strtotime($navCheckOut) <= strtotime($navCheckIn)) {
 $navNights = max(1, (int)round((strtotime($navCheckOut) - strtotime($navCheckIn)) / 86400));
 $navDest = $queryParams['destination'] ?? ($queryParams['q'] ?? 'Dar es Salaam');
 ?>
-                    <!-- Trivago Integrated Search Pods in Header — consolidated to home (/) -->
-                    <form action="<?= $this->Url->build('/'); ?>" method="GET" class="d-flex align-items-center flex-grow-1 mx-3 position-relative" style="max-width: 840px;" id="nav_search_form">
+                    <!-- Header search pill — home look: Where to? | Check-in | Check-out | Guests & Rooms | Search -->
+                    <form action="<?= $this->Url->build('/'); ?>" method="GET" class="d-flex align-items-center flex-grow-1 mx-3 position-relative" style="max-width: 840px;" id="nav_search_form" role="search" aria-label="Find stays">
                         <input type="hidden" name="lat" id="nav_hidden_lat" value="<?= h($queryParams['lat'] ?? '') ?>">
                         <input type="hidden" name="lng" id="nav_hidden_lng" value="<?= h($queryParams['lng'] ?? '') ?>">
-                        <div class="d-flex align-items-center border rounded-3 bg-white w-100 shadow-xs" id="nav_search_container" style="height: 46px; border-color: #cbd5e1 !important; transition: border 0.15s ease;">
+                        <div class="d-flex align-items-center bg-white w-100 nav-cds-pill" id="nav_search_container" role="group" aria-label="Search stays">
                             <!-- 1. Destination -->
-                            <div class="px-3 py-1 border-end position-relative d-flex align-items-center gap-2.5 flex-grow-1" id="nav_dest_pod" style="min-width: 200px; flex-grow: 1.3; cursor: text;" onclick="openNavRecentDropdown(event)">
-                                <i class="fa-solid fa-magnifying-glass text-slate-700" style="font-size: 17px;"></i>
+                            <div class="nav-cds-seg position-relative d-flex align-items-center flex-grow-1" id="nav_dest_pod" style="flex-grow: 1.3; cursor: text;" onclick="openNavRecentDropdown(event)" role="combobox" aria-expanded="false" aria-haspopup="listbox" aria-label="Destination">
+                                <i class="fa-solid fa-magnifying-glass nav-cds-icon" aria-hidden="true"></i>
                                 <div class="d-flex flex-column flex-grow-1 overflow-hidden">
-                                    <span style="font-size: 10.5px; color: #64748b; font-weight: 600; line-height: 1.1;">Destination</span>
+                                    <span class="nav-cds-label">Where to?</span>
                                     <div class="d-flex align-items-center justify-content-between">
-                                        <input name="destination" id="nav_dest_input" type="text" class="border-0 p-0 fw-bold text-slate-900" style="font-size: 14px; outline: none; background: transparent; width: 100%;" value="<?= h($navDest) ?>" onfocus="openNavRecentDropdown(event)" oninput="handleNavDestInput(event)" onkeydown="handleNavDestKeydown(event)" autocomplete="off" placeholder="Where to? (e.g. Zanzibar, Arusha)">
-                                        <button type="button" class="border-0 bg-transparent text-slate-400 p-0 ms-1" onclick="clearNavDest(event)" aria-label="Clear destination" style="font-size: 12px;"><i class="fa-solid fa-xmark"></i></button>
+                                        <input name="destination" id="nav_dest_input" type="text" class="border-0 p-0 nav-cds-value" style="outline: none; background: transparent; width: 100%;" value="<?= h($navDest) ?>" onfocus="openNavRecentDropdown(event)" oninput="handleNavDestInput(event)" onkeydown="handleNavDestKeydown(event)" autocomplete="off" placeholder="City, landmark, or hotel" aria-label="Destination input">
+                                        <button type="button" class="border-0 bg-transparent p-0 ms-1 nav-cds-clear" onclick="clearNavDest(event)" aria-label="Clear destination"><i class="fa-solid fa-xmark"></i></button>
                                     </div>
                                 </div>
                             </div>
+                            <div class="nav-cds-divider" aria-hidden="true"></div>
 
-                            <!-- 2. Check-in/out -->
-                            <div class="px-3 py-1 border-end d-flex align-items-center gap-2.5 position-relative" id="nav_date_pod" style="min-width: 175px; flex-grow: 1; cursor: pointer;" onclick="openNavDatePicker(event)">
-                                <i class="fa-regular fa-calendar text-slate-700" style="font-size: 17px;"></i>
+                            <!-- 2. Check-in -->
+                            <div class="nav-cds-seg d-flex align-items-center position-relative" id="nav_date_pod_ci" role="button" tabindex="0" aria-label="Check-in date" onclick="openNavDatePicker(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openNavDatePicker(event);}">
                                 <div class="d-flex flex-column overflow-hidden">
-                                    <span style="font-size: 10.5px; color: #64748b; font-weight: 600; line-height: 1.1;">Check-in/out</span>
-                                    <span class="fw-bold text-slate-900" id="nav_date_display" style="font-size: 13.5px; white-space: nowrap;">
-                                        <?= date('j M', strtotime($navCheckIn)) ?> - <?= date('j M', strtotime($navCheckOut)) ?>
-                                    </span>
+                                    <span class="nav-cds-label">Check-in</span>
+                                    <span class="nav-cds-value" id="nav_ci_display" style="white-space: nowrap;"><?= date('j M', strtotime($navCheckIn)) ?></span>
                                 </div>
 
                                 <input type="hidden" name="checkIn" id="nav_hidden_checkin" value="<?= h($navCheckIn) ?>">
                                 <input type="hidden" name="checkOut" id="nav_hidden_checkout" value="<?= h($navCheckOut) ?>">
+                            </div>
+                            <div class="nav-cds-divider" aria-hidden="true"></div>
+
+                            <!-- 3. Check-out -->
+                            <div class="nav-cds-seg d-flex align-items-center position-relative" id="nav_date_pod_co" role="button" tabindex="0" aria-label="Check-out date" onclick="openNavDatePicker(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openNavDatePicker(event);}">
+                                <div class="d-flex flex-column overflow-hidden">
+                                    <span class="nav-cds-label">Check-out</span>
+                                    <span style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap;">
+                                        <span class="nav-cds-value" id="nav_date_display" style="white-space: nowrap;"><?= date('j M', strtotime($navCheckOut)) ?></span>
+                                        <span class="nav-nights-badge" id="nav_nights_badge"><?= $navNights ?> night<?= $navNights!==1?'s':'' ?></span>
+                                    </span>
+                                </div>
 
                                 <!-- Trivago Dual-Month Datepicker Modal (Header) -->
-                                <div class="trivago-datepicker-modal" id="nav_datepicker_modal" onclick="event.stopPropagation();" style="left: -180px; width: 660px;">
+                                <div class="trivago-datepicker-modal nav-cds-pop" id="nav_datepicker_modal" onclick="event.stopPropagation();" style="left: -180px; width: 660px;" role="dialog" aria-label="Choose dates">
                                     <div class="trivago-cal-header-row">
                                         <button type="button" class="trivago-cal-nav-btn" onclick="navNavCal(-1)">
                                             <i class="fa-solid fa-chevron-left"></i>
@@ -106,12 +113,12 @@ $navDest = $queryParams['destination'] ?? ($queryParams['q'] ?? 'Dar es Salaam')
 
                             </div>
 
-                            <!-- 3. Guests and rooms -->
-                            <div class="px-3 py-1 d-flex align-items-center gap-2.5 position-relative flex-grow-1" id="nav_guest_pod" style="min-width: 165px; flex-grow: 1; cursor: pointer;" onclick="openNavGuestModal(event)">
-                                <i class="fa-solid fa-user-group text-slate-700" style="font-size: 17px;"></i>
+                            <!-- 4. Guests and rooms -->
+                            <div class="nav-cds-seg d-flex align-items-center position-relative flex-grow-1" id="nav_guest_pod" style="cursor: pointer;" onclick="openNavGuestModal(event)" role="button" tabindex="0" aria-haspopup="dialog" aria-label="Guests and rooms" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openNavGuestModal(event);}">
+                                <i class="fa-solid fa-user-group nav-cds-icon" aria-hidden="true"></i>
                                 <div class="d-flex flex-column overflow-hidden">
-                                    <span style="font-size: 10.5px; color: #64748b; font-weight: 600; line-height: 1.1;">Guests and rooms</span>
-                                    <span class="fw-bold text-slate-900" id="nav_guest_display" style="font-size: 13.5px; white-space: nowrap;">
+                                    <span class="nav-cds-label">Guests &amp; Rooms</span>
+                                    <span class="nav-cds-value" id="nav_guest_display" style="white-space: nowrap;">
                                         <?= (int)($queryParams['adults'] ?? 2) ?> Guests, <?= (int)($queryParams['rooms'] ?? 1) ?> Room
                                     </span>
                                 </div>
@@ -171,10 +178,12 @@ $navDest = $queryParams['destination'] ?? ($queryParams['q'] ?? 'Dar es Salaam')
                                 </div>
                             </div>
 
-                            <!-- 4. Blue Search Button (Desktop Only) -->
-                            <button type="submit" class="btn btn-primary d-none d-lg-flex align-items-center justify-content-center m-1 rounded-2" style="background-color: #007fad; border-color: #007fad; width: 40px; height: 38px;">
-                                <i class="fa-solid fa-magnifying-glass text-white fs-6"></i>
-                            </button>
+                            <!-- 5. Search CTA (Carbon primary) -->
+                            <div style="display:flex;align-items:center;padding:4px 4px 4px 2px;">
+                              <button type="submit" class="nav-cds-cta d-none d-lg-inline-flex align-items-center justify-content-center" aria-label="Search stays">
+                                  <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span>Search</span>
+                              </button>
+                            </div>
                         </div>
 
                         <!-- Mapbox Auto-Suggestion / Recent Destinations Dropdown -->
@@ -220,7 +229,7 @@ $navDest = $queryParams['destination'] ?? ($queryParams['q'] ?? 'Dar es Salaam')
                     // keep chip text in sync
                     document.addEventListener('DOMContentLoaded', function(){
                       var d=document.getElementById('nav_dest_input'), chip=document.getElementById('nav_chip_text');
-                      if(d&&chip){ d.addEventListener('input', function(){ chip.textContent=(d.value||'Where to?')+' • '+ (document.getElementById('nav_date_display')?.textContent||'')+' • '+(document.getElementById('nav_guest_display')?.textContent||''); }); }
+                      if(d&&chip){ d.addEventListener('input', function(){ var ci=(document.getElementById('nav_ci_display')?.textContent||''); var co=(document.getElementById('nav_date_display')?.textContent||''); chip.textContent=(d.value||'Where to?')+' • '+ci+'–'+co+' • '+(document.getElementById('nav_guest_display')?.textContent||''); }); }
                     });
                     </script>
 

@@ -55,7 +55,7 @@ $propCity = $queryParams['property_city'] ?: ($property['city'] ?? '');
 
 						<div class="d-flex align-items-center justify-content-center mb-3">
 							<div style="width:72px;height:72px;border-radius:50%;background:#EBF5FF;border:1px solid #dbeafe;display:flex;align-items:center;justify-content:center">
-								<i class="fa-solid fa-check fs-2" style="color:#2563EB"></i>
+								<i class="fa-solid fa-check fs-2" style="color:#0f62fe"></i>
 							</div>
 						</div>
 						<div class="d-flex align-items-center justify-content-center flex-column text-center mb-4">
@@ -131,8 +131,8 @@ $propCity = $queryParams['property_city'] ?: ($property['city'] ?? '');
 
 						<div class="text-center d-flex align-items-center justify-content-center flex-wrap gap-2">
 							<a href="<?= $this->Url->build('/'); ?>" class="btn fw-bold rounded-full px-4" style="background:#fff;border:1px solid #e8eaed;border-radius:30px;padding:10px 20px;color:#1a1d25">Browse More Stays</a>
-							<a href="<?= $this->Url->build('/my-booking'); ?>" class="btn fw-bold rounded-full px-4" style="background:#2563EB;color:#fff;border-radius:30px;padding:10px 20px;box-shadow:0 4px 12px rgba(37,99,235,0.18)">View My Bookings</a>
-							<button type="button" data-bs-toggle="modal" data-bs-target="#invoice" class="btn fw-bold rounded-full px-4" style="background:#F8FAFC;border:1px solid #e8eaed;border-radius:30px;padding:10px 20px;color:#2563EB">
+							<a href="<?= $this->Url->build('/my-booking'); ?>" class="btn fw-bold rounded-full px-4" style="background:#0f62fe;color:#fff;border-radius:30px;padding:10px 20px;box-shadow:0 4px 12px rgba(15,98,254,0.18)">View My Bookings</a>
+							<button type="button" data-bs-toggle="modal" data-bs-target="#invoice" class="btn fw-bold rounded-full px-4" style="background:#F8FAFC;border:1px solid #e8eaed;border-radius:30px;padding:10px 20px;color:#0f62fe">
 								<i class="fa-solid fa-receipt me-1"></i>View Invoice Receipt
 							</button>
 						</div>

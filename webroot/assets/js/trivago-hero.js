@@ -253,16 +253,11 @@ function highlightMatch(text, query) {
 }
 
 function getStoredHeroRecentSearches() {
-    try {
-        const raw = localStorage.getItem('fastnet_recent_destinations');
-        return raw ? JSON.parse(raw) : [];
-    } catch(e) {
-        return [];
-    }
+    return [];
 }
 
-function showDefaultHeroDestinations() {
-    const recents = getStoredHeroRecentSearches();
+
+function showDefaultHeroDestinations() {HeroRecentSearches();
     const titleEl = document.getElementById('hero_recent_header_title');
     const listEl = document.getElementById('hero_dest_suggestions_list');
     if (!listEl) return;
@@ -270,31 +265,8 @@ function showDefaultHeroDestinations() {
     heroCurrentSuggestions = [];
     heroActiveSuggestIdx = -1;
 
-    let items = [];
-    if (recents && recents.length > 0) {
-        if (titleEl) titleEl.innerText = 'Recent & Popular Destinations';
-        recents.forEach(r => {
-            items.push({
-                name: r.name,
-                subtitle: r.subtitle || 'Recent search',
-                icon: 'fa-solid fa-clock-rotate-left',
-                iconClass: 'icon-purple',
-                lat: r.lat,
-                lng: r.lng,
-                isRecent: true
-            });
-        });
-        HERO_POPULAR_DESTINATIONS.forEach(p => {
-            if (!items.some(it => it.name.toLowerCase() === p.name.toLowerCase())) {
-                items.push(p);
-            }
-        });
-    } else {
-        if (titleEl) titleEl.innerText = 'Popular Destinations in Tanzania';
-        items = [...HERO_POPULAR_DESTINATIONS];
-    }
-
-    heroCurrentSuggestions = items;
+    if (titleEl) titleEl.innerText = 'Popular Destinations in Tanzania';
+    heroCurrentSuggestions = [...HERO_POPULAR_DESTINATIONS];
     renderHeroSuggestionList(items, '');
 }
 
@@ -508,13 +480,7 @@ function selectHeroDestination(name, subtitle, lat, lng) {
     if (hiddenLat && lat !== null && lat !== undefined) hiddenLat.value = lat;
     if (hiddenLng && lng !== null && lng !== undefined) hiddenLng.value = lng;
 
-    try {
-        let recents = getStoredHeroRecentSearches();
-        recents = recents.filter(r => r.name.toLowerCase() !== name.toLowerCase());
-        recents.unshift({ name, subtitle, lat, lng, date: new Date().toISOString() });
-        if (recents.length > 6) recents = recents.slice(0, 6);
-        localStorage.setItem('fastnet_recent_destinations', JSON.stringify(recents));
-    } catch (e) {}
+    // recent searches removed — nothing stored
 
     closeAllPopups();
 

@@ -1,8 +1,8 @@
 <!-- Sleek fastnetstays.com Top Loading Progress Bar with Safe Area & Glow -->
 <div id="home-top-loader-bar" class="home-top-loader-bar"></div>
 
-<!-- Mobile Floating Capsule Pill Indicator (fastnetstays.com App Style) -->
-<div id="home-mobile-loader-pill" class="d-md-none pill-hidden">
+<!-- Floating Capsule Pill Indicator (all screens — desktop included) -->
+<div id="home-mobile-loader-pill" class="pill-hidden">
 	<div class="mobile-loader-pill-inner">
 		<div class="mobile-loader-spinner"></div>
 		<span class="mobile-loader-text">Finding best stays...</span>

@@ -42,6 +42,7 @@
 
         <div id="main-wrapper">
 
+            <?= $this->Flash->render() ?>
             <!-- Main Content -->
         	<?= $this->fetch('content') ?>
 

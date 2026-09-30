@@ -422,6 +422,9 @@ return [
      */
     'Session' => [
         'defaults' => 'php',
+        // Portal users work long shifts: 8h idle timeout instead of PHP's 24min,
+        // otherwise every portal click after a pause bounces to login.
+        'timeout' => 480,
     ],
 
     /**

@@ -26,30 +26,72 @@ class AdminOwnerController extends AppController
         $this->apiClient = new FastnetApiClient();
         $this->authService = new AuthService($this->apiClient);
         $this->roleService = new RoleService($this->apiClient, $this->authService);
+        $this->viewBuilder()->setLayout('portal');
+    }
+
+    private function rawToken(): string
+    {
+        $token = trim((string)$this->getRequest()->getSession()->read('auth_token'));
+        // Session should hold raw token, but tolerate "Bearer xxx" if ever stored prefixed
+        if (stripos($token, 'Bearer ') === 0) {
+            $token = trim(substr($token, 7));
+        }
+        return $token;
     }
 
     private function hostHeaders(): array
     {
-        $token = trim((string)$this->getRequest()->getSession()->read('auth_token'));
+        $token = $this->rawToken();
         return $token !== '' ? ['Authorization' => 'Bearer ' . $token] : [];
     }
 
+    /**
+     * Session-cached profile (120s TTL) — backend /user/personal-details
+     * takes ~2.3s; sidebar/topbar only need it for display.
+     * Releases the session lock before/after slow I/O so parallel
+     * portal requests (prefetch) don't serialize on the session file.
+     */
+    private function cachedProfile(): array
+    {
+        if ($this->rawToken() === '') return [];
+        $session = $this->getRequest()->getSession();
+        $cached = $session->read('UserProfile');
+        $ts = (int)$session->read('UserProfileTs');
+        if (is_array($cached) && !empty($cached) && $ts > time() - 120) {
+            $session->close();
+            return $cached;
+        }
+        $session->close();
+        $fresh = $this->authService->getPersonalDetails($this->rawToken());
+        if (!empty($fresh) && !empty($fresh['id'])) { // id required: public personal-details returns a demo profile (null id) for bad tokens
+            $session->write('UserProfile', $fresh);
+            $session->write('UserProfileTs', time());
+            $session->close();
+            return $fresh;
+        }
+        return is_array($cached) && !empty($cached) ? $cached : $fresh;
+    }
+
+    /**
+     * No login wall: admin pages always render. Without an admin session the
+     * backend calls return nothing and pages show empty states + sign-in
+     * banner (portal.php). Nothing here may redirect.
+     */
     private function requireAdmin(): ?\Cake\Http\Response
     {
-        $token = trim((string)$this->getRequest()->getSession()->read('auth_token'));
-        $user = $this->getRequest()->getSession()->read('User');
-        if ($token === '' || empty($user)) {
-            $this->Flash->error(__('Please sign in to access Admin.'));
-            return $this->redirect('/login');
-        }
-        $role = $this->roleService->getRole($token);
-        if ($role !== 'admin') {
-            // Owners go to host, others to home
-            if ($role === 'owner') {
-                return $this->redirect('/host/dashboard');
-            }
-            $this->Flash->error(__('Admin access required.'));
-            return $this->redirect('/');
+        return null;
+    }
+
+    /**
+     * Backend said 401: session token is dead. Bounce to login with a safe
+     * return address instead of dead-ending on "Unauthenticated".
+     */
+    private function bounceOnUnauth(?array $res, string $returnUrl): ?\Cake\Http\Response
+    {
+        if (is_array($res) && (int)($res['_status'] ?? 0) === 401) {
+            $this->Flash->error(__('Session expired — please sign in again.'));
+            $safe = str_starts_with($returnUrl, '/') && !str_starts_with($returnUrl, '//') ? $returnUrl : '/admin/dashboard';
+            return $this->redirect('/login?redirect=' . urlencode($safe));
         }
         return null;
     }
@@ -64,7 +106,7 @@ class AdminOwnerController extends AppController
     {
         if ($r = $this->requireAdmin()) return $r;
         $headers = $this->hostHeaders();
-        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
+        $userProfile = $this->cachedProfile();
 
         $propRes = $this->apiClient->get('/admin/properties', [], $headers);
         if (empty($propRes) || !empty($propRes['_status'])) {
@@ -99,7 +141,7 @@ class AdminOwnerController extends AppController
     {
         if ($r = $this->requireAdmin()) return $r;
         $headers = $this->hostHeaders();
-        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
+        $userProfile = $this->cachedProfile();
 
         $q = $this->getRequest()->getQueryParams();
         $page = max(1, (int)($q['page'] ?? 1));
@@ -126,7 +168,7 @@ class AdminOwnerController extends AppController
     {
         if ($r = $this->requireAdmin()) return $r;
         $headers = $this->hostHeaders();
-        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
+        $userProfile = $this->cachedProfile();
 
         $q = $this->getRequest()->getQueryParams();
         $search = trim((string)($q['search'] ?? ''));
@@ -148,7 +190,7 @@ class AdminOwnerController extends AppController
     {
         if ($r = $this->requireAdmin()) return $r;
         $headers = $this->hostHeaders();
-        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
+        $userProfile = $this->cachedProfile();
 
         $q = $this->getRequest()->getQueryParams();
         $dateRange = trim((string)($q['date_range'] ?? '30_days'));
@@ -170,7 +212,7 @@ class AdminOwnerController extends AppController
     {
         if ($r = $this->requireAdmin()) return $r;
         $headers = $this->hostHeaders();
-        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
+        $userProfile = $this->cachedProfile();
 
         $q = $this->getRequest()->getQueryParams();
         $params = [];
@@ -196,7 +238,7 @@ class AdminOwnerController extends AppController
     {
         if ($r = $this->requireAdmin()) return $r;
         $headers = $this->hostHeaders();
-        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
+        $userProfile = $this->cachedProfile();
 
         if ($this->getRequest()->is('post')) {
             $data = (array)$this->getRequest()->getData();
@@ -238,7 +280,7 @@ class AdminOwnerController extends AppController
     {
         if ($r = $this->requireAdmin()) return $r;
         $headers = $this->hostHeaders();
-        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
+        $userProfile = $this->cachedProfile();
 
         if ($this->getRequest()->is(['post','patch'])) {
             $data = (array)$this->getRequest()->getData();
@@ -284,7 +326,7 @@ class AdminOwnerController extends AppController
     {
         if ($r = $this->requireAdmin()) return $r;
         $headers = $this->hostHeaders();
-        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
+        $userProfile = $this->cachedProfile();
 
         $res = $this->apiClient->get('/admin/reviews', [], $headers);
         $reviews = $res['data'] ?? (isset($res[0]) ? $res : []);
@@ -303,11 +345,35 @@ class AdminOwnerController extends AppController
         $data = (array)$this->getRequest()->getData();
         $status = trim((string)($data['status'] ?? 'approved'));
         $reason = trim((string)($data['reason'] ?? $data['admin_notes'] ?? ''));
+        $type = strtolower(trim($type));
+
+        // Backend validation:
+        // owner: approved,rejected,changes_requested,suspended
+        // lodge: Active,Pending,Removed,changes_requested,rejected
+        if ($type === 'lodge' || $type === 'property') {
+            $map = [
+                'approved' => 'Active',
+                'approve' => 'Active',
+                'active' => 'Active',
+                'rejected' => 'rejected',
+                'reject' => 'rejected',
+                'changes_requested' => 'changes_requested',
+                'pending' => 'Pending',
+                'removed' => 'Removed',
+                'suspended' => 'Removed',
+            ];
+            $low = strtolower($status);
+            $status = $map[$low] ?? $map[strtolower(trim($status))] ?? 'Active';
+        } else {
+            // owner: normalise to backend lowercase set
+            $low = strtolower($status);
+            $allowedOwner = ['approved', 'rejected', 'changes_requested', 'suspended'];
+            $status = in_array($low, $allowedOwner, true) ? $low : 'approved';
+        }
         $payload = ['status' => $status];
         if ($reason !== '') $payload['reason'] = $reason;
         if ($reason !== '') $payload['admin_notes'] = $reason;
 
-        $type = strtolower(trim($type));
         $endpoint = '';
         if ($type === 'owner') {
             $endpoint = '/admin/verification/owner/' . $id;
@@ -318,6 +384,8 @@ class AdminOwnerController extends AppController
             return $this->redirect(['action' => 'owners']);
         }
         $res = $this->apiClient->post($endpoint, $payload, $headers);
+        $back = ($type === 'lodge' || $type === 'property') ? '/admin/lodges' : '/admin/owners';
+        if ($bounce = $this->bounceOnUnauth($res, $back)) return $bounce;
         if (!empty($res['_status']) && (int)$res['_status'] >= 400) {
             $this->Flash->error(__($res['message'] ?? 'Verification failed.'));
         } else {
@@ -335,20 +403,15 @@ class AdminOwnerController extends AppController
     {
         if ($r = $this->requireAdmin()) return $r;
         $headers = $this->hostHeaders();
-        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
+        $userProfile = $this->cachedProfile();
 
         if ($this->getRequest()->is(['post','patch'])) {
             $data = (array)$this->getRequest()->getData();
             $bid = trim((string)($data['booking_id'] ?? ''));
             $status = trim((string)($data['status'] ?? ''));
             if ($bid !== '' && $status !== '') {
-                // fastnet_admin_portal: PATCH /admin/bookings/{id}/status — backend may use admin/bookings
+                // Backend source of truth: PATCH /admin/bookings/{id}/status
                 $res = $this->apiClient->patch('/admin/bookings/' . $bid . '/status', ['status' => $status], $headers);
-                if (empty($res) || !empty($res['_status'])) {
-                    // Fallback to bookings status
-                    $res2 = $this->apiClient->patch('/bookings/' . $bid . '/status', ['status' => $status], $headers);
-                    $res = $res2 ?? $res;
-                }
                 if (!empty($res['_status']) && (int)$res['_status'] >= 400) {
                     $this->Flash->error(__($res['message'] ?? 'Could not update booking.'));
                 } else if ($res !== null) {
@@ -388,7 +451,7 @@ class AdminOwnerController extends AppController
     {
         if ($r = $this->requireAdmin()) return $r;
         $headers = $this->hostHeaders();
-        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
+        $userProfile = $this->cachedProfile();
 
         if ($this->getRequest()->is('post')) {
             $data = (array)$this->getRequest()->getData();
@@ -444,20 +507,15 @@ class AdminOwnerController extends AppController
     {
         if ($r = $this->requireAdmin()) return $r;
         $headers = $this->hostHeaders();
-        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
+        $userProfile = $this->cachedProfile();
 
         if ($this->getRequest()->is(['post','patch'])) {
             $data = (array)$this->getRequest()->getData();
             $rid = trim((string)($data['request_id'] ?? ''));
             $status = trim((string)($data['status'] ?? ''));
             if ($rid !== '' && $status !== '') {
-                // Real PATCH if backend supports; fallback to local optimistic not needed
+                // Backend source of truth: PATCH /lodge-requests/{id}/status
                 $res = $this->apiClient->patch('/lodge-requests/' . $rid . '/status', ['status' => $status], $headers);
-                if (empty($res) || !empty($res['_status'])) {
-                    // Try alternative
-                    $res2 = $this->apiClient->patch('/lodge-requests/' . $rid, ['status' => $status], $headers);
-                    $res = $res2 ?? $res;
-                }
                 if (!empty($res['_status']) && (int)$res['_status'] >= 400) {
                     $this->Flash->error(__($res['message'] ?? 'Could not update request.'));
                 } else if ($res !== null) {

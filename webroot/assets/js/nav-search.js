@@ -83,13 +83,11 @@ function openNavDatePicker(e) {
     if (e) e.stopPropagation();
     closeNavPopups();
     const modal = document.getElementById('nav_datepicker_modal');
-    const pod = document.getElementById('nav_date_pod');
+    const pods = [document.getElementById('nav_date_pod_ci'), document.getElementById('nav_date_pod_co')];
     if (modal) modal.classList.add('show');
-    if (pod) {
-        pod.style.outline = '2px solid #007fad';
-        pod.style.outlineOffset = '-2px';
-        pod.style.borderRadius = '6px';
-    }
+    pods.forEach(function(pod){
+        if (pod) { pod.style.outline = '2px solid #0f62fe'; pod.style.outlineOffset = '-2px'; pod.style.borderRadius = '6px'; }
+    });
     renderNavCalendars();
 }
 
@@ -186,10 +184,7 @@ function handleNavDateClick(clickedDate) {
         navEndDate = null;
         navSelectingEndDate = true;
         
-        const displayEl = document.getElementById('nav_date_display');
-        if (displayEl) {
-            displayEl.innerText = `${navStartDate.getDate()} ${navMonthShort[navStartDate.getMonth()]} - Select check-out`;
-        }
+        paintNavDates(`${navStartDate.getDate()} ${navMonthShort[navStartDate.getMonth()]}`, 'Select dates', '');
     } else {
         // Second click: Select check-out date
         if (clickedDate.getTime() === navStartDate.getTime()) {
@@ -206,10 +201,7 @@ function handleNavDateClick(clickedDate) {
             navEndDate = null;
             navSelectingEndDate = true;
             
-            const displayEl = document.getElementById('nav_date_display');
-            if (displayEl) {
-                displayEl.innerText = `${navStartDate.getDate()} ${navMonthShort[navStartDate.getMonth()]} - Select check-out`;
-            }
+            paintNavDates(`${navStartDate.getDate()} ${navMonthShort[navStartDate.getMonth()]}`, 'Select dates', '');
         } else {
             // Future check-out date selected (> navStartDate)
             navEndDate = clickedDate;
@@ -222,6 +214,15 @@ function handleNavDateClick(clickedDate) {
     renderNavCalendars();
 }
 
+function paintNavDates(ciText, coText, nightsText) {
+    const ci = document.getElementById('nav_ci_display');
+    const co = document.getElementById('nav_date_display');
+    const badge = document.getElementById('nav_nights_badge');
+    if (ci && ciText) ci.innerText = ciText;
+    if (co && coText) co.innerText = coText;
+    if (badge && nightsText) badge.innerText = nightsText;
+    if (co) co.title = ciText && coText ? `${ciText} - ${coText}${nightsText ? ` (${nightsText})` : ''}` : '';
+}
 function applyNavDateSelection(syncInputs = true) {
     if (!navStartDate || !navEndDate) return;
     const startStr = formatLocalDate(navStartDate);
@@ -236,11 +237,11 @@ function applyNavDateSelection(syncInputs = true) {
     const nightsText = nights === 1 ? '1 night' : `${nights} nights`;
     const displayStr = `${navStartDate.getDate()} ${navMonthShort[navStartDate.getMonth()]} - ${navEndDate.getDate()} ${navMonthShort[navEndDate.getMonth()]}`;
 
-    const displayEl = document.getElementById('nav_date_display');
-    if (displayEl) {
-        displayEl.innerText = displayStr;
-        displayEl.title = `${displayStr} (${nightsText})`;
-    }
+    paintNavDates(
+        `${navStartDate.getDate()} ${navMonthShort[navStartDate.getMonth()]}`,
+        `${navEndDate.getDate()} ${navMonthShort[navEndDate.getMonth()]}`,
+        nightsText
+    );
 }
 
 function submitNavSearchForm() {
@@ -324,16 +325,11 @@ function highlightMatch(text, query) {
 }
 
 function getStoredRecentSearches() {
-    try {
-        const raw = localStorage.getItem('fastnet_recent_destinations');
-        return raw ? JSON.parse(raw) : [];
-    } catch(e) {
-        return [];
-    }
+    return [];
 }
 
-function showDefaultDestinations() {
-    const recents = getStoredRecentSearches();
+
+function showDefaultDestinations() {RecentSearches();
     const titleEl = document.getElementById('nav_recent_header_title');
     const listEl = document.getElementById('nav_dest_suggestions_list');
     if (!listEl) return;
@@ -341,31 +337,8 @@ function showDefaultDestinations() {
     navCurrentSuggestions = [];
     navActiveSuggestIdx = -1;
 
-    let items = [];
-    if (recents && recents.length > 0) {
-        if (titleEl) titleEl.innerText = 'Recent & Popular Destinations';
-        recents.forEach(r => {
-            items.push({
-                name: r.name,
-                subtitle: r.subtitle || 'Recent search',
-                icon: 'fa-solid fa-clock-rotate-left',
-                iconClass: 'icon-purple',
-                lat: r.lat,
-                lng: r.lng,
-                isRecent: true
-            });
-        });
-        NAV_POPULAR_DESTINATIONS.forEach(p => {
-            if (!items.some(it => it.name.toLowerCase() === p.name.toLowerCase())) {
-                items.push(p);
-            }
-        });
-    } else {
-        if (titleEl) titleEl.innerText = 'Popular Destinations in Tanzania';
-        items = [...NAV_POPULAR_DESTINATIONS];
-    }
-
-    navCurrentSuggestions = items;
+    if (titleEl) titleEl.innerText = 'Popular Destinations in Tanzania';
+    navCurrentSuggestions = [...NAV_POPULAR_DESTINATIONS];
     renderSuggestionList(items, '');
 }
 
@@ -417,7 +390,7 @@ function openNavRecentDropdown(e) {
 
     if (drop) drop.classList.add('show');
     if (pod) {
-        pod.style.outline = '2px solid #007fad';
+        pod.style.outline = '2px solid #0f62fe';
         pod.style.outlineOffset = '-2px';
         pod.style.borderRadius = '6px';
     }
@@ -582,13 +555,7 @@ function selectNavDestination(name, subtitle, lat, lng) {
     if (hiddenLat && lat !== null && lat !== undefined) hiddenLat.value = lat;
     if (hiddenLng && lng !== null && lng !== undefined) hiddenLng.value = lng;
 
-    try {
-        let recents = getStoredRecentSearches();
-        recents = recents.filter(r => r.name.toLowerCase() !== name.toLowerCase());
-        recents.unshift({ name, subtitle, lat, lng, date: new Date().toISOString() });
-        if (recents.length > 6) recents = recents.slice(0, 6);
-        localStorage.setItem('fastnet_recent_destinations', JSON.stringify(recents));
-    } catch (e) {}
+    // recent searches removed — nothing stored
 
     closeNavPopups();
 
@@ -600,7 +567,7 @@ function selectNavDestination(name, subtitle, lat, lng) {
         });
     }
 
-    const datePod = document.getElementById('nav_date_pod');
+    const datePod = document.getElementById('nav_date_pod_ci') || document.getElementById('nav_date_pod_co');
     if (datePod && typeof openNavDatePicker === 'function') {
         setTimeout(() => {
             openNavDatePicker();
@@ -637,7 +604,7 @@ function openNavGuestModal(e) {
     const pod = document.getElementById('nav_guest_pod');
     if (modal) modal.classList.add('show');
     if (pod) {
-        pod.style.outline = '2px solid #007fad';
+        pod.style.outline = '2px solid #0f62fe';
         pod.style.outlineOffset = '-2px';
         pod.style.borderRadius = '6px';
     }
@@ -724,7 +691,7 @@ function closeNavPopups() {
         const el = document.getElementById(id);
         if (el) el.classList.remove('show');
     });
-    const pods = ['nav_dest_pod', 'nav_date_pod', 'nav_guest_pod', 'nav_user_btn'];
+    const pods = ['nav_dest_pod', 'nav_date_pod_ci', 'nav_date_pod_co', 'nav_guest_pod', 'nav_user_btn'];
     pods.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.outline = 'none';

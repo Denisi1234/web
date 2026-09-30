@@ -108,7 +108,7 @@ function toggleNavUserDropdown(e) {
     if (!wasOpen) {
         drop.classList.add('show');
         if (btn) {
-            btn.style.outline = '2px solid #007fad';
+            btn.style.outline = '2px solid #0f62fe';
             btn.style.outlineOffset = '-2px';
         }
     }

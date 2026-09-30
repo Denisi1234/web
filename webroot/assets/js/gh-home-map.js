@@ -128,6 +128,17 @@
 
         _map.on('load', function () {
             try{ _map.resize(); }catch(e){}
+            // Focused search area wins: fit the picked viewport once, then
+            // hand control back to result-driven framing below.
+            try{
+                if (cfg && cfg.focusBbox && typeof cfg.focusBbox === 'string') {
+                    var p = cfg.focusBbox.split(',').map(Number);
+                    if (p.length === 4 && p.every(isFinite)) {
+                        _map.fitBounds([[p[1], p[0]], [p[3], p[2]]], { padding: 48, duration: 900 });
+                        _fitted = true;
+                    }
+                }
+            }catch(e){}
             // clear fallback overlay once map actually loads
             var el=document.getElementById('gh-interactive-map');
             if(el){
@@ -164,7 +175,7 @@
                 if(el && !el.querySelector('.gh-map-empty')){
                     var msg=document.createElement('div');
                     msg.className='gh-map-empty';
-                    msg.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.92);z-index:5;font-family:Google Sans,Roboto,sans-serif;color:#5f6368;font-size:13px;text-align:center;padding:16px;';
+                    msg.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.92);z-index:5;font-family:\'IBM Plex Sans\',Inter,Roboto,sans-serif;color:#525252;font-size:13px;text-align:center;padding:16px;';
                     msg.innerHTML='<div><div style="font-size:28px;margin-bottom:8px;">🗺️</div>No stays in this area<br><span style="font-size:11px;color:#9aa0a6;">Pan or zoom to explore</span></div>';
                     el.appendChild(msg);
                 }
@@ -245,8 +256,12 @@
             }
         });
 
-        // Fit all markers — first load only; filter refreshes keep the user's viewport
-        if (!_fitted && markers.length > 1) {
+        // Fit markers: first load fits all; single result centers on its pin (region follows location).
+        // Later refreshes are handled by ghRefreshMarkers (off-screen reframe only) so filters don't yank the map.
+        if (!_fitted && markers.length === 1 && markers[0].lat && markers[0].lng) {
+            _map.flyTo({ center: [markers[0].lng, markers[0].lat], zoom: 14, duration: 800 });
+            _fitted = true;
+        } else if (!_fitted && markers.length > 1) {
             var bounds = new mapboxgl.LngLatBounds();
             markers.forEach(function (m) { if (m.lat && m.lng) bounds.extend([m.lng, m.lat]); });
             _map.fitBounds(bounds, { padding: 56, maxZoom: 14, duration: 800 });
@@ -304,6 +319,24 @@
         _clearMarkers();
         _addMarkers(markers||[]);
         _cfg.markers = markers||[];
+        // Region follows location: if the new result set is entirely outside the viewport (new city search),
+        // reframe once so Arusha results don't sit on a Dar es Salaam map.
+        try{
+            var list = markers || [];
+            if (_map && list.length && _fitted) {
+                var b = _map.getBounds();
+                var anyVisible = list.some(function(m){ return m.lat && m.lng && b.contains([m.lng, m.lat]); });
+                if (!anyVisible) {
+                    if (list.length === 1) {
+                        _map.flyTo({ center: [list[0].lng, list[0].lat], zoom: 14, duration: 800 });
+                    } else {
+                        var nb = new mapboxgl.LngLatBounds();
+                        list.forEach(function(m){ if (m.lat && m.lng) nb.extend([m.lng, m.lat]); });
+                        _map.fitBounds(nb, { padding: 56, maxZoom: 14, duration: 800 });
+                    }
+                }
+            }
+        }catch(e){}
     };
     window.addEventListener('fastnet:markers-update', function(e){
         if(e.detail) window.ghRefreshMarkers(e.detail);

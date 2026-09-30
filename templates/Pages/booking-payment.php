@@ -1,4 +1,4 @@
-<?php $this->assign('title', 'Complete payment | fastnetstays.com'); ?>
+<?php $this->assign('title', 'Complete payment'); ?>
 <?= $this->Html->css('/assets/css/google-travel-layout.css') ?>
 <?= $this->Html->css('/assets/css/google-travel-home.css') ?>
 <?= $this->element('navbar') ?>
@@ -25,7 +25,7 @@
     <div class="container" style="max-width: 620px;">
         <section class="trivago-card text-center p-4 p-md-5" aria-labelledby="payment-title">
             <div class="payment-icon-circle" aria-hidden="true">
-                <i id="payment-icon" class="fa-solid fa-mobile-screen-button" style="font-size:26px;color:#2563EB"></i>
+                <i id="payment-icon" class="fa-solid fa-mobile-screen-button" style="font-size:26px;color:#0f62fe"></i>
             </div>
             <h1 id="payment-title" class="trivago-card-title">Approve your mobile payment</h1>
             <p id="payment-status-text" class="trivago-card-subtitle">Sending payment request to your phone...</p>

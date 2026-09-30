@@ -1,0 +1,234 @@
+/* carbon-journey.css — IBM Carbon v11 polish for booking journey + detail pages
+ * (booking-page, bookingpage-03, booking-payment, bookingpage-success, hotel-detail)
+ * Mirrors carbon-home.css approach: Baymard structure kept, Carbon color/type/focus/spacing win.
+ * Loaded on every page EXCEPT home (home has carbon-home.css). White theme, IBM Plex Sans.
+ */
+
+/* ── 1. Single Carbon font stack (icons excluded) ── */
+.agoda-pay-header, .agoda-pay-title, .agoda-pay-sub,
+.agoda-card, .agoda-side-card, .agoda-price-card,
+.agoda-price-row, .agoda-price-total, .agoda-included,
+.agoda-field, .agoda-input, .agoda-terms, .agoda-checkbox,
+.agoda-email-note, .agoda-flexi, .agoda-cancel-card,
+.agoda-breadcrumb, .agoda-side-title, .agoda-side-sub,
+.agoda-rating, .agoda-green, .agoda-secure,
+.trivago-card-title, .trivago-card-subtitle,
+#payment-status, #payment-status-text {
+  font-family: 'IBM Plex Sans','Inter','Google Sans',Roboto,'Helvetica Neue',Arial,sans-serif !important;
+}
+
+/* ── 2. Carbon grays for body text (keep rating greens/price oranges) ── */
+.agoda-pay-title, .agoda-side-title, .agoda-price-row, .agoda-price-total b {
+  color: #161616 !important;
+}
+.agoda-pay-sub, .agoda-side-sub, .agoda-included, .agoda-email-note {
+  color: #525252 !important;
+}
+
+/* ── 3. Carbon focus: 2px blue ring, never invisible ── */
+.agoda-card :focus-visible, .agoda-side-card :focus-visible,
+.agoda-pay-header :focus-visible, #payment-status:focus-visible {
+  outline: 2px solid #0f62fe !important; outline-offset: 2px !important;
+}
+.agoda-input:focus, input.agoda-input:focus {
+  border-color: #0f62fe !important;
+  box-shadow: inset 0 -2px 0 #0f62fe !important;
+  outline: none !important;
+}
+.agoda-checkbox input, .agoda-digital input, .agoda-pay-radio input,
+input[type="checkbox"][accent-color], input[type="radio"] {
+  accent-color: #0f62fe !important;
+}
+
+/* ── 4. Carbon buttons: primary blue-60 (pill shape kept for CTA prominence) ── */
+.agoda-book-btn {
+  background: #0f62fe !important; border-color: #0f62fe !important;
+  box-shadow: 0 4px 12px rgba(15,98,254,.25) !important;
+}
+.agoda-book-btn:hover { background: #0353e9 !important; border-color: #0353e9 !important; }
+.agoda-book-btn:active { background: #002d9c !important; }
+.agoda-book-btn:disabled { background: #c6c6c6 !important; border-color: #c6c6c6 !important; color: #8d8d8d !important; }
+
+/* ── 5. Steps + timer + status bars → Carbon ── */
+.agoda-step.done .num, .agoda-step.active .num {
+  background: #0f62fe !important; border-color: #0f62fe !important;
+}
+.agoda-step.active span, .agoda-step.done span { color: #0f62fe !important; }
+.agoda-step-line.filled { background: #0f62fe !important; }
+#payment-status.alert-info { background: #edf5ff !important; border-color: #d0e2ff !important; color: #161616 !important; }
+#payment-status.alert-success { background: #defbe6 !important; border-color: #a7f3d0 !important; color: #161616 !important; }
+#payment-status.alert-danger { background: #fff1f1 !important; border-color: #fecaca !important; color: #161616 !important; }
+#payment-status.alert-warning { background: #fffbeb !important; border-color: #fde68a !important; color: #161616 !important; }
+
+/* ── 6. Price card: radius lock 8px, honest fee rows inherit ── */
+.agoda-card, .agoda-side-card { border-radius: 8px !important; border-color: #e0e0e0 !important; }
+
+/* ── 7. Hotel detail: Carbon type, focus, grays (Plex inherited; icons excluded) ── */.agoda-breadcrumb, .agoda-tabs-wrap, .agoda-detail-grid,
+.agoda-gallery, .agoda-mobile-bar, .agoda-review-scroll {
+  font-family: 'IBM Plex Sans','Inter','Google Sans',Roboto,'Helvetica Neue',Arial,sans-serif !important;
+}
+.agoda-tab { color: #525252 !important; }
+.agoda-tab:hover { color: #161616 !important; }
+.agoda-tab:focus-visible, .agoda-view-deal:focus-visible,
+.agoda-room-card :focus-visible, .agoda-gallery :focus-visible,
+.agoda-mobile-bar :focus-visible {
+  outline: 2px solid #0f62fe !important; outline-offset: 2px !important;
+}
+.agoda-view-deal { min-height: 44px !important; }
+.agoda-room-card.selected { border-color: #0f62fe !important; }
+.room-card-title { color: #161616 !important; }
+
+/* ── 7. Header search pill — home look, Carbon tokens ── */
+.nav-cds-pill {
+  height: 52px !important; background: #fff !important;
+  border: 1px solid #e0e0e0 !important; border-radius: 8px !important;
+  box-shadow: 0 1px 2px rgba(22,22,22,.06) !important;
+  transition: box-shadow .15s ease, border-color .15s ease !important;
+  overflow: visible !important; padding: 3px !important; gap: 0 !important;
+}
+.nav-cds-pill:hover { border-color: #8d8d8d !important; box-shadow: 0 2px 6px rgba(22,22,22,.1) !important; }
+.nav-cds-pill:focus-within { border-color: #0f62fe !important; box-shadow: inset 0 -2px 0 #0f62fe !important; }
+.nav-cds-seg {
+  padding: 4px 12px !important; border-radius: 4px !important;
+  min-width: 0 !important; gap: 8px !important;
+}
+.nav-cds-seg:hover { background: #f4f4f4 !important; }
+#nav_dest_pod { min-width: 180px !important; }
+#nav_date_pod_ci, #nav_date_pod_co { min-width: 110px !important; }
+#nav_guest_pod { min-width: 150px !important; }
+.nav-cds-label {
+  font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important;
+  font-size: 11px !important; font-weight: 400 !important;
+  letter-spacing: .32px !important; color: #525252 !important;
+  line-height: 1.2 !important; white-space: nowrap !important;
+}
+.nav-cds-value {
+  font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important;
+  font-size: 14px !important; font-weight: 500 !important;
+  color: #161616 !important; line-height: 1.3 !important;
+}
+.nav-cds-value::placeholder { color: rgba(22,22,22,.4) !important; font-weight: 400 !important; }
+.nav-cds-icon { color: #0f62fe !important; font-size: 14px !important; flex-shrink: 0 !important; }
+.nav-cds-clear { color: #6f6f6f !important; font-size: 12px !important; width: 28px !important; height: 28px !important; border-radius: 50% !important; }
+.nav-cds-clear:hover { background: #f4f4f4 !important; color: #161616 !important; }
+.nav-cds-divider { width: 1px !important; align-self: center !important; height: 28px !important; background: #e0e0e0 !important; flex-shrink: 0 !important; }
+.nav-nights-badge {
+  display: inline-flex !important; align-items: center !important;
+  font-size: 11px !important; font-weight: 600 !important;
+  color: #0043ce !important; background: #edf5ff !important;
+  border: 1px solid #d0e2ff !important; border-radius: 12px !important;
+  padding: 0 8px !important; line-height: 20px !important; white-space: nowrap !important;
+}
+.nav-cds-cta {
+  gap: 8px !important; background: #0f62fe !important; color: #fff !important;
+  border: none !important; border-radius: 4px !important;
+  padding: 0 18px !important; height: 40px !important; min-height: 40px !important;
+  font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important;
+  font-size: 14px !important; font-weight: 600 !important; white-space: nowrap !important;
+}
+.nav-cds-cta:hover { background: #0353e9 !important; }
+.nav-cds-cta:active { background: #002d9c !important; }
+.nav-cds-cta:focus-visible { outline: 2px solid #0f62fe !important; outline-offset: 2px !important; }
+.nav-cds-seg:focus-visible { outline: 2px solid #0f62fe !important; outline-offset: 1px !important; }
+.nav-cds-seg .nav-cds-value:focus-visible { outline: none !important; box-shadow: none !important; }
+/* Header dropdown + modals → Carbon popover */
+.trivago-recent-dropdown, .trivago-datepicker-modal, .trivago-guests-modal {
+  border: 1px solid #e0e0e0 !important; border-radius: 8px !important;
+  box-shadow: 0 8px 24px rgba(22,22,22,.12) !important;
+  font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important;
+}
+.trivago-apply-btn {
+  background: #0f62fe !important; border-color: #0f62fe !important; color: #fff !important;
+  border-radius: 4px !important; min-height: 40px !important;
+}
+.trivago-apply-btn:hover { background: #0353e9 !important; }
+.trivago-reset-btn { color: #525252 !important; border-radius: 4px !important; }
+.trivago-shortcut-btn { border-radius: 16px !important; border-color: #e0e0e0 !important; }
+.trivago-shortcut-btn:hover { border-color: #0f62fe !important; color: #0043ce !important; background: #edf5ff !important; }
+.trivago-round-btn:focus-visible, .trivago-shortcut-btn:focus-visible,
+.trivago-apply-btn:focus-visible, .trivago-reset-btn:focus-visible {
+  outline: 2px solid #0f62fe !important; outline-offset: 2px !important;
+}
+/* Header mobile chip + bottom sheet (mirrors home pattern) */
+@media (max-width: 767px) {
+  #nav_search_wrapper { display: block !important; }
+  #nav_search_container { display: none !important; }
+  #nav_search_container.in-sheet { display: flex !important; }
+  .nav-mobile-chip {
+    display: flex !important; align-items: center !important; gap: 10px !important;
+    height: 52px !important; padding: 8px 16px !important; width: 100% !important;
+    background: #fff !important; border: 1px solid #e0e0e0 !important;
+    border-radius: 8px !important; box-shadow: 0 1px 2px rgba(22,22,22,.06) !important;
+    cursor: pointer !important;
+    font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important;
+  }
+  .nav-mobile-chip-icon {
+    width: 32px !important; height: 32px !important; border-radius: 50% !important;
+    background: #0f62fe !important; color: #fff !important;
+    display: flex !important; align-items: center !important; justify-content: center !important;
+    font-size: 14px !important; flex-shrink: 0 !important;
+  }
+  .nav-mobile-chip-text {
+    flex: 1 !important; font-size: 13px !important; font-weight: 500 !important; color: #161616 !important;
+    white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; text-align: left !important;
+  }
+  .nav-mobile-chip-chevron {
+    width: 32px !important; height: 32px !important; border-radius: 50% !important;
+    background: #f4f4f4 !important; color: #525252 !important;
+    display: flex !important; align-items: center !important; justify-content: center !important;
+    font-size: 12px !important; flex-shrink: 0 !important;
+  }
+  .nav-mobile-sheet {
+    display: none !important; position: fixed !important; inset: 0 !important; z-index: 3000 !important;
+    background: rgba(22,22,22,.4) !important;
+  }
+  .nav-mobile-sheet.open { display: block !important; }
+  .nav-mobile-sheet-inner {
+    position: absolute !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+    background: #fff !important; border-radius: 8px 8px 0 0 !important;
+    max-height: 92dvh !important; display: flex !important; flex-direction: column !important;
+  }
+  .nav-mobile-sheet .sheet-drag { display: flex !important; justify-content: center !important; padding: 10px 0 6px !important; }
+  .nav-mobile-sheet .sheet-drag span { width: 38px !important; height: 4px !important; background: #e0e0e0 !important; border-radius: 9999px !important; display: block !important; }
+  .nav-mobile-sheet .sheet-header {
+    display: flex !important; align-items: center !important; justify-content: space-between !important;
+    padding: 2px 16px 12px !important;
+    font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important;
+    font-size: 17px !important; font-weight: 700 !important; color: #161616 !important;
+  }
+  .nav-mobile-sheet .sheet-body { padding: 0 16px calc(16px + env(safe-area-inset-bottom)) !important; overflow-y: auto !important; }
+  /* Stacked pill inside sheet */
+  .nav-mobile-sheet #nav_search_container {
+    flex-direction: column !important; align-items: stretch !important;
+    height: auto !important; gap: 4px !important; padding: 8px !important;
+  }
+  .nav-mobile-sheet .nav-cds-seg { padding: 10px 12px !important; border: 1px solid #e0e0e0 !important; }
+  .nav-mobile-sheet .nav-cds-divider { width: auto !important; height: 1px !important; }
+  .nav-mobile-sheet .nav-cds-cta { width: 100% !important; min-height: 48px !important; justify-content: center !important; }
+  .nav-mobile-sheet .trivago-datepicker-modal,
+  .nav-mobile-sheet .trivago-guests-modal,
+  .nav-mobile-sheet .trivago-recent-dropdown {
+    position: fixed !important; left: 12px !important; right: 12px !important;
+    top: auto !important; bottom: 12px !important; width: auto !important; max-width: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agoda-card, .agoda-side-card, .agoda-book-btn { transition: none !important; }
+}
+
+/* ── 8. Detail mobile professionalism: lightbox + map modal + tabs ── */
+#photo_lightbox_modal button {
+  min-height: 44px !important; min-width: 44px !important;
+}
+#photo_lightbox_modal button:focus-visible, #hotel_map_modal button:focus-visible {
+  outline: 2px solid #0f62fe !important; outline-offset: 2px !important;
+}
+@media (max-width: 768px) {
+  #web1-hotel-detail-map { height: 70dvh !important; }
+  #hotel_map_modal { padding: 8px !important; }
+  #photo_lightbox_modal { padding: 12px !important; }
+  .agoda-tabs-wrap { gap: 0 !important; }
+  .agoda-tab { padding: 0 12px !important; min-height: 56px !important; }
+  .agoda-mobile-bar .agoda-view-deal { min-height: 44px !important; }
+}

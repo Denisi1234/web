@@ -234,6 +234,7 @@ $mSummary = h($destVal ?: 'All Tanzanian Destinations') . ' • ' . date('M j', 
     <form action="<?= $this->Url->build('/') ?>" method="GET" autocomplete="off" id="gh_search_form" role="search" aria-label="Find stays" novalidate>
       <input type="hidden" name="lat" id="gh_lat" value="<?= h($queryParams['lat'] ?? '') ?>">
       <input type="hidden" name="lng" id="gh_lng" value="<?= h($queryParams['lng'] ?? '') ?>">
+      <input type="hidden" name="bbox" id="gh_bbox" value="<?= h($queryParams['bbox'] ?? '') ?>">
       <input type="hidden" name="checkin" id="gh_ci" value="<?= h($checkIn) ?>">
       <input type="hidden" name="checkout" id="gh_co" value="<?= h($checkOut) ?>">
       <!-- legacy aliases for backward compat -->
@@ -444,20 +445,12 @@ var POPULAR=[
   {id:'serengeti', label:'Serengeti', sub:'National Park', icon:'fa-paw', lat:-2.3333, lng:34.8333, aka:'seronera'},
   {id:'mwanza', label:'Mwanza', sub:'Lake Victoria', icon:'fa-water', lat:-2.5167, lng:32.9, aka:'lakevictoria'}
 ];
-var RECENT_KEY='fns_recent_searches';
 function fnsMatchPopular(p, ql, qslug){
   if(!ql) return true;
   if(p.label.toLowerCase().indexOf(ql)!==-1 || p.sub.toLowerCase().indexOf(ql)!==-1) return true;
   if(p.aka && p.aka.indexOf(ql)!==-1) return true;
   if(qslug && p.aka && p.aka.replace(/[^a-z0-9 ]/g,'').replace(/ /g,'').indexOf(qslug)!==-1) return true;
   return false;
-}
-function getRecent(){ try{return JSON.parse(localStorage.getItem(RECENT_KEY)||'[]');}catch(e){return [];} }
-function pushRecent(val){
-  if(!val || val==='All Tanzanian Destinations') return;
-  var arr=getRecent().filter(function(v){return v.toLowerCase()!==val.toLowerCase();});
-  arr.unshift(val); arr=arr.slice(0,5);
-  try{localStorage.setItem(RECENT_KEY, JSON.stringify(arr));}catch(e){}
 }
 function renderDest(q){
   var popularEl=document.getElementById('fns_dd_popular');
@@ -475,18 +468,9 @@ function renderDest(q){
     html+='<div class="fns-dd-item'+active+'" id="'+optId+'" role="option"'+sel+' data-value="'+p.label+'" data-idx="'+i+'" onclick="fnsPickDest(\''+p.label.replace(/'/g,"\\'")+'\','+p.lat+','+p.lng+')" onmouseenter="fnsHlDest('+i+')"><span class="fns-dd-icon"><i class="fa-solid '+p.icon+'"></i></span><span><div class="fns-dd-label">'+p.label+'</div><div class="fns-dd-sub">'+p.sub+'</div></span></div>';
   });
   popularEl.innerHTML=html;
-  // recent
-  var recent=getRecent();
-  if(recent.length){
-    var rh='<div class="fns-dd-section"><i class="fa-regular fa-clock" style="margin-right:6px;"></i>Recent Searches</div>';
-    recent.forEach(function(r){
-      if(ql && r.toLowerCase().indexOf(ql)===-1) return;
-      rh+='<div class="fns-dd-item" onclick="fnsPickDest(\''+r.replace(/'/g,"\\'")+'\')"><span class="fns-dd-icon"><i class="fa-solid fa-clock-rotate-left"></i></span><span><div class="fns-dd-label">'+r+'</div><div class="fns-dd-sub">Recent</div></span></div>';
-    });
-    recentEl.innerHTML=rh;
-  } else recentEl.innerHTML='';
+  recentEl.innerHTML='';
   // also sync mobile list (thumb-friendly 56px rows)
-  syncMobileList(ql, filtered, recent);
+  syncMobileList(ql, filtered, []);
   // live Mapbox autocomplete for real Tanzanian areas (debounced, cached)
   fnsMbxSuggest(ql);
 }
@@ -539,11 +523,7 @@ function syncMobileList(ql, filtered, recent){
     });
   }
   filtered.forEach(function(p){ mh+='<div class="fns-dd-item mob" role="option" tabindex="0" onclick="fnsPickDest(\''+p.label.replace(/'/g,"\\'")+'\','+p.lat+','+p.lng+');fnsSheetGo(\'when\');" onkeydown="if(event.key===\'Enter\') this.click()"><span class="fns-dd-icon" aria-hidden="true"><i class="fa-solid '+p.icon+'"></i></span><span><div class="fns-dd-label">'+p.label+'</div><div class="fns-dd-sub">'+p.sub+'</div></span><span style="margin-left:auto;color:#9CA3AF;"><i class="fa-solid fa-chevron-right" style="font-size:11px;"></i></span></div>'; });
-  if(recent.length){
-    mh+='<div class="fns-dd-section" style="margin-top:8px;">Recent</div>';
-    recent.forEach(function(r){ mh+='<div class="fns-dd-item mob" role="option" tabindex="0" onclick="fnsPickDest(\''+r.replace(/'/g,"\\'")+'\');fnsSheetGo(\'when\');" onkeydown="if(event.key===\'Enter\') this.click()"><span class="fns-dd-icon" aria-hidden="true"><i class="fa-solid fa-clock-rotate-left"></i></span><span><div class="fns-dd-label">'+r+'</div><div class="fns-dd-sub">Recent search</div></span></div>'; });
-  }
-  if(!filtered.length && !recent.length && !(_mbxQ===ql && _mbxResults.length)) mh='<div style="padding:16px;color:var(--fns-text-sec);font-size:14px;text-align:center;">No matches — try Arusha, Zanzibar, Mwanza</div>';
+  if(!filtered.length && !(_mbxQ===ql && _mbxResults.length)) mh='<div style="padding:16px;color:var(--fns-text-sec);font-size:14px;text-align:center;">No matches — try Arusha, Zanzibar, Mwanza</div>';
   mList.innerHTML=mh;
 }
 function fnsMbxSuggest(ql){
@@ -554,7 +534,7 @@ function fnsMbxSuggest(ql){
     _mbxResults=_mbxCache[ql]; _mbxQ=ql; renderMbx();
     syncMobileList(ql,
       POPULAR.filter(function(p){ return fnsMatchPopular(p, ql, ql.replace(/[^a-z0-9]/g,'')); }),
-      getRecent());
+      []);
     return;
   }
   _mbxT=setTimeout(function(){
@@ -577,7 +557,7 @@ function fnsMbxSuggest(ql){
         renderMbx();
         syncMobileList(curQ,
           POPULAR.filter(function(p){ return fnsMatchPopular(p, curQ, curQ.replace(/[^a-z0-9]/g,'')); }),
-          getRecent());
+          []);
       })
       .catch(function(e){ if(e&&e.name==='AbortError') return; renderMbx(); });
   }, 250);
@@ -587,20 +567,22 @@ window.fnsPickMbx=function(i){
   var city=mbxCityName(f);
   var lng=(f.center&&f.center.length>1)?f.center[0]:null;
   var lat=(f.center&&f.center.length>1)?f.center[1]:null;
-  fnsPickDest(city, lat, lng);
+  var bbox='';
+  if(f.bbox&&f.bbox.length===4){ bbox=f.bbox[3]+','+f.bbox[2]+','+f.bbox[1]+','+f.bbox[0]; }
+  fnsPickDest(city, lat, lng, bbox);
   if(window.innerWidth<=991 && typeof fnsSheetGo==='function'){ try{ fnsSheetGo('when'); }catch(e){} }
 };
-window.fnsPickDest=function(val, lat, lng){
+window.fnsPickDest=function(val, lat, lng, bbox){
   document.getElementById('gh_dest').value=val;
   document.getElementById('gh_city').value=val;
   document.getElementById('fns_m_input').value=val;
-  var latEl=document.getElementById('gh_lat'), lngEl=document.getElementById('gh_lng');
+  var latEl=document.getElementById('gh_lat'), lngEl=document.getElementById('gh_lng'), bbEl=document.getElementById('gh_bbox');
   if(latEl) latEl.value=(lat!==undefined&&lat!==null&&lat!=='')?lat:'';
   if(lngEl) lngEl.value=(lng!==undefined&&lng!==null&&lng!=='')?lng:'';
-  pushRecent(val);
+  if(bbEl) bbEl.value=bbox||'';
   fnsClosePopovers();
   document.getElementById('fns_m_where_val').textContent=val;
-  if(window.FastNetState) FastNetState.replaceState({city:val, destination:val, lat:(lat||''), lng:(lng||'')});
+  if(window.FastNetState) FastNetState.replaceState({city:val, destination:val, lat:(lat||''), lng:(lng||''), bbox:(bbox||'')});
   updateClear();
 };
 window.fnsHlDest=function(i){
@@ -648,7 +630,8 @@ window.fnsDestInput=function(v){
   renderDest(v);
   document.getElementById('gh_city').value=v;
   document.getElementById('gh_lat').value=''; document.getElementById('gh_lng').value='';
-  if(window.FastNetState) FastNetState.replaceState({city:v, destination:v, lat:'', lng:''});
+  var _bb=document.getElementById('gh_bbox'); if(_bb) _bb.value='';
+  if(window.FastNetState) FastNetState.replaceState({city:v, destination:v, lat:'', lng:'', bbox:''});
   var pop=document.getElementById('fns_pop_dest');
   if(pop && !pop.classList.contains('open')){ pop.classList.add('open'); document.getElementById('fns_seg_where').setAttribute('aria-expanded','true');}
 };
@@ -666,9 +649,10 @@ window.fnsDestClear=function(){
   document.getElementById('gh_city').value='';
   document.getElementById('fns_m_input').value='';
   document.getElementById('gh_lat').value=''; document.getElementById('gh_lng').value='';
+  var _bb2=document.getElementById('gh_bbox'); if(_bb2) _bb2.value='';
   updateClear(); renderDest('');
   document.getElementById('gh_dest').focus();
-  if(window.FastNetState) FastNetState.replaceState({city:'', destination:'', lat:'', lng:''});
+  if(window.FastNetState) FastNetState.replaceState({city:'', destination:'', lat:'', lng:'', bbox:''});
 };
 
 // ── Date helpers ──
@@ -818,6 +802,20 @@ window.fnsGuestsToggle=function(e){
   if(!isOpen){ pop.classList.add('open'); document.getElementById('fns_seg_guests').classList.add('active'); document.getElementById('fns_seg_guests').setAttribute('aria-expanded','true'); }
 };
 window.fnsGuestsClose=function(){ document.getElementById('fns_pop_guests').classList.remove('open'); fnsCloseSegActive(); };
+/* Exact-area default: on submit with no destination AND no picked bbox, stamp
+   the current map viewport so explore-mode matches what the user sees.
+   A typed/picked destination always wins — never constrain it by viewport. */
+document.getElementById('gh_search_form').addEventListener('submit', function(){
+  try{
+    var bb=document.getElementById('gh_bbox');
+    var typed=(document.getElementById('gh_dest').value||'').trim();
+    if(bb && !bb.value && !typed && window._ghMap){
+      var b=window._ghMap.getBounds(); if(!b) return;
+      var ne=b.getNorthEast(), sw=b.getSouthWest();
+      bb.value=ne.lat.toFixed(4)+','+ne.lng.toFixed(4)+','+sw.lat.toFixed(4)+','+sw.lng.toFixed(4);
+    }
+  }catch(e){}
+});
 window.fnsGuestsApply=function(){ if(window.FastNetState) window.FastNetState.pushState({adults:String(_ad), children:String(_ch), rooms:String(_rm)}); fnsGuestsClose(); document.getElementById('gh_search_form').requestSubmit(); };
 
 // ── Popover helpers ──
@@ -870,10 +868,11 @@ window.fnsAccToggle=function(step){
 window.fnsMDestInput=function(v){
   document.getElementById('gh_dest').value=v; document.getElementById('gh_city').value=v;
   document.getElementById('gh_lat').value=''; document.getElementById('gh_lng').value='';
+  var _bbm=document.getElementById('gh_bbox'); if(_bbm) _bbm.value='';
   updateClear(); renderDest(v);
-  if(window.FastNetState) FastNetState.replaceState({city:v, destination:v, lat:'', lng:''});
+  if(window.FastNetState) FastNetState.replaceState({city:v, destination:v, lat:'', lng:'', bbox:''});
 };
-window.fnsMClear=function(){ document.getElementById('fns_m_input').value=''; document.getElementById('gh_dest').value=''; document.getElementById('gh_city').value=''; document.getElementById('gh_lat').value=''; document.getElementById('gh_lng').value=''; updateClear(); renderDest(''); if(window.FastNetState) FastNetState.replaceState({city:'', destination:'', lat:'', lng:''}); };
+window.fnsMClear=function(){ document.getElementById('fns_m_input').value=''; document.getElementById('gh_dest').value=''; document.getElementById('gh_city').value=''; document.getElementById('gh_lat').value=''; document.getElementById('gh_lng').value=''; var _bb3=document.getElementById('gh_bbox'); if(_bb3) _bb3.value=''; updateClear(); renderDest(''); if(window.FastNetState) FastNetState.replaceState({city:'', destination:'', lat:'', lng:'', bbox:''}); };
 function renderMobileCal(){
   var grid=document.getElementById('fns_m_grid'); if(!grid) return;
   grid.innerHTML='';
@@ -929,7 +928,7 @@ window.fnsClearAllMobile=function(){
 };
 window.fnsMobileSearch=function(){
   document.getElementById('gh_city').value=document.getElementById('fns_m_input').value || document.getElementById('gh_dest').value;
-  var v=document.getElementById('gh_city').value; if(v) pushRecent(v);
+  var v=document.getElementById('gh_city').value;
   // ensure dates are valid before push
   if(_co <= _ci){ var c=new Date(_ci+'T00:00:00'); c.setDate(c.getDate()+1); _co=c.toISOString().slice(0,10); }
   fnsCloseMobile();

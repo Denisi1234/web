@@ -7,11 +7,27 @@ $propCity = \App\Utility\TextFormatter::formatTitle((string)($property['city'] ?
 $propArea = \App\Utility\TextFormatter::formatTitle((string)($property['area'] ?? $propCity));
 $actualReviews = !empty($reviews) && is_array($reviews) ? $reviews : [];
 $reviewsCount = count($actualReviews) > 0 ? count($actualReviews) : (int)($property['reviews_count'] ?? $property['review_count'] ?? 0);
-$propRating = !empty($property['rating']) ? (float)$property['rating'] : ($reviewsCount > 0 ? array_sum(array_map(fn($r)=>(float)($r['rating']??5), $actualReviews)) / max(1, count($actualReviews)) : 4.8);
+$propRating = !empty($property['rating']) ? (float)$property['rating'] : ($reviewsCount > 0 ? array_sum(array_map(fn($r)=>(float)($r['rating']??5), $actualReviews)) / max(1, count($actualReviews)) : 0.0);
 $score10 = ($propRating <= 5.0) ? round($propRating * 2, 1) : round($propRating, 1);
 $score10Fmt = number_format($score10, 1);
 $ratingLabel = $score10 >= 9.0 ? 'Exceptional' : ($score10 >= 8.0 ? 'Excellent' : ($score10 >= 7.0 ? 'Very Good' : 'Good'));
-$propPrice = (float)($property['starting_price'] ?? ($property['price_per_night'] ?? ($property['price'] ?? 275)));
+$propBase = (float)($property['starting_price'] ?? ($property['price_per_night'] ?? ($property['price'] ?? 0)));
+// "From" price = lowest AVAILABLE room price (customer rate). The property base rate is NOT
+// bookable by itself, so it is only a fallback when no room carries a price.
+$propPrice = 0.0;
+if (!empty($rooms) && is_array($rooms)) {
+    $pricePool = [];
+    foreach ($rooms as $pr) {
+        if (!is_array($pr)) continue;
+        if (!array_key_exists('is_available', $pr) || (bool)$pr['is_available']) $pricePool[] = $pr;
+    }
+    if ($pricePool === []) $pricePool = array_values(array_filter($rooms, 'is_array'));
+    foreach ($pricePool as $pr) {
+        $rp = (float)($pr['customer_price'] ?? ($pr['price'] ?? 0));
+        if ($rp > 0 && ($propPrice <= 0 || $rp < $propPrice)) $propPrice = $rp;
+    }
+}
+if ($propPrice <= 0) $propPrice = $propBase;
 $propPrice = $propPrice > 0 ? $propPrice : 275;
 $firstRoomId = !empty($rooms[0]['id']) ? $rooms[0]['id'] : null;
 $detailPropertyId = (int)($propertyId ?? 0);
@@ -46,11 +62,15 @@ if (!empty($property['images']) && is_array($property['images'])) {
 }
 if (!empty($rooms) && is_array($rooms)) {
     foreach ($rooms as $r) {
-        $ph = $r['photos'] ?? []; if(is_string($ph)) $ph=json_decode($ph,true);
+        if (!is_array($r)) continue;
+        $ph = $r['photos'] ?? ($r['images'] ?? []); if(is_string($ph)) $ph=json_decode($ph,true);
         if(is_array($ph)) foreach($ph as $p){ $u=is_array($p)?($p['url']??$p['image_url']??''):$p; $u = $hdNormUrl((string)$u); if($u && !in_array($u,$galleryImages)) $galleryImages[]=$u; }
     }
 }
 if (count($galleryImages) < 8) {
+    // Demo padding ONLY in debug or ?demo=1 — production shows real photos only, never fake Unsplash mixed with real rooms
+    $allowDemoPad = \Cake\Core\Configure::read('debug') || isset($queryParams['demo']);
+    if ($allowDemoPad) {
     $demo = [
         'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&h=800&fit=crop',
         'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=600&h=400&fit=crop',
@@ -63,23 +83,24 @@ if (count($galleryImages) < 8) {
     ];
     foreach($demo as $d) if(!in_array($d,$galleryImages)) $galleryImages[]=$d;
     $galleryImages = array_slice($galleryImages,0,8);
+    }
 }
 $qp = $queryParams ?? [];
 $checkInVal = $qp['checkin'] ?? $qp['checkIn'] ?? '2026-10-12';
 $checkOutVal = $qp['checkout'] ?? $qp['checkOut'] ?? '2026-10-18';
 
-$this->assign('title', h($propTitle) . ' | fastnetstays.com');
-$this->assign('description', h(mb_strimwidth(strip_tags($propDesc),0,155,'...')) . ' — Book on FastNet Stays');
+$this->assign('title', $propTitle);
+$this->assign('description', mb_strimwidth(strip_tags($propDesc),0,155,'...') . ' — Book on FastNet Stays');
 ?>
 <style>
 /* Agoda exact detail — matches screenshot */
 .agoda-breadcrumb{background:#fff !important;border-bottom:1px solid #e8eaed !important;padding:10px 0 !important;font-size:13px !important;color:#5f6368 !important;display:block !important;width:100% !important;margin:0 !important}
-.agoda-breadcrumb a{color:#3264ff !important;text-decoration:none !important;font-weight:500 !important}
+.agoda-breadcrumb a{color:#0f62fe !important;text-decoration:none !important;font-weight:500 !important}
 .agoda-breadcrumb a:hover{color:#174ea6 !important;text-decoration:underline !important}
 .agoda-breadcrumb .agoda-bc-sep{color:#9aa0a6 !important;margin:0 4px !important;user-select:none}
 .agoda-breadcrumb .agoda-bc-count{color:#5f6368 !important;font-weight:400 !important}
 .agoda-breadcrumb .agoda-bc-current{color:#202124 !important;font-weight:600 !important}
-.agoda-breadcrumb .agoda-bc-seeall{color:#3264ff !important;font-weight:700 !important;white-space:nowrap !important;text-decoration:none !important}
+.agoda-breadcrumb .agoda-bc-seeall{color:#0f62fe !important;font-weight:700 !important;white-space:nowrap !important;text-decoration:none !important}
 .agoda-breadcrumb .agoda-bc-seeall:hover{text-decoration:underline !important}
 .agoda-breadcrumb .agoda-bc-inner{max-width:1180px !important;margin:0 auto !important;padding:0 12px !important;display:flex !important;align-items:center !important;justify-content:space-between !important;gap:12px !important;flex-wrap:wrap !important}
 .agoda-breadcrumb .agoda-bc-trail{display:flex !important;align-items:center !important;gap:6px !important;flex-wrap:wrap !important;font-size:13px !important;line-height:1.4 !important}
@@ -95,13 +116,13 @@ $this->assign('description', h(mb_strimwidth(strip_tags($propDesc),0,155,'...'))
 .agoda-tabs-wrap{background:#fff;border:1px solid #e8eaed;border-radius:8px;max-width:1180px;margin:14px auto;padding:0 8px 0 8px;display:flex;align-items:center;gap:0;height:58px;overflow-x:auto;scrollbar-width:none}
 .agoda-tabs-wrap::-webkit-scrollbar{display:none}
 .agoda-tab{padding:0 14px;height:56px;display:flex;align-items:center;font-size:14px;font-weight:500;color:#5f6368;border-bottom:2px solid transparent;white-space:nowrap;text-decoration:none;cursor:pointer;background:none;border-left:none;border-right:none;border-top:none}
-.agoda-tab.active{color:#3264ff;border-bottom-color:#3264ff;font-weight:700}
+.agoda-tab.active{color:#0f62fe;border-bottom-color:#0f62fe;font-weight:700}
 .agoda-tab:hover{color:#202124}
 .agoda-deal-cta{margin-left:auto;display:flex;align-items:center;gap:12px;padding-left:12px;white-space:nowrap}
 .agoda-deal-price{font-size:13px;color:#70757a}
 .agoda-deal-price b{color:#e53935;font-size:22px;font-weight:800;margin-left:4px}
-.agoda-view-deal{background:#3576f6;color:#fff;border:none;border-radius:24px;padding:10px 20px;font-weight:800;font-size:13px;letter-spacing:0.02em;cursor:pointer}
-.agoda-view-deal:hover{background:#2a5ad6}
+.agoda-view-deal{background:#0f62fe;color:#fff;border:none;border-radius:24px;padding:10px 20px;font-weight:800;font-size:13px;letter-spacing:0.02em;cursor:pointer}
+.agoda-view-deal:hover{background:#0353e9}
 .agoda-detail-grid{max-width:1180px;margin:24px auto;display:grid;grid-template-columns:1fr 360px;gap:24px;padding:0 20px;align-items:start}
 .agoda-rooms-header{margin:24px 0 16px !important;padding:0 4px}
 .agoda-card{padding:20px !important}
@@ -211,7 +232,7 @@ $this->assign('description', h(mb_strimwidth(strip_tags($propDesc),0,155,'...'))
 .agoda-title{font-size:23px;font-weight:800;color:#1a1d25;margin:12px 0 6px;line-height:1.25;letter-spacing:-0.01em}
 .agoda-stars{color:#b7791f;font-size:13px;letter-spacing:2px;vertical-align:middle;margin-left:6px}
 .agoda-address{font-size:13px;color:#5f6368;margin-top:4px;line-height:1.4}
-.agoda-address a{color:#3264ff;text-decoration:none;font-weight:700}
+.agoda-address a{color:#0f62fe;text-decoration:none;font-weight:700}
 .agoda-highlights-title{font-size:18px;font-weight:800;color:#1a1d25;margin:2px 0 12px}
 .agoda-highlight{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #f1f3f4;align-items:flex-start}
 .agoda-highlight:last-child{border:none}
@@ -225,7 +246,7 @@ $this->assign('description', h(mb_strimwidth(strip_tags($propDesc),0,155,'...'))
 .agoda-fac-item{display:flex;align-items:center;gap:8px;font-size:13px;color:#202124}
 .agoda-fac-item i{font-size:12px}
 .agoda-free-badge{background:#e6f4ea;color:#137333;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;margin-left:4px}
-.agoda-see-all-link{color:#3264ff;font-size:14px;font-weight:700;text-decoration:none}
+.agoda-see-all-link{color:#0f62fe;font-size:14px;font-weight:700;text-decoration:none}
 .agoda-see-all-link:hover{text-decoration:underline}
 /* High demand */
 .agoda-high-demand{background:#fef2f2;border:1px solid #fee2e2;border-radius:10px;padding:16px 18px;margin-top:12px}
@@ -237,16 +258,16 @@ $this->assign('description', h(mb_strimwidth(strip_tags($propDesc),0,155,'...'))
 .agoda-rating-score{background:#0d4a7a;color:#fff;border-radius:10px 10px 10px 0;padding:10px 12px;font-size:24px;font-weight:800;line-height:1}
 .agoda-rating-label b{font-size:16px;color:#0d4a7a}
 .agoda-rating-label span{font-size:13px;color:#5f6368;display:block}
-.agoda-see-all-reviews{color:#3264ff;font-size:13px;font-weight:600;text-decoration:none;margin-left:auto}
+.agoda-see-all-reviews{color:#0f62fe;font-size:13px;font-weight:600;text-decoration:none;margin-left:auto}
 .agoda-bar-row{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:#202124;margin:8px 0 4px}
 .agoda-bar-row span:last-child{color:#202124;font-weight:600}
 .agoda-bar-bg{height:6px;background:#e8eaed;border-radius:99px;overflow:hidden;margin-bottom:8px;display:flex;gap:0}
-.agoda-bar-fill{height:100%;background:#3264ff;border-radius:99px}
+.agoda-bar-fill{height:100%;background:#0f62fe;border-radius:99px}
 .agoda-review-scroll{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-top:12px}
 .agoda-review-scroll::-webkit-scrollbar{display:none}
 .agoda-review-snippet{border:1px solid #e8eaed;border-radius:10px;padding:12px 12px;font-size:13px;color:#202124;line-height:1.4;background:#fff;min-width:280px;max-width:280px;flex:0 0 85%}
 .agoda-review-author{font-size:12px;color:#5f6368;margin-top:8px;display:flex;align-items:center;gap:6px}
-.agoda-review-arrow{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:#fff;border:1px solid #e8eaed;box-shadow:0 2px 8px rgba(0,0,0,0.12);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.agoda-review-arrow{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:#fff;border:1px solid #e8eaed;box-shadow:0 2px 8px rgba(0,0,0,0.12);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .agoda-map-card{background:#fff;border:1px solid #e0e6ef;border-radius:12px;overflow:hidden}
 .agoda-map-thumb{height:150px;background:#e8ecef;position:relative;overflow:hidden}
 .agoda-map-thumb img{width:100%;height:100%;object-fit:cover;opacity:1}
@@ -264,7 +285,7 @@ $this->assign('description', h(mb_strimwidth(strip_tags($propDesc),0,155,'...'))
 .agoda-landmark-row span:last-child{color:#5f6368}
 .agoda-rooms-header{display:flex;align-items:center;justify-content:space-between;margin:16px 0 10px;gap:12px;flex-wrap:wrap}
 .agoda-rooms-header h2{font-size:22px;font-weight:800;color:#1a1d25;margin:0}
-.agoda-price-match{font-size:13px;color:#3264ff;font-weight:700;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.agoda-price-match{font-size:13px;color:#0f62fe;font-weight:700;display:flex;align-items:center;gap:6px;white-space:nowrap}
 /* Mobile sticky bar */
 .agoda-mobile-bar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:999;background:#fff;border-top:1px solid #e0e6ef;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));align-items:center;justify-content:space-between;gap:12px;box-shadow:0 -4px 16px rgba(0,0,0,0.08)}
 .agoda-mobile-bar-price{display:flex;flex-direction:column;line-height:1}
@@ -299,10 +320,45 @@ img{max-width:100%;height:auto}
   /* Rating review scroll snap for smooth swipe */
   .agoda-review-scroll{scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
   .agoda-review-snippet{scroll-snap-align:start}
-  .agoda-review-arrow{width:28px;height:28px;right:6px}
+  .agoda-review-arrow{width:44px;height:44px;right:6px}
 }
 </style>
 <?= $this->element('navbar') ?>
+
+<!-- Detail loading feedback: spinner from tap until content settles -->
+<?= $this->element('Home/home-loader') ?>
+<script>
+(function () {
+  function pill(on, text) {
+    var p = document.getElementById('home-mobile-loader-pill');
+    if (p) {
+      p.classList.toggle('pill-hidden', !on);
+      if (on && text) { var t = p.querySelector('.mobile-loader-text'); if (t) t.textContent = text; }
+    }
+    var bar = document.getElementById('home-top-loader-bar');
+    if (bar) {
+      if (on) { bar.style.display = 'block'; bar.style.opacity = '1'; bar.style.width = '65%'; }
+      else { bar.style.width = '100%'; setTimeout(function(){ bar.style.opacity = '0'; setTimeout(function(){ bar.style.display = 'none'; }, 300); }, 150); }
+    }
+  }
+  pill(true, 'Loading stay details…');
+  function done() { pill(false); }
+  window.addEventListener('load', function () { setTimeout(done, 350); });
+  setTimeout(done, 5000);
+  window.addEventListener('pageshow', done);
+  // room card Reserve → booking flow: spinner while the system loads.
+  // hold navigation briefly so it paints before unload.
+  document.addEventListener('click', function (e) {
+    if (e.defaultPrevented || (e.button !== undefined && e.button !== 0) || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target.closest ? e.target.closest('a[href*="/booking-page"]') : null;
+    if (!a || (a.target && a.target !== '_self')) return;
+    e.preventDefault();
+    pill(true, 'Loading booking…');
+    var href = a.href;
+    setTimeout(function () { window.location.href = href; }, 140);
+  });
+})();
+</script>
 
 <!-- Mobile breadcrumb AFTER header: Home > Dar es Salaam Hotels -->
 <nav class="agoda-breadcrumb agoda-breadcrumb-mobile d-md-none" aria-label="Breadcrumb" style="padding:8px 0 !important;margin:0 !important;">
@@ -314,16 +370,16 @@ img{max-width:100%;height:auto}
   </div>
 </nav>
 
-<!-- Breadcrumb — dynamic + scoped classes for CSS isolation -->
+<!-- Breadcrumb — dynamic + scoped classes for CSS isolation. Counts are real backend totals, hidden when unknown. -->
 <nav class="agoda-breadcrumb agoda-breadcrumb-desktop">
   <div class="agoda-bc-inner">
     <div class="agoda-bc-trail">
       <a href="/">Home</a> <span class="agoda-bc-sep">›</span>
-      <a href="/?destination=<?= urlencode($propCity) ?>"><?= h($propCity) ?> Hotels</a> <span class="agoda-bc-count">(<?= h($propCity === 'Dar es Salaam' ? '520' : '326') ?>)</span> <span class="agoda-bc-sep">›</span>
-      <a href="/?destination=<?= urlencode($propCity) ?>&amp;property_type=Resort"><?= h($propCity) ?> Resorts</a> <span class="agoda-bc-count">(6)</span> <span class="agoda-bc-sep">›</span>
+      <a href="/?destination=<?= urlencode($propCity) ?>"><?= h($propCity) ?> Hotels</a><?php if (isset($cityPropertyCount) && $cityPropertyCount !== null): ?> <span class="agoda-bc-count">(<?= number_format((int)$cityPropertyCount) ?>)</span><?php endif; ?> <span class="agoda-bc-sep">›</span>
+      <a href="/?destination=<?= urlencode($propCity) ?>&amp;property_type=Resort"><?= h($propCity) ?> Resorts</a> <span class="agoda-bc-sep">›</span>
       <span class="agoda-bc-current">Book <?= h($propTitle) ?></span>
     </div>
-    <a href="/?destination=<?= urlencode($propCity) ?>" class="agoda-bc-seeall">See all <?= h($propCity === 'Dar es Salaam' ? '520' : '326') ?> properties in <?= h($propCity) ?></a>
+    <a href="/?destination=<?= urlencode($propCity) ?>" class="agoda-bc-seeall">See all<?php if (isset($cityPropertyCount) && $cityPropertyCount !== null): ?> <?= number_format((int)$cityPropertyCount) ?> <?= ((int)$cityPropertyCount === 1 ? 'property' : 'properties') ?><?php endif; ?> in <?= h($propCity) ?></a>
   </div>
 </nav>
 
@@ -378,7 +434,7 @@ img{max-width:100%;height:auto}
     <div class="agoda-card" id="overview-section">
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <span class="agoda-badge-bestseller">Best seller</span>
-        <button style="margin-left:auto;background:none;border:1px solid #e8eaed;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="toggleWishlist(<?= $detailPropertyId ?>,this)" aria-label="Save"><i class="fa-regular fa-heart" style="color:#5f6368;font-size:16px"></i></button>
+        <button style="margin-left:auto;background:none;border:1px solid #e8eaed;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="toggleWishlist(<?= $detailPropertyId ?>,this)" aria-label="Save"><i class="fa-regular fa-heart" style="color:#5f6368;font-size:16px"></i></button>
       </div>
       <div class="agoda-title"><?= h($propTitle) ?> <span class="agoda-stars"><?= str_repeat('★', $propStars) ?><?= $propStars<5 ? str_repeat('☆',5-$propStars) : '' ?></span></div>
       <div class="agoda-address"><?= h($propAddress) ?></div>
@@ -388,7 +444,7 @@ img{max-width:100%;height:auto}
       </div>
       <?php endif; ?>
       <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-        <button type="button" onclick="openHotelMapModal()" style="background:#fff;border:1px solid #dadce0;border-radius:9999px;padding:7px 14px;font-size:13px;font-weight:600;color:#1A73E8;display:inline-flex;align-items:center;gap:6px;cursor:pointer"><i class="fa-solid fa-location-dot"></i> SEE MAP</button>
+        <button type="button" onclick="openHotelMapModal()" style="background:#fff;border:1px solid #dadce0;border-radius:9999px;padding:7px 14px;font-size:13px;font-weight:600;color:#0f62fe;display:inline-flex;align-items:center;gap:6px;cursor:pointer"><i class="fa-solid fa-location-dot"></i> SEE MAP</button>
         <button type="button" class="agoda-view-deal" onclick="document.getElementById('rooms-section')?.scrollIntoView({behavior:'smooth'})" style="padding:7px 16px;font-size:13px">View Rooms</button>
       </div>
     </div>
@@ -436,19 +492,19 @@ img{max-width:100%;height:auto}
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 24px">
         <div>
-          <div class="agoda-bar-row"><span>Cleanliness</span><span style="color:#3264ff"><?= number_format(min(10, $score10 + 0.1), 1) ?></span></div>
+          <div class="agoda-bar-row"><span>Cleanliness</span><span style="color:#0f62fe"><?= number_format(min(10, $score10 + 0.1), 1) ?></span></div>
           <div class="agoda-bar-bg"><div class="agoda-bar-fill" style="width:<?= min(100, round(($score10 + 0.1) * 10)) ?>%"></div></div>
         </div>
         <div>
-          <div class="agoda-bar-row"><span>Facilities</span><span style="color:#3264ff"><?= number_format(max(7.0, min(10, $score10 - 0.1)), 1) ?></span></div>
+          <div class="agoda-bar-row"><span>Facilities</span><span style="color:#0f62fe"><?= number_format(max(7.0, min(10, $score10 - 0.1)), 1) ?></span></div>
           <div class="agoda-bar-bg"><div class="agoda-bar-fill" style="width:<?= max(70, min(100, round(($score10 - 0.1) * 10))) ?>%"></div></div>
         </div>
         <div>
-          <div class="agoda-bar-row"><span>Service</span><span style="color:#3264ff"><?= number_format(min(10, $score10), 1) ?></span></div>
+          <div class="agoda-bar-row"><span>Service</span><span style="color:#0f62fe"><?= number_format(min(10, $score10), 1) ?></span></div>
           <div class="agoda-bar-bg"><div class="agoda-bar-fill" style="width:<?= min(100, round($score10 * 10)) ?>%"></div></div>
         </div>
         <div>
-          <div class="agoda-bar-row"><span>Value for money</span><span style="color:#3264ff"><?= number_format(max(7.0, min(10, $score10 - 0.3)), 1) ?></span></div>
+          <div class="agoda-bar-row"><span>Value for money</span><span style="color:#0f62fe"><?= number_format(max(7.0, min(10, $score10 - 0.3)), 1) ?></span></div>
           <div class="agoda-bar-bg"><div class="agoda-bar-fill" style="width:<?= max(70, min(100, round(($score10 - 0.3) * 10))) ?>%"></div></div>
         </div>
       </div>
@@ -494,7 +550,7 @@ img{max-width:100%;height:auto}
 </div>
 <div id="hotel_map_modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:4000;align-items:center;justify-content:center;padding:12px" onclick="closeHotelMapModal()">
   <div onclick="event.stopPropagation()" style="background:#fff;border-radius:12px;max-width:860px;width:100%;padding:12px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b><?= h($propTitle) ?></b><button onclick="closeHotelMapModal()" style="border:none;background:#f1f3f4;border-radius:50%;width:32px;height:32px">✕</button></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b><?= h($propTitle) ?></b><button onclick="closeHotelMapModal()" style="border:none;background:#f1f3f4;border-radius:50%;width:44px;height:44px">✕</button></div>
     <div id="web1-hotel-detail-map" style="height:480px;background:#e8ecef;border-radius:12px;border:1px solid #e8eaed"></div>
   </div>
 </div>

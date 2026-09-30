@@ -74,7 +74,7 @@ $currentPropId = (int)($property['id'] ?? ($propertyId ?? 0));
             <?php foreach ($reviewList as $rev): 
                 $author = $rev['user_name'] ?? ($rev['guest_name'] ?? ($rev['name'] ?? 'Verified Guest'));
                 $stars = max(1, min(5, (int)($rev['rating'] ?? 5)));
-                $comment = $rev['comment'] ?? ($rev['review'] ?? 'Exceptional stay.');
+                $comment = trim((string)($rev['comment'] ?? ($rev['review'] ?? '')));
                 $date = !empty($rev['created_at']) ? (is_string($rev['created_at']) && strlen($rev['created_at']) > 10 ? date('d M Y', strtotime($rev['created_at'])) : $rev['created_at']) : 'Recently';
             ?>
                 <div class="col-xl-6 col-lg-6 col-md-12">
@@ -93,7 +93,7 @@ $currentPropId = (int)($property['id'] ?? ($propertyId ?? 0));
                                 <?= str_repeat('★', $stars) ?>
                             </div>
                         </div>
-                        <p style="color:#3c4043;font-size:13px;line-height:1.5;font-style:italic;margin:0;font-family:Roboto,sans-serif;">"<?= h($comment) ?>"</p>
+                        <?php if ($comment !== ''): ?><p style="color:#3c4043;font-size:13px;line-height:1.5;font-style:italic;margin:0;font-family:Roboto,sans-serif;">"<?= h($comment) ?>"</p><?php endif; ?>
                     </div>
                 </div>
             <?php endforeach; ?>

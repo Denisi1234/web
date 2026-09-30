@@ -1,63 +1,65 @@
-<?php $this->assign('title', 'Admin Bookings | FastNetStays'); ?>
-<?= $this->element('navbar') ?>
-<style>.host-card{border:1px solid #e8eaed;border-radius:16px;box-shadow:0 6px 16px rgba(0,0,0,.05);background:#fff}.pill{border-radius:9999px;padding:4px 8px;font-size:11px;font-weight:700}.tab-pill{border-radius:9999px;padding:6px 12px;font-size:12px;font-weight:700;border:1px solid #e8eaed;background:#fff;color:#5f6368}.tab-pill.active{background:#2563EB;color:#fff;border-color:#2563EB}</style>
-<div class="container py-4" style="max-width:1280px">
-  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-    <div><h1 style="font-size:20px;font-weight:800">Admin Bookings</h1><p style="font-size:12px;color:#5f6368">Port of fastnet_admin_portal/lib/screens/bookings_screen.dart — GET /admin/bookings + PATCH /admin/bookings/{id}/status</p></div>
-    <span style="background:#F0F3FF;color:#2563EB;border-radius:9999px;padding:6px 12px;font-size:11px;font-weight:700"><?= count($bookings ?? []) ?> total</span>
-  </div>
-
-  <form method="get" class="d-flex gap-2 mb-3 flex-wrap">
-    <input name="search" value="<?= h($search ?? '') ?>" placeholder="Search guest/property/id" class="form-control" style="max-width:260px;border-radius:12px;height:44px">
-    <select name="status" class="form-select" style="max-width:180px;border-radius:12px;height:44px" onchange="this.form.submit()">
-      <option value="all" <?= ($status ?? 'all')==='all'?'selected':'' ?>>All</option>
-      <option value="Pending" <?= ($status ?? '')==='Pending'?'selected':'' ?>>Pending</option>
-      <option value="Confirmed" <?= ($status ?? '')==='Confirmed'?'selected':'' ?>>Confirmed</option>
-      <option value="Checked In" <?= ($status ?? '')==='Checked In'?'selected':'' ?>>Checked In</option>
-      <option value="Completed" <?= ($status ?? '')==='Completed'?'selected':'' ?>>Completed</option>
-      <option value="Cancelled" <?= ($status ?? '')==='Cancelled'?'selected':'' ?>>Cancelled</option>
-    </select>
-    <button class="btn" style="background:#2563EB;color:#fff;border-radius:12px;height:44px">Filter</button>
-    <a href="<?= $this->Url->build('/admin/bookings') ?>" class="btn" style="border:1px solid #e8eaed;border-radius:12px;height:44px">Clear</a>
-  </form>
-
-  <?php if (empty($bookings)): ?><div class="host-card p-5 text-center" style="color:#5f6368">No bookings.</div>
-  <?php else: ?>
-  <div class="host-card p-0 overflow-hidden">
-    <div class="table-responsive"><table class="table align-middle mb-0" style="font-size:13px"><thead style="background:#F8FAFC;font-size:11px;color:#5f6368"><tr><th>Booking</th><th>Guest</th><th>Property</th><th>Check-in → Check-out (nights)</th><th>Total</th><th>Status</th><th>Update</th></tr></thead><tbody>
-      <?php foreach ($bookings as $b):
-        $bid=$b['id'] ?? $b['booking_code'] ?? '';
-        $st= strtolower((string)($b['status'] ?? $b['payment_status'] ?? 'pending'));
-        $price=(float)($b['total_price'] ?? $b['total_amount'] ?? 0);
-        $ci=substr((string)($b['check_in'] ?? ''),0,10);
-        $co=substr((string)($b['check_out'] ?? ''),0,10);
-        $nights = 1;
-        try { if($ci && $co) $nights = max(1, (new DateTime($co))->diff(new DateTime($ci))->days); } catch (Throwable $e) {}
-      ?><tr>
-        <td style="font-weight:800;color:#2563EB">#<?= h($bid) ?></td>
-        <td><?= h($b['guest_name'] ?? $b['guest']['name'] ?? 'Guest') ?></td>
-        <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><?= h($b['property_name'] ?? $b['property']['name'] ?? '') ?></td>
-        <td style="font-size:12px"><?= h($ci) ?> → <?= h($co) ?> (<?= $nights ?> nights)</td>
-        <td style="color:#C2410C;font-weight:800">TSh <?= number_format($price) ?></td>
-        <td><span class="pill" style="background:<?= $st==='confirmed'?'#EBF5FF;color:#1A56DB':($st==='completed'?'#dcfce7;color:#15803d':($st==='cancelled'?'#fee2e2;color:#dc2626':($st==='checked in'?'#dcfce7;color:#15803d':'#fef3c7;color:#d97706'))) ?>"><?= h($b['status'] ?? $b['payment_status'] ?? '—') ?></span></td>
-        <td>
-          <?= $this->Form->create(null, ['url'=>['controller'=>'AdminOwner','action'=>'bookings']]) ?>
-            <?= $this->Form->hidden('booking_id',['value'=>$bid]) ?>
-            <div class="d-flex gap-1">
-              <select name="status" class="form-select form-select-sm" style="border-radius:9999px;min-width:130px">
-                <option value="Pending" <?= $st==='pending'?'selected':'' ?>>Pending</option>
-                <option value="Confirmed" <?= $st==='confirmed'?'selected':'' ?>>Confirmed</option>
-                <option value="Checked In" <?= $st==='checked in'?'selected':'' ?>>Checked In</option>
-                <option value="Completed" <?= $st==='completed'?'selected':'' ?>>Completed</option>
-                <option value="Cancelled" <?= $st==='cancelled' || $st==='canceled'?'selected':'' ?>>Cancelled</option>
-              </select>
-              <button class="btn btn-sm" style="background:#2563EB;color:#fff;border-radius:9999px">Save</button>
-            </div>
-          <?= $this->Form->end() ?>
-        </td>
-      </tr><?php endforeach; ?>
-    </tbody></table></div>
-  </div>
-  <?php endif; ?>
+<?php
+$this->assign('title', 'Bookings');
+$this->assign('portal_title', 'Bookings');
+$this->assign('page_actions', '<span style="font-size:13px;color:var(--p-text-2)">' . count($bookings ?? []) . ' total</span>');
+?>
+<div class="p-card mb-3">
+  <?= $this->Form->create(null, ['type' => 'get', 'style' => 'display:flex;gap:8px;flex-wrap:wrap;align-items:end']) ?>
+    <div style="flex:1;min-width:200px">
+      <label style="font-size:12px;font-weight:600;color:var(--p-text-2)">Search</label>
+      <input name="search" value="<?= h($search ?? '') ?>" placeholder="Guest, property, id" class="form-control" style="min-height:40px">
+    </div>
+    <div style="min-width:170px">
+      <label style="font-size:12px;font-weight:600;color:var(--p-text-2)">Status</label>
+      <select name="status" class="form-select" style="min-height:40px" onchange="this.form.submit()">
+        <?php foreach (['all' => 'All', 'Pending' => 'Pending', 'Confirmed' => 'Confirmed', 'Checked In' => 'Checked In', 'Completed' => 'Completed', 'Cancelled' => 'Cancelled'] as $k => $v): ?>
+          <option value="<?= $k ?>" <?= ($status ?? 'all') === $k ? 'selected' : '' ?>><?= $v ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+    <button class="p-btn" type="submit">Filter</button>
+    <a href="<?= $this->Url->build('/admin/bookings') ?>" class="p-btn ghost">Clear</a>
+  <?= $this->Form->end() ?>
 </div>
-<?= $this->element('footer', ['skin'=>'skin-light-footer']) ?>
+
+<?php if (empty($bookings)): ?>
+  <div class="p-card"><div class="p-empty">No bookings.</div></div>
+<?php else: ?>
+  <div class="p-table-wrap">
+    <div class="table-responsive"><table class="p-table">
+      <thead><tr><th>Booking</th><th>Guest</th><th>Property</th><th>Dates</th><th style="text-align:right">Total</th><th>Status</th><th>Update</th></tr></thead>
+      <tbody>
+        <?php foreach ($bookings as $b):
+          $bid = $b['id'] ?? $b['booking_code'] ?? '';
+          $st = strtolower((string)($b['status'] ?? $b['payment_status'] ?? 'pending'));
+          $badge = $st === 'confirmed' ? 'blue' : ($st === 'completed' ? 'green' : (in_array($st, ['cancelled', 'canceled'], true) ? 'red' : 'yellow'));
+          $price = (float)($b['total_price'] ?? $b['total_amount'] ?? 0);
+          $ci = substr((string)($b['check_in'] ?? ''), 0, 10);
+          $co = substr((string)($b['check_out'] ?? ''), 0, 10);
+          $nights = 1;
+          try { if ($ci && $co) $nights = max(1, (new DateTime($co))->diff(new DateTime($ci))->days); } catch (Throwable $e) {}
+        ?>
+        <tr>
+          <td><strong>#<?= h($bid) ?></strong></td>
+          <td><?= h($b['guest_name'] ?? $b['guest']['name'] ?? 'Guest') ?></td>
+          <td style="max-width:170px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><?= h($b['property_name'] ?? $b['property']['name'] ?? '') ?></td>
+          <td style="font-size:12px;white-space:nowrap"><?= h($ci) ?> → <?= h($co) ?> (<?= $nights ?>n)</td>
+          <td style="text-align:right;font-weight:600;white-space:nowrap">TSh <?= number_format($price) ?></td>
+          <td><span class="p-badge <?= $badge ?>"><?= h($b['status'] ?? $b['payment_status'] ?? '—') ?></span></td>
+          <td>
+            <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'bookings'], 'style' => 'display:flex;gap:6px']) ?>
+              <?= $this->Form->hidden('booking_id', ['value' => $bid]) ?>
+              <select name="status" class="form-select form-select-sm" style="min-height:32px;min-width:120px">
+                <?php foreach (['Pending', 'Confirmed', 'Checked In', 'Completed', 'Cancelled'] as $opt): ?>
+                  <option value="<?= $opt ?>" <?= $st === strtolower($opt) ? 'selected' : '' ?>><?= $opt ?></option>
+                <?php endforeach; ?>
+              </select>
+              <button class="p-btn" style="min-height:32px;font-size:12px">Save</button>
+            <?= $this->Form->end() ?>
+          </td>
+        </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table></div>
+  </div>
+<?php endif; ?>

@@ -76,10 +76,10 @@ $getAmenityIcon = function(string $name): string {
 
 <?php if (!empty($allAmenities)): ?><div style="margin-top:16px;padding-top:16px;border-top:1px solid #e8eaed;">
     <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-        <h4 class="fs-6 fw-medium mb-0" style="color:#202124;font-family:'Google Sans',Roboto,sans-serif;font-weight:500;">
-            <i class="fa-solid fa-list-check me-2" style="color:#1a73e8;"></i>Popular amenities
+        <h4 class="fs-6 fw-medium mb-0" style="color:#161616;font-family:'IBM Plex Sans','Inter',Roboto,sans-serif;font-weight:500;">
+            <i class="fa-solid fa-list-check me-2" style="color:#0f62fe;"></i>Popular amenities
         </h4>
-        <button type="button" class="btn btn-sm rounded-pill px-3 fw-medium" data-bs-toggle="modal" data-bs-target="#allAmenitiesModal" style="border:1px solid #dadce0;background:#fff;color:#1a73e8;font-family:'Google Sans',sans-serif;">
+        <button type="button" class="btn btn-sm rounded-pill px-3 fw-medium" data-bs-toggle="modal" data-bs-target="#allAmenitiesModal" style="border:1px solid #dadce0;background:#fff;color:#0f62fe;font-family:'IBM Plex Sans','Inter',Roboto,sans-serif;">
             View all <?= count($allAmenities) ?>
         </button>
     </div>
@@ -103,8 +103,8 @@ $getAmenityIcon = function(string $name): string {
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" style="border:1px solid #dadce0;">
             <div class="modal-header px-4 py-3 bg-white" style="border-bottom:1px solid #e8eaed;">
                 <div class="d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-hotel fs-5" style="color:#1a73e8;"></i>
-                    <h5 class="modal-title fw-medium" id="allAmenitiesModalLabel" style="color:#202124;font-family:'Google Sans',sans-serif;">
+                    <i class="fa-solid fa-hotel fs-5" style="color:#0f62fe;"></i>
+                    <h5 class="modal-title fw-medium" id="allAmenitiesModalLabel" style="color:#161616;font-family:'IBM Plex Sans','Inter',Roboto,sans-serif;">
                         All amenities · <?= h($property['name'] ?? 'Lodge') ?>
                     </h5>
                 </div>
@@ -115,7 +115,7 @@ $getAmenityIcon = function(string $name): string {
                     <?php foreach ($categorized as $categoryName => $items): ?>
                         <?php if (!empty($items)): ?>
                             <div class="col-md-6">
-                                <h6 class="fw-medium pb-2 mb-3" style="color:#202124;font-family:'Google Sans',sans-serif;border-bottom:1px solid #e8eaed;"><?= h($categoryName) ?></h6>
+                                <h6 class="fw-medium pb-2 mb-3" style="color:#161616;font-family:'IBM Plex Sans','Inter',Roboto,sans-serif;border-bottom:1px solid #e8eaed;"><?= h($categoryName) ?></h6>
                                 <ul class="list-unstyled mb-0">
                                     <?php foreach ($items as $itm): ?>
                                         <li class="d-flex align-items-center gap-2 mb-2" style="color:#3c4043;font-size:13px;font-family:Roboto,sans-serif;">
@@ -130,7 +130,7 @@ $getAmenityIcon = function(string $name): string {
                 </div>
             </div>
             <div class="modal-footer px-4 py-3" style="background:#f8f9fa;border-top:1px solid #e8eaed;">
-                <button type="button" class="btn fw-medium px-4 py-2 rounded-pill" data-bs-dismiss="modal" style="background:#1a73e8;color:#fff;border:none;">Done</button>
+                <button type="button" class="btn fw-medium px-4 py-2 rounded-pill" data-bs-dismiss="modal" style="background:#0f62fe;color:#fff;border:none;">Done</button>
             </div>
         </div>
     </div>

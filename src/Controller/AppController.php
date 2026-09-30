@@ -30,6 +30,28 @@ class AppController extends Controller
         $isLoggedIn = !$isLoggedOut && !empty($sessionUser) && (!empty($sessionUser['id']) || !empty($sessionUser['email']));
         $userProfile = $isLoggedIn ? $sessionUser : null;
 
+        // Collapse identical queued flash messages (repeated auth redirects,
+        // background prefetch kicks) so users see each notice once, not ×12.
+        try {
+            $flashes = $session->read('Flash.flash');
+            if (is_array($flashes) && count($flashes) > 1) {
+                $seen = [];
+                $unique = [];
+                foreach ($flashes as $f) {
+                    $sig = ($f['key'] ?? 'flash') . '|' . (string)($f['message'] ?? '');
+                    if (!isset($seen[$sig])) {
+                        $seen[$sig] = true;
+                        $unique[] = $f;
+                    }
+                }
+                if (count($unique) !== count($flashes)) {
+                    $session->write('Flash.flash', $unique);
+                }
+            }
+        } catch (\Throwable $e) {
+            // never break rendering on flash housekeeping
+        }
+
         $this->set(compact('userProfile', 'isLoggedIn'));
     }
 }

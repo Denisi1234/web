@@ -1,18 +1,38 @@
-<?php $this->assign('title','Add Property | FastNetStays'); ?>
-<?= $this->element('navbar') ?>
-<style>.host-input{width:100%;height:44px;border:1px solid #e8eaed;border-radius:12px;padding:0 12px}.host-card{border:1px solid #e8eaed;border-radius:16px;box-shadow:0 6px 16px rgba(0,0,0,.05)}</style>
-<div class="container py-4" style="max-width:720px">
-  <h1 style="font-size:20px;font-weight:800">Add New Property</h1><p style="font-size:12px;color:#5f6368">Adapted from admin_owner_portal/add-room.php + mobile add_property.dart — POST /api/properties.</p>
-  <?= $this->Form->create(null,['url'=>['action'=>'create']]) ?>
-  <div class="host-card p-3 d-grid gap-3">
-    <input name="name" class="host-input" placeholder="Property name *" required>
-    <input name="city" class="host-input" placeholder="City (e.g. Dar es Salaam)" required>
-    <input name="address" class="host-input" placeholder="Address">
-    <input name="price_per_night" class="host-input" placeholder="Price per night TSh" type="number" required>
-    <textarea name="description" class="host-input" style="height:80px;padding:10px" placeholder="Description"></textarea>
-    <input name="image_url" class="host-input" placeholder="Cover image URL (or upload via portal)">
-    <button class="btn" style="background:#2563EB;color:#fff;border-radius:30px;padding:12px;font-weight:800">Create Listing</button>
-  </div>
+<?php
+$this->assign('title', 'Add Property');
+$this->assign('portal_title', 'Add property');
+$this->assign('page_actions', '<a href="' . $this->Url->build('/host/listings') . '" class="p-btn ghost">Back to listings</a>');
+?>
+<div class="p-card" style="max-width:720px">
+  <h3>New property</h3>
+  <div class="sub">Creates a property and submits it for verification. Add rooms next.</div>
+  <?= $this->Form->create(null, ['url' => ['action' => 'create'], 'style' => 'display:grid;gap:12px;margin-top:16px']) ?>
+    <div>
+      <label for="prop-name" style="font-size:12px;font-weight:600;color:var(--p-text-2)">Property name *</label>
+      <input id="prop-name" name="name" class="form-control" style="min-height:40px" placeholder="Sunrise Lodge" required>
+    </div>
+    <div class="row g-2">
+      <div class="col-md-6">
+        <label for="prop-city" style="font-size:12px;font-weight:600;color:var(--p-text-2)">City</label>
+        <input id="prop-city" name="city" class="form-control" style="min-height:40px" placeholder="Dar es Salaam">
+      </div>
+      <div class="col-md-6">
+        <label for="prop-address" style="font-size:12px;font-weight:600;color:var(--p-text-2)">Address</label>
+        <input id="prop-address" name="address" class="form-control" style="min-height:40px" placeholder="Plot 123, Njiro Road">
+      </div>
+    </div>
+    <div>
+      <label for="prop-price" style="font-size:12px;font-weight:600;color:var(--p-text-2)">Price per night (TSh) *</label>
+      <input id="prop-price" name="price_per_night" class="form-control" style="min-height:40px" placeholder="150000" type="number" min="1" required>
+    </div>
+    <div>
+      <label for="prop-desc" style="font-size:12px;font-weight:600;color:var(--p-text-2)">Description</label>
+      <textarea id="prop-desc" name="description" class="form-control" style="min-height:80px" placeholder="Describe the property"></textarea>
+    </div>
+    <div>
+      <label for="prop-img" style="font-size:12px;font-weight:600;color:var(--p-text-2)">Cover image URL</label>
+      <input id="prop-img" name="image_url" class="form-control" style="min-height:40px" placeholder="https://…">
+    </div>
+    <button class="p-btn" style="justify-content:center">Create listing</button>
   <?= $this->Form->end() ?>
 </div>
-<?= $this->element('footer',['skin'=>'skin-light-footer']) ?>

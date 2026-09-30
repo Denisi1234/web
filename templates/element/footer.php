@@ -27,10 +27,7 @@ $isCompact = !empty($compact) && $compact === true;
                 <!-- Column 1 Brand & Social ~28% -->
                 <div class="footer-col footer-col--brand">
                     <div class="footer-widget">
-                        <a class="footer-brand" href="<?= $this->Url->build('/'); ?>" title="FastNetStays.com" style="display:inline-flex;align-items:baseline;gap:3px;text-decoration:none;line-height:1;margin:2px 0 4px;flex-direction:row;">
-                            <span style="font-family:'Grand Hotel','Brush Script MT',cursive;font-size:30px;font-weight:400;letter-spacing:-.02em;line-height:1;background:linear-gradient(45deg,#feda75 0%,#fa7e1e 18%,#d62976 38%,#962fbf 68%,#4f5bd5 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap;display:inline-block;padding-bottom:2px;">FastNetStays</span>
-                            <span style="font-family:'Grand Hotel',cursive;font-size:11px;color:<?= $isDark ? '#cbd5e1' : '#64748b' ?>;opacity:.95;transform:translateY(1px);">.com</span>
-                        </a>
+                        <div style="margin:2px 0 4px;"><?= $this->element('logo', ['tone' => $isDark ? 'dark' : 'light', 'size' => 19]) ?></div>
                         <p class="footer-tagline <?= $isDark ? 'text-light-50' : 'text-muted' ?>">Book hotel rooms and fast stays instantly across Tanzania with fastnetstays.com.</p>
                         <div class="foot-socials">
                             <ul>

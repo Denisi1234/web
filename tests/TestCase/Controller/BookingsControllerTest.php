@@ -47,11 +47,17 @@ class BookingsControllerTest extends TestCase
     private function _getCsrfToken(): string
     {
         $this->get('/booking-page');
-        $token = $this->_request->getAttribute('csrfToken') ?? '';
+        $token = '';
+        $req = $this->_request;
+        if (is_object($req) && method_exists($req, 'getAttribute')) {
+            $token = $req->getAttribute('csrfToken') ?? '';
+        } elseif (is_array($req)) {
+            $token = $req['csrfToken'] ?? '';
+        }
         if (empty($token) && isset($this->_response)) {
             // fallback from cookie
             $cookies = $this->_response->getCookie('csrfToken');
-            $token = $cookies['value'] ?? '';
+            $token = is_array($cookies) ? ($cookies['value'] ?? '') : '';
         }
         return (string)$token;
     }

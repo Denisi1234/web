@@ -45,7 +45,13 @@ class AuthService
     {
         $headers = [];
         if (!empty($token)) {
-            $headers['Authorization'] = 'Bearer ' . $token;
+            $raw = trim((string)$token);
+            // Accept both raw token and already-prefixed "Bearer xxx" (controllers historically passed prefixed value)
+            if (stripos($raw, 'Bearer ') === 0) {
+                $headers['Authorization'] = $raw;
+            } else {
+                $headers['Authorization'] = 'Bearer ' . $raw;
+            }
         }
 
         $res = $this->apiClient->get('/user/personal-details', [], $headers);

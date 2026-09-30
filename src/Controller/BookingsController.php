@@ -52,6 +52,31 @@ class BookingsController extends AppController
         $guests = (int)($queryParams['adults'] ?? 2) + (int)($queryParams['children'] ?? 0);
         $roomsCount = max(1, (int)($queryParams['rooms'] ?? 1));
 
+        // 0. Resume a valid session quote (error redirects land here with only quote_id) —
+        // avoids re-quoting and can never fall through to home for lack of ids.
+        $resumeQuoteId = trim((string)($queryParams['quote_id'] ?? ''));
+        if ($resumeQuoteId !== '') {
+            $resumed = $this->getRequest()->getSession()->read('booking_quotes.' . $resumeQuoteId);
+            if (is_array($resumed) && !empty($resumed['expires_at']) && (int)$resumed['expires_at'] >= time()
+                && !empty($resumed['calculation']) && !empty($resumed['property']) && !empty($resumed['room'])) {
+                $queryParams = array_merge($queryParams, [
+                    'checkIn' => $resumed['check_in'] ?? ($queryParams['checkIn'] ?? null),
+                    'checkOut' => $resumed['check_out'] ?? ($queryParams['checkOut'] ?? null),
+                    'adults' => $resumed['adults'] ?? ($queryParams['adults'] ?? null),
+                    'children' => $resumed['children'] ?? ($queryParams['children'] ?? null),
+                    'rooms' => $resumed['rooms'] ?? ($queryParams['rooms'] ?? null),
+                ]);
+                $this->set(compact('queryParams') + [
+                    'property' => $resumed['property'],
+                    'room' => $resumed['room'],
+                    'calculation' => $resumed['calculation'],
+                    'quote' => $resumed,
+                    'quoteError' => null,
+                ]);
+                return $this->render('/Pages/booking-page');
+            }
+        }
+
         // 1. Fetch Property info
         $property = null;
         if ($propertyId) {
@@ -103,82 +128,25 @@ class BookingsController extends AppController
             $room = $quote['room'];
             $calculation = $quote['calculation'];
         } catch (\Throwable $exception) {
-            $quoteError = $exception->getMessage();
-            // Local fallback quote — so NEXT button still works when backend unavailable (demo / offline)
-            // Only fallback if we have at least a property/room context or URL price param
-            try {
-                $fallbackPrice = 0;
-                if (!empty($room['price'])) $fallbackPrice = (float)$room['price'];
-                elseif (!empty($room['customer_price'])) $fallbackPrice = (float)$room['customer_price'];
-                elseif (!empty($queryParams['price'])) $fallbackPrice = (float)$queryParams['price'];
-                elseif (!empty($queryParams['customer_price'])) $fallbackPrice = (float)$queryParams['customer_price'];
-                // If still no room, synthesize minimal room/property for template display
-                if (!$room) {
-                    $room = [
-                        'id' => $roomId ?: 1,
-                        'name' => 'Standard Room',
-                        'price' => $fallbackPrice ?: 262,
-                        'customer_price' => $fallbackPrice ?: 262,
-                        'max_occupancy' => 2,
-                    ];
-                    if ($fallbackPrice == 0) $fallbackPrice = 262;
-                }
-                if (!$property) {
-                    $property = [
-                        'id' => $propertyId ?: 1,
-                        'name' => 'Selected Property',
-                        'city' => $queryParams['city'] ?? $queryParams['destination'] ?? 'Dar es Salaam',
-                        'address' => 'Dar es Salaam, Tanzania',
-                        'rating' => 8.4,
-                        'review_count' => 737,
-                    ];
-                }
-                if ($fallbackPrice == 0) $fallbackPrice = (float)($room['price'] ?? 262);
-                $fallbackCheckIn = $this->parseDateOrDefault($queryParams['checkIn'] ?? $queryParams['check_in'] ?? $defaultCheckIn, $defaultCheckIn);
-                $fallbackCheckOut = $this->parseDateOrDefault($queryParams['checkOut'] ?? $queryParams['check_out'] ?? $defaultCheckOut, $defaultCheckOut);
-                $nights = max(1, (int)round((strtotime($fallbackCheckOut) - strtotime($fallbackCheckIn)) / 86400));
-                $roomsCnt = max(1, (int)($queryParams['rooms'] ?? 1));
-                $subtotal = $fallbackPrice * $nights * $roomsCnt;
-                $total = $subtotal; // no tax in fallback
-                $quote = [
-                    'quote_id' => bin2hex(random_bytes(16)),
-                    'created_at' => time(),
-                    'expires_at' => time() + 900,
-                    'property_id' => $propertyId ?: 1,
-                    'room_id' => $roomId ?: (int)($room['id'] ?? 1),
-                    'check_in' => $fallbackCheckIn,
-                    'check_out' => $fallbackCheckOut,
-                    'adults' => max(1, (int)($queryParams['adults'] ?? 2)),
-                    'children' => (int)($queryParams['children'] ?? 0),
-                    'rooms' => $roomsCnt,
-                    'property' => $property,
-                    'room' => $room,
-                    'calculation' => [
-                        'price_per_night' => $fallbackPrice,
-                        'subtotal' => $subtotal,
-                        'taxes' => 0,
-                        'azampay_fee' => 0,
-                        'total_amount' => $total,
-                        'nights' => $nights,
-                        'rooms_count' => $roomsCnt,
-                        'cancellation_policy' => 'Free cancellation before ' . $fallbackCheckIn,
-                        'is_fallback' => true,
-                    ],
-                    '_fallback' => true,
-                    '_fallback_error' => $quoteError,
-                ];
-                $this->getRequest()->getSession()->write('booking_quotes.' . $quote['quote_id'], $quote);
-                $queryParams = array_merge($queryParams, [
-                    'quote_id' => $quote['quote_id'],
-                    'checkIn' => $quote['check_in'],
-                    'checkOut' => $quote['check_out'],
-                ]);
-                $calculation = $quote['calculation'];
-                // Keep original error for display but allow flow to continue
-                // $quoteError remains for banner but quote is now valid
-            } catch (\Throwable $fallbackEx) {
-                // If fallback also fails, keep original error
+            // No fake fallback quote: booking without an authoritative backend price would charge
+            // the wrong amount. Send the guest back to the stay with an honest reason instead.
+            $detailQuery = array_filter([
+                'city' => $queryParams['city'] ?? ($queryParams['destination'] ?? null),
+                'checkin' => $queryParams['checkIn'] ?? ($queryParams['check_in'] ?? ($queryParams['checkin'] ?? null)),
+                'checkout' => $queryParams['checkOut'] ?? ($queryParams['check_out'] ?? ($queryParams['checkout'] ?? null)),
+                'adults' => $queryParams['adults'] ?? null,
+                'children' => $queryParams['children'] ?? null,
+                'rooms' => $queryParams['rooms'] ?? null,
+            ], fn($v) => $v !== null && $v !== '');
+            if ($exception instanceof \InvalidArgumentException) {
+                $this->Flash->error(__($exception->getMessage()));
+            } else {
+                $this->Flash->error(__('We could not reach the booking service. Please check your connection and try again.'));
             }
+            if ($propertyId > 0) {
+                return $this->redirect(['controller' => 'Stays', 'action' => 'detail', $propertyId, '?' => $detailQuery]);
+            }
+            return $this->redirect(['controller' => 'Pages', 'action' => 'index', '?' => $detailQuery]);
         }
 
         $this->set(compact('property', 'room', 'calculation', 'queryParams', 'quote', 'quoteError'));
@@ -209,7 +177,26 @@ class BookingsController extends AppController
             $quote = $quoteId !== '' ? $request->getSession()->read('booking_quotes.' . $quoteId) : null;
             if (!is_array($quote) || empty($quote['expires_at']) || (int)$quote['expires_at'] < time()) {
                 $this->Flash->error(__('Your room quote has expired. Please select the room again.'));
-                return $this->redirect(['action' => 'bookingPage']);
+                // Carry the quote's own ids/dates so re-pricing succeeds instead of falling through to home
+                $retryQuery = [];
+                if (is_array($quote)) {
+                    $retryQuery = array_filter([
+                        'property_id' => $quote['property_id'] ?? null,
+                        'room_id' => $quote['room_id'] ?? null,
+                        'checkIn' => $quote['check_in'] ?? null,
+                        'checkOut' => $quote['check_out'] ?? null,
+                        'adults' => $quote['adults'] ?? null,
+                        'children' => $quote['children'] ?? null,
+                        'rooms' => $quote['rooms'] ?? null,
+                    ], fn($v) => $v !== null && $v !== '');
+                }
+                // Also merge any ids the POST carried (payment step re-submits context)
+                foreach (['property_id', 'room_id', 'checkIn', 'check_in', 'checkOut', 'check_out', 'adults', 'children', 'rooms'] as $k) {
+                    if (!isset($retryQuery[$k]) && isset($postData[$k]) && $postData[$k] !== '' && $postData[$k] !== null) {
+                        $retryQuery[$k] = $postData[$k];
+                    }
+                }
+                return $this->redirect(['action' => 'bookingPage', '?' => $retryQuery]);
             }
             if (!$this->paymentService->isConfigured()) {
                 $this->Flash->error(__('Online payments are not configured yet. Please try again later.'));
@@ -444,48 +431,13 @@ class BookingsController extends AppController
                     $queryParams['quote_id'] = $quote['quote_id'];
                     $calculation = $quote['calculation'];
                 } catch (\Throwable $e) {
-                    // Fallback local quote, same as bookingPage
-                    try {
-                        $fallbackPrice = (float)($queryParams['price'] ?? 262);
-                        $ci = $this->parseDateOrDefault($queryParams['checkIn'] ?? $queryParams['check_in'] ?? $defaultCheckIn, $defaultCheckIn);
-                        $co = $this->parseDateOrDefault($queryParams['checkOut'] ?? $queryParams['check_out'] ?? $defaultCheckOut, $defaultCheckOut);
-                        $nights = max(1, (int)round((strtotime($co) - strtotime($ci)) / 86400));
-                        $roomsCnt = max(1, (int)($queryParams['rooms'] ?? 1));
-                        $subtotal = $fallbackPrice * $nights * $roomsCnt;
-                        $quote = [
-                            'quote_id' => bin2hex(random_bytes(16)),
-                            'created_at' => time(),
-                            'expires_at' => time() + 900,
-                            'property_id' => $propertyId,
-                            'room_id' => $roomId,
-                            'check_in' => $ci,
-                            'check_out' => $co,
-                            'adults' => max(1, (int)($queryParams['adults'] ?? 2)),
-                            'children' => (int)($queryParams['children'] ?? 0),
-                            'rooms' => $roomsCnt,
-                            'property' => ['id'=>$propertyId, 'name'=>'Selected Property', 'city'=>$queryParams['city'] ?? 'Dar es Salaam'],
-                            'room' => ['id'=>$roomId, 'name'=>'Standard Room', 'price'=>$fallbackPrice],
-                            'calculation' => [
-                                'price_per_night'=>$fallbackPrice,
-                                'subtotal'=>$subtotal,
-                                'taxes'=>0,
-                                'total_amount'=>$subtotal,
-                                'nights'=>$nights,
-                                'rooms_count'=>$roomsCnt,
-                                'cancellation_policy'=>'Free cancellation before '.$ci,
-                                'is_fallback'=>true,
-                            ],
-                            '_fallback'=>true,
-                        ];
-                        $this->getRequest()->getSession()->write('booking_quotes.' . $quote['quote_id'], $quote);
-                        $queryParams['quote_id'] = $quote['quote_id'];
-                        $queryParams['checkIn'] = $ci;
-                        $queryParams['checkOut'] = $co;
-                        $calculation = $quote['calculation'];
-                    } catch (\Throwable $e2) {
-                        $this->Flash->error(__('Your booking session has expired. Please select your room again.'));
-                        return $this->redirect(['action' => 'bookingPage', '?' => $queryParams]);
+                    // No fake fallback quote here either — restart the pricing step honestly.
+                    if ($e instanceof \InvalidArgumentException) {
+                        $this->Flash->error(__($e->getMessage()));
+                    } else {
+                        $this->Flash->error(__('We could not reach the booking service. Please try again.'));
                     }
+                    return $this->redirect(['action' => 'bookingPage', '?' => $queryParams]);
                 }
             } else {
                 $this->Flash->error(__('Your booking session has expired. Please select your room again.'));
@@ -498,9 +450,11 @@ class BookingsController extends AppController
             $propData = $this->apiClient->get('/properties/' . $propertyId);
             if (!empty($propData)) $property = $propData['data'] ?? $propData;
         }
-        // Ensure property/room fallback exists for rendering
-        if (!$property) $property = ['id'=>$propertyId, 'name'=>'Selected Property', 'city'=>$queryParams['city'] ?? 'Dar es Salaam'];
-        if (!$room) $room = ['id'=>$roomId, 'name'=>'Standard Room', 'price'=> (float)($queryParams['price'] ?? 262)];
+        // Without a real property + room + calculation there is nothing honest to render — restart pricing.
+        if (!is_array($property) || !is_array($room) || empty($calculation)) {
+            $this->Flash->error(__('Your booking session has expired. Please select your room again.'));
+            return $this->redirect(['action' => 'bookingPage', '?' => $queryParams]);
+        }
         $this->set(compact('property','room','calculation','queryParams','quote'));
         return $this->render('/Pages/bookingpage-03');
     }

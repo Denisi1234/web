@@ -214,7 +214,16 @@ class PagesController extends AppController
             'sort'             => $sortBy,
             'lat'              => $input['lat'] ?? '',
             'lng'              => $input['lng'] ?? '',
+            'bbox'             => '',
         ];
+        // Viewport bbox "ne_lat,ne_lng,sw_lat,sw_lng" — exact-area filter, survives round-trips
+        $rawBounds = trim((string)($input['bounds'] ?? $input['bbox'] ?? ''));
+        if ($rawBounds !== '') {
+            $parts = array_map('trim', explode(',', $rawBounds));
+            if (count($parts) === 4 && count(array_filter($parts, 'is_numeric')) === 4) {
+                $queryParams['bbox'] = implode(',', $parts);
+            }
+        }
 
         // Fetch real properties from API — empty destination = All Tanzania (omit q to fetch all, don't filter to zero)
         $isAllTanzania = $destination === '' || strtolower($destination) === 'tanzania';
@@ -233,16 +242,32 @@ class PagesController extends AppController
         $apiPayload['per_page'] = 48;
         // property_type handled locally solid with name fallback — do not forward to API (API type field is null for seeded data)
         if (!empty($currentAmenities)) $apiPayload['amenities'] = implode(',', $currentAmenities);
-        if ($selectedRating !== '') $apiPayload['rating'] = $selectedRating;
+        // Rating filter was dead: backend only reads min_rating (keeps unreviewed lodges)
+        if ($selectedRating !== '') {
+            $apiPayload['rating'] = $selectedRating;
+            $apiPayload['min_rating'] = $selectedRating;
+        }
         if ($freeCancel) $apiPayload['free_cancellation'] = 1;
         if ($minPrice !== '') $apiPayload['price_min'] = $minPrice;
         if ($maxPrice !== '') $apiPayload['price_max'] = $maxPrice;
-        if ($paymentOpt !== '') $apiPayload['payment'] = $paymentOpt;
-        if ($mealsOpt !== '') $apiPayload['meals'] = $mealsOpt;
-        if ($neighborhood !== '') $apiPayload['neighborhood'] = $neighborhood;
+        // Meals map to real amenity text (backend matches description/room amenities)
+        $mealAmen = ['breakfast' => 'Breakfast', 'self_catering' => 'Kitchen'];
+        if (!empty($mealAmen[$mealsOpt] ?? '')) {
+            $apiPayload['amenities'] = trim(($apiPayload['amenities'] ?? '') . ',' . $mealAmen[$mealsOpt], ',');
+        }
+        // payment/neighborhood have no backend data source — never forwarded (UI removed)
         if (!empty($queryParams['lat']) && !empty($queryParams['lng'])) {
             $apiPayload['lat'] = $queryParams['lat'];
             $apiPayload['lng'] = $queryParams['lng'];
+        }
+        // Exact-area viewport wins over radius: backend intersects both
+        if (!empty($queryParams['bbox'])) {
+            $apiPayload['bounds'] = $queryParams['bbox'];
+        }
+        $areaParam = trim((string)($input['area'] ?? ''));
+        if ($areaParam !== '') {
+            $apiPayload['area'] = $areaParam;
+            $queryParams['area'] = $areaParam;
         }
 
         $properties = $this->staysService->searchProperties($apiPayload);
@@ -490,8 +515,82 @@ class PagesController extends AppController
         return $this->redirect(['controller' => 'Stays', 'action' => 'destination01', '?' => $this->getRequest()->getQueryParams()]);
     }
 
-    // ── Host Onboarding ───────────────────────────────────────────────────
-    public function joinUs() { return $this->render('/Pages/join-us'); }
+    // ── Host Onboarding (real working) ────────────────────────────────────
+    public function joinUs()
+    {
+        $session = $this->getRequest()->getSession();
+        $sessionUser = $session->read('User');
+        $rawToken = trim((string)$session->read('auth_token'));
+        if (stripos($rawToken, 'Bearer ') === 0) {
+            $rawToken = trim(substr($rawToken, 7));
+        }
+        $isLoggedIn = !$session->read('is_logged_out') && !empty($sessionUser);
+        $userRole = strtolower((string)($sessionUser['role'] ?? ''));
+        $headers = $rawToken !== '' ? ['Authorization' => 'Bearer ' . $rawToken] : [];
+
+        // Handle Become-a-Host upgrade for logged-in customers
+        if ($this->getRequest()->is('post')) {
+            $data = (array)$this->getRequest()->getData();
+            if (($data['action'] ?? '') === 'become_host') {
+                if (!$isLoggedIn) {
+                    $this->Flash->error(__('Please sign in first, then become a host.'));
+                    return $this->redirect('/login?redirect=/join-us');
+                }
+                if (in_array($userRole, ['owner', 'admin'], true)) {
+                    return $this->redirect('/host/onboarding');
+                }
+                $payload = [];
+                if (!empty($data['phone_number'])) $payload['phone_number'] = trim((string)$data['phone_number']);
+                if (!empty($data['business_name'])) $payload['business_name'] = trim((string)$data['business_name']);
+                $res = $this->apiClient->post('/become-host', $payload, $headers);
+                if ($res === null) {
+                    $this->Flash->error(__('Service unavailable. Please try again.'));
+                } elseif (!empty($res['_status']) && (int)$res['_status'] >= 400) {
+                    $this->Flash->error(__($res['message'] ?? 'Could not upgrade to host.'));
+                } else {
+                    // Prefer the authoritative user in the become-host response;
+                    // fall back to /me only when absent (saves a slow round-trip)
+                    $respUser = (is_array($res) && !empty($res['user']) && is_array($res['user'])) ? $res['user'] : null;
+                    if ($respUser === null || empty($respUser['email'])) {
+                        $me = $this->apiClient->get('/me', [], $headers);
+                        $respUser = (is_array($me) && !empty($me['email'])) ? $me : null;
+                    }
+                    if (is_array($respUser) && !empty($respUser['email'])) {
+                        $updated = is_array($sessionUser) ? array_merge($sessionUser, $respUser) : $respUser;
+                        $updated['role'] = strtolower((string)($respUser['role'] ?? 'owner'));
+                        $updated['token'] = $rawToken;
+                        $session->write('User', $updated);
+                    } elseif (is_array($sessionUser)) {
+                        $sessionUser['role'] = 'owner';
+                        $session->write('User', $sessionUser);
+                    }
+                    $this->Flash->success(__('You are now a host! Add your first property.'));
+                    return $this->redirect('/host/onboarding');
+                }
+            }
+        }
+
+        // For owners/admins: fetch my properties for status section (real data).
+        // Owner → ?mine=1 (own only); admin → /admin/properties slice.
+        // Never fall back to other hosts' lodges: empty stays empty.
+        $myProperties = [];
+        if ($isLoggedIn && $rawToken !== '' && in_array($userRole, ['owner', 'admin'], true)) {
+            try {
+                if ($userRole === 'admin') {
+                    $pRes = $this->apiClient->get('/admin/properties', ['per_page' => 6], $headers);
+                } else {
+                    $pRes = $this->apiClient->get('/properties', ['mine' => 1, 'per_page' => 6], $headers);
+                }
+                $all = $pRes['data'] ?? (isset($pRes[0]) ? $pRes : []);
+                if (is_array($all)) $myProperties = array_values(array_slice($all, 0, 6));
+            } catch (\Throwable $e) {
+                $myProperties = [];
+            }
+        }
+
+        $this->set(compact('isLoggedIn', 'userRole', 'myProperties', 'sessionUser'));
+        return $this->render('/Pages/join-us');
+    }
     public function addListing() { return $this->redirect('/join-us'); }
     public function addListingStep02() { return $this->redirect('/join-us'); }
     public function addListingStep03() { return $this->redirect('/join-us'); }
@@ -532,56 +631,99 @@ class PagesController extends AppController
     public function deleteAccount() { return $this->redirect(['controller' => 'Account', 'action' => 'deleteAccount']); }
 
     // ── Authentication Flow ───────────────────────────────────────────────
+    /**
+     * Internal safe redirect: only relative portal paths, no protocol tricks
+     * (backslashes, //host, control chars). Returns '' when unsafe.
+     */
+    private function safeRedirect(string $url): string
+    {
+        $url = trim($url);
+        if ($url === '' || strlen($url) > 500) return '';
+        if (!str_starts_with($url, '/') || str_starts_with($url, '//')) return '';
+        if (str_contains($url, '\\') || preg_match('/[\r\n\t<>"]/', $url)) return '';
+        if (!preg_match('#^/[A-Za-z0-9/_\-.?=&%#+]*$#', $url)) return '';
+        return $url;
+    }
+
+    /**
+     * Brute-force guard: max 10 login attempts per IP per 5 minutes.
+     */
+    private function loginRateLimited(string $ip): bool
+    {
+        $key = 'login_rate_' . md5($ip);
+        $rec = \Cake\Cache\Cache::read($key, 'default');
+        $now = time();
+        $count = (is_array($rec) && isset($rec['exp']) && $rec['exp'] > $now) ? (int)$rec['count'] : 0;
+        if ($count >= 10) return true;
+        \Cake\Cache\Cache::write($key, ['count' => $count + 1, 'exp' => $now + 300]);
+        return false;
+    }
+
     public function login()
     {
         $session = $this->getRequest()->getSession();
+        // Display role: which audience this sign-in is focused on (display only —
+        // landing always follows the verified backend role)
+        $loginRole = strtolower(trim((string)$this->getRequest()->getQuery('role', 'customer')));
+        if (!in_array($loginRole, ['customer', 'owner', 'admin'], true)) {
+            $loginRole = 'customer';
+        }
 
         if ($this->getRequest()->is('post')) {
             $data = (array)$this->getRequest()->getData();
+            $ip = $this->getRequest()->clientIp() ?? 'unknown';
 
             // 1. Handle AJAX Session Synchronization (from login.php fetch) — verified, whitelist only
             if (!empty($data['action']) && $data['action'] === 'login_sync' && !empty($data['user'])) {
+                // Must be same-origin XHR + within attempt budget
+                $isXhr = strtolower((string)$this->getRequest()->getHeaderLine('X-Requested-With')) === 'xmlhttprequest';
+                if (!$isXhr) {
+                    return $this->response->withStatus(400)->withType('application/json')->withStringBody(json_encode(['success'=>false,'error'=>'Bad request']));
+                }
+                if ($this->loginRateLimited($ip)) {
+                    return $this->response->withStatus(429)->withType('application/json')->withStringBody(json_encode(['success'=>false,'error'=>'Too many attempts. Try again in a few minutes.']));
+                }
                 $token = (string)($data['token'] ?? ($data['access_token'] ?? ''));
-                if (empty($token)) {
+                if (strlen($token) < 10 || strlen($token) > 2048) {
                     return $this->response->withStatus(401)->withType('application/json')->withStringBody(json_encode(['success'=>false,'error'=>'Missing token']));
                 }
-                // Verify token server-side via backend (source of truth) — never trust client user array directly
-                $verified = null;
+                // Verify token server-side via backend (source of truth).
+                // ONLY /me verifies: it is auth-guarded (401 on bad token).
+                // /user/personal-details is public and returns a demo profile
+                // for missing/invalid tokens — it must NEVER authenticate.
+                $verifiedUser = null;
                 try {
-                    // Use authoritative endpoint; falls back to personal-details if verify not present
-                    $verified = $this->apiClient->get('/auth/verify', [], ['Authorization' => 'Bearer ' . $token]);
-                    if (empty($verified) || !is_array($verified)) {
-                        $verified = $this->apiClient->get('/user/personal-details', [], ['Authorization' => 'Bearer ' . $token]);
+                    $me = $this->apiClient->get('/me', [], ['Authorization' => 'Bearer ' . $token]);
+                    if (is_array($me) && empty($me['_status'])) {
+                        $cand = $me['user'] ?? $me['data'] ?? $me;
+                        if (is_array($cand) && !empty($cand['email']) && !empty($cand['id'])) {
+                            $verifiedUser = $cand;
+                        }
                     }
                 } catch (\Throwable $e) {
-                    $verified = null;
-                }
-                $verifiedUser = null;
-                if (is_array($verified)) {
-                    $verifiedUser = $verified['user'] ?? $verified['data'] ?? $verified['details'] ?? $verified;
-                    if (!is_array($verifiedUser) || empty($verifiedUser['email'])) {
-                        // Try personal-details shape
-                        if (!empty($verified['details']) && is_array($verified['details'])) $verifiedUser = $verified['details'];
-                    }
-                }
-                // Also try AuthService helper as fallback
-                if (empty($verifiedUser) || empty($verifiedUser['email'])) {
-                    $fallback = $this->authService->getPersonalDetails($token);
-                    if (!empty($fallback['email'])) $verifiedUser = $fallback;
+                    $verifiedUser = null;
                 }
                 if (empty($verifiedUser) || empty($verifiedUser['email'])) {
                     return $this->response->withStatus(401)->withType('application/json')->withStringBody(json_encode(['success'=>false,'error'=>'Token verification failed']));
                 }
                 // Whitelist only safe fields from verified user (never trust client-supplied arbitrary keys)
-                $allow = ['id','name','first_name','last_name','email','phone','city','country','avatar','email_verified'];
+                // role is required for admin/owner portal guards + header nav
+                $allow = ['id','name','first_name','last_name','full_name','email','phone','phone_number','city','country','avatar','avatar_bg','avatar_color','email_verified','role','status'];
                 $user = [];
                 foreach ($allow as $k) {
                     if (array_key_exists($k, $verifiedUser)) $user[$k] = $verifiedUser[$k];
                 }
+                // Normalise role + phone aliases
+                if (!empty($user['role'])) $user['role'] = strtolower((string)$user['role']);
+                if (empty($user['phone']) && !empty($user['phone_number'])) $user['phone'] = $user['phone_number'];
+                if (empty($user['name']) && !empty($user['full_name'])) $user['name'] = $user['full_name'];
                 $user['token'] = $token;
                 if (empty($user['first_name']) && !empty($user['name'])) {
                     $user['first_name'] = explode(' ', trim($user['name']))[0];
                 }
+                // NOTE: no session renew() here on purpose — renew() destroys the
+                // previous session file, instantly logging out every other open
+                // tab. Fixation risk is negligible (httponly + SameSite=Lax + 8h).
                 $this->authService->syncSession($session, $user);
 
                 return $this->response->withType('application/json')->withStringBody((string)json_encode([
@@ -591,10 +733,20 @@ class PagesController extends AppController
             }
 
             // 2. Handle Traditional Form Login
-            $email = (string)($data['email'] ?? '');
+            $email = trim((string)($data['email'] ?? ''));
             $password = (string)($data['password'] ?? '');
 
-            if (!empty($email) && !empty($password)) {
+            if ($email !== '' || $password !== '') {
+                if ($this->loginRateLimited($ip)) {
+                    $this->Flash->error(__('Too many login attempts. Please try again in a few minutes.'));
+                    $this->set(compact('loginRole'));
+                    return $this->render('/Pages/login');
+                }
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($password) < 1) {
+                    $this->Flash->error(__('Invalid email or password.'));
+                    $this->set(compact('loginRole'));
+                    return $this->render('/Pages/login');
+                }
                 $res = $this->authService->login($email, $password);
                 $authToken = $res['access_token'] ?? ($res['token'] ?? null);
                 $userData = $res['user'] ?? null;
@@ -604,17 +756,31 @@ class PagesController extends AppController
                     if ($authToken) {
                         $user['token'] = $authToken;
                     }
+                    if (!empty($user['role'])) $user['role'] = strtolower((string)$user['role']);
+                    if (empty($user['phone']) && !empty($user['phone_number'])) $user['phone'] = $user['phone_number'];
                     if (empty($user['first_name']) && !empty($user['name'])) {
                         $user['first_name'] = explode(' ', trim($user['name']))[0];
                     }
+                    // NOTE: no session renew() here on purpose — renew() destroys the
+                    // previous session file, instantly logging out every other open tab.
                     $this->authService->syncSession($session, $user);
                     $this->Flash->success(__('Login successful. Welcome back!'));
+                    $redirect = $this->safeRedirect(trim((string)$this->getRequest()->getQuery('redirect', '')));
+                    if ($redirect !== '') {
+                        return $this->redirect($redirect);
+                    }
+                    $role = strtolower((string)($user['role'] ?? ''));
+                    if ($role === 'admin') return $this->redirect('/admin/dashboard');
+                    if ($role === 'owner') return $this->redirect('/host/dashboard');
+                    // Host-intent sign-in but plain customer account → convert page
+                    if ($loginRole === 'owner') return $this->redirect('/join-us');
                     return $this->redirect('/');
                 }
                 $this->Flash->error(__('Invalid email or password.'));
             }
         }
 
+        $this->set(compact('loginRole'));
         return $this->render('/Pages/login');
     }
 
@@ -625,6 +791,11 @@ class PagesController extends AppController
             $this->Flash->success(__('Account created successfully! Welcome to fastnetstays.com.'));
             return $this->redirect('/login');
         }
+        $requestedRole = strtolower(trim((string)$this->getRequest()->getQuery('role', 'customer')));
+        if (!in_array($requestedRole, ['customer', 'owner'], true)) {
+            $requestedRole = 'customer';
+        }
+        $this->set(compact('requestedRole'));
         return $this->render('/Pages/signup');
     }
 

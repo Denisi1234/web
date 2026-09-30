@@ -208,6 +208,8 @@
         <?= $this->Html->css('/assets/css/carbon-polish.css?v=' . filemtime(WWW_ROOT . 'assets/css/carbon-polish.css')) ?>
         <?php if ($isHomePage): ?>
         <?= $this->Html->css('/assets/css/carbon-home.css?v=' . filemtime(WWW_ROOT . 'assets/css/carbon-home.css')) ?>
+        <?php else: ?>
+        <?= $this->Html->css('/assets/css/carbon-journey.css?v=' . filemtime(WWW_ROOT . 'assets/css/carbon-journey.css')) ?>
         <?php endif; ?>
 
         <!-- Universal App Loader Engine -->
@@ -308,6 +310,19 @@
 
         <div id="main-wrapper">
 
+            <!-- Flash messages (Carbon notifications) — rendered here so notices
+                 never pile up unseen across public pages -->
+            <style>
+            .message{font-family:'IBM Plex Sans','Inter',Roboto,Arial,sans-serif;font-size:14px;line-height:1.5;padding:12px 16px;margin:12px 0;background:#f4f4f4;border:1px solid #e0e0e0;border-left:3px solid #0f62fe;color:#161616;cursor:pointer}
+            .message.error{background:#fff1f1;border-left-color:#da1e28}
+            .message.success{background:#defbe6;border-left-color:#24a148}
+            .message.warning{background:#fcf4d6;border-left-color:#f1c21b}
+            .message.hidden{display:none}
+            </style>
+            <div class="container" style="max-width:1140px">
+                <?= $this->Flash->render() ?>
+            </div>
+
             <!-- Main Content -->
         	<?= $this->fetch('content') ?>
 
@@ -349,6 +364,17 @@
         ], ['defer' => true]); ?>
 
         <?= $this->fetch('script') ?>
+
+        <!-- Global toast (all pages): polite live region + fnsToast helper. Home defines its own richer copy. -->
+        <div id="fns_toast" role="status" aria-live="polite" aria-atomic="true" style="position:fixed;bottom:20px;bottom:calc(20px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#161616;color:#fff;padding:11px 18px;border-radius:9999px;font-size:13px;font-weight:500;display:none;z-index:4000;box-shadow:0 8px 30px rgba(0,0,0,.18);max-width:min(92vw,420px);text-align:center;pointer-events:none;font-family:'IBM Plex Sans','Inter',Roboto,sans-serif"></div>
+        <script>
+        window.fnsToast = window.fnsToast || function(msg, ms){
+            var t = document.getElementById('fns_toast');
+            if(!t) return;
+            t.textContent = msg; t.style.display = 'block';
+            clearTimeout(t._t); t._t = setTimeout(function(){ t.style.display = 'none'; }, ms || 2800);
+        };
+        </script>
 
     </body>
 </html>

@@ -103,8 +103,9 @@ if (!function_exists('ghPropImages')) {
         $propType = !empty($prop['property_type']) ? ucfirst($prop['property_type']) : '';
         $starLabel = $stars > 0 ? $stars . '-star hotel' : ($propType ?: '');
 
-        // Price — base nightly rate; stay total = nightly × nights × rooms (matches backend BookingCalculationService:
-        // subtotal = nightly×nights×qty, VAT 0%, +1% AzamPay fee at checkout). Never claim fees included.
+        // Price — backend customer_price_per_night ALREADY includes the 1% AzamPay fee
+        // (Property::getCustomerPricePerNightAttribute + fee_note "Includes payment processing fee", VAT 0%).
+        // Stay total = customer nightly × nights × rooms. Never claim anything beyond the fee_note.
         $price      = (int)($prop['customer_price_per_night'] ?? ($prop['price_per_night'] ?? ($prop['price'] ?? 0)));
         $currency   = ($price > 500) ? 'TSh ' : '$';
         $priceLabel = $price > 0 ? $currency . number_format($price) : '';
@@ -211,6 +212,10 @@ if (!function_exists('ghPropImages')) {
             <button type="button" class="gh-card-bm" onclick="event.stopPropagation();ghBookmark(<?= $propId ?>,this)" title="Save" aria-label="Save">
                 <i class="fa-regular fa-bookmark" style="font-size:12px;"></i>
             </button>
+            <!-- Locate on map: touch/click focuses the pin without navigating -->
+            <button type="button" class="gh-card-locate" onclick="event.stopPropagation();if(window.ghFocusMarker)window.ghFocusMarker(<?= $propId ?>)" title="Show on map" aria-label="Show on map">
+                <i class="fa-solid fa-location-dot" style="font-size:12px;"></i>
+            </button>
             <!-- Carousel dots / counter -->
             <?php if ($isSlider): ?>
                 <div class="gh-card-dots" id="gh-dots-<?= $propId ?>">
@@ -257,7 +262,7 @@ if (!function_exists('ghPropImages')) {
                         <?php if ($nightsForPrice > 1 || $roomsForPrice > 1): ?>
                             <span style="display:block;font-size:11.5px;font-weight:500;color:#525252;"><?= h($totalNightsLabel) ?></span>
                         <?php endif; ?>
-                        <span style="display:block;font-size:10.5px;color:#6f6f6f;" title="1% AzamPay mobile-money fee is added at checkout">+1% mobile-money fee at checkout</span>
+                        <span style="display:block;font-size:10.5px;color:#6f6f6f;" title="<?= h($prop['fee_note'] ?? 'Includes payment processing fee') ?>"><?= h($prop['fee_note'] ?? 'Incl. payment processing fee') ?></span>
                     </span>
                 <?php endif; ?>
             </div>
@@ -300,15 +305,15 @@ if (!function_exists('ghPropImages')) {
                     <a href="<?= $detailUrl ?>" class="gh-btn-prices" onclick="event.stopPropagation()">View prices</a>
                 <?php endif; ?>
             </div>
-            <!-- Mobile: price + Show details (price visible so users know cost before tapping) -->
+            <!-- Mobile: price + same View prices/details button as desktop -->
             <div class="gh-card-viewmap">
                 <?php if ($priceLabel !== ''): ?>
                 <div style="display:flex;flex-direction:column;line-height:1.2;min-width:0;">
                     <span class="gh-hotel-price" style="display:inline-block !important;font-size:15px;font-weight:700;color:#202124;" data-nightly="<?= h($priceLabel) ?>" data-total="<?= h($totalLabel) ?>" data-nights="<?= (int)$nightsForPrice ?>"><?= h($priceLabel) ?><span class="gh-price-night" style="font-size:11px;font-weight:400;color:#5f6368;">/night</span></span>
                 </div>
                 <?php endif; ?>
-                <a href="<?= $detailUrl ?>" class="gh-btn-prices" onclick="event.stopPropagation()" style="<?= $priceLabel!=='' ? 'flex:0 0 auto;' : 'flex:1;justify-content:center;' ?>min-height:44px;font-size:14px;font-weight:600;touch-action:manipulation;">
-                    Show details
+                <a href="<?= $detailUrl ?>" class="<?= !$hasPrice ? 'gh-btn-details' : 'gh-btn-prices' ?>" onclick="event.stopPropagation()" style="<?= $priceLabel!=='' ? 'flex:0 0 auto;' : 'flex:1;justify-content:center;' ?>min-height:44px;font-size:14px;font-weight:600;touch-action:manipulation;">
+                    <?= !$hasPrice ? 'View details' : 'View prices' ?>
                 </a>
                 <button type="button" class="gh-viewmap-bm" onclick="event.stopPropagation();ghBookmark(<?= $propId ?>,this)" aria-label="Save" style="width:44px;height:44px;border:1px solid #dadce0;border-radius:50%;background:#fff;touch-action:manipulation;"><i class="fa-regular fa-bookmark"></i></button>
             </div>

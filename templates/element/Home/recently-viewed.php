@@ -54,15 +54,19 @@ if ($recentStays === []) {
 
 		<!-- Recently Viewed Horizontal Scroll / Grid List (Real Content) -->
 		<div class="d-flex align-items-center gap-3 overflow-x-auto pb-2 home-real-container" id="home-recently-viewed-list" style="scrollbar-width: none; -ms-overflow-style: none;">
-			<?php foreach ($recentStays as $stay): 
-				$stayId = $stay['id'] ?? 11;
-				$stayName = $stay['name'] ?? 'Stay';
-				$stayCity = $stay['city'] ?? 'Tanzania';
-				$stayRating = $stay['rating'] ?? ($stay['star_rating'] ?? 4.5);
-				$stayReviews = $stay['reviews_count'] ?? 120;
-				$stayRatingText = $stay['rating_text'] ?? 'Very good';
-				$stayImage = $stay['image_url'] ?? 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=400&q=80';
-			?>
+		<?php foreach ($recentStays as $stay):
+			if (empty($stay['id'])) continue;
+			$stayId = (int)$stay['id'];
+			$stayName = $stay['name'] ?? 'Stay';
+			$stayCity = $stay['city'] ?? 'Tanzania';
+			$stayRatingRaw = $stay['rating'] ?? ($stay['star_rating'] ?? null);
+			$stayReviewsRaw = (int)($stay['reviews_count'] ?? 0);
+			$hasStayRating = $stayRatingRaw !== null && $stayReviewsRaw > 0;
+			$stayRating = $hasStayRating ? (float)$stayRatingRaw : 0.0;
+			$stayRatingText = $stay['rating_text'] ?? '';
+			$stayImage = $stay['image_url'] ?? '';
+			$stayStars = max(0, min(5, (int)($stay['star_rating'] ?? 0)));
+		?>
 			<!-- Combo Card (Search Pill + Real Property Card) -->
 			<div class="trivago-recent-combo-card">
 				<!-- Search Pill on Left -->
@@ -79,23 +83,25 @@ if ($recentStays === []) {
 
 				<!-- Viewed Property Card on Right -->
 				<a href="<?= $this->Url->build('/hotel-detail/' . $stayId); ?>" class="trivago-recent-prop-card text-decoration-none">
-					<div class="trivago-recent-img-wrap">
-						<img src="<?= h($stayImage) ?>" alt="<?= h($stayName) ?>" class="trivago-recent-img" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=400&q=80';">
+				<div class="trivago-recent-img-wrap">
+					<?php if ($stayImage !== ''): ?><img src="<?= h($stayImage) ?>" alt="<?= h($stayName) ?>" class="trivago-recent-img" loading="lazy"><?php else: ?><span class="trivago-recent-img" style="display:flex;align-items:center;justify-content:center;background:#f4f4f4;color:#8d8d8d;" aria-hidden="true"><i class="fa-solid fa-image"></i></span><?php endif; ?>
+				</div>
+				<div class="trivago-recent-prop-info">
+					<h4 class="trivago-recent-prop-title" title="<?= h($stayName) ?>"><?= h(mb_strimwidth($stayName, 0, 18, '...')) ?></h4>
+					<?php if ($hasStayRating): ?>
+					<div class="trivago-recent-prop-rating">
+						<span class="fw-bold text-slate-900"><?= number_format($stayRating, 1) ?></span>
+						<?php if ($stayRatingText !== ''): ?><span class="text-slate-600">- <?= h($stayRatingText) ?></span><?php endif; ?>
+						<span class="text-slate-400"><?= number_format($stayReviewsRaw) ?></span>
 					</div>
-					<div class="trivago-recent-prop-info">
-						<h4 class="trivago-recent-prop-title" title="<?= h($stayName) ?>"><?= h(mb_strimwidth($stayName, 0, 18, '...')) ?></h4>
-						<div class="trivago-recent-prop-rating">
-							<span class="fw-bold text-slate-900"><?= number_format((float)$stayRating, 1) ?></span>
-							<span class="text-slate-600">- <?= h($stayRatingText) ?></span>
-							<span class="text-slate-400"><?= number_format((int)$stayReviews) ?></span>
-						</div>
-						<div class="trivago-recent-prop-stars">
-							<i class="fa-solid fa-star"></i>
-							<i class="fa-solid fa-star"></i>
-							<i class="fa-solid fa-star"></i>
-							<span><?= h(ucfirst($stayCity)) ?></span>
-						</div>
+					<?php else: ?>
+					<div class="trivago-recent-prop-rating"><span class="text-slate-400">New — no reviews yet</span></div>
+					<?php endif; ?>
+					<div class="trivago-recent-prop-stars">
+						<?php if ($stayStars > 0): ?><?php for ($si = 0; $si < $stayStars; $si++): ?><i class="fa-solid fa-star"></i><?php endfor; ?><?php endif; ?>
+						<span><?= h(ucfirst($stayCity)) ?></span>
 					</div>
+				</div>
 				</a>
 			</div>
 			<?php endforeach; ?>

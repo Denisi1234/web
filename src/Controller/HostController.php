@@ -22,60 +22,216 @@ class HostController extends AppController
         parent::initialize();
         $this->apiClient = new FastnetApiClient();
         $this->authService = new AuthService($this->apiClient);
+        $this->viewBuilder()->setLayout('portal');
+    }
+
+    private function rawToken(): string
+    {
+        $token = trim((string)$this->getRequest()->getSession()->read('auth_token'));
+        if (stripos($token, 'Bearer ') === 0) {
+            $token = trim(substr($token, 7));
+        }
+        return $token;
     }
 
     private function hostHeaders(): array
     {
-        $token = trim((string)$this->getRequest()->getSession()->read('auth_token'));
+        $token = $this->rawToken();
         return $token !== '' ? ['Authorization' => 'Bearer ' . $token] : [];
+    }
+
+    private function sessionUser(): array
+    {
+        $u = $this->getRequest()->getSession()->read('User');
+        return is_array($u) ? $u : [];
+    }
+
+    private function isAdminUser(): bool
+    {
+        return strtolower((string)($this->sessionUser()['role'] ?? '')) === 'admin';
+    }
+
+    private function ownerId(): int
+    {
+        return (int)($this->sessionUser()['id'] ?? 0);
+    }
+
+    /** True when the last portal fetch hit a dead backend (null/5xx) — views show retry, not false-empty. */
+    private bool $backendError = false;
+
+    private function markBackend(?array $res): void
+    {
+        if ($res === null || (!empty($res['_status']) && (int)$res['_status'] >= 500)) {
+            $this->backendError = true;
+        }
+    }
+
+    /**
+     * Owner-scoped property list, backend as source of truth.
+     * Admin → /admin/properties (all, has host_id).
+     * Owner → /properties?mine=1 (own only, incl. pending/roomless).
+     * Falls back to client-side host_id filter when items carry it.
+     */
+    private function myProperties(array $headers): array
+    {
+        if ($this->rawToken() === '') return [];
+        if ($this->isAdminUser()) {
+            $res = $this->apiClient->get('/admin/properties', [], $headers);
+            $this->markBackend($res);
+            if (!empty($res) && empty($res['_status'])) {
+                $list = $res['data'] ?? (isset($res[0]) ? $res : []);
+                if (is_array($list)) return array_values($list);
+            }
+        } else {
+            $res = $this->apiClient->get('/properties', ['mine' => 1, 'per_page' => 50], $headers);
+            $this->markBackend($res);
+            if (!empty($res) && empty($res['_status'])) {
+                $list = $res['data'] ?? (isset($res[0]) ? $res : []);
+                if (is_array($list)) return array_values($list);
+            }
+        }
+        // Fallback: unscoped list filtered by host_id when present
+        $res = $this->apiClient->get('/properties', ['per_page' => 50], $headers);
+        $this->markBackend($res);
+        $list = $res['data'] ?? (isset($res[0]) ? $res : []);
+        if (!is_array($list)) return [];
+        $oid = $this->ownerId();
+        if (!$this->isAdminUser() && $oid > 0) {
+            $scoped = array_values(array_filter($list, fn($p) => (int)($p['host_id'] ?? $p['host']['id'] ?? 0) === $oid));
+            // Only use filtered result if items actually carry ownership info
+            foreach ($list as $p) {
+                if (isset($p['host_id']) || isset($p['host']['id'])) return $scoped;
+            }
+        }
+        return array_values($list);
+    }
+
+    /**
+     * Owner-scoped bookings. Owner → /bookings first (server-scoped by host);
+     * admin → /admin/bookings first.
+     */
+    private function myBookings(array $headers): array
+    {
+        if ($this->rawToken() === '') return [];
+        $first = $this->isAdminUser() ? '/admin/bookings' : '/bookings';
+        $second = $this->isAdminUser() ? '/bookings' : '/admin/bookings';
+        $res = $this->apiClient->get($first, [], $headers);
+        if (empty($res) || !empty($res['_status'])) {
+            $res = $this->apiClient->get($second, [], $headers);
+        }
+        $this->markBackend($res);
+        $list = $res['data'] ?? (isset($res[0]) ? $res : []);
+        return is_array($list) ? array_values($list) : [];
+    }
+
+    /**
+     * Session-cached profile (120s TTL) — backend /user/personal-details
+     * takes ~2.3s, and sidebar/topbar only need it for display.
+     * Backend stays source of truth; refresh on profile update.
+     * Releases the session lock before/after slow I/O so parallel
+     * portal requests (prefetch) don't serialize on the session file.
+     */
+    private function cachedProfile(): array
+    {
+        if ($this->rawToken() === '') return [];
+        $session = $this->getRequest()->getSession();
+        $cached = $session->read('UserProfile');
+        $ts = (int)$session->read('UserProfileTs');
+        if (is_array($cached) && !empty($cached) && $ts > time() - 120) {
+            $session->close();
+            return $cached;
+        }
+        $session->close();
+        $fresh = $this->authService->getPersonalDetails($this->rawToken());
+        if (!empty($fresh) && !empty($fresh['id'])) { // id required: public personal-details returns a demo profile (null id) for bad tokens
+            $session->write('UserProfile', $fresh);
+            $session->write('UserProfileTs', time());
+            $session->close();
+            return $fresh;
+        }
+        return is_array($cached) && !empty($cached) ? $cached : $fresh;
     }
 
     public function beforeFilter(\Cake\Event\EventInterface $event)
     {
         parent::beforeFilter($event);
-        // Require login for all host actions — portal page-login.php:18 POST /api/login → Bearer
-        $token = trim((string)$this->getRequest()->getSession()->read('auth_token'));
-        $user = $this->getRequest()->getSession()->read('User');
-        if ($token === '' || empty($user)) {
-            $this->Flash->error(__('Please sign in to access Host Dashboard.'));
-            return $this->redirect('/login');
-        }
+        // No login wall: portal always renders. Without a session the pages
+        // show empty states + a sign-in banner (portal.php); backend calls
+        // simply return nothing without a token. Nothing here may redirect.
     }
 
     public function dashboard()
     {
         $headers = $this->hostHeaders();
-        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
-        // Mirror admin_owner_portal/index.php:12 — admin sees all, owner filtered by host_id if backend respects token
-        $propRes = $this->apiClient->get('/admin/properties', [], $headers);
-        if (empty($propRes) || !empty($propRes['_status'])) {
-            $propRes = $this->apiClient->get('/properties', [], $headers);
-        }
-        $properties = $propRes['data'] ?? (isset($propRes[0]) ? $propRes : []);
-        if (!is_array($properties)) $properties = [];
+        $userProfile = $this->cachedProfile();
 
-        $bookRes = $this->apiClient->get('/admin/bookings', [], $headers);
-        $bookings = $bookRes['data'] ?? (isset($bookRes[0]) ? $bookRes : []);
-        if (!is_array($bookings)) $bookings = [];
+        $properties = $this->myProperties($headers);
+
+        $bookings = $this->myBookings($headers);
 
         $stats = [
             'properties' => count($properties),
             'bookings' => count($bookings),
             'revenue' => array_sum(array_map(fn($b) => (float)($b['total_price'] ?? 0), $bookings)),
         ];
-        $this->set(compact('userProfile', 'properties', 'bookings', 'stats'));
+        $backendError = $this->backendError;
+        $this->set(compact('userProfile', 'properties', 'bookings', 'stats', 'backendError'));
         return $this->render('/Pages/host-dashboard');
     }
 
     public function listings()
     {
         $headers = $this->hostHeaders();
-        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
-        $res = $this->apiClient->get('/properties', [], $headers);
-        $properties = $res['data'] ?? (isset($res[0]) ? $res : []);
-        if (!is_array($properties)) $properties = [];
-        $this->set(compact('userProfile', 'properties'));
+        $userProfile = $this->cachedProfile();
+        $properties = $this->myProperties($headers);
+        $backendError = $this->backendError;
+        $this->set(compact('userProfile', 'properties', 'backendError'));
         return $this->render('/Pages/host-listings');
+    }
+
+    /**
+     * Build property payload with backend-required defaults (area defaults to city).
+     */
+    private function buildPropertyPayload(array $data): array
+    {
+        $city = trim((string)($data['city'] ?? 'Dar es Salaam'));
+        if ($city === '') $city = 'Dar es Salaam';
+        $area = trim((string)($data['area'] ?? ''));
+        if ($area === '') $area = $city;
+        return [
+            'name' => trim((string)($data['name'] ?? '')),
+            'description' => trim((string)($data['description'] ?? '')),
+            'address' => trim((string)($data['address'] ?? '')),
+            'city' => $city,
+            'area' => $area,
+            'price_per_night' => (float)($data['price_per_night'] ?? 0),
+            'latitude' => is_numeric($data['latitude'] ?? null) ? (float)$data['latitude'] : -6.7924,
+            'longitude' => is_numeric($data['longitude'] ?? null) ? (float)$data['longitude'] : 39.2083,
+            'image_url' => trim((string)($data['image_url'] ?? '')),
+        ];
+    }
+
+    private function propertyErrorMessage(?array $res): string
+    {
+        if (empty($res)) return 'Service unavailable. Please try again.';
+        $msg = trim((string)($res['message'] ?? 'Could not create listing.'));
+        if (!empty($res['errors']) && is_array($res['errors'])) {
+            $flat = [];
+            foreach ($res['errors'] as $fieldErrors) {
+                foreach ((array)$fieldErrors as $e) $flat[] = $e;
+            }
+            if (!empty($flat)) $msg .= ' ' . implode(' ', array_slice($flat, 0, 3));
+        }
+        return $msg;
+    }
+
+    private function submitLodgeVerification(int $propertyId, array $headers): void
+    {
+        try {
+            $this->apiClient->post('/verification/lodge/' . $propertyId, [], $headers);
+        } catch (\Throwable $e) {
+            // Non-fatal: property is created Active by default; admin can still review
+        }
     }
 
     public function create()
@@ -83,30 +239,23 @@ class HostController extends AppController
         $headers = $this->hostHeaders();
         if ($this->getRequest()->is('post')) {
             $data = (array)$this->getRequest()->getData();
-            $payload = [
-                'name' => trim((string)($data['name'] ?? '')),
-                'description' => trim((string)($data['description'] ?? '')),
-                'address' => trim((string)($data['address'] ?? '')),
-                'city' => trim((string)($data['city'] ?? 'Dar es Salaam')),
-                'area' => trim((string)($data['area'] ?? '')),
-                'price_per_night' => (float)($data['price_per_night'] ?? 0),
-                'latitude' => (float)($data['latitude'] ?? -6.7924),
-                'longitude' => (float)($data['longitude'] ?? 39.2083),
-                'image_url' => trim((string)($data['image_url'] ?? '')),
-            ];
+            $payload = $this->buildPropertyPayload($data);
             if ($payload['name'] === '' || $payload['price_per_night'] <= 0) {
                 $this->Flash->error(__('Name and price are required.'));
             } else {
                 $res = $this->apiClient->post('/properties', $payload, $headers);
+                if ($bounce = $this->bounceOnUnauth($res, '/host/listings/add')) return $bounce;
                 if (!empty($res['_status']) && (int)$res['_status'] >= 400) {
-                    $this->Flash->error(__($res['message'] ?? 'Could not create listing.'));
+                    $this->Flash->error(__($this->propertyErrorMessage($res)));
                 } else {
-                    $this->Flash->success(__('Property created.'));
-                    return $this->redirect(['action' => 'listings']);
+                    $pid = (int)(($res['id'] ?? $res['data']['id'] ?? 0));
+                    if ($pid > 0) $this->submitLodgeVerification($pid, $headers);
+                    $this->Flash->success(__('Property created and submitted for verification. Add rooms next.'));
+                    return $this->redirect(['action' => 'rooms']);
                 }
             }
         }
-        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
+        $userProfile = $this->cachedProfile();
         $this->set(compact('userProfile'));
         return $this->render('/Pages/host-listing-form');
     }
@@ -114,13 +263,8 @@ class HostController extends AppController
     public function bookings()
     {
         $headers = $this->hostHeaders();
-        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
-        $res = $this->apiClient->get('/admin/bookings', [], $headers);
-        if (empty($res) || !empty($res['_status'])) {
-            $res = $this->apiClient->get('/bookings', [], $headers);
-        }
-        $bookings = $res['data'] ?? (isset($res[0]) ? $res : []);
-        if (!is_array($bookings)) $bookings = [];
+        $userProfile = $this->cachedProfile();
+        $bookings = $this->myBookings($headers);
         $this->set(compact('userProfile', 'bookings'));
         return $this->render('/Pages/host-bookings');
     }
@@ -128,15 +272,33 @@ class HostController extends AppController
     public function calendar(?int $id = null)
     {
         $headers = $this->hostHeaders();
-        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
+        $userProfile = $this->cachedProfile();
         $property = null;
         $rooms = [];
         if ($id) {
-            $res = $this->apiClient->get('/properties/' . $id, [], $headers);
-            $property = $res['data'] ?? $res;
+            // Fast path: owner-scoped list (mine=1, has host_id) instead of
+            // /properties/{id} show (~7s). Falls back to show if missing.
+            $property = null;
+            $list = $this->myProperties($headers);
+            foreach ($list as $p) {
+                if ((int)($p['id'] ?? 0) === (int)$id) { $property = $p; break; }
+            }
+            if ($property === null) {
+                $res = $this->apiClient->get('/properties/' . $id, [], $headers);
+                $property = $res['data'] ?? $res;
+            }
             if (empty($property) || !empty($property['_status'])) {
                 $this->Flash->error(__('Property not found.'));
                 return $this->redirect(['action' => 'listings']);
+            }
+            // Ownership guard: non-admins only manage their own lodges
+            if (!$this->isAdminUser()) {
+                $oid = $this->ownerId();
+                $hid = (int)($property['host_id'] ?? $property['host']['id'] ?? 0);
+                if ($hid > 0 && $oid > 0 && $hid !== $oid) {
+                    $this->Flash->error(__('Property not found.'));
+                    return $this->redirect(['action' => 'listings']);
+                }
             }
             $rRes = $this->apiClient->get('/properties/' . $id . '/rooms', [], $headers);
             $rooms = $rRes['data'] ?? (isset($rRes[0]) ? $rRes : []);
@@ -157,6 +319,7 @@ class HostController extends AppController
                 if (isset($data['status'])) $payload['status'] = trim((string)$data['status']);
                 if (!empty($payload)) {
                     $upRes = $this->apiClient->put('/rooms/' . $roomId, $payload, $headers);
+                    if ($bounce = $this->bounceOnUnauth($upRes, '/host/calendar/' . $id)) return $bounce;
                     if (!empty($upRes['_status']) && (int)$upRes['_status'] >= 400) {
                         $this->Flash->error(__($upRes['message'] ?? 'Could not update room.'));
                     } else {
@@ -173,21 +336,32 @@ class HostController extends AppController
     public function earnings()
     {
         $headers = $this->hostHeaders();
-        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
-        // Try finance overview, fallback to admin dashboardStats (admin_owner_portal/chart-flot.php parity)
-        $res = $this->apiClient->get('/finance/overview', [], $headers);
-        if (empty($res) || !empty($res['_status'])) {
-            $res = $this->apiClient->get('/admin/dashboard-stats', [], $headers);
+        $userProfile = $this->cachedProfile();
+        // Finance endpoints take ~7-8s each — 90s session cache so sidebar
+        // navigation stays fast; backend stays source of truth on refresh.
+        $session = $this->getRequest()->getSession();
+        $finance = $session->read('FinanceCache');
+        $payouts = $session->read('PayoutsCache');
+        $fts = (int)$session->read('FinanceCacheTs');
+        if (!is_array($finance) || !is_array($payouts) || $fts < time() - 90) {
+            // Try finance overview, fallback to admin dashboardStats (admin_owner_portal/chart-flot.php parity)
+            $res = $this->apiClient->get('/finance/overview', [], $headers);
+            if (empty($res) || !empty($res['_status'])) {
+                $res = $this->apiClient->get('/admin/dashboard-stats', [], $headers);
+            }
+            if (empty($res) || !empty($res['_status'])) {
+                $res = $this->apiClient->get('/admin/owners/financial-summary', [], $headers);
+            }
+            $finance = $res['data'] ?? $res;
+            if (!is_array($finance)) $finance = [];
+            // payouts ledger fallback for mobile financial_reports.dart
+            $pRes = $this->apiClient->get('/payouts', [], $headers);
+            $payouts = $pRes['data'] ?? (isset($pRes[0]) ? $pRes : []);
+            if (!is_array($payouts)) $payouts = [];
+            $session->write('FinanceCache', $finance);
+            $session->write('PayoutsCache', $payouts);
+            $session->write('FinanceCacheTs', time());
         }
-        if (empty($res) || !empty($res['_status'])) {
-            $res = $this->apiClient->get('/admin/owners/financial-summary', [], $headers);
-        }
-        $finance = $res['data'] ?? $res;
-        if (!is_array($finance)) $finance = [];
-        // payouts ledger fallback for mobile financial_reports.dart
-        $pRes = $this->apiClient->get('/payouts', [], $headers);
-        $payouts = $pRes['data'] ?? (isset($pRes[0]) ? $pRes : []);
-        if (!is_array($payouts)) $payouts = [];
         $this->set(compact('userProfile', 'finance', 'payouts'));
         return $this->render('/Pages/host-earnings');
     }
@@ -197,23 +371,22 @@ class HostController extends AppController
     public function rooms()
     {
         $headers = $this->hostHeaders();
-        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
+        $userProfile = $this->cachedProfile();
         $search = trim((string)$this->getRequest()->getQuery('search', ''));
         $status = trim((string)$this->getRequest()->getQuery('status', ''));
 
-        // Fetch properties for owner filter + dropdown
-        $pRes = $this->apiClient->get('/properties', [], $headers);
-        $properties = $pRes['data'] ?? (isset($pRes[0]) ? $pRes : []);
-        if (!is_array($properties)) $properties = [];
+        // Fetch properties for owner filter + dropdown (owner-scoped)
+        $properties = $this->myProperties($headers);
 
         // Fetch all rooms
         $rRes = $this->apiClient->get('/rooms', [], $headers);
         $rooms = $rRes['data'] ?? (isset($rRes[0]) ? $rRes : []);
         if (!is_array($rooms)) $rooms = [];
-        // Also try per-property fallback if /rooms empty
+        // Fallback per-property only if /rooms empty — capped at 3 to avoid
+        // N+1 fan-out (~1.9s each) blocking sidebar navigation
         if (empty($rooms) && !empty($properties)) {
             $agg = [];
-            foreach (array_slice($properties, 0, 8) as $p) {
+            foreach (array_slice($properties, 0, 3) as $p) {
                 $pid = $p['id'] ?? null;
                 if (!$pid) continue;
                 $rr = $this->apiClient->get('/properties/' . $pid . '/rooms', [], $headers);
@@ -256,18 +429,53 @@ class HostController extends AppController
         return $this->render('/Pages/host-rooms');
     }
 
+    /**
+     * Normalize amenity input: form may send a single comma-joined string
+     * ("Wifi, AC, TV") or an array — backend expects a clean string array.
+     */
+    private function amenityList(mixed $raw): array
+    {
+        $out = [];
+        foreach ((array)$raw as $item) {
+            foreach (explode(',', (string)$item) as $part) {
+                $part = trim($part);
+                if ($part !== '') $out[] = $part;
+            }
+        }
+        return array_values(array_unique($out));
+    }
+
+    /**
+     * Backend said 401: session token is dead. Bounce to login with a safe
+     * return address instead of dead-ending on "Unauthenticated".
+     * Returns a redirect response, or null to continue normally.
+     */
+    private function bounceOnUnauth(?array $res, string $returnUrl): ?\Cake\Http\Response
+    {
+        if (is_array($res) && (int)($res['_status'] ?? 0) === 401) {
+            $this->Flash->error(__('Session expired — please sign in again.'));
+            $safe = str_starts_with($returnUrl, '/') && !str_starts_with($returnUrl, '//') ? $returnUrl : '/host/dashboard';
+            return $this->redirect('/login?redirect=' . urlencode($safe));
+        }
+        return null;
+    }
+
     public function addRoom()
     {
         $headers = $this->hostHeaders();
-        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
+        $userProfile = $this->cachedProfile();
 
-        $pRes = $this->apiClient->get('/properties', [], $headers);
-        $properties = $pRes['data'] ?? (isset($pRes[0]) ? $pRes : []);
-        if (!is_array($properties)) $properties = [];
+        $properties = $this->myProperties($headers);
+
+        // Preselect a property arriving from onboarding (?property_id=)
+        $wantPid = (int)$this->getRequest()->getQuery('property_id', 0);
+        if ($wantPid > 0) {
+            usort($properties, fn($a, $b) => ((int)($b['id'] ?? 0) === $wantPid) <=> ((int)($a['id'] ?? 0) === $wantPid));
+        }
 
         if ($this->getRequest()->is('post')) {
             $data = (array)$this->getRequest()->getData();
-            $propertyId = (int)($data['property_id'] ?? 0);
+            $propertyId = (int)($data['property_id'] ?? $this->getRequest()->getQuery('property_id', 0));
             if ($propertyId <= 0 && !empty($properties)) $propertyId = (int)($properties[0]['id'] ?? 0);
             if ($propertyId <= 0) {
                 $this->Flash->error(__('No property available. Create a property first.'));
@@ -285,13 +493,14 @@ class HostController extends AppController
                     'room_size' => trim((string)($data['room_size'] ?? '')),
                     'status' => trim((string)($data['status'] ?? 'available')),
                     'description' => trim((string)($data['description'] ?? '')),
-                    'amenities' => array_values(array_filter(array_map('trim', (array)($data['amenities'] ?? [])))),
+                    'amenities' => $this->amenityList($data['amenities'] ?? []),
                     'photos' => array_values(array_filter(array_map('trim', (array)($data['photos'] ?? [])))),
                 ];
                 if ($payload['room_number'] === '' || $payload['price'] <= 0) {
                     $this->Flash->error(__('Room number and price are required.'));
                 } else {
                     $res = $this->apiClient->post('/properties/' . $propertyId . '/rooms', $payload, $headers);
+                    if ($bounce = $this->bounceOnUnauth($res, '/host/rooms/add')) return $bounce;
                     if (!empty($res['_status']) && (int)$res['_status'] >= 400) {
                         $this->Flash->error(__($res['message'] ?? 'Could not create room.'));
                     } else {
@@ -311,7 +520,7 @@ class HostController extends AppController
     public function editRoom(?string $id = null)
     {
         $headers = $this->hostHeaders();
-        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
+        $userProfile = $this->cachedProfile();
         $roomId = (int)$id;
         if ($roomId <= 0) return $this->redirect(['action' => 'rooms']);
 
@@ -323,9 +532,7 @@ class HostController extends AppController
             return $this->redirect(['action' => 'rooms']);
         }
 
-        $pRes = $this->apiClient->get('/properties', [], $headers);
-        $properties = $pRes['data'] ?? (isset($pRes[0]) ? $pRes : []);
-        if (!is_array($properties)) $properties = [];
+        $properties = $this->myProperties($headers);
 
         if ($this->getRequest()->is(['post','put','patch'])) {
             $data = (array)$this->getRequest()->getData();
@@ -339,10 +546,11 @@ class HostController extends AppController
                     }
                 }
             }
-            if (isset($data['amenities'])) $payload['amenities'] = array_values(array_filter(array_map('trim', (array)$data['amenities'])));
+            if (isset($data['amenities'])) $payload['amenities'] = $this->amenityList($data['amenities']);
             if (isset($data['photos'])) $payload['photos'] = array_values(array_filter(array_map('trim', (array)$data['photos'])));
 
             $res = $this->apiClient->put('/rooms/' . $roomId, $payload, $headers);
+            if ($bounce = $this->bounceOnUnauth($res, '/host/rooms/' . $roomId)) return $bounce;
             if (!empty($res['_status']) && (int)$res['_status'] >= 400) {
                 $this->Flash->error(__($res['message'] ?? 'Could not update room.'));
             } else {
@@ -359,23 +567,35 @@ class HostController extends AppController
     public function editLodge(?string $id = null)
     {
         $headers = $this->hostHeaders();
-        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
+        $userProfile = $this->cachedProfile();
         $propId = $id !== null ? (int)$id : null;
 
-        $pRes = $this->apiClient->get('/properties', [], $headers);
-        $properties = $pRes['data'] ?? (isset($pRes[0]) ? $pRes : []);
-        if (!is_array($properties)) $properties = [];
+        $properties = $this->myProperties($headers);
 
         $property = null;
         if ($propId) {
-            $r = $this->apiClient->get('/properties/' . $propId, [], $headers);
-            $property = $r['data'] ?? $r;
-            if (empty($property) || !empty($property['_status'])) $property = null;
+            foreach ($properties as $p) {
+                if ((int)($p['id'] ?? 0) === (int)$propId) { $property = $p; break; }
+            }
+            if ($property === null) {
+                $r = $this->apiClient->get('/properties/' . $propId, [], $headers);
+                $property = $r['data'] ?? $r;
+                if (empty($property) || !empty($property['_status'])) $property = null;
+            }
         }
         if (!$property && !empty($properties)) $property = $properties[0];
         if (!$property) {
             $this->Flash->error(__('No property found. Create one first.'));
             return $this->redirect(['action' => 'listings']);
+        }
+        // Ownership guard for explicit ids
+        if ($propId && !$this->isAdminUser()) {
+            $oid = $this->ownerId();
+            $hid = (int)($property['host_id'] ?? $property['host']['id'] ?? 0);
+            if ($hid > 0 && $oid > 0 && $hid !== $oid) {
+                $this->Flash->error(__('Property not found.'));
+                return $this->redirect(['action' => 'listings']);
+            }
         }
         $propId = (int)($property['id'] ?? $propId);
 
@@ -394,12 +614,13 @@ class HostController extends AppController
                 'area' => trim((string)($data['area'] ?? $property['area'] ?? '')),
                 'price_per_night' => (float)($data['price_per_night'] ?? $property['price_per_night'] ?? 0),
                 'image_url' => trim((string)($data['image_url'] ?? $property['image_url'] ?? '')),
-                'amenities' => array_values(array_filter(array_map('trim', (array)($data['amenities'] ?? $property['amenities'] ?? [])))),
+                'amenities' => $this->amenityList($data['amenities'] ?? $property['amenities'] ?? []),
             ];
             if ($payload['name'] === '' || $payload['price_per_night'] <= 0) {
                 $this->Flash->error(__('Name and price are required.'));
             } else {
                 $res = $this->apiClient->put('/properties/' . $propId, $payload, $headers);
+                if ($bounce = $this->bounceOnUnauth($res, '/host/lodge/' . $propId . '/edit')) return $bounce;
                 if (!empty($res['_status']) && (int)$res['_status'] >= 400) {
                     $this->Flash->error(__($res['message'] ?? 'Could not update lodge.'));
                 } else {
@@ -413,46 +634,169 @@ class HostController extends AppController
         return $this->render('/Pages/host-lodge-form');
     }
 
+    /**
+     * Real multi-page onboarding wizard (?step=1..5) with session draft.
+     * 1 Basics → 2 Location → 3 Photos → 4 Rooms (many, each with pictures)
+     * → 5 Review & launch. Rooms belong to this lodge only.
+     */
     public function onboarding()
     {
         $headers = $this->hostHeaders();
-        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
+        $userProfile = $this->cachedProfile();
+        $session = $this->getRequest()->getSession();
+
+        $step = (int)$this->getRequest()->getQuery('step', 1);
+        if ($step < 1 || $step > 5) $step = 1;
+        $draft = $session->read('OnboardDraft');
+        if (!is_array($draft)) $draft = [];
 
         if ($this->getRequest()->is('post')) {
             $data = (array)$this->getRequest()->getData();
-            $payload = [
-                'name' => trim((string)($data['name'] ?? '')),
-                'description' => trim((string)($data['description'] ?? '')),
-                'address' => trim((string)($data['address'] ?? '')),
-                'city' => trim((string)($data['city'] ?? 'Dar es Salaam')),
-                'area' => trim((string)($data['area'] ?? '')),
-                'price_per_night' => (float)($data['price_per_night'] ?? 0),
-                'latitude' => (float)($data['latitude'] ?? -6.7924),
-                'longitude' => (float)($data['longitude'] ?? 39.2083),
-                'image_url' => trim((string)($data['image_url'] ?? '')),
-                'amenities' => array_values(array_filter(array_map('trim', (array)($data['amenities'] ?? [])))),
-            ];
+            $postedStep = (int)($data['wizard_step'] ?? $step);
+
+            if ($postedStep === 1) {
+                $draft['name'] = trim((string)($data['name'] ?? ''));
+                $draft['type'] = trim((string)($data['type'] ?? 'Lodge'));
+                $draft['description'] = trim((string)($data['description'] ?? ''));
+                $draft['price_per_night'] = (float)($data['price_per_night'] ?? 0);
+                if ($draft['name'] === '' || $draft['price_per_night'] <= 0) {
+                    $this->Flash->error(__('Property name and nightly price are required.'));
+                    $this->set(compact('userProfile', 'draft', 'step'));
+                    return $this->render('/Pages/host-onboarding');
+                }
+                $session->write('OnboardDraft', $draft);
+                return $this->redirect(['action' => 'onboarding', '?' => ['step' => 2]]);
+            }
+
+            if ($postedStep === 2) {
+                $draft['city'] = trim((string)($data['city'] ?? ''));
+                $draft['area'] = trim((string)($data['area'] ?? ''));
+                $draft['address'] = trim((string)($data['address'] ?? ''));
+                $draft['latitude'] = is_numeric($data['latitude'] ?? null) ? (float)$data['latitude'] : -6.7924;
+                $draft['longitude'] = is_numeric($data['longitude'] ?? null) ? (float)$data['longitude'] : 39.2083;
+                if ($draft['city'] === '') {
+                    $this->Flash->error(__('City is required — pick your location on the map.'));
+                    $step = 2;
+                    $this->set(compact('userProfile', 'draft', 'step'));
+                    return $this->render('/Pages/host-onboarding');
+                }
+                $session->write('OnboardDraft', $draft);
+                return $this->redirect(['action' => 'onboarding', '?' => ['step' => 3]]);
+            }
+
+            if ($postedStep === 3) {
+                $draft['image_url'] = trim((string)($data['image_url'] ?? ''));
+                if ($draft['image_url'] === '') {
+                    $this->Flash->error(__('A cover photo is required — upload one above.'));
+                    $step = 3;
+                    $this->set(compact('userProfile', 'draft', 'step'));
+                    return $this->render('/Pages/host-onboarding');
+                }
+                $session->write('OnboardDraft', $draft);
+                return $this->redirect(['action' => 'onboarding', '?' => ['step' => 4]]);
+            }
+
+            if ($postedStep === 4) {
+                // Category-first rooms: each category (Deluxe…) carries shared
+                // attributes + many room numbers (45, 78…). Expand to rows.
+                $rooms = [];
+                $rawCats = $data['cats'] ?? [];
+                if (is_array($rawCats)) {
+                    foreach ($rawCats as $cat) {
+                        if (!is_array($cat)) continue;
+                        $price = (float)($cat['price'] ?? 0);
+                        if ($price <= 0) continue;
+                        $nums = [];
+                        foreach ((array)($cat['numbers'] ?? []) as $n) {
+                            $n = trim((string)$n);
+                            if ($n !== '' && !in_array($n, $nums, true)) $nums[] = $n;
+                        }
+                        if (empty($nums)) continue;
+                        $photos = [];
+                        foreach ((array)($cat['photos'] ?? []) as $ph) {
+                            $ph = trim((string)$ph);
+                            if ($ph !== '') $photos[] = $ph;
+                        }
+                        $photos = array_values($photos);
+                        $shared = [
+                            'room_type' => trim((string)($cat['room_type'] ?? 'Standard')),
+                            'price' => $price,
+                            'capacity' => max(1, (int)($cat['capacity'] ?? 2)),
+                            'max_adults' => max(1, (int)($cat['max_adults'] ?? $cat['capacity'] ?? 2)),
+                            'max_children' => max(0, (int)($cat['max_children'] ?? 0)),
+                            'bed_configuration' => trim((string)($cat['bed_configuration'] ?? '')),
+                            'status' => trim((string)($cat['status'] ?? 'available')),
+                            'amenities' => $this->amenityList($cat['amenities'] ?? []),
+                            'photos' => $photos,
+                        ];
+                        foreach ($nums as $num) {
+                            $rooms[] = array_merge(['room_number' => $num], $shared);
+                        }
+                    }
+                }
+                $draft['rooms'] = $rooms;
+                // Keep category view for re-render: stash raw groups too
+                $draft['roomCats'] = is_array($rawCats) ? array_values($rawCats) : [];
+                $session->write('OnboardDraft', $draft);
+                return $this->redirect(['action' => 'onboarding', '?' => ['step' => 5]]);
+            }
+
+            // Step 5 · Review & launch: lodge + all its rooms, then verify
+            $draft['amenities'] = $this->amenityList($data['amenities'] ?? ($draft['amenities'] ?? []));
+            $payload = $this->buildPropertyPayload($draft);
+            $payload['amenities'] = $draft['amenities'];
             if ($payload['name'] === '' || $payload['price_per_night'] <= 0) {
-                $this->Flash->error(__('Name and price are required.'));
-            } else {
-                $res = $this->apiClient->post('/properties', $payload, $headers);
-                if (!empty($res['_status']) && (int)$res['_status'] >= 400) {
-                    $this->Flash->error(__($res['message'] ?? 'Could not create property.'));
-                } else {
-                    $this->Flash->success(__('Property onboarded. Add rooms next.'));
-                    return $this->redirect(['action' => 'rooms']);
+                $this->Flash->error(__('Basics are incomplete — back to step 1.'));
+                return $this->redirect(['action' => 'onboarding', '?' => ['step' => 1]]);
+            }
+            $res = $this->apiClient->post('/properties', $payload, $headers);
+            // Dead token → re-login with progress intact (draft stays in session)
+            if ($bounce = $this->bounceOnUnauth($res, '/host/onboarding?step=5')) {
+                $session->write('OnboardDraft', $draft);
+                return $bounce;
+            }
+            if (!empty($res['_status']) && (int)$res['_status'] >= 400) {
+                $this->Flash->error(__($this->propertyErrorMessage($res)));
+                $step = 5;
+                $session->write('OnboardDraft', $draft);
+                $this->set(compact('userProfile', 'draft', 'step'));
+                return $this->render('/Pages/host-onboarding');
+            }
+            $pid = (int)(($res['id'] ?? $res['data']['id'] ?? 0));
+            $roomFails = [];
+            $roomUnauth = false;
+            foreach ((array)($draft['rooms'] ?? []) as $rm) {
+                if ($pid <= 0) break;
+                $rRes = $this->apiClient->post('/properties/' . $pid . '/rooms', $rm, $headers);
+                if (is_array($rRes) && (int)($rRes['_status'] ?? 0) === 401) { $roomUnauth = true; break; }
+                if (empty($rRes) || (!empty($rRes['_status']) && (int)$rRes['_status'] >= 400)) {
+                    $roomFails[] = (string)($rm['room_number'] ?? '?');
                 }
             }
+            if ($roomUnauth) {
+                // Lodge exists — rooms can be added after re-login; keep no stale draft
+                $session->delete('OnboardDraft');
+                $this->Flash->error(__('Session expired — please sign in again to add rooms.'));
+                return $this->redirect('/login?redirect=' . urlencode('/host/rooms/add?property_id=' . $pid));
+            }
+            if ($pid > 0) $this->submitLodgeVerification($pid, $headers);
+            $session->delete('OnboardDraft');
+            $nRooms = count((array)($draft['rooms'] ?? [])) - count($roomFails);
+            if (!empty($roomFails)) {
+                $this->Flash->error(__('Rooms not created ({0}) — numbers may already exist. Add them under Rooms.', implode(', ', $roomFails)));
+            }
+            $this->Flash->success(__('Property onboarded with {0} room(s) and submitted for verification.', $nRooms));
+            return $this->redirect(['action' => 'rooms']);
         }
 
-        $this->set(compact('userProfile'));
+        $this->set(compact('userProfile', 'draft', 'step'));
         return $this->render('/Pages/host-onboarding');
     }
 
     public function profile()
     {
         $headers = $this->hostHeaders();
-        $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
+        $userProfile = $this->cachedProfile();
         $me = $userProfile;
 
         // Try /me for fuller data
@@ -474,28 +818,26 @@ class HostController extends AppController
                 'profile_photo_url' => trim((string)($data['profile_photo_url'] ?? '')),
             ], fn($v) => $v !== '');
             if (!empty($payload)) {
-                $res = $this->apiClient->put('/user/profile', $payload, $headers);
-                // Fallback /profile
-                if (!empty($res['_status']) && (int)$res['_status'] === 404) {
-                    $res = $this->apiClient->patch('/profile', $payload, $headers);
-                }
+                // Backend source of truth: PATCH /profile (auth:sanctum)
+                $res = $this->apiClient->patch('/profile', $payload, $headers);
+                if ($bounce = $this->bounceOnUnauth($res, '/host/profile')) return $bounce;
                 if ($res === null) {
                     $this->Flash->error(__('Could not update profile — service unavailable.'));
                 } elseif (!empty($res['_status']) && (int)$res['_status'] >= 400) {
                     $this->Flash->error(__($res['message'] ?? 'Could not update profile.'));
                 } else {
                     $this->Flash->success(__('Profile updated.'));
-                    // Refresh
-                    $userProfile = $this->authService->getPersonalDetails($headers['Authorization'] ?? '');
+                    // Invalidate session profile so next read is fresh from backend
+                    $this->getRequest()->getSession()->delete('UserProfile');
+                    $this->getRequest()->getSession()->delete('UserProfileTs');
+                    $userProfile = $this->cachedProfile();
                     $me = $userProfile;
                 }
             }
         }
 
-        // Stats for header (properties/rooms)
-        $pRes = $this->apiClient->get('/properties', [], $headers);
-        $properties = $pRes['data'] ?? (isset($pRes[0]) ? $pRes : []);
-        if (!is_array($properties)) $properties = [];
+        // Stats for header (properties/rooms) — owner-scoped
+        $properties = $this->myProperties($headers);
         $rRes = $this->apiClient->get('/rooms', [], $headers);
         $rooms = $rRes['data'] ?? (isset($rRes[0]) ? $rRes : []);
         if (!is_array($rooms)) $rooms = [];

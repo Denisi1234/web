@@ -369,9 +369,7 @@ document.addEventListener('DOMContentLoaded', function(){
       if(obj['city'] && !obj['destination']) obj['destination']=obj['city'];
       if(obj['checkin'] && !obj['checkIn']) obj['checkIn']=obj['checkin'];
       if(obj['checkout'] && !obj['checkOut']) obj['checkOut']=obj['checkout'];
-      // recent save
-      const cityVal=obj['city']||obj['destination']||'';
-      if(cityVal) try{ const k='fns_recent_searches'; let arr=JSON.parse(localStorage.getItem(k)||'[]'); arr=arr.filter(v=>v.toLowerCase()!==cityVal.toLowerCase()); arr.unshift(cityVal); localStorage.setItem(k, JSON.stringify(arr.slice(0,5))); }catch(e){}
+      // recent searches removed — nothing stored
       FastNetState.pushState(obj);
     });
   }

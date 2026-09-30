@@ -4,6 +4,8 @@
  * Dynamically renders rooms, real amenities, real prices, bed configurations, and capacity from backend.
  */
 $roomList = is_array($rooms ?? null) ? $rooms : [];
+// Belt & braces: drop any non-room scalars (backend error shapes) — every loop below indexes into room arrays
+$roomList = array_values(array_filter($roomList, fn($r) => is_array($r)));
 
 // If no rooms returned, provide clean fallback structure
 if (empty($roomList)) {
@@ -11,8 +13,9 @@ if (empty($roomList)) {
 }
 
 $qp = $queryParams ?? [];
-$ci = $qp['checkIn'] ?? $qp['check_in'] ?? $qp['checkin'] ?? date('Y-m-d', strtotime('+1 day'));
-$co = $qp['checkOut'] ?? $qp['check_out'] ?? $qp['checkout'] ?? date('Y-m-d', strtotime('+2 days'));
+$propertyId = (int)($propertyId ?? ($detailPropertyId ?? ($property['id'] ?? ($qp['property_id'] ?? ($qp['id'] ?? ($roomList[0]['property_id'] ?? 0))))));
+$ci = $qp['checkIn'] ?? $qp['check_in'] ?? $qp['checkin'] ?? date('Y-m-d', strtotime('+7 days'));
+$co = $qp['checkOut'] ?? $qp['check_out'] ?? $qp['checkout'] ?? date('Y-m-d', strtotime($ci . ' +1 day'));
 try {
     $nights = max(1, (int)round((strtotime($co) - strtotime($ci)) / 86400));
 } catch (\Exception $e) {
@@ -82,13 +85,13 @@ foreach ($roomList as $rItem) {
   <div style="display:flex;flex-wrap:wrap;gap:8px">
     <?php foreach (array_slice($availablePills, 0, 8) as $pill): ?>
     <button type="button" class="agoda-filter-pill" data-filter="<?= h(strtolower($pill)) ?>" onclick="this.classList.toggle('active'); filterRoomsByPills()" style="border:1px solid #dadce0;background:#fff;border-radius:20px;padding:6px 12px;font-size:12px;color:#202124;display:flex;align-items:center;gap:6px;cursor:pointer">
-      <i class="fa-solid <?= $getRoomAmenityIcon($pill) ?>" style="font-size:11px;color:#1a73e8;"></i> <?= h($pill) ?>
+      <i class="fa-solid <?= $getRoomAmenityIcon($pill) ?>" style="font-size:11px;color:#0f62fe;"></i> <?= h($pill) ?>
     </button>
     <?php endforeach; ?>
   </div>
 </div>
 <style>
-.agoda-filter-pill.active{background:#e8f0fe !important;border-color:#3264ff !important;color:#3264ff !important;font-weight:600;}
+.agoda-filter-pill.active{background:#e8f0fe !important;border-color:#0f62fe !important;color:#0f62fe !important;font-weight:600;}
 </style>
 <?php endif; ?>
 
@@ -99,26 +102,42 @@ foreach ($roomList as $rItem) {
     <p style="font-size:13px;margin:0;">There are currently no rooms available for this property. Please try selecting different travel dates.</p>
   </div>
 <?php else:
-  // Sort to compute real cheapest and highest tier rooms
-  $sortedRooms = $roomList;
-  usort($sortedRooms, function($a, $b) {
-      $pa = (float)($a['customer_price'] ?? ($a['price'] ?? 0));
-      $pb = (float)($b['customer_price'] ?? ($b['price'] ?? 0));
-      return $pa <=> $pb;
-  });
-  $cheapestRoom = $sortedRooms[0] ?? null;
-  $comfortRoom = count($sortedRooms) > 1 ? $sortedRooms[count($sortedRooms) - 1] : null;
+  // Category picks: cheapest CATEGORY by from-price, roomiest CATEGORY by max capacity.
+  // Groups come pre-sorted cheapest-first per category from the controller.
+  $groupPicks = $roomGroups ?? [];
+  $cheapestGroup = $groupPicks[0] ?? null;
+  $roomiestGroup = null;
+  foreach ($groupPicks as $gp) {
+      if ($roomiestGroup === null || (int)($gp['maxCapacity'] ?? 0) > (int)($roomiestGroup['maxCapacity'] ?? 0)) {
+          $roomiestGroup = $gp;
+      }
+  }
+  if ($roomiestGroup !== null && $cheapestGroup !== null && $roomiestGroup['label'] === $cheapestGroup['label'] && ($roomiestGroup['fromPrice'] ?? 0) === ($cheapestGroup['fromPrice'] ?? 0)) {
+      $roomiestGroup = null; // same category wins both — don't duplicate the card
+  }
+  $groupCover = function(array $gp) use ($normImgUrl): string {
+      foreach (($gp['rooms'] ?? []) as $gm) {
+          if (!is_array($gm)) continue;
+          $ph = $gm['photos'] ?? ($gm['images'] ?? []);
+          if (is_string($ph)) $ph = json_decode($ph, true) ?: [];
+          if (is_array($ph)) foreach ($ph as $one) {
+              $u = $normImgUrl(is_array($one) ? ($one['url'] ?? $one['image_url'] ?? '') : (string)$one);
+              if ($u !== '') return $u;
+          }
+          if (!empty($gm['primary_image_url'])) {
+              $u = $normImgUrl((string)$gm['primary_image_url']);
+              if ($u !== '') return $u;
+          }
+      }
+      return '';
+  };
 ?>
 
-  <?php if ($cheapestRoom): 
-    $cPrice = (float)($cheapestRoom['customer_price'] ?? ($cheapestRoom['price'] ?? 0));
-    $rawCName = $cheapestRoom['name'] ?? ($cheapestRoom['room_number'] ?? 'Standard Room');
-    $cName = \App\Utility\TextFormatter::formatTitle((string)$rawCName);
-    $cSize = !empty($cheapestRoom['room_size']) ? (is_numeric($cheapestRoom['room_size']) ? $cheapestRoom['room_size'].' m²' : $cheapestRoom['room_size']) : '';
-    $cPhotos = $cheapestRoom['photos'] ?? ($cheapestRoom['images'] ?? []);
-    if (is_string($cPhotos)) $cPhotos = json_decode($cPhotos, true) ?: [];
-    $cImg = !empty($cPhotos[0]) ? (is_array($cPhotos[0]) ? ($cPhotos[0]['url'] ?? '') : $cPhotos[0]) : ($cheapestRoom['primary_image_url'] ?? '');
-    $cImg = $normImgUrl((string)$cImg) ?: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=200&h=150&fit=crop';
+  <?php if ($cheapestGroup):
+    $cPrice = (float)($cheapestGroup['fromPrice'] ?? 0);
+    $cName = ($cheapestGroup['label'] ?? 'Standard') . ' Room';
+    $cAvail = (int)($cheapestGroup['availableCount'] ?? 0);
+    $cImg = $groupCover($cheapestGroup);
   ?>
   <!-- Recommended Summary Cards — Phase 2: mobile chip palette parity -->
    <div style="font-size:14px;font-weight:800;color:#202124;margin:8px 0">Recommended for you</div>
@@ -127,56 +146,72 @@ foreach ($roomList as $rItem) {
       <div style="flex:1">
         <span style="background:rgba(232,212,201,0.9);color:#9A4B2F;font-size:10px;font-weight:700;border-radius:6px;padding:3px 7px">Lowest Price</span>
         <div style="font-size:13.5px;font-weight:700;color:#202124;margin-top:6px"><?= h($cName) ?></div>
-        <div style="font-size:11.5px;color:#5f6368">From <span style="color:#C2410C;font-weight:800">TSh <?= number_format($cPrice) ?></span>/night <?= $cSize ? ' · ' . h($cSize) : '' ?></div>
+        <div style="font-size:11.5px;color:#5f6368">From <span style="color:#C2410C;font-weight:800">TSh <?= number_format($cPrice) ?></span>/night · <?= $cAvail ?> of <?= (int)($cheapestGroup['count'] ?? 1) ?> available</div>
         <div style="font-size:11px;color:#137333;font-weight:600;margin-top:2px"><i class="fa-solid fa-check" style="font-size:10px"></i> Best value available</div>
       </div>
-      <img src="<?= h($cImg) ?>" alt="<?= h($cName) ?>" style="width:84px;height:64px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#e5e7eb" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=200&h=150&fit=crop'">
+      <?php if ($cImg !== ''): ?><img src="<?= h($cImg) ?>" alt="<?= h($cName) ?>" style="width:84px;height:64px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#e5e7eb"><?php endif; ?>
     </div>
 
-    <?php if ($comfortRoom && $comfortRoom['id'] !== $cheapestRoom['id']): 
-      $mPrice = (float)($comfortRoom['customer_price'] ?? ($comfortRoom['price'] ?? 0));
-      $rawMName = $comfortRoom['name'] ?? ($comfortRoom['room_number'] ?? 'Comfort Suite');
-      $mName = \App\Utility\TextFormatter::formatTitle((string)$rawMName);
-      $mSize = !empty($comfortRoom['room_size']) ? (is_numeric($comfortRoom['room_size']) ? $comfortRoom['room_size'].' m²' : $comfortRoom['room_size']) : '';
-      $mPhotos = $comfortRoom['photos'] ?? ($comfortRoom['images'] ?? []);
-      if (is_string($mPhotos)) $mPhotos = json_decode($mPhotos, true) ?: [];
-      $mImg = !empty($mPhotos[0]) ? (is_array($mPhotos[0]) ? ($mPhotos[0]['url'] ?? '') : $mPhotos[0]) : ($comfortRoom['primary_image_url'] ?? '');
-      $mImg = $normImgUrl((string)$mImg) ?: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=200&h=150&fit=crop';
+    <?php if ($roomiestGroup):
+      $mPrice = (float)($roomiestGroup['fromPrice'] ?? 0);
+      $mName = ($roomiestGroup['label'] ?? 'Standard') . ' Room';
+      $mImg = $groupCover($roomiestGroup);
+      $mCap = (int)($roomiestGroup['maxCapacity'] ?? 0);
       $diff = $mPrice - $cPrice;
     ?>
     <div class="recommended-card" style="background:#fff;border:1px solid #e8eaed;border-radius:12px;padding:12px;display:flex;gap:12px;align-items:center">
       <div style="flex:1">
         <span style="background:rgba(231,219,248,0.9);color:#7B3FE4;font-size:10px;font-weight:700;border-radius:6px;padding:3px 7px">Most Spacious</span>
         <div style="font-size:13.5px;font-weight:700;color:#202124;margin-top:6px"><?= h($mName) ?></div>
-        <div style="font-size:11.5px;color:#5f6368">From <span style="color:#C2410C;font-weight:800">TSh <?= number_format($mPrice) ?></span>/night <?= $mSize ? ' · ' . h($mSize) : '' ?></div>
+        <div style="font-size:11.5px;color:#5f6368">From <span style="color:#C2410C;font-weight:800">TSh <?= number_format($mPrice) ?></span>/night<?= $mCap > 0 ? ' · Sleeps ' . $mCap : '' ?></div>
         <div style="font-size:11px;color:#7B3FE4;font-weight:600;margin-top:2px"><i class="fa-solid fa-sparkles" style="font-size:10px"></i> <?= $diff > 0 ? '+TSh ' . number_format($diff) . ' for extra comfort' : 'Spacious retreat' ?></div>
       </div>
-      <img src="<?= h($mImg) ?>" alt="<?= h($mName) ?>" style="width:84px;height:64px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#e5e7eb" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=200&h=150&fit=crop'">
+      <?php if ($mImg !== ''): ?><img src="<?= h($mImg) ?>" alt="<?= h($mName) ?>" style="width:84px;height:64px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#e5e7eb"><?php endif; ?>
     </div>
     <?php endif; ?>
   </div>
   <?php endif; ?>
 
-  <!-- Detailed Room Cards -->
-  <?php foreach ($roomList as $rIdx => $item):
-      $roomId = (int)($item['id'] ?? ($rIdx + 1));
-      $rNum = trim((string)($item['room_number'] ?? ''));
-      $rType = trim((string)($item['room_type_id'] ?? ($item['type'] ?? '')));
-      $rName = trim((string)($item['name'] ?? ''));
-      
-      // Determine authentic title
-      if ($rName !== '') {
-          $title = \App\Utility\TextFormatter::formatTitle($rName);
-      } elseif ($rType !== '' && $rNum !== '') {
-          $title = \App\Utility\TextFormatter::formatTitle($rType) . ' (' . \App\Utility\TextFormatter::formatTitle($rNum) . ')';
-      } elseif ($rNum !== '') {
-          $title = \App\Utility\TextFormatter::formatTitle($rNum);
-      } elseif ($rType !== '') {
-          $title = \App\Utility\TextFormatter::formatTitle($rType) . ' Room';
-      } else {
-          $title = 'Standard Room ' . ($rIdx + 1);
+  <!-- Detailed Room Cards — one card per CATEGORY (room_type_id); physical room numbers live inside -->
+  <?php
+  // Fallback: element rendered without controller groups → wrap each room as its own single-room group
+  if (empty($roomGroups) && !empty($roomList)) {
+      $roomGroups = [];
+      foreach ($roomList as $solo) {
+          $t = trim((string)($solo['room_type_id'] ?? ($solo['type'] ?? 'Standard')));
+          $roomGroups[] = ['type' => $t, 'label' => \App\Utility\TextFormatter::formatTitle($t),
+              'rooms' => [$solo], 'representative' => $solo,
+              'fromPrice' => (float)($solo['customer_price'] ?? ($solo['price'] ?? 0)),
+              'numbers' => array_values(array_filter([trim((string)($solo['room_number'] ?? ''))])),
+              'count' => 1];
       }
+  }
+  ?>
+  <?php foreach ($roomGroups as $gIdx => $group):
+      // Category model: card sells the ROOM TYPE; bookRoom (cheapest available unit) is assigned silently.
+      // Physical numbers never display customer-facing — room_id below is internal.
+      $item = $group['bookRoom'] ?? ($group['representative'] ?? []);
+      $rIdx = $gIdx;
+      $roomId = (int)($item['id'] ?? ($gIdx + 1));
+      $groupLabel = $group['label'] ?? 'Standard';
+      $groupCount = (int)($group['count'] ?? count($group['rooms'] ?? []));
+      $groupAvail = (int)($group['availableCount'] ?? $groupCount);
+      $groupInventory = 0;
+      foreach (($group['rooms'] ?? []) as $gr) { $groupInventory += max(1, (int)($gr['total_inventory'] ?? 1)); }
+      // Category occupancy limits (max across units) — describes the type, not one bed
+      $catAdults = max(1, (int)($group['maxAdults'] ?? ($item['max_adults'] ?? ($item['capacity'] ?? 2))));
+      $catChildren = (int)($group['maxChildren'] ?? ($item['max_children'] ?? 0));
+      $catCapacity = max(1, (int)($group['maxCapacity'] ?? ($catAdults + $catChildren)));
 
+      // Title: "Standard Room". Sub: real availability for the selected dates.
+      $title = $groupLabel . ' Room';
+      if ($groupAvail <= 0) {
+          $availText = 'Unavailable for selected dates';
+      } elseif ($groupAvail === 1 && $groupCount === 1) {
+          $availText = '1 room available for selected dates';
+      } else {
+          $availText = $groupAvail . ' of ' . $groupCount . ' room' . ($groupCount !== 1 ? 's' : '') . ' available for selected dates';
+      }
       $rawSize = $item['room_size'] ?? ($item['size'] ?? ($item['area'] ?? ''));
       $size = !empty($rawSize) ? (is_numeric($rawSize) ? $rawSize . ' m²' : (string)$rawSize) : '';
       
@@ -184,25 +219,28 @@ foreach ($roomList as $rItem) {
       if ($bed !== '' && !preg_match('/\b(bed|beds)\b/i', $bed)) {
           $bed .= ' Bed';
       }
-      $maxAdults = max(1, (int)($item['max_adults'] ?? ($item['capacity'] ?? 2)));
-      $maxChildren = (int)($item['max_children'] ?? 0);
-      $capacity = (int)($item['capacity'] ?? ($maxAdults + $maxChildren));
+      $maxAdults = $catAdults;
+      $maxChildren = $catChildren;
+      $capacity = $catCapacity;
       $floor = !empty($item['floor']) ? \App\Utility\TextFormatter::formatTitle((string)$item['floor']) : '';
 
-      // Collect authentic room photos
-      $photosRaw = $item['photos'] ?? ($item['images'] ?? []);
-      if (is_string($photosRaw)) $photosRaw = json_decode($photosRaw, true) ?: [];
+      // Collect category photos: merge unique photos across all rooms in the group
       $roomPhotos = [];
-      if (is_array($photosRaw)) {
-          foreach ($photosRaw as $p) {
-              $u = is_array($p) ? ($p['url'] ?? $p['image_url'] ?? '') : (string)$p;
-              $u = $normImgUrl($u);
+      foreach (($group['rooms'] ?? [$item]) as $gRoom) {
+          if (!is_array($gRoom)) continue;
+          $photosRaw = $gRoom['photos'] ?? ($gRoom['images'] ?? []);
+          if (is_string($photosRaw)) $photosRaw = json_decode($photosRaw, true) ?: [];
+          if (is_array($photosRaw)) {
+              foreach ($photosRaw as $p) {
+                  $u = is_array($p) ? ($p['url'] ?? $p['image_url'] ?? '') : (string)$p;
+                  $u = $normImgUrl($u);
+                  if ($u !== '' && !in_array($u, $roomPhotos, true)) $roomPhotos[] = $u;
+              }
+          }
+          if (!empty($gRoom['primary_image_url'])) {
+              $u = $normImgUrl((string)$gRoom['primary_image_url']);
               if ($u !== '' && !in_array($u, $roomPhotos, true)) $roomPhotos[] = $u;
           }
-      }
-      if (empty($roomPhotos) && !empty($item['primary_image_url'])) {
-          $u = $normImgUrl((string)$item['primary_image_url']);
-          if ($u !== '') $roomPhotos[] = $u;
       }
       if (empty($roomPhotos) && !empty($property['image_url'])) {
           $u = $normImgUrl((string)$property['image_url']);
@@ -213,8 +251,10 @@ foreach ($roomList as $rItem) {
       }
       $mainImg = $roomPhotos[0];
 
+      // Category facilities: union across all units in the type
+      $amenitiesRaw = $group['amenities'] ?? [];
+      if (empty($amenitiesRaw)) $amenitiesRaw = $item['amenities'] ?? [];
       // Parse room amenities
-      $amenitiesRaw = $item['amenities'] ?? [];
       if (is_string($amenitiesRaw)) {
           $dec = json_decode($amenitiesRaw, true);
           $roomAmenities = is_array($dec) ? $dec : array_filter(array_map('trim', explode(',', $amenitiesRaw)));
@@ -227,85 +267,63 @@ foreach ($roomList as $rItem) {
           $roomAmenities = ['Air conditioning', 'Wi-Fi', 'Private bathroom', 'Shower'];
       }
 
-      // Base price calculation
-      $priceBase = (float)($item['customer_price'] ?? ($item['price'] ?? 45000));
-      $priceBase = $priceBase > 0 ? $priceBase : 45000;
+      // Base price: bookable unit customer rate (fee-inclusive). No invented packages,
+      // no strike prices — one honest rate built only from real signals.
+      $priceBase = (float)($item['customer_price'] ?? ($item['price'] ?? 0));
+      $amenText = strtolower(implode(' ', $roomAmenities) . ' ' . implode(' ', (array)($property['amenities'] ?? [])));
+      $hasBreakfast = str_contains($amenText, 'breakfast');
+      $hasWifi = str_contains($amenText, 'wi-fi') || str_contains($amenText, 'wifi');
+      $cancelPolicy = trim((string)($calculation['cancellation_policy'] ?? ($quote['calculation']['cancellation_policy'] ?? '')));
+      $hasFreeCancel = $cancelPolicy !== ''
+          || !empty($property['free_cancellation'])
+          || str_contains(strtolower((string)($property['cancellation_policy'] ?? '')), 'free');
 
-      // Construct dynamic rate offers based on real room data
-      $hasBreakfast = str_contains(strtolower(implode(' ', $roomAmenities)), 'breakfast') || !empty($property['breakfast_included']);
-      $hasFreeCancel = !empty($property['free_cancellation']) || str_contains(strtolower((string)($property['cancellation_policy'] ?? '')), 'free');
-
+      $unitRaw = trim((string)($item['room_number'] ?? ''));
+      $unitDisplay = $unitRaw !== ''
+          ? (preg_match('/^room\b/i', $unitRaw) ? \App\Utility\TextFormatter::formatTitle($unitRaw) : 'Room ' . \App\Utility\TextFormatter::formatTitle($unitRaw))
+          : '';
       $offers = [
           [
               'title' => 'Standard Rate',
+              'unit' => $unitDisplay,
               'adults' => min($maxAdults, $adultsCount),
-              'breakfast' => $hasBreakfast ? 'Breakfast included' : 'Breakfast available at property',
-              'cancel' => $hasFreeCancel ? 'Free cancellation' : 'Non-refundable (Best rate)',
-              'pay' => 'Pay online or at check-in',
-              'wifi' => 'High-speed Wi-Fi',
+              'breakfast' => $hasBreakfast ? 'Breakfast included' : '',
+              'cancel' => $hasFreeCancel ? ($cancelPolicy !== '' ? $cancelPolicy : 'Free cancellation') : 'Non-refundable rate',
+              'pay' => 'Pay online with mobile money',
+              'wifi' => $hasWifi ? 'Wi-Fi' : '',
               'price' => $priceBase,
-              'strike' => round($priceBase * 1.20),
-              'off' => '-17%',
+              'strike' => null,
+              'off' => null,
               'freeCancel' => $hasFreeCancel,
           ],
       ];
 
-      // Offer with breakfast add-on if not already bundled
-      if (!$hasBreakfast) {
-          $offers[] = [
-              'title' => 'Bed & Breakfast Package',
-              'adults' => min($maxAdults, $adultsCount),
-              'breakfast' => 'Full Breakfast included',
-              'cancel' => 'Free cancellation available',
-              'pay' => 'Pay online or at check-in',
-              'wifi' => 'High-speed Wi-Fi',
-              'price' => round($priceBase * 1.15),
-              'strike' => round($priceBase * 1.35),
-              'off' => '-15%',
-              'freeCancel' => true,
-          ];
-      }
-
-      // Group / Family offer if room capacity is larger
-      if ($maxAdults > 2) {
-          $offers[] = [
-              'title' => 'Family / Full Capacity Rate',
-              'adults' => $maxAdults,
-              'breakfast' => 'Breakfast included for all guests',
-              'cancel' => 'Free cancellation available',
-              'pay' => 'Pay online or at check-in',
-              'wifi' => 'High-speed Wi-Fi',
-              'price' => round($priceBase * 1.25),
-              'strike' => null,
-              'off' => null,
-              'freeCancel' => true,
-          ];
-      }
-
-      // Build search token for filter pills
-      $filterTokens = strtolower($title . ' ' . $bed . ' ' . $size . ' ' . implode(' ', $roomAmenities));
+      // Build search token for filter pills (category + bed + amenities; numbers stay internal)
+      $filterTokens = strtolower($title . ' ' . $groupLabel . ' ' . $bed . ' ' . $size . ' ' . implode(' ', $roomAmenities));
   ?>
   <div class="agoda-room-card" id="room_card_<?= $roomId ?>" data-room-filters="<?= h($filterTokens) ?>" data-room-id="<?= $roomId ?>" style="background:#fff;border:1px solid #e8eaed;border-radius:16px;overflow:hidden;display:grid;grid-template-columns:260px 1fr;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);transition:border-color 180ms ease, box-shadow 180ms ease">
     
     <!-- Left Column: Photo & Room Details -->
     <div style="padding:14px;border-right:1px solid #e8eaed;display:flex;flex-direction:column;justify-content:space-between;background:#fafafa">
       <div>
-        <div class="room-hero-wrap" style="position:relative;border-radius:16px;overflow:hidden;height:165px;background:#e5e7eb">
+        <div class="room-hero-wrap" style="position:relative;border-radius:16px;overflow:hidden;height:165px;background:#e5e7eb" data-room-photos="<?= htmlspecialchars(json_encode($roomPhotos), ENT_QUOTES, 'UTF-8') ?>" data-room-id="<?= $roomId ?>">
           <img id="room_img_<?= $roomId ?>" src="<?= h($mainImg) ?>" alt="<?= h($title) ?>" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;background:#e5e7eb" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop'">
           <div style="position:absolute;top:10px;left:10px;display:flex;flex-wrap:wrap;gap:6px">
-            <span style="background:rgba(232,212,201,0.95);color:#9A4B2F;font-size:11px;font-weight:700;border-radius:6px;padding:5px 8px;">Our last 2!</span>
+            <?php if ($groupAvail <= 0): ?><span style="background:#f4f4f4;color:#525252;font-size:11px;font-weight:700;border-radius:6px;padding:5px 8px;">Unavailable for these dates</span><?php elseif ($groupAvail <= 2): ?><span style="background:rgba(232,212,201,0.95);color:#9A4B2F;font-size:11px;font-weight:700;border-radius:6px;padding:5px 8px;">Only <?= $groupAvail ?> left!</span><?php endif; ?>
             <?php if ($hasFreeCancel): ?><span style="background:rgba(231,219,248,0.95);color:#7B3FE4;font-size:11px;font-weight:700;border-radius:6px;padding:5px 8px;">Free cancellation</span><?php endif; ?>
           </div>
           <span style="position:absolute;top:10px;right:10px;background:#15803d;color:#fff;font-size:10px;font-weight:700;border-radius:6px;padding:4px 8px;<?= count($roomPhotos) > 1 ? '' : 'display:none' ?>">Available</span>
           <?php if (count($roomPhotos) > 1): ?>
-          <span id="room_counter_<?= $roomId ?>" style="position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,0.72);color:#fff;font-size:11px;border-radius:14px;padding:4px 10px;font-weight:700;">1/<?= count($roomPhotos) ?></span>
-          <button type="button" onclick="cycleRoomPhoto(<?= $roomId ?>, <?= htmlspecialchars(json_encode($roomPhotos), ENT_QUOTES, 'UTF-8') ?>)" aria-label="Next photo" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.94);border:none;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.2)"><i class="fa-solid fa-chevron-right" style="font-size:13px;color:#1a1d25"></i></button>
+          <span id="room_counter_<?= $roomId ?>" style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,0.72);color:#fff;font-size:11px;border-radius:14px;padding:4px 10px;font-weight:700;letter-spacing:.04em;">1/<?= count($roomPhotos) ?></span>
+          <button type="button" onclick="cycleRoomPhoto(<?= $roomId ?>, <?= htmlspecialchars(json_encode($roomPhotos), ENT_QUOTES, 'UTF-8') ?>, -1)" aria-label="Previous photo" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.94);border:none;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.2)"><i class="fa-solid fa-chevron-left" style="font-size:13px;color:#1a1d25"></i></button>
+          <button type="button" onclick="cycleRoomPhoto(<?= $roomId ?>, <?= htmlspecialchars(json_encode($roomPhotos), ENT_QUOTES, 'UTF-8') ?>, 1)" aria-label="Next photo" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.94);border:none;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.2)"><i class="fa-solid fa-chevron-right" style="font-size:13px;color:#1a1d25"></i></button>
           <?php else: ?>
           <span id="room_counter_<?= $roomId ?>" style="display:none">1/1</span>
           <?php endif; ?>
         </div>
 
         <div class="room-card-title" style="font-size:18px;font-weight:800;color:#1a1d25;margin-top:12px;line-height:1.3;display:flex;gap:12px;align-items:flex-start;justify-content:space-between"><?= h($title) ?><?php if ($size): ?><span style="font-size:13px;font-weight:500;color:#5f6368;white-space:nowrap;flex-shrink:0"><?= h($size) ?></span><?php endif; ?></div>
+        <div style="font-size:12.5px;font-weight:600;color:<?= $groupAvail <= 0 ? '#6f6f6f' : '#137333' ?>;margin-top:2px"><?= h($availText) ?></div>
         
         <!-- Stat Pills — mobile parity (F8FAFC r14) — desktop also shows pills -->
         <div class="room-stat-pills" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
@@ -316,7 +334,7 @@ foreach ($roomList as $rItem) {
         <!-- Fallback inline meta for desktop legacy (hidden on mobile via CSS) -->
         <div class="room-meta-inline" style="font-size:12px;color:#5f6368;margin-top:6px;line-height:1.4;display:none">
           <?php if ($size): ?><span><i class="fa-solid fa-maximize" style="font-size:10px"></i> <?= h($size) ?></span> · <?php endif; ?>
-          <span><i class="fa-solid fa-user-group" style="font-size:10px"></i> Max <?= h($maxAdults) ?> adults<?php if ($maxChildren > 0): ?> · <?= h($maxChildren) ?> children<?php endif; ?></span> · <i class="fa-solid fa-bed" style="font-size:10px;color:#1a73e8"></i> <?= h($bed) ?>
+          <span><i class="fa-solid fa-user-group" style="font-size:10px"></i> Max <?= h($maxAdults) ?> adults<?php if ($maxChildren > 0): ?> · <?= h($maxChildren) ?> children<?php endif; ?></span> · <i class="fa-solid fa-bed" style="font-size:10px;color:#0f62fe"></i> <?= h($bed) ?>
           <?php if ($floor): ?> · <span><?= h($floor) ?></span><?php endif; ?>
         </div>
 
@@ -333,61 +351,68 @@ foreach ($roomList as $rItem) {
         <div class="room-amenity-chips" style="display:flex;flex-wrap:wrap;gap:8px">
           <?php foreach (array_slice($roomAmenities, 0, 8) as $amItem): ?>
           <span style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #e8eaed;border-radius:14px;padding:7px 10px;font-size:12px;font-weight:500;color:#202124;white-space:nowrap">
-            <i class="fa-solid <?= $getRoomAmenityIcon($amItem) ?>" style="font-size:11px;color:#1a73e8;width:12px;text-align:center"></i>
+            <i class="fa-solid <?= $getRoomAmenityIcon($amItem) ?>" style="font-size:11px;color:#0f62fe;width:12px;text-align:center"></i>
             <span><?= h($amItem) ?></span>
           </span>
           <?php endforeach; ?>
         </div>
-        <!-- Mobile-only price block (mirrors Flutter F8FAFC r18) -->
+        <!-- Mobile-only info block (price lives once, in the offers below + sticky bar — no duplicate) -->
         <div class="room-mobile-price-block" style="display:none;margin-top:14px;background:#F8FAFC;border:1px solid #e8eaed;border-radius:18px;padding:14px">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
             <div>
-              <div style="font-size:13px;font-weight:700;color:#1a1d25">2 adults</div>
-              <div style="font-size:12px;color:#5f6368;margin-top:4px">You won't be charged yet</div>
+              <div style="font-size:13px;font-weight:700;color:#1a1d25"><?= h($adultsCount) ?> adult<?= $adultsCount>1?'s':'' ?> · <?= h($nights) ?> night<?= $nights>1?'s':'' ?></div>
+              <div style="font-size:12px;color:#5f6368;margin-top:4px">You won't be charged yet — see rate below</div>
             </div>
-            <div style="font-size:22px;font-weight:800;color:#C2410C">TSh <?= number_format($priceBase) ?></div>
           </div>
           <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:#202124">
-            <span style="display:flex;align-items:center;gap:8px"><i class="fa-solid fa-circle-info" style="font-size:13px;color:#5f6368"></i> Cancellation policy</span>
-            <span style="display:flex;align-items:center;gap:8px"><i class="fa-solid fa-circle-check" style="font-size:13px;color:#15803d"></i> No credit card needed</span>
-            <span style="display:flex;align-items:center;gap:8px"><i class="fa-solid fa-square-parking" style="font-size:13px;color:#5f6368"></i> Parking</span>
-            <span style="display:flex;align-items:center;gap:8px"><i class="fa-solid fa-wifi" style="font-size:13px;color:#1a73e8"></i> Free WiFi</span>
-            <span style="display:flex;align-items:center;gap:8px;color:#B45309"><i class="fa-solid fa-bolt" style="font-size:13px"></i> Only 2 left</span>
+            <span style="display:flex;align-items:center;gap:8px"><i class="fa-solid fa-circle-info" style="font-size:13px;color:#5f6368"></i> <?= h($o['cancel']) ?></span>
+            <?php if (!empty($o['wifi'])): ?>
+            <span style="display:flex;align-items:center;gap:8px"><i class="fa-solid fa-wifi" style="font-size:13px;color:#0f62fe"></i> <?= h($o['wifi']) ?></span>
+            <?php endif; ?>
+            <?php if ($groupInventory > 0 && $groupInventory <= 5): ?><span style="display:flex;align-items:center;gap:8px;color:#B45309"><i class="fa-solid fa-bolt" style="font-size:13px"></i> Only <?= $groupInventory ?> left</span><?php endif; ?>
           </div>
-          <a href="#" onclick="event.preventDefault();var c=this.closest('.agoda-room-card');if(c){document.querySelectorAll('.agoda-room-card').forEach(function(x){x.classList.remove('selected')});c.classList.add('selected')};" style="margin-top:8px;display:inline-flex;font-size:14px;font-weight:700;color:#2563EB;text-decoration:none">See details</a>
         </div>
       </div>
     </div>
 
-    <!-- Right Column: Stacked Offers & Booking Rates -->
+    <!-- Right Column: Stacked Offers & Booking Rates (sole price source on all screens) -->
     <div style="display:flex;flex-direction:column;background:#fff">
       <?php foreach ($offers as $oi => $o): 
           $isFirstOffer = ($oi === 0);
-          $bookUrl = $this->Url->build('/booking-page?' . http_build_query(array_merge($qp, [
-              'property_id' => (int)($propertyId ?? 0),
+          $bookParams = array_filter(array_merge($qp, [
+              'property_id' => $propertyId,
               'room_id' => $roomId,
               'price' => $o['price'],
               'checkIn' => $ci,
               'checkOut' => $co,
               'adults' => $adultsCount,
               'rooms' => $roomsCount
-          ])));
+          ]), fn($v) => $v !== null && $v !== '');
+          // Remove duplicate snake_case keys if camelCase checkIn/checkOut are set
+          unset($bookParams['check_in'], $bookParams['check_out'], $bookParams['checkin'], $bookParams['checkout']);
+          $bookUrl = $this->Url->build('/booking-page?' . http_build_query($bookParams));
       ?>
-      <div style="display:grid;grid-template-columns:1fr 200px;gap:0;border-bottom:1px solid #e8eaed;flex:1;<?= $isFirstOffer ? 'border-top:3px solid #1a73e8;' : '' ?>">
+      <div style="display:grid;grid-template-columns:1fr 200px;gap:0;border-bottom:1px solid #e8eaed;flex:1;<?= $isFirstOffer ? 'border-top:3px solid #0f62fe;' : '' ?>">
         
         <!-- Offer Inclusions -->
         <div style="padding:14px;border-right:1px solid #e8eaed;display:flex;flex-direction:column;justify-content:center">
-          <div style="font-size:12px;font-weight:700;color:#202124;margin-bottom:4px"><?= h($o['title']) ?></div>
+          <div style="font-size:12px;font-weight:700;color:#202124;margin-bottom:2px"><?= h(!empty($o['unit']) ? $o['unit'] : $o['title']) ?></div>
+          <div style="font-size:11px;font-weight:600;color:#5f6368;margin-bottom:4px"><?= h($o['title']) ?></div>
           <div style="font-size:11.5px;color:#3c4043;display:flex;flex-direction:column;gap:3px">
             <div><i class="fa-solid fa-user-check" style="font-size:10px;color:#5f6368;width:14px"></i> <?= h($o['adults']) ?> adults included</div>
-            <div style="<?= str_contains($o['breakfast'], 'included') ? 'color:#15803d;font-weight:600' : '' ?>">
+            <?php if (!empty($o['breakfast'])): ?>
+            <div style="color:#15803d;font-weight:600">
               <i class="fa-solid fa-mug-saucer" style="font-size:10px;width:14px"></i> <?= h($o['breakfast']) ?>
             </div>
+            <?php endif; ?>
+
             <div style="color:<?= $o['freeCancel'] ? '#15803d;font-weight:600' : '#5f6368' ?>">
               <i class="fa-solid <?= $o['freeCancel'] ? 'fa-circle-check' : 'fa-circle-info' ?>" style="font-size:10px;width:14px"></i> <?= h($o['cancel']) ?>
             </div>
             <div><i class="fa-solid fa-credit-card" style="font-size:10px;color:#5f6368;width:14px"></i> <?= h($o['pay']) ?></div>
-            <div><i class="fa-solid fa-wifi" style="font-size:10px;color:#1a73e8;width:14px"></i> <?= h($o['wifi']) ?></div>
+            <?php if (!empty($o['wifi'])): ?>
+            <div><i class="fa-solid fa-wifi" style="font-size:10px;color:#0f62fe;width:14px"></i> <?= h($o['wifi']) ?></div>
+            <?php endif; ?>
           </div>
         </div>
 
@@ -401,19 +426,17 @@ foreach ($roomList as $rItem) {
           <?php endif; ?>
           
           <div class="room-price-main" style="font-size:20px;font-weight:800;color:#C2410C">TSh <?= number_format($o['price']) ?></div>
-          <div style="font-size:10.5px;color:#5f6368">Per night before taxes</div>
+          <div style="font-size:10.5px;color:#5f6368">Per night, incl. fees</div>
           <div style="font-size:11px;color:#202124;margin-top:2px;font-weight:500;">1 room · <?= $nights ?> night<?= $nights > 1 ? 's' : '' ?></div>
           
           <div style="display:flex;gap:6px;margin-top:10px;align-items:center;width:100%;justify-content:flex-end">
-            <a href="<?= h($bookUrl) ?>" onclick="selectRoomCard(<?= $roomId ?>)" style="background:#2563EB;color:#fff;border:none;border-radius:24px;padding:9px 24px;font-size:13.5px;font-weight:700;text-decoration:none;display:inline-block;box-shadow:0 1px 3px rgba(37,99,235,0.3);transition:background 0.15s ease;">
+            <a href="<?= h($bookUrl) ?>" onclick="selectRoomCard(<?= $roomId ?>)" style="background:#0f62fe;color:#fff;border:none;border-radius:24px;padding:9px 24px;font-size:13.5px;font-weight:700;text-decoration:none;display:inline-block;box-shadow:0 1px 3px rgba(37,99,235,0.3);transition:background 0.15s ease;">
               Reserve
             </a>
           </div>
           
           <?php if ($o['freeCancel']): ?>
           <div style="font-size:11px;color:#15803d;font-weight:600;margin-top:6px"><i class="fa-solid fa-shield-check"></i> Free cancellation</div>
-          <?php else: ?>
-          <div style="font-size:10.5px;color:#5f6368;margin-top:6px">Instant confirmation</div>
           <?php endif; ?>
         </div>
 
@@ -432,10 +455,12 @@ function selectRoomCard(roomId){
     var card=document.getElementById('room_card_'+roomId);
     if(card) card.classList.add('selected');
 }
-function cycleRoomPhoto(roomId, photos) {
+function cycleRoomPhoto(roomId, photos, dir) {
     if (!photos || !photos.length) return;
+    dir = (dir === -1) ? -1 : 1;
     var cur = window._roomPhotoIdx[roomId] || 0;
-    var next = (cur + 1) % photos.length;
+    var total = photos.length;
+    var next = (cur + dir + total) % total;
     window._roomPhotoIdx[roomId] = next;
     var imgEl = document.getElementById('room_img_' + roomId);
     if (imgEl) {
@@ -445,6 +470,26 @@ function cycleRoomPhoto(roomId, photos) {
     if(counter) counter.textContent=(next+1)+'/'+photos.length;
     selectRoomCard(roomId);
 }
+// Swipe on room photos (mobile): left = next, right = previous
+(function(){
+    function photosOf(wrap){
+        try { return JSON.parse(wrap.getAttribute('data-photos') || '[]'); } catch(e){ return []; }
+    }
+    document.addEventListener('touchstart', function(e){
+        var wrap = e.target.closest ? e.target.closest('.room-hero-wrap') : null;
+        if(!wrap || !wrap.hasAttribute('data-room-id')) return;
+        wrap._swipeX = e.touches[0].clientX;
+    }, {passive:true});
+    document.addEventListener('touchend', function(e){
+        var wrap = e.target.closest ? e.target.closest('.room-hero-wrap') : null;
+        if(!wrap || wrap._swipeX === undefined) return;
+        var dx = e.changedTouches[0].clientX - wrap._swipeX;
+        wrap._swipeX = undefined;
+        if(Math.abs(dx) < 36) return;
+        var id = parseInt(wrap.getAttribute('data-room-id'), 10);
+        cycleRoomPhoto(id, photosOf(wrap), dx < 0 ? 1 : -1);
+    }, {passive:true});
+})();
 
 function filterRoomsByPills() {
     var active = [];
@@ -471,7 +516,7 @@ function filterRoomsByPills() {
 
 <style>
 /* Phase 1 — mobile card parity tokens + Phase 2 desktop refinement */
-.agoda-room-card.selected{border-color:#2563EB !important;border-width:1.6px !important;box-shadow:0 6px 16px rgba(0,0,0,0.08) !important}
+.agoda-room-card.selected{border-color:#0f62fe !important;border-width:1.6px !important;box-shadow:0 6px 16px rgba(0,0,0,0.08) !important}
 .agoda-room-card{transition:border-color 180ms ease,box-shadow 180ms ease;border-radius:16px !important}
 .agoda-room-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.06) !important}
 .room-hero-wrap{aspect-ratio:auto;border-radius:16px !important}

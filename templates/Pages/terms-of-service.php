@@ -1,10 +1,15 @@
 <?php
-$this->assign('title', 'Customer Terms of Service | fastnetstays.com');
+$this->assign('title', 'Customer Terms of Service');
 ?>
 
 <?= $this->Html->css('/assets/css/google-travel-layout.css') ?>
 <?= $this->Html->css('/assets/css/google-travel-home.css') ?>
 <?= $this->Html->css('/assets/css/google-travel-cards.css') ?>
+<style>
+/* Scroll fix: home split-view CSS locks body scroll on desktop — legal pages must scroll */
+html, body { height: auto !important; overflow-y: auto !important; }
+#main-wrapper { height: auto !important; overflow: visible !important; display: block !important; }
+</style>
 
 <?= $this->element('navbar') ?>
 <nav aria-label="Breadcrumb" class="container-fluid px-2 px-lg-2" style="max-width:100%;margin:0 auto;background:#f8f9fa;">

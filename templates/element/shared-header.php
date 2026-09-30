@@ -7,9 +7,11 @@
 
 $controller = $this->request->getParam('controller');
 $action = $this->request->getParam('action');
-// Hide nav inline search bar on home page — it has its own Google Hotels search bar
+// Hide nav inline search bar on home page — it has its own Google Hotels search bar.
+// Also hidden on hotel detail (removed per product decision — detail focuses on rooms, search lives on home).
 $isHomePage = ($controller === 'Pages' && $action === 'index');
-$showNavSearchBar = !$isHomePage && (in_array($action, ['hotelList01', 'detail', 'hotelDetail']) || ($controller === 'Stays' && in_array($action, ['index', 'detail'])));
+$isDetailPage = in_array($action, ['detail', 'hotelDetail']);
+$showNavSearchBar = !$isHomePage && !$isDetailPage && (in_array($action, ['hotelList01']) || ($controller === 'Stays' && in_array($action, ['index'])));
 
 
 // ── Authentication Resolution ──
@@ -35,7 +37,7 @@ $navAvatarColor = $effectiveUser['avatar_color'] ?? '#0284c7';
 if (!str_starts_with($navAvatarBg, '#') && !str_starts_with($navAvatarBg, 'rgb')) $navAvatarBg = '#f0f9ff';
 ?>
 <?= $this->Html->css('/assets/css/navbar.css?v=' . filemtime(WWW_ROOT . 'assets/css/navbar.css')); ?>
-<?= $this->Html->css('/assets/css/shared-header-mobile.css') ?>
+<?= $this->Html->css('/assets/css/shared-header-mobile.css?v=' . filemtime(WWW_ROOT . 'assets/css/shared-header-mobile.css')) ?>
 
 <!-- Shared fastnetstays.com Accommodation Header -->
 <div class="agoda-sticky-wrapper">
@@ -43,12 +45,8 @@ if (!str_starts_with($navAvatarBg, '#') && !str_starts_with($navAvatarBg, 'rgb')
         <div class="container-fluid px-2 px-md-3 px-lg-4 max-w-[1440px] mx-auto h-100">
             <div class="d-flex align-items-center justify-content-between flex-wrap flex-lg-nowrap h-100">
                 
-                <!-- fastnetstays.com Brand Logo — Instagram watermark wordmark -->
-                <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&display=swap" rel="stylesheet">
-                <a class="d-flex align-items-center text-decoration-none py-1 select-none me-2 me-lg-3 flex-shrink-0 order-1" href="<?= $this->Url->build('/'); ?>" title="fastnetstays.com">
-                    <span style="font-family:'Grand Hotel','Brush Script MT',cursive;font-size:32px;font-weight:400;letter-spacing:-.02em;line-height:1;background:linear-gradient(45deg,#feda75 0%,#fa7e1e 18%,#d62976 38%,#962fbf 68%,#4f5bd5 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 1px 0 rgba(0,0,0,.04));white-space:nowrap;">FastNetStays</span>
-                    <span style="font-family:'Grand Hotel',cursive;font-size:13px;font-weight:400;color:#9ca3af;letter-spacing:.02em;margin-left:1px;align-self:flex-end;margin-bottom:4px;opacity:.9;">.com</span>
-                </a>
+                <!-- fastnetstays.com Brand — Carbon wordmark -->
+                <span class="d-flex align-items-center py-1 me-2 me-lg-3 flex-shrink-0 order-1"><?= $this->element('logo') ?></span>
 
                 <!-- Context-Aware Search Bar (Order 2 on desktop inline, Order 3 on mobile full-width row) -->
                 <?php if ($showNavSearchBar): ?>
@@ -313,7 +311,7 @@ if (!str_starts_with($navAvatarBg, '#') && !str_starts_with($navAvatarBg, 'rgb')
                 closeAllPopups();
                 if (!wasOpen) {
                     drop.classList.add('show');
-                    userBtn.style.outline = '2px solid #007fad';
+                    userBtn.style.outline = '2px solid #0f62fe';
                     userBtn.style.outlineOffset = '-2px';
                 }
             };

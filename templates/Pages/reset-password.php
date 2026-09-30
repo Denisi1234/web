@@ -32,11 +32,7 @@ $this->assign('title', 'Create new password | FastNet Stays');
 						<!-- Information -->
 						<div class="col-lg-6 order-1">
 							<div class="p-4 p-sm-7">
-																<a href="<?= $this->Url->build('/'); ?>" class="d-inline-flex align-items-center text-decoration-none mb-4" title="fastnetstays.com" style="text-decoration:none!important;">
-									<link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&display=swap" rel="stylesheet">
-									<span style="font-family:'Grand Hotel','Brush Script MT',cursive;font-size:34px;font-weight:400;letter-spacing:-.02em;line-height:1;background:linear-gradient(45deg,#feda75 0%,#fa7e1e 18%,#d62976 38%,#962fbf 68%,#4f5bd5 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 1px 0 rgba(0,0,0,.04));white-space:nowrap;">FastNetStays</span>
-									<span style="font-family:'Grand Hotel',cursive;font-size:13px;font-weight:400;color:#9ca3af;letter-spacing:.02em;margin-left:1px;align-self:flex-end;margin-bottom:4px;opacity:.9;">.com</span>
-								</a>
+																<?= $this->element('logo', ['size' => 22]) ?>
 
 								<h1 class="mb-2 fs-2">Create New Password</h1>
 								<p class="mb-0 text-muted">Enter a strong new password for your account.</p>

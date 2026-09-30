@@ -68,10 +68,26 @@ class BookingQuoteService
 
         // Extract authoritative pricing
         $property = $calc['property'] ?? null;
+        $fetchedFull = false;
         if (empty($property)) {
             // Fallback fetch property/room for display if backend didn't return
             $propertyResponse = $this->apiClient->get('/properties/' . $propertyId);
             $property = $propertyResponse['data'] ?? $propertyResponse;
+            $fetchedFull = true;
+        }
+        // Enrich display fields (amenities, photos, bed, ratings) — /bookings/calculate
+        // returns pricing-only snapshots, but the quote page renders real content.
+        // Calc values win on conflict; full fetch only fills gaps.
+        if (!$fetchedFull) {
+            try {
+                $fullResponse = $this->apiClient->get('/properties/' . $propertyId);
+            $fullProperty = is_array($fullResponse) ? ($fullResponse['data'] ?? $fullResponse) : null;
+            if (is_array($fullProperty) && isset($fullProperty['id'])) {
+                $property = is_array($property) ? $property + $fullProperty : $fullProperty;
+            }
+        } catch (\Throwable $e) {
+            // display enrichment is best-effort; pricing already authoritative
+        }
         }
         $room = null;
         if (!empty($calc['rooms'][0])) {
@@ -88,6 +104,16 @@ class BookingQuoteService
             if (!empty($property['rooms']) && empty($availableRooms)) $availableRooms = $property['rooms'];
             foreach ((array)$availableRooms as $candidate) {
                 if ((int)($candidate['id'] ?? 0) === $roomId) { $room = $candidate; break; }
+            }
+        }
+        // Enrich room display fields from the full property payload (calc rooms carry pricing only).
+        // Calc pricing keys win; everything else fills from the matching full room.
+        if (is_array($room) && !empty($property['rooms']) && is_array($property['rooms'])) {
+            foreach ($property['rooms'] as $full) {
+                if (is_array($full) && (int)($full['id'] ?? 0) === (int)($room['id'] ?? $roomId)) {
+                    $room = $room + $full;
+                    break;
+                }
             }
         }
         if (!$room) {

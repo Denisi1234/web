@@ -99,7 +99,8 @@ $lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
 #gh_mobile_breadcrumb .breadcrumb-item.active{color:#5f6368;overflow:hidden;text-overflow:ellipsis}
 @media(max-width:991px){
   /* Single static stack: header → breadcrumb → tabs scroll away together; only filter chips stay sticky */
-  #gh_mobile_stack{display:block !important;position:static !important;top:auto !important;z-index:auto !important}
+  /* No top margin here: body{padding-top} already clears the fixed header (double offset = dead gap) */
+  #gh_mobile_stack{display:block !important;position:static !important;top:auto !important;margin-top:0 !important;z-index:auto !important}
   #gh_mobile_stack #gh_mobile_breadcrumb{display:block !important;position:static !important;top:auto !important;z-index:auto !important}
   #gh_mobile_stack .gh-m-tabs{display:flex !important;position:static !important;top:auto !important;z-index:auto !important}
   #gh_desktop_breadcrumb{display:none !important}
@@ -178,7 +179,7 @@ $lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
 
                         <!-- Mapbox GL Container — real Mapbox from backend -->
                         <div id="gh-interactive-map" style="width:100%; height:100%; min-height:560px; background:#e8ecef;" role="application" aria-label="Map of hotels"></div>
-                        <noscript><img src="https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/-6.7725,39.245,11/600x800?access_token=placeholder" alt="Map of hotels" style="width:100%;height:100%;object-fit:cover;opacity:.6"></noscript>
+                        <noscript><div style="width:100%;height:100%;min-height:560px;display:flex;align-items:center;justify-content:center;background:#f4f4f4;color:#525252;font-size:14px;">Enable JavaScript to view the interactive map.</div></noscript>
 
                         <!-- "Update list when map moves" — PC screenshot: checkbox + text pill -->
                         <div class="position-absolute top-0 start-50 translate-middle-x mt-3" style="z-index:20;">
@@ -215,101 +216,58 @@ $lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
     </div>
 </main>
 
-<!-- Recently viewed rail — renders only when session has stays (element self-guards on empty) -->
-<?= $this->element('Home/recently-viewed', ['recentStays' => $recentStays ?? []]) ?>
 
-<!-- Mobile Floating Map / List Toggle (Baymard: split-view must be discoverable on mobile) -->
-<button type="button" id="gh_mobile_map_toggle" class="d-lg-none" onclick="ghToggleMobileMap(true)" aria-label="Show map" aria-expanded="false" aria-controls="gh_mobile_map_wrap" style="position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:1500;background:#0f62fe;color:#fff;border:none;border-radius:9999px;padding:12px 20px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(15,98,254,.35);min-height:48px;touch-action:manipulation;font-family:'IBM Plex Sans','Inter','Google Sans',Roboto,sans-serif;">
-    <i class="fa-solid fa-map" aria-hidden="true"></i><span id="gh_mobile_map_label">Map · <?= number_format($totalCount ?? count($properties ?? [])) ?> stays</span>
-</button>
-<!-- Mobile fullscreen map overlay -->
-<div id="gh_mobile_map_wrap" class="d-lg-none" role="dialog" aria-modal="true" aria-label="Hotel map" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:2000;background:#e8ecef;">
-    <div id="gh-mobile-map" style="width:100%;height:100%;" role="application" aria-label="Map of hotels"></div>
-    <button type="button" onclick="ghToggleMobileMap(false)" aria-label="Show list" style="position:absolute;bottom:calc(20px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#fff;color:#1F2937;border:1px solid #E5E7EB;border-radius:9999px;padding:12px 20px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);min-height:48px;z-index:2001;">
-        <i class="fa-solid fa-list" aria-hidden="true"></i> List
-    </button>
-    <button type="button" id="gh_mobile_map_close" onclick="ghToggleMobileMap(false)" aria-label="Close map" style="position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;width:44px;height:44px;border-radius:50%;border:1px solid #E5E7EB;background:#fff;color:#1F2937;font-size:16px;z-index:2001;box-shadow:0 2px 8px rgba(0,0,0,.12);"><i class="fa-solid fa-xmark"></i></button>
-</div>
-<script>
-window._ghMobileMap = null;
-window.ghToggleMobileMap = function(open){
-  var wrap = document.getElementById('gh_mobile_map_wrap');
-  var toggle = document.getElementById('gh_mobile_map_toggle');
-  if(!wrap) return;
-  if(open){
-    wrap.style.display = 'block'; wrap.setAttribute('aria-hidden','false');
-    document.body.style.overflow = 'hidden';
-    if(toggle){ toggle.style.display = 'none'; toggle.setAttribute('aria-expanded','true'); }
-    // A11y: move focus into dialog (close button); Escape + return-focus handled below
-    setTimeout(function(){ var c=document.getElementById('gh_mobile_map_close'); if(c) c.focus({preventScroll:true}); }, 60);
-    // init mobile map once (reuse desktop cfg markers)
-    if(!window._ghMobileMap && typeof mapboxgl !== 'undefined'){
-      try{
-        var cfg = window._ghCfg || {markers: [], defaultLat: -6.7725, defaultLng: 39.2450, defaultZoom: 12};
-        var hasTok = window.MAPBOX_TOKEN && window.MAPBOX_TOKEN.indexOf('pk.') === 0;
-        var style = window.MAPBOX_STYLE || 'mapbox://styles/mapbox/streets-v12';
-        if(!hasTok || style.indexOf('mapbox://') !== 0) style = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
-        else mapboxgl.accessToken = window.MAPBOX_TOKEN;
-        var m = new mapboxgl.Map({container: 'gh-mobile-map', style: style, center: [cfg.defaultLng || 39.2450, cfg.defaultLat || -6.7725], zoom: cfg.defaultZoom || 12});
-        m.addControl(new mapboxgl.NavigationControl({showCompass: false}), 'top-right');
-        window._ghMobileMap = m;
-        m.on('load', function(){
-          (cfg.markers || []).slice(0, 200).forEach(function(mk){
-            var el = document.createElement('a');
-            el.href = '/hotel-detail/' + mk.id; el.className = 'gh-mm-price';
-            el.textContent = mk.label; el.style.cssText = 'background:#fff;border:1px solid #dadce0;border-radius:9999px;padding:6px 10px;font-size:12px;font-weight:700;color:#0f62fe;box-shadow:0 2px 8px rgba(0,0,0,.15);white-space:nowrap;text-decoration:none;display:inline-block;';
-            try{ new mapboxgl.Marker({element: el}).setLngLat([mk.lng, mk.lat]).addTo(m); }catch(e){}
-          });
-        });
-      }catch(e){ console.warn('mobile map', e); }
-    } else if(window._ghMobileMap){ try{ window._ghMobileMap.resize(); }catch(e){} }
-  } else {
-    wrap.style.display = 'none'; wrap.setAttribute('aria-hidden','true');
-    document.body.style.overflow = '';
-    if(toggle){ toggle.style.display = 'flex'; toggle.setAttribute('aria-expanded','false'); toggle.focus({preventScroll:true}); }
-  }
-};
-document.addEventListener('keydown', function(e){
-  if(e.key !== 'Escape') return;
-  var wrap = document.getElementById('gh_mobile_map_wrap');
-  if(wrap && wrap.style.display === 'block'){ e.preventDefault(); window.ghToggleMobileMap(false); }
-});
-// M-1: sticky offsets measured from fixed header (not hardcoded 64/116px) — survives wrapping/shrink
-window.ghSyncSticky = function(){
-  try{
-    var wrap = document.querySelector('.agoda-sticky-wrapper');
-    var hh = wrap ? wrap.offsetHeight : (window.innerWidth <= 575 ? 58 : 64);
-    var sw = document.getElementById('fns_search_wrap');
-    var cw = document.getElementById('fns_chips_wrap');
-    if(window.innerWidth >= 992){
-      if(sw) sw.style.top = hh + 'px';
-      if(cw) cw.style.top = (hh + (sw ? sw.offsetHeight : 68)) + 'px';
-    } else if(cw){
-      // mobile search chip scrolls away — chips stick directly under fixed header
-      cw.style.top = hh + 'px';
-    }
-  }catch(e){}
-};
-window.addEventListener('resize', function(){ if(window._ghStickyT) clearTimeout(window._ghStickyT); window._ghStickyT = setTimeout(window.ghSyncSticky, 150); });
-document.addEventListener('DOMContentLoaded', function(){ window.ghSyncSticky(); setTimeout(window.ghSyncSticky, 800); });
-if(document.fonts && document.fonts.ready){ document.fonts.ready.then(function(){ window.ghSyncSticky(); }); }
-// keep toggle count fresh after AJAX hydrate
-window.addEventListener('fastnet:shimmer-hide', function(){
-  var lbl = document.getElementById('gh_mobile_map_label');
-  var c = document.getElementById('gh_results_count');
-  if(lbl && c) lbl.textContent = 'Map · ' + c.textContent.replace(' results','') + ' stays';
-});
-</script>
-<!-- Mobile bottom sheet — hidden until a map marker is tapped (populated by gh-home-map.js) -->
-<div class="gh-mobile-sheet d-lg-none" id="gh_mobile_sheet" aria-hidden="true" style="display:none !important;">
-    <div class="gh-sheet-handle" id="gh_sheet_handle"><span></span></div>
-    <div class="gh-sheet-scroll" id="gh_sheet_scroll"></div>
-</div>
-<!-- Mobile horizontal carousel — hidden until map is active -->
-<div class="gh-mobile-carousel d-lg-none" id="gh_mobile_carousel" aria-hidden="true" style="display:none !important;"></div>
 
 <!-- Filters Modal -->
 <?= $this->element('Home/gh-filters-modal') ?>
+
+<!-- Mobile loading indicator (bar + pill) + controller -->
+<?= $this->element('Home/home-loader') ?>
+<?= $this->Html->script('/assets/js/home-carousel.js?v=' . filemtime(WWW_ROOT . 'assets/js/home-carousel.js'), ['defer' => true]) ?>
+<script>
+/* State-aware mobile loader: destination in the pill, hide on settle */
+(function () {
+  function dest() {
+    var d = document.getElementById('gh_dest');
+    var m = document.getElementById('fns_m_input');
+    return ((m && m.value) || (d && d.value) || 'Tanzania').trim() || 'Tanzania';
+  }
+  function show() { if (typeof window.showHomeLoader === 'function') window.showHomeLoader('Searching ' + dest() + '…'); }
+  function hide() { if (typeof window.hideHomeLoader === 'function') window.hideHomeLoader(); }
+  var f = document.getElementById('gh_search_form');
+  if (f) f.addEventListener('submit', show);
+  // every detail entry (card, View prices/details, Show details, name) → spinner while system loads.
+  // anchors: hold navigation ~140ms so the spinner actually paints before unload.
+  document.addEventListener('click', function (e) {
+    if (e.defaultPrevented || (e.button !== undefined && e.button !== 0) || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target.closest ? e.target.closest('a[href*="/hotel-detail/"]') : null;
+    if (!a) {
+      var card = e.target.closest ? e.target.closest('.gh-card[data-property-id]') : null;
+      if (card && typeof window.showHomeLoader === 'function') window.showHomeLoader('Loading stay details…');
+      return;
+    }
+    if (a.target && a.target !== '_self') return;
+    if (typeof window.showHomeLoader === 'function') {
+      e.preventDefault();
+      window.showHomeLoader('Loading stay details…');
+      var href = a.href;
+      setTimeout(function () { window.location.href = href; }, 140);
+    }
+  });
+  // mobile sheet search is SPA (pushState + hydrate): wrap to show until results land
+  var tries = 0;
+  (function hookMobile() {
+    if (typeof window.fnsMobileSearch === 'function') {
+      var orig = window.fnsMobileSearch;
+      window.fnsMobileSearch = function () { show(); try { return orig.apply(this, arguments); } catch (e) { hide(); } };
+    } else if (++tries < 40) setTimeout(hookMobile, 250);
+  })();
+  window.addEventListener('fastnet:markers-update', hide);
+  window.addEventListener('fastnet:shimmer-hide', hide);
+  window.addEventListener('pageshow', hide);
+  if (document.readyState !== 'loading') hide(); else document.addEventListener('DOMContentLoaded', hide);
+})();
+</script>
 
 <?php
 // Real Mapbox — only public pk.* echoed (never secret). Backend GET /api/map-config is cached.
@@ -368,6 +326,7 @@ echo json_encode($markers, JSON_UNESCAPED_UNICODE);
         defaultLat: <?= !empty($queryParams['lat']) ? (float)$queryParams['lat'] : -6.7725 ?>,
         defaultLng: <?= !empty($queryParams['lng']) ? (float)$queryParams['lng'] : 39.2450 ?>,
         defaultZoom: 13,
+        focusBbox: <?= json_encode($queryParams['bbox'] ?? '') ?>,
         style: window.MAPBOX_STYLE || 'mapbox://styles/mapbox/streets-v12',
     };
     window._ghCfg = cfg;
@@ -480,4 +439,4 @@ window.fnsToast = function(msg, ms){
   clearTimeout(t._t); t._t = setTimeout(function(){ t.style.display = 'none'; }, ms || 2800);
 };
 </script>
-<div id="fns_toast" role="status" aria-live="polite" aria-atomic="true" style="position:fixed;bottom:20px;bottom:calc(20px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:11px 18px;border-radius:9999px;font-size:13px;font-weight:500;display:none;z-index:4000;box-shadow:0 8px 30px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.12);max-width:min(92vw,420px);text-align:center;pointer-events:none;font-family:'Inter',Roboto,sans-serif"></div>
+<?php // Global #fns_toast lives in layout/default.php (single source, all pages) ?>

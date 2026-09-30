@@ -20,7 +20,7 @@ class FastnetApiClient
     protected string $baseUrl;
     protected int $timeout;
 
-    public function __construct(?string $baseUrl = null, int $timeout = 6)
+    public function __construct(?string $baseUrl = null, int $timeout = 10)
     {
         $this->timeout = $timeout;
         $this->baseUrl = $baseUrl ?: (string)Configure::read(
@@ -87,17 +87,19 @@ class FastnetApiClient
     }
 
     /**
-     * Internal request executor — bubbles 4xx/5xx as JSON with _status, retries timeouts, caches safe GETs
+     * Internal request executor — backend is source of truth.
+     * Only the static /map-config GET is cached (5 min); all admin/host
+     * data (properties, rooms, bookings, finance, users) is always live.
+     * 4xx/5xx bubble as JSON with _status so callers never fallback to mocks silently.
      */
     protected function request(string $method, string $endpoint, array $data = [], array $headers = []): ?array
     {
         $url = $this->baseUrl . '/' . ltrim($endpoint, '/');
         $isGet = strtoupper($method) === 'GET';
         $cacheKey = null;
-        // Per-route cache for safe GETs (60s) — /properties, /map-config — include Authorization to avoid cross-role poisoning
-        if ($isGet && (str_contains($endpoint, '/properties') || str_contains($endpoint, '/map-config'))) {
-            $authHash = isset($headers['Authorization']) ? sha1((string)$headers['Authorization']) : 'guest';
-            $cacheKey = 'fastnet_api_' . md5($method . $endpoint . json_encode($data) . '|' . $authHash);
+        // Only cache static config — never mutable portal data
+        if ($isGet && str_contains($endpoint, '/map-config')) {
+            $cacheKey = 'fastnet_api_' . md5($method . $endpoint . json_encode($data));
             $cached = \Cake\Cache\Cache::read($cacheKey, 'default');
             if (is_array($cached)) return $cached;
         }
@@ -124,7 +126,8 @@ class FastnetApiClient
                 $status = $response->getStatusCode();
                 if ($response->isOk() || $status === 201) {
                     $json = $response->getJson();
-                    if ($cacheKey && is_array($json)) \Cake\Cache\Cache::write($cacheKey, $json);
+                    // 5-min TTL on static config only; portal data stays live
+                    if ($cacheKey && is_array($json)) \Cake\Cache\Cache::write($cacheKey, $json, 'default');
                     return $json;
                 }
                 // Bubble all 4xx/5xx as JSON with _status so callers don't fallback to mocks silently
@@ -150,12 +153,11 @@ class FastnetApiClient
         return null;
     }
 
+    /**
+     * Only static /map-config is cached, and writes never affect it,
+     * so there is nothing to invalidate — backend stays source of truth.
+     */
     private function clearPropertiesCache(): void
     {
-        try {
-            \Cake\Cache\Cache::clear(false, 'default');
-        } catch (\Throwable $e) {
-            // ignore
-        }
     }
 }

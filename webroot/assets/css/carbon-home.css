@@ -190,6 +190,19 @@
   background: #0f62fe !important; border-color: #0f62fe !important;
   font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important;
 }
+/* ── 9. Carbon map chrome: controls, update-list pill, empty overlay ── */
+#gh_map_col button:focus-visible, #gh_mobile_map_wrap button:focus-visible {
+  outline: 2px solid #0f62fe !important; outline-offset: 2px !important;
+}
+#gh_update_list_btn {
+  font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important;
+  border-color: #e0e0e0 !important; color: #161616 !important;
+}
+#gh_update_list_btn:hover { border-color: #8d8d8d !important; }
+.gh-map-empty {
+  font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important;
+  color: #525252 !important;
+}
 .gh-map-marker::before { border-top-color: #0f62fe !important; }
 .gh-map-marker::after { border-top-color: rgba(15,98,254,.9) !important; }
 .gh-mm-icon i { color: #0f62fe !important; }
@@ -242,4 +255,99 @@
 }
 @media (max-width: 991px) {
   .cds-search-pill#fns_pill { height: auto !important; }
+}
+
+/* ── Card locate button (touch card → map focuses pin, no navigation) ── */
+.gh-card-locate{position:absolute;left:8px;bottom:8px;width:30px;height:30px;border-radius:50%;background:rgba(22,22,22,.55);border:none;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;z-index:3;transition:background .15s}
+.gh-card-locate:hover{background:#0f62fe}
+.gh-card-locate:focus-visible,.gh-card-bm:focus-visible{outline:2px solid #0f62fe !important;outline-offset:2px !important}
+.gh-card:focus-visible{outline:2px solid #0f62fe !important;outline-offset:2px !important}
+
+/* ═══════════════════════════════════════════════════════════════
+   8. Mobile home → Carbon (list-only, professional)
+   Search chip + sheet + filters + cards, White theme tokens.
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 991px) {
+  /* search chip → Carbon tile */
+  .fns-mobile-chip {
+    background: #fff !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 1px 2px rgba(22,22,22,.06) !important;
+    min-height: 56px !important;
+  }
+  .fns-mobile-chip:active { border-color: #0f62fe !important; }
+  .fns-mobile-chip-icon { background: #0f62fe !important; border-radius: 4px !important; }
+  .fns-mobile-chip-text { font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important; color: #161616 !important; }
+  .fns-mobile-chip-chevron { background: #f4f4f4 !important; border-radius: 4px !important; color: #525252 !important; }
+  /* bottom sheet chrome */
+  .fns-mobile-sheet { background: #fff !important; }
+  .fns-sheet-header-title { font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important; color: #161616 !important; }
+  .fns-sheet-back { border: 1px solid #e0e0e0 !important; border-radius: 4px !important; }
+  .fns-sheet-tab { font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important; color: #525252 !important; }
+  .fns-sheet-tab.active { color: #0f62fe !important; border-bottom-color: #0f62fe !important; }
+  .fns-sheet-step { background: #f4f4f4 !important; }
+  .fns-sheet-accordion { border: 1px solid #e0e0e0 !important; border-radius: 8px !important; box-shadow: none !important; }
+  .fns-acc-title { font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important; color: #161616 !important; }
+  .fns-acc-value { color: #525252 !important; }
+  /* calendar days: Carbon blue select */
+  .fns-day.fns-selected, .fns-day[aria-selected="true"], .fns-m-day.fns-selected, .fns-m-day[aria-selected="true"] {
+    background: #0f62fe !important; color: #fff !important; border-radius: 4px !important;
+  }
+  .fns-day:focus-visible, .fns-m-day:focus-visible, .fns-step-btn:focus-visible { outline: 2px solid #0f62fe !important; outline-offset: 1px !important; }
+  .fns-step-btn { border: 1px solid #0f62fe !important; color: #0f62fe !important; border-radius: 4px !important; }
+  /* sheet footer actions */
+  .fns-sheet-footer { border-top: 1px solid #e0e0e0 !important; background: #fff !important; }
+  .fns-sheet-footer .fns-btn-apply { background: #0f62fe !important; border-radius: 4px !important; box-shadow: none !important; font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important; }
+  .fns-sheet-footer .fns-btn-reset { border: 1px solid #0f62fe !important; color: #0f62fe !important; border-radius: 4px !important; background: #fff !important; }
+  /* filter chips row */
+  .fns-chip { border: 1px solid #c6c6c6 !important; border-radius: 16px !important; color: #161616 !important; font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important; }
+  .fns-chip.active { background: #edf5ff !important; border-color: #0f62fe !important; color: #0043ce !important; }
+  /* results header + sort */
+  .gh-results-count-row { color: #161616 !important; font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important; }
+  .gh-m-sort-btn { border: 1px solid #e0e0e0 !important; border-radius: 4px !important; color: #161616 !important; }
+  /* cards: single column, sharp Carbon tiles, price ink */
+  #gh-cards-container .gh-card { border-radius: 8px !important; border: 1px solid #e0e0e0 !important; box-shadow: 0 1px 2px rgba(22,22,22,.06) !important; }
+  .gh-card .gh-hotel-price { color: #161616 !important; }
+  .gh-card .gh-card-count, .gh-card-dots { z-index: 3; }
+  /* mobile breadcrumb + tabs */
+  #gh_mobile_breadcrumb { background: #f4f4f4 !important; border-bottom: 1px solid #e0e0e0 !important; }
+  .gh-m-tabs { background: #fff !important; border-bottom: 1px solid #e0e0e0 !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fns-mobile-chip, .fns-sheet-tab, .fns-step-btn, .fns-chip { transition: none !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   9. Loading indicators → Carbon (top bar + mobile pill + shimmer)
+   ═══════════════════════════════════════════════════════════════ */
+.home-top-loader-bar {
+  background: #0f62fe !important;
+  box-shadow: 0 0 8px rgba(15,98,254,.55) !important;
+  height: 3px !important;
+}
+.mobile-loader-pill-inner {
+  background: #161616 !important;
+  border: 1px solid #393939 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.3) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.mobile-loader-spinner {
+  border: 2px solid rgba(255,255,255,.25) !important;
+  border-top-color: #0f62fe !important;
+  border-right-color: #0f62fe !important;
+}
+.mobile-loader-text {
+  font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important;
+  font-weight: 600 !important;
+  color: #f4f4f4 !important;
+}
+/* card photo shimmer while lazy images load */
+.gh-card-photo { background: #f4f4f4 !important; }
+.gh-card-photo img { background: #e0e0e0; }
+.gh-card-photo img[src=""] { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) {
+  .home-top-loader-bar, .mobile-loader-spinner { animation: none !important; transition: none !important; }
 }

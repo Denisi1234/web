@@ -80,7 +80,7 @@ class MapService
         // Only call Mapbox Static API if token is a valid, configured pk.* key (not dummy string)
         if (!empty($token) && str_starts_with($token, 'pk.') && !str_contains($token, '.demo')) {
             return sprintf(
-                'https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-s+1a73e8(%f,%f)/%f,%f,%d,0/%dx%d@2x?access_token=%s',
+                'https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-s+0f62fe(%f,%f)/%f,%f,%d,0/%dx%d@2x?access_token=%s',
                 $lng, $lat, $lng, $lat, $zoom, $width, $height, $token
             );
         }

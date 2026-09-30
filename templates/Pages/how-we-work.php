@@ -1,5 +1,5 @@
 <?php
-$this->assign('title', 'How We Work | fastnetstays.com');
+$this->assign('title', 'How We Work');
 ?>
 
 <?= $this->Html->css('/assets/css/google-travel-layout.css') ?>

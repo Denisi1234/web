@@ -1,0 +1,120 @@
+/* portal.css — FastNet Stays back-office shell (IBM Carbon tokens)
+   Gray 100 sidebar (#161616/#262626) · White content (#f4f4f4) · Blue 60 (#0f62fe) */
+:root {
+  --p-bg: #f4f4f4;
+  --p-surface: #ffffff;
+  --p-text: #161616;
+  --p-text-2: #525252;
+  --p-border: #e0e0e0;
+  --p-blue: #0f62fe;
+  --p-blue-dark: #0353e9;
+  --p-side: #161616;
+  --p-side-2: #262626;
+  --p-side-3: #353535;
+  --p-side-text: #f4f4f4;
+  --p-side-2-text: #c6c6c6;
+  --p-success: #0e6027;
+  --p-success-bg: #defbe6;
+  --p-warn: #8e6a00;
+  --p-warn-bg: #fcf4d6;
+  --p-danger: #a2191f;
+  --p-danger-bg: #fdecea;
+  --p-sidebar-w: 256px;
+  --p-rail-w: 64px;
+  --p-topbar-h: 56px;
+}
+html, body { height: auto !important; overflow-y: auto !important; }
+body.portal { background: var(--p-bg); color: var(--p-text); font-family: 'IBM Plex Sans', 'Inter', Roboto, sans-serif; margin: 0; }
+body.portal #main-wrapper { height: auto !important; overflow: visible !important; display: block !important; padding-top: 0 !important; }
+
+/* ── Shell grid ── */
+.p-shell { min-height: 100vh; }
+.p-main { margin-left: var(--p-sidebar-w); min-height: 100vh; display: flex; flex-direction: column; }
+.p-content { flex: 1; padding: 24px 32px 48px; max-width: 1280px; width: 100%; margin: 0 auto; }
+
+/* ── Sidebar ── */
+.p-side { position: fixed; inset: 0 auto 0 0; width: var(--p-sidebar-w); background: var(--p-side); color: var(--p-side-text); display: flex; flex-direction: column; z-index: 1040; }
+.p-brand { display: flex; align-items: center; gap: 10px; padding: 16px 20px; border-bottom: 1px solid var(--p-side-2); font-weight: 600; font-size: 16px; color: #fff; text-decoration: none; }
+.p-brand-mark { width: 32px; height: 32px; background: var(--p-blue); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+.p-role { margin: 12px 16px 4px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--p-side-2-text); display: flex; align-items: center; gap: 8px; }
+.p-role-dot { width: 8px; height: 8px; border-radius: 50%; background: #24a148; }
+.p-nav { flex: 1; overflow-y: auto; padding: 4px 0 16px; }
+.p-nav-sec { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #8d8d8d; padding: 16px 20px 6px; }
+.p-link { position: relative; display: flex; align-items: center; gap: 12px; padding: 10px 20px; color: var(--p-side-2-text); text-decoration: none; font-size: 14px; font-weight: 400; border-left: 3px solid transparent; }
+.p-link i { width: 18px; text-align: center; font-size: 14px; flex-shrink: 0; }
+.p-link:hover { background: var(--p-side-2); color: #fff; }
+.p-link.active { background: var(--p-side-3); color: #fff; font-weight: 600; border-left-color: var(--p-blue); }
+.p-side-foot { border-top: 1px solid var(--p-side-2); padding: 12px 16px; }
+.p-user { display: flex; align-items: center; gap: 10px; padding: 6px 4px 10px; }
+.p-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--p-blue); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px; flex-shrink: 0; }
+.p-user-meta { min-width: 0; }
+.p-user-name { font-size: 13px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.p-user-role { font-size: 11px; color: var(--p-side-2-text); }
+.p-logout { display: flex; align-items: center; gap: 10px; padding: 8px 4px; color: var(--p-side-2-text); text-decoration: none; font-size: 13px; }
+.p-logout:hover { color: #fff; }
+
+/* ── Topbar ── */
+.p-top { position: sticky; top: 0; z-index: 1030; height: var(--p-topbar-h); background: var(--p-surface); border-bottom: 1px solid var(--p-border); display: flex; align-items: center; gap: 12px; padding: 0 32px; }
+.p-menu-btn { display: none; background: none; border: none; font-size: 18px; color: var(--p-text); padding: 8px; cursor: pointer; }
+.p-title { font-size: 18px; font-weight: 600; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.p-top-actions { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.p-site-link { font-size: 13px; color: var(--p-text-2); text-decoration: none; white-space: nowrap; }
+.p-site-link:hover { color: var(--p-blue); }
+.p-top-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--p-side); color: #fff; border: none; font-weight: 600; font-size: 13px; cursor: pointer; }
+.dropdown-menu { font-size: 14px; }
+
+/* ── Components ── */
+.p-card { background: var(--p-surface); border: 1px solid var(--p-border); padding: 20px; height: 100%; }
+.p-card h3 { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
+.p-card .sub { font-size: 13px; color: var(--p-text-2); }
+.p-stat { background: var(--p-surface); border: 1px solid var(--p-border); border-top: 3px solid var(--p-blue); padding: 16px 20px; height: 100%; }
+.p-stat .v { font-size: 28px; font-weight: 600; line-height: 1.2; }
+.p-stat .l { font-size: 13px; color: var(--p-text-2); }
+.p-stat .s { font-size: 12px; color: var(--p-text-2); margin-top: 4px; }
+.p-table-wrap { background: var(--p-surface); border: 1px solid var(--p-border); overflow-x: auto; }
+table.p-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 0; }
+.p-table thead th { text-align: left; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--p-text-2); padding: 12px 16px; border-bottom: 1px solid var(--p-border); background: var(--p-surface); white-space: nowrap; }
+.p-table tbody td { padding: 12px 16px; border-bottom: 1px solid var(--p-border); vertical-align: middle; }
+.p-table tbody tr:last-child td { border-bottom: none; }
+.p-table tbody tr:hover { background: #f4f4f4; }
+.p-badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 3px 10px; white-space: nowrap; }
+.p-badge.green { background: var(--p-success-bg); color: var(--p-success); }
+.p-badge.yellow { background: var(--p-warn-bg); color: var(--p-warn); }
+.p-badge.blue { background: #e5f0ff; color: var(--p-blue); }
+.p-badge.red { background: var(--p-danger-bg); color: var(--p-danger); }
+.p-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; font-size: 14px; font-weight: 600; text-decoration: none; border: 1px solid transparent; cursor: pointer; background: var(--p-blue); color: #fff; }
+.p-btn:hover { background: var(--p-blue-dark); color: #fff; }
+.p-btn.ghost { background: transparent; color: var(--p-blue); border-color: var(--p-blue); }
+.p-btn.ghost:hover { background: var(--p-blue); color: #fff; }
+.p-empty { padding: 48px 20px; text-align: center; color: var(--p-text-2); font-size: 14px; }
+.p-flash { max-width: 1280px; margin: 0 auto; padding: 16px 32px 0; width: 100%; }
+
+/* ── Rail (desktop collapse) ── */
+.p-shell.rail .p-main { margin-left: var(--p-rail-w); }
+.p-shell.rail .p-side { width: var(--p-rail-w); }
+.p-shell.rail .p-brand span, .p-shell.rail .p-role, .p-shell.rail .p-nav-sec,
+.p-shell.rail .p-link span, .p-shell.rail .p-user-meta, .p-shell.rail .p-logout span { display: none; }
+.p-shell.rail .p-link { justify-content: center; padding: 12px 0; }
+.p-shell.rail .p-brand { justify-content: center; padding: 16px 0; }
+.p-shell.rail .p-user, .p-shell.rail .p-logout { justify-content: center; }
+
+/* ── Mobile drawer ── */
+.p-scrim { display: none; }
+@media (max-width: 991px) {
+  .p-main { margin-left: 0; }
+  .p-content { padding: 16px 16px 40px; }
+  .p-top { padding: 0 16px; }
+  .p-flash { padding: 12px 16px 0; }
+  .p-menu-btn { display: block; }
+  .p-side { transform: translateX(-100%); transition: transform .2s ease; width: var(--p-sidebar-w) !important; }
+  .p-shell.nav-open .p-side { transform: translateX(0); }
+  .p-shell.nav-open .p-scrim { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1035; }
+  .p-shell.rail .p-side { width: var(--p-sidebar-w) !important; }
+  .p-shell.rail .p-brand span, .p-shell.rail .p-role, .p-shell.rail .p-nav-sec,
+  .p-shell.rail .p-link span, .p-shell.rail .p-user-meta, .p-shell.rail .p-logout span { display: inherit; }
+  .p-shell.rail .p-main { margin-left: 0; }
+  .p-top-actions .p-site-link { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .p-side { transition: none; }
+}

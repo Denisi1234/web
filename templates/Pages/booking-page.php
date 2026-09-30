@@ -9,16 +9,31 @@ $propTitle = \App\Utility\TextFormatter::formatTitle((string)($property['name'] 
 $propCity = \App\Utility\TextFormatter::formatTitle((string)($property['city'] ?? 'Dar es Salaam'));
 $propArea = \App\Utility\TextFormatter::formatTitle((string)($property['area'] ?? $propCity));
 $propCountry = \App\Utility\TextFormatter::formatTitle((string)($property['country'] ?? 'Tanzania'));
-$propStars = !empty($property['star_rating']) ? max(1, min(5, (int)$property['star_rating'])) : 4;
+$propStars = !empty($property['star_rating']) ? max(1, min(5, (int)$property['star_rating'])) : 0;
 $rawAddr = trim((string)($property['address'] ?? ''));
 $propAddressShort = $rawAddr !== '' ? \App\Utility\TextFormatter::formatTitle($rawAddr) : \App\Utility\TextFormatter::formatLocation($propArea, $propCity);
-$propRating = $property['rating'] ?? 8.4;
-$propReviews = $property['review_count'] ?? $property['reviews_count'] ?? 737;
+$propRatingRaw = $property['reviews_avg_rating'] ?? ($property['rating'] ?? null);
+$propReviewsRaw = $property['reviews_count'] ?? ($property['review_count'] ?? null);
+$hasRating = $propRatingRaw !== null && $propReviewsRaw !== null && (int)$propReviewsRaw > 0;
+$propRating = $hasRating ? (float)$propRatingRaw : 0.0;
+$propReviews = $hasRating ? (int)$propReviewsRaw : 0;
 
 $roomTitle = \App\Utility\TextFormatter::formatTitle((string)($room['name'] ?? ($room['room_number'] ?? 'Standard Room')));
-$roomSize = $room['size'] ?? $room['area'] ?? $room['room_size'] ?? '78 m²';
-$roomMax = $room['max_occupancy'] ?? $room['max_adults'] ?? 2;
-$bed = \App\Utility\TextFormatter::formatTitle((string)($room['bed_configuration'] ?? '1 King Bed'));
+$roomSizeRaw = $room['size'] ?? ($room['area'] ?? ($room['room_size'] ?? ''));
+$roomSize = $roomSizeRaw !== '' ? (is_numeric($roomSizeRaw) ? $roomSizeRaw . ' m²' : (string)$roomSizeRaw) : '';
+$roomMax = (int)($room['max_occupancy'] ?? ($room['max_adults'] ?? ($room['capacity'] ?? 0)));
+$bedRaw = trim((string)($room['bed_configuration'] ?? ($room['beds'] ?? '')));
+$bed = $bedRaw !== '' ? \App\Utility\TextFormatter::formatTitle($bedRaw) : '';
+if ($bed !== '' && !preg_match('/\b(bed|beds)\b/i', $bed)) $bed .= ' Bed';
+// Real amenities: room + property merged, unique. Never hardcoded.
+$realAmenities = [];
+foreach ([$room['amenities'] ?? [], $property['amenities'] ?? []] as $amSrc) {
+    if (is_string($amSrc)) { $d = json_decode($amSrc, true); $amSrc = is_array($d) ? $d : explode(',', $amSrc); }
+    foreach ((array)$amSrc as $am) {
+        $t = trim((string)(is_array($am) ? ($am['name'] ?? '') : $am));
+        if ($t !== '' && !in_array($t, $realAmenities, true)) $realAmenities[] = $t;
+    }
+}
 $adults = max(1, (int)($queryParams['adults'] ?? ($room['max_adults'] ?? 2)));
 $children = (int)($queryParams['children'] ?? ($room['max_children'] ?? 0));
 $guests = $adults + $children;
@@ -48,7 +63,7 @@ if (!empty($room['photos'])) {
         if ($img0) $img = $img0;
     }
 }
-if (empty($img)) $img = 'https://images.unsplash.com/photo-1571896349842-89672768eec3?w=400&h=300&fit=crop'; // fallback resort pool
+// No fake fallback photo: empty stays empty, template renders a neutral placeholder.
 $roomImg = $img;
 if (!empty($room['photos'])) {
     // try room specific
@@ -58,7 +73,7 @@ if (!empty($room['photos'])) {
         if ($r) $roomImg = $r;
     }
 }
-if ($roomImg === $img) $roomImg = 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=300&h=200&fit=crop';
+
 
 // Autofill
 $prefillFirstName = $userProfile['first_name'] ?? '';
@@ -74,7 +89,7 @@ $prefillFullName = trim($prefillFirstName . ' ' . $prefillLastName);
 $hasPrefill = !empty($prefillFirstName) && !empty($prefillEmail) && !empty($prefillPhone);
 $leadEditDisplay = $hasPrefill ? 'none' : 'block';
 
-$this->assign('title', 'Customer information | fastnetstays.com');
+$this->assign('title', 'Customer information');
 ?>
 <style>
 /* Agoda Checkout — exact to screenshot */
@@ -86,12 +101,12 @@ $this->assign('title', 'Customer information | fastnetstays.com');
 .agoda-steps{display:flex;align-items:center;gap:0;flex:1;max-width:560px;margin:0 24px}
 .agoda-step{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;white-space:nowrap}
 .agoda-step .num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:1px solid #dadce0;background:#fff;color:#5f6368}
-.agoda-step.active .num{background:#2563EB;color:#fff;border-color:#2563EB}
-.agoda-step.done .num{background:#2563EB;color:#fff;border-color:#2563EB}
+.agoda-step.active .num{background:#0f62fe;color:#fff;border-color:#0f62fe}
+.agoda-step.done .num{background:#0f62fe;color:#fff;border-color:#0f62fe}
 .agoda-step span{color:#5f6368}
-.agoda-step.active span{color:#2563EB}
+.agoda-step.active span{color:#0f62fe}
 .agoda-step-line{flex:1;height:2px;background:#e8eaed;margin:0 8px;border-radius:1px}
-.agoda-step-line.filled{background:#2563EB}
+.agoda-step-line.filled{background:#0f62fe}
 .agoda-user{font-size:13px;color:#202124;display:flex;align-items:center;gap:8px;white-space:nowrap}
 .agoda-user .avatar{width:32px;height:32px;border-radius:50%;background:#7c6af0;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
 .agoda-timer-bar{background:#fef3e8;border-bottom:1px solid #fde8cc;padding:10px 16px;text-align:center;font-size:13px;color:#202124;display:flex;align-items:center;justify-content:center;gap:8px}
@@ -104,19 +119,17 @@ $this->assign('title', 'Customer information | fastnetstays.com');
 .agoda-lead-card{background:#F8FAFC;border:1px solid #e8eaed;border-radius:14px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:8px 16px}
 .agoda-lead-name{font-size:14px;font-weight:700;color:#202124;display:flex;align-items:center;gap:6px}
 .agoda-lead-meta{font-size:13px;color:#202124}
-.agoda-edit{color:#3264ff;font-size:13px;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:4px;align-self:end}
+.agoda-edit{color:#0f62fe;font-size:13px;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:4px;align-self:end}
 .agoda-pref-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;background:#F8FAFC;border:1px solid #e8eaed;border-radius:14px;padding:14px 16px}
 .agoda-pref-col b{font-size:13px;color:#202124;display:block;margin-bottom:8px}
 .agoda-radio{display:flex;align-items:center;gap:8px;font-size:13px;color:#202124;margin:8px 0}
-.agoda-radio input{width:18px;height:18px;accent-color:#1a73e8}
-.agoda-link{color:#3264ff;font-size:13px;font-weight:600;text-decoration:none}
+.agoda-radio input{width:18px;height:18px;accent-color:#0f62fe}
+.agoda-link{color:#0f62fe;font-size:13px;font-weight:600;text-decoration:none}
 .agoda-link:hover{text-decoration:underline}
 .agoda-benefit{display:flex;align-items:center;gap:12px;background:#f8f9fa;border-radius:8px;padding:14px}
 .agoda-benefit .free-badge{background:#0f7a2b;color:#fff;font-size:11px;font-weight:800;padding:4px 8px;border-radius:4px}
-.agoda-quote{font-size:13px;color:#5f6368;background:#f8f9fa;border-radius:8px;padding:10px 12px;margin-top:10px}
-.agoda-urgent{font-size:12px;color:#c0392b;text-align:center;margin-top:8px}
-.agoda-next-btn{background:#2563EB;color:#fff;border:none;border-radius:30px;padding:14px 24px;font-size:15px;font-weight:800;width:100%;cursor:pointer;letter-spacing:0.02em;box-shadow:0 4px 12px rgba(37,99,235,0.18);transition:background 150ms ease}
-.agoda-next-btn:hover{background:#1d4ed8}
+.agoda-next-btn{background:#0f62fe;color:#fff;border:none;border-radius:30px;padding:14px 24px;font-size:15px;font-weight:800;width:100%;cursor:pointer;letter-spacing:0.02em;box-shadow:0 4px 12px rgba(15,98,254,0.18);transition:background 150ms ease}
+.agoda-next-btn:hover{background:#0353e9}
 .agoda-not-charged{font-size:12px;color:#0f7a2b;text-align:center;font-weight:600;margin-top:6px}
 .agoda-side-card{background:#fff;border:1px solid #e8eaed;border-radius:16px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.04)}
 .agoda-side-card-inner{padding:14px}
@@ -136,9 +149,8 @@ $this->assign('title', 'Customer information | fastnetstays.com');
 .agoda-amenities span{margin-right:10px;white-space:nowrap}
 .agoda-green-banner{background:#e6f4ea;border:1px solid #c8e6c9;border-radius:8px;padding:10px 12px;font-size:12px;color:#202124;display:flex;gap:8px;align-items:center}
 .agoda-green-banner b{color:#137333}
-.agoda-pink-banner{background:#fdecea;border:1px solid #f5c6cb;border-radius:8px;padding:10px 12px;font-size:12px;color:#7d2e2e;display:flex;gap:8px;align-items:center}
 .agoda-input{width:100%;height:44px;border:1px solid #dadce0;border-radius:12px;padding:0 12px;font-size:13px;transition:border-color 150ms ease,box-shadow 150ms ease}
-.agoda-input:focus{outline:none;border-color:#2563EB;box-shadow:0 0 0 2px rgba(37,99,235,0.15)}
+.agoda-input:focus{outline:none;border-color:#0f62fe;box-shadow:0 0 0 2px rgba(15,98,254,0.15)}
 @media(max-width:992px){
   .agoda-checkout-header{height:auto;padding:10px 0}
   .agoda-checkout-header-inner{flex-wrap:wrap;gap:10px}
@@ -183,11 +195,10 @@ $this->assign('title', 'Customer information | fastnetstays.com');
   .agoda-pref-grid{padding:12px}
   .agoda-benefit{padding:12px;gap:10px}
   .agoda-benefit i{font-size:24px!important}
-  .agoda-quote{font-size:12px}
   .agoda-dates{flex-wrap:wrap;gap:8px}
   .agoda-hotel-thumb,.agoda-room-thumb{width:60px;height:60px;flex:0 0 60px}
   .agoda-amenities{font-size:11px}
-  .agoda-green-banner,.agoda-pink-banner{font-size:11px;padding:8px 10px}
+  .agoda-green-banner{font-size:11px;padding:8px 10px}
 }
 @media(max-width:375px){
   .agoda-checkout-header{padding:6px 0}
@@ -299,7 +310,7 @@ $this->assign('title', 'Customer information | fastnetstays.com');
       <div class="agoda-card">
         <div class="agoda-card-title" style="color:#0f7a2b">Free room benefits</div>
         <div class="agoda-benefit">
-          <i class="fa-solid fa-calendar-check" style="color:#1a73e8;font-size:28px"></i>
+          <i class="fa-solid fa-calendar-check" style="color:#0f62fe;font-size:28px"></i>
           <div style="flex:1">
             <div style="font-size:13px;font-weight:700;color:#202124">Fully refundable</div>
             <div style="font-size:12px;color:#5f6368"><?= h($calculation['cancellation_policy'] ?? $quote['calculation']['cancellation_policy'] ?? 'Free cancellation before ' . date('j F Y', strtotime($checkIn))) ?></div>
@@ -307,9 +318,6 @@ $this->assign('title', 'Customer information | fastnetstays.com');
           <span class="free-badge">FREE</span>
         </div>
       </div>
-
-      <div class="agoda-quote">"The beautiful beach was a favorite and it was never crowded." <span style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:#5f6368"><span>🇺🇸</span> Julie · Jun 2024</span></div>
-      <div class="agoda-urgent">Hurry! Our last room for your dates at this price</div>
 
       <div class="agoda-card" style="padding:14px">
         <button type="submit" class="agoda-next-btn">NEXT: FINAL STEP</button>
@@ -322,9 +330,9 @@ $this->assign('title', 'Customer information | fastnetstays.com');
   <div style="display:flex;flex-direction:column;gap:12px">
     <div class="agoda-side-card">
       <div class="agoda-dates">
-        <div><span style="font-size:11px;color:#5f6368">Check-in</span><b style="display:block"><?= date('D, M j', strtotime($checkIn)) ?></b><span style="font-size:11px;color:#5f6368">16:00</span></div>
+        <div><span style="font-size:11px;color:#5f6368">Check-in</span><b style="display:block"><?= date('D, M j', strtotime($checkIn)) ?></b></div>
         <div style="color:#5f6368">→</div>
-        <div><span style="font-size:11px;color:#5f6368">Check-out</span><b style="display:block"><?= date('D, M j', strtotime($checkOut)) ?></b><span style="font-size:11px;color:#5f6368">10:00</span></div>
+        <div><span style="font-size:11px;color:#5f6368">Check-out</span><b style="display:block"><?= date('D, M j', strtotime($checkOut)) ?></b></div>
         <div style="text-align:right"><b><?= h($nights) ?></b><span style="font-size:11px;color:#5f6368;display:block">nights</span></div>
       </div>
     </div>
@@ -332,43 +340,49 @@ $this->assign('title', 'Customer information | fastnetstays.com');
     <div class="agoda-side-card">
       <div class="agoda-side-card-inner">
         <div class="agoda-hotel-row">
-          <img class="agoda-hotel-thumb" src="<?= h($img) ?>" alt="<?= h($propTitle) ?>" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1566073771259-6a8506099945?w=200&h=200&fit=crop'">
+          <?php if ($img !== ''): ?><img class="agoda-hotel-thumb" src="<?= h($img) ?>" alt="<?= h($propTitle) ?>"><?php else: ?><span class="agoda-hotel-thumb" style="display:inline-flex;align-items:center;justify-content:center;background:#f4f4f4;color:#8d8d8d;" aria-hidden="true"><i class="fa-solid fa-image"></i></span><?php endif; ?>
           <div>
             <div class="agoda-hotel-title"><?= h($propTitle) ?></div>
-            <div class="agoda-stars"><?= str_repeat('★', $propStars) ?></div>
-            <div class="agoda-rating"><b><?= h(number_format((float)$propRating,1)) ?> Excellent</b> <span style="color:#5f6368;font-size:12px"><?= h($propReviews) ?> reviews</span></div>
+            <?php if ($propStars > 0): ?><div class="agoda-stars"><?= str_repeat('★', $propStars) ?></div><?php endif; ?>
+            <?php if ($hasRating): ?><div class="agoda-rating"><b><?= h(number_format($propRating,1)) ?> Excellent</b> <span style="color:#5f6368;font-size:12px"><?= h($propReviews) ?> reviews</span></div><?php else: ?><div class="agoda-rating"><span style="color:#5f6368;font-size:12px">New property — no reviews yet</span></div><?php endif; ?>
             <div style="font-size:11px;color:#5f6368;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px"><?= h($propAddressShort) ?>...</div>
-            <a href="javascript:void(0)" class="agoda-link" style="font-size:12px">What's nearby?</a>
+
           </div>
         </div>
-        <div style="margin-top:10px;font-size:11px;color:#0f7a2b;display:flex;gap:6px;align-items:center"><i class="fa-solid fa-shield-check"></i> <?= h($calculation['cancellation_policy'] ?? $quote['calculation']['cancellation_policy'] ?? 'Stay flexible! Free cancellation') ?>.</div>
+        <?php $cancelLine = trim((string)($calculation['cancellation_policy'] ?? ($quote['calculation']['cancellation_policy'] ?? ''))); ?>
+        <?php if ($cancelLine !== ''): ?><div style="margin-top:10px;font-size:11px;color:#0f7a2b;display:flex;gap:6px;align-items:center"><i class="fa-solid fa-shield-check"></i> <?= h($cancelLine) ?>.</div><?php endif; ?>
       </div>
     </div>
 
     <div class="agoda-side-card">
       <div class="agoda-side-card-inner">
         <div class="agoda-room-box">
-          <img class="agoda-room-thumb" src="<?= h($roomImg) ?>" alt="<?= h($roomTitle) ?>" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=200&h=200&fit=crop'">
+          <?php if ($roomImg !== ''): ?><img class="agoda-room-thumb" src="<?= h($roomImg) ?>" alt="<?= h($roomTitle) ?>"><?php else: ?><span class="agoda-room-thumb" style="display:inline-flex;align-items:center;justify-content:center;background:#f4f4f4;color:#8d8d8d;" aria-hidden="true"><i class="fa-solid fa-bed"></i></span><?php endif; ?>
           <div>
             <div class="agoda-room-title">1 x <?= h($roomTitle) ?></div>
-            <div class="agoda-room-meta">Size:<?= h($roomSize) ?><br>Max:<?= h($roomMax) ?> adults<br><?= h($bed) ?></div>
+            <div class="agoda-room-meta"><?php
+              $metaBits = [];
+              if ($roomSize !== '') $metaBits[] = 'Size: ' . h($roomSize);
+              if ($roomMax > 0) $metaBits[] = 'Max: ' . h($roomMax) . ' adults';
+              if ($bed !== '') $metaBits[] = h($bed);
+              echo implode('<br>', $metaBits);
+            ?></div>
           </div>
         </div>
+        <?php if (!empty($realAmenities)): ?>
         <div style="margin-top:10px" class="agoda-amenities">
-          <div style="color:#0f7a2b"><i class="fa-solid fa-suitcase"></i> Luggage storage available<br><i class="fa-solid fa-clock"></i> 24 hours check-in<br><i class="fa-solid fa-check"></i> Book and pay now<br><span style="color:#c45a00"><i class="fa-solid fa-fire"></i> Hurry! Our last room for your dates at this price</span></div>
           <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:4px 8px">
-            <span><i class="fa-solid fa-check" style="font-size:10px"></i> Separate shower/bathtub</span><span><i class="fa-solid fa-check" style="font-size:10px"></i> Blackout curtains</span>
-            <span><i class="fa-solid fa-check" style="font-size:10px"></i> Non-smoking</span><span><i class="fa-solid fa-check" style="font-size:10px"></i> Private bathroom</span>
-            <span><i class="fa-solid fa-check" style="font-size:10px"></i> Wi-Fi [free]</span><span><i class="fa-solid fa-check" style="font-size:10px"></i> Individual air conditioning</span>
-            <span><i class="fa-solid fa-check" style="font-size:10px"></i> Coffee/tea maker</span><span><i class="fa-solid fa-check" style="font-size:10px"></i> Refrigerator</span>
-            <span><i class="fa-solid fa-check" style="font-size:10px"></i> Hair dryer</span><span><a href="#" class="agoda-link">+28 more</a></span>
+            <?php foreach (array_slice($realAmenities, 0, 8) as $amItem): ?>
+            <span><i class="fa-solid fa-check" style="font-size:10px"></i> <?= h($amItem) ?></span>
+            <?php endforeach; ?>
+            <?php if (count($realAmenities) > 8): ?><span style="color:#5f6368">+<?= count($realAmenities) - 8 ?> more</span><?php endif; ?>
           </div>
         </div>
+        <?php endif; ?>
       </div>
     </div>
 
-    <div class="agoda-green-banner"><i class="fa-solid fa-thumbs-up" style="color:#0f7a2b"></i> <span><b>Great choice of property</b> – with an average guest rating of <b>8.3</b></span></div>
-    <div class="agoda-pink-banner"><i class="fa-solid fa-bell" style="color:#c0392b"></i> Hurry! Our last room for your dates at this price</div>
+    <?php if ($hasRating): ?><div class="agoda-green-banner"><i class="fa-solid fa-thumbs-up" style="color:#0f7a2b"></i> <span><b>Great choice of property</b> – with an average guest rating of <b><?= h(number_format($propRating,1)) ?></b></span></div><?php endif; ?>
   </div>
 </div>
 

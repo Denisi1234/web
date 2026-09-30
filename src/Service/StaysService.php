@@ -126,11 +126,12 @@ class StaysService
     }
 
     /**
-     * Get property by ID
+     * Get property by ID, forwarding search context so the backend can attach
+     * per-room availability (is_available, meets_capacity, unavailability_reason).
      */
-    public function getProperty(int $id): ?array
+    public function getProperty(int $id, array $params = []): ?array
     {
-        $res = $this->apiClient->get('/properties/' . $id);
+        $res = $this->apiClient->get('/properties/' . $id, $params);
         if (!empty($res['_status']) && $res['_status'] >= 400) {
             $res = null;
         }
