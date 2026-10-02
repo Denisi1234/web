@@ -115,6 +115,7 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/host/lodge/{id}/edit', ['controller' => 'Host', 'action' => 'editLodge'], ['pass'=>['id'],'id'=>'\d+']);
         $builder->connect('/host/onboarding', ['controller' => 'Host', 'action' => 'onboarding']);
         $builder->connect('/host/profile', ['controller' => 'Host', 'action' => 'profile']);
+        $builder->connect('/host/cache-bust', ['controller' => 'Host', 'action' => 'cacheBust']);
         $builder->connect('/owner', ['controller' => 'Host', 'action' => 'dashboard']);
 
         // Admin Portal — working things only (admin_owner_portal + fastnet_admin_portal → AdminOwnerController)
@@ -129,6 +130,7 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/admin/finance/ledger', ['controller' => 'AdminOwner', 'action' => 'financeLedger']);
         $builder->connect('/admin/finance/payouts', ['controller' => 'AdminOwner', 'action' => 'payouts']);
         $builder->connect('/admin/support', ['controller' => 'AdminOwner', 'action' => 'support']);
+        $builder->connect('/admin/cache-bust', ['controller' => 'AdminOwner', 'action' => 'cacheBust']);
         $builder->connect('/admin/reviews', ['controller' => 'AdminOwner', 'action' => 'reviews']);
         $builder->connect('/admin/verification/{type}/{id}', ['controller' => 'AdminOwner', 'action' => 'verify'], ['pass'=>['type','id'],'type'=>'owner|lodge|property']);
         $builder->connect('/admin_owner', ['controller' => 'AdminOwner', 'action' => 'dashboard']);

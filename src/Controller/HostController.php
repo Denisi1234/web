@@ -56,6 +56,20 @@ class HostController extends AppController
         return (int)($this->sessionUser()['id'] ?? 0);
     }
 
+    /**
+     * Release the PHP session lock before slow backend I/O so parallel
+     * portal requests (PJAX prefetch/warmup) don't serialize on the session
+     * file. Safe: later session reads/writes transparently reopen it, and
+     * nothing below writes auth state mid-request.
+     */
+    private function releaseSession(): void
+    {
+        try {
+            $this->getRequest()->getSession()->close();
+        } catch (\Throwable $e) {
+        }
+    }
+
     /** True when the last portal fetch hit a dead backend (null/5xx) — views show retry, not false-empty. */
     private bool $backendError = false;
 
@@ -67,61 +81,122 @@ class HostController extends AppController
     }
 
     /**
+     * Clear host property and booking caches on create/edit/delete mutations.
+     */
+    private function clearHostPropertiesCache(): void
+    {
+        try {
+            $session = $this->getRequest()->getSession();
+            $session->delete('HostProperties');
+            $session->delete('HostPropertiesTs');
+            $session->delete('HostBookings');
+            $session->delete('HostBookingsTs');
+        } catch (\Throwable $e) {
+        }
+    }
+
+    /**
      * Owner-scoped property list, backend as source of truth.
      * Admin → /admin/properties (all, has host_id).
      * Owner → /properties?mine=1 (own only, incl. pending/roomless).
      * Falls back to client-side host_id filter when items carry it.
+     * Caches in session for 60s to make portal navigations instantaneous.
      */
     private function myProperties(array $headers): array
     {
         if ($this->rawToken() === '') return [];
+        $session = $this->getRequest()->getSession();
+        $cached = $session->read('HostProperties');
+        $ts = (int)$session->read('HostPropertiesTs');
+        if (is_array($cached) && !empty($cached) && $ts > time() - 60) {
+            return $cached;
+        }
+
         if ($this->isAdminUser()) {
+            $this->releaseSession();
             $res = $this->apiClient->get('/admin/properties', [], $headers);
             $this->markBackend($res);
+            if ($res === null) return is_array($cached) ? $cached : [];
             if (!empty($res) && empty($res['_status'])) {
                 $list = $res['data'] ?? (isset($res[0]) ? $res : []);
-                if (is_array($list)) return array_values($list);
+                if (is_array($list)) {
+                    $result = array_values($list);
+                    $session->write('HostProperties', $result);
+                    $session->write('HostPropertiesTs', time());
+                    return $result;
+                }
             }
         } else {
+            $this->releaseSession();
             $res = $this->apiClient->get('/properties', ['mine' => 1, 'per_page' => 50], $headers);
             $this->markBackend($res);
+            if ($res === null) return is_array($cached) ? $cached : [];
             if (!empty($res) && empty($res['_status'])) {
                 $list = $res['data'] ?? (isset($res[0]) ? $res : []);
-                if (is_array($list)) return array_values($list);
+                if (is_array($list)) {
+                    $result = array_values($list);
+                    $session->write('HostProperties', $result);
+                    $session->write('HostPropertiesTs', time());
+                    return $result;
+                }
             }
         }
         // Fallback: unscoped list filtered by host_id when present
+        $this->releaseSession();
         $res = $this->apiClient->get('/properties', ['per_page' => 50], $headers);
         $this->markBackend($res);
+        if ($res === null) return is_array($cached) ? $cached : [];
         $list = $res['data'] ?? (isset($res[0]) ? $res : []);
-        if (!is_array($list)) return [];
+        if (!is_array($list)) return is_array($cached) ? $cached : [];
         $oid = $this->ownerId();
         if (!$this->isAdminUser() && $oid > 0) {
             $scoped = array_values(array_filter($list, fn($p) => (int)($p['host_id'] ?? $p['host']['id'] ?? 0) === $oid));
             // Only use filtered result if items actually carry ownership info
             foreach ($list as $p) {
-                if (isset($p['host_id']) || isset($p['host']['id'])) return $scoped;
+                if (isset($p['host_id']) || isset($p['host']['id'])) {
+                    $session->write('HostProperties', $scoped);
+                    $session->write('HostPropertiesTs', time());
+                    return $scoped;
+                }
             }
         }
-        return array_values($list);
+        $result = array_values($list);
+        $session->write('HostProperties', $result);
+        $session->write('HostPropertiesTs', time());
+        return $result;
     }
 
     /**
      * Owner-scoped bookings. Owner → /bookings first (server-scoped by host);
-     * admin → /admin/bookings first.
+     * admin → /admin/bookings first. Caches in session for 60s.
      */
     private function myBookings(array $headers): array
     {
         if ($this->rawToken() === '') return [];
+        $session = $this->getRequest()->getSession();
+        $cached = $session->read('HostBookings');
+        $ts = (int)$session->read('HostBookingsTs');
+        if (is_array($cached) && !empty($cached) && $ts > time() - 60) {
+            return $cached;
+        }
+
         $first = $this->isAdminUser() ? '/admin/bookings' : '/bookings';
         $second = $this->isAdminUser() ? '/bookings' : '/admin/bookings';
+        $this->releaseSession();
         $res = $this->apiClient->get($first, [], $headers);
+        if ($res === null) {
+            $this->markBackend($res);
+            return is_array($cached) ? $cached : [];
+        }
         if (empty($res) || !empty($res['_status'])) {
             $res = $this->apiClient->get($second, [], $headers);
         }
         $this->markBackend($res);
         $list = $res['data'] ?? (isset($res[0]) ? $res : []);
-        return is_array($list) ? array_values($list) : [];
+        $result = is_array($list) ? array_values($list) : [];
+        $session->write('HostBookings', $result);
+        $session->write('HostBookingsTs', time());
+        return $result;
     }
 
     /**
@@ -179,6 +254,36 @@ class HostController extends AppController
         return $this->render('/Pages/host-dashboard');
     }
 
+    /**
+     * Cache-bust bridge for direct-API saves: the browser writes straight to
+     * the backend, then hits this (fast, no backend call) to drop stale
+     * session caches (profile, onboarding draft) before landing on the list
+     * page. `go` is restricted to local paths. quiet=1 returns 204 for
+     * background busts after optimistic saves.
+     */
+    public function cacheBust()
+    {
+        $q = $this->getRequest()->getQueryParams();
+        $scope = array_values(array_filter(array_map('trim', explode(',', (string)($q['scope'] ?? '')))));
+        if (in_array('profile', $scope, true)) {
+            $sess = $this->getRequest()->getSession();
+            $sess->delete('UserProfile');
+            $sess->delete('UserProfileTs');
+        }
+        if (!empty($q['draft'])) {
+            $this->getRequest()->getSession()->delete('OnboardDraft');
+        }
+        if (!empty($q['quiet'])) {
+            $this->autoRender = false;
+            return $this->response->withStatus(204);
+        }
+        $go = (string)($q['go'] ?? '/host/dashboard');
+        if (!str_starts_with($go, '/') || str_starts_with($go, '//')) {
+            $go = '/host/dashboard';
+        }
+        return $this->redirect($go);
+    }
+
     public function listings()
     {
         $headers = $this->hostHeaders();
@@ -187,6 +292,31 @@ class HostController extends AppController
         $backendError = $this->backendError;
         $this->set(compact('userProfile', 'properties', 'backendError'));
         return $this->render('/Pages/host-listings');
+    }
+
+    /**
+     * Map-picker vars for location steps: token/style resolved server-side
+     * (2s fail-fast, cached 5min) + an instant static preview image, so the
+     * step-2 map paints immediately without waiting on extra round trips.
+     */
+    private function mapPickVars(float $lat, float $lng): array
+    {
+        $mapToken = '';
+        $mapStyle = 'mapbox://styles/mapbox/streets-v12';
+        $mapPreviewUrl = '';
+        try {
+            $maps = new \App\Service\MapService($this->apiClient);
+            $cfg = $maps->getMapConfig(2);
+            if (!empty($cfg['token']) && is_string($cfg['token']) && str_starts_with($cfg['token'], 'pk.')) {
+                $mapToken = $cfg['token'];
+            }
+            if (!empty($cfg['style']) && is_string($cfg['style'])) {
+                $mapStyle = $cfg['style'];
+            }
+            $mapPreviewUrl = $maps->getStaticMapUrl($lat, $lng, 12, 640, 340);
+        } catch (\Throwable $e) {
+        }
+        return compact('mapToken', 'mapStyle', 'mapPreviewUrl');
     }
 
     /**
@@ -249,6 +379,7 @@ class HostController extends AppController
                     $this->Flash->error(__($this->propertyErrorMessage($res)));
                 } else {
                     $pid = (int)(($res['id'] ?? $res['data']['id'] ?? 0));
+                    $this->clearHostPropertiesCache();
                     if ($pid > 0) $this->submitLodgeVerification($pid, $headers);
                     $this->Flash->success(__('Property created and submitted for verification. Add rooms next.'));
                     return $this->redirect(['action' => 'rooms']);
@@ -383,8 +514,10 @@ class HostController extends AppController
         $rooms = $rRes['data'] ?? (isset($rRes[0]) ? $rRes : []);
         if (!is_array($rooms)) $rooms = [];
         // Fallback per-property only if /rooms empty — capped at 3 to avoid
-        // N+1 fan-out (~1.9s each) blocking sidebar navigation
-        if (empty($rooms) && !empty($properties)) {
+        // N+1 fan-out (~1.9s each) blocking sidebar navigation.
+        // Skipped when /rooms itself failed transport (null): the backend is
+        // down, so per-property calls would just burn 3 more timeouts.
+        if (empty($rooms) && $rRes !== null && !empty($properties)) {
             $agg = [];
             foreach (array_slice($properties, 0, 3) as $p) {
                 $pid = $p['id'] ?? null;
@@ -599,6 +732,10 @@ class HostController extends AppController
         }
         $propId = (int)($property['id'] ?? $propId);
 
+        // Wizard step for the template (1 Basics → 2 Location → 3 Photos → 4 Review).
+        $step = (int)$this->getRequest()->getQuery('step', 1);
+        if ($step < 1 || $step > 4) $step = 1;
+
         // Aggregate room types/amenities for chips
         $rRes = $this->apiClient->get('/properties/' . $propId . '/rooms', [], $headers);
         $rooms = $rRes['data'] ?? (isset($rRes[0]) ? $rRes : []);
@@ -624,13 +761,19 @@ class HostController extends AppController
                 if (!empty($res['_status']) && (int)$res['_status'] >= 400) {
                     $this->Flash->error(__($res['message'] ?? 'Could not update lodge.'));
                 } else {
+                    $this->clearHostPropertiesCache();
                     $this->Flash->success(__('Lodge updated.'));
                     return $this->redirect(['action' => 'listings']);
                 }
             }
         }
 
-        $this->set(compact('userProfile', 'property', 'rooms'));
+        $this->set(compact('userProfile', 'property', 'rooms', 'step'));
+        if ($step === 2) {
+            $pLat = is_numeric($property['latitude'] ?? $property['lat'] ?? null) ? (float)($property['latitude'] ?? $property['lat']) : -6.7924;
+            $pLng = is_numeric($property['longitude'] ?? $property['lng'] ?? null) ? (float)($property['longitude'] ?? $property['lng']) : 39.2083;
+            $this->set($this->mapPickVars($pLat, $pLng));
+        }
         return $this->render('/Pages/host-lodge-form');
     }
 
@@ -678,6 +821,7 @@ class HostController extends AppController
                     $this->Flash->error(__('City is required — pick your location on the map.'));
                     $step = 2;
                     $this->set(compact('userProfile', 'draft', 'step'));
+                    $this->set($this->mapPickVars((float)($draft['latitude'] ?? -6.7924), (float)($draft['longitude'] ?? 39.2083)));
                     return $this->render('/Pages/host-onboarding');
                 }
                 $session->write('OnboardDraft', $draft);
@@ -765,14 +909,25 @@ class HostController extends AppController
             $pid = (int)(($res['id'] ?? $res['data']['id'] ?? 0));
             $roomFails = [];
             $roomUnauth = false;
-            foreach ((array)($draft['rooms'] ?? []) as $rm) {
-                if ($pid <= 0) break;
-                $rRes = $this->apiClient->post('/properties/' . $pid . '/rooms', $rm, $headers);
-                if (is_array($rRes) && (int)($rRes['_status'] ?? 0) === 401) { $roomUnauth = true; break; }
-                if (empty($rRes) || (!empty($rRes['_status']) && (int)$rRes['_status'] >= 400)) {
-                    $roomFails[] = (string)($rm['room_number'] ?? '?');
+            
+            if ($pid > 0) {
+                $multiRequests = [];
+                foreach ((array)($draft['rooms'] ?? []) as $i => $rm) {
+                    $multiRequests[$i] = ['endpoint' => '/properties/' . $pid . '/rooms', 'data' => $rm];
+                }
+                if (!empty($multiRequests)) {
+                    $multiResults = $this->apiClient->postMulti($multiRequests, $headers);
+                    foreach ($multiResults as $i => $rRes) {
+                        if (is_array($rRes) && (int)($rRes['_status'] ?? 0) === 401) { $roomUnauth = true; }
+                        if (empty($rRes) || (!empty($rRes['_status']) && (int)$rRes['_status'] >= 400)) {
+                            // Extract original room number to report failure
+                            $rm = $multiRequests[$i]['data'];
+                            $roomFails[] = (string)($rm['room_number'] ?? '?');
+                        }
+                    }
                 }
             }
+            
             if ($roomUnauth) {
                 // Lodge exists — rooms can be added after re-login; keep no stale draft
                 $session->delete('OnboardDraft');
@@ -780,6 +935,7 @@ class HostController extends AppController
                 return $this->redirect('/login?redirect=' . urlencode('/host/rooms/add?property_id=' . $pid));
             }
             if ($pid > 0) $this->submitLodgeVerification($pid, $headers);
+            $this->clearHostPropertiesCache();
             $session->delete('OnboardDraft');
             $nRooms = count((array)($draft['rooms'] ?? [])) - count($roomFails);
             if (!empty($roomFails)) {
@@ -790,6 +946,9 @@ class HostController extends AppController
         }
 
         $this->set(compact('userProfile', 'draft', 'step'));
+        if ($step === 2) {
+            $this->set($this->mapPickVars((float)($draft['latitude'] ?? -6.7924), (float)($draft['longitude'] ?? 39.2083)));
+        }
         return $this->render('/Pages/host-onboarding');
     }
 

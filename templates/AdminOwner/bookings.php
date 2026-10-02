@@ -47,7 +47,7 @@ $this->assign('page_actions', '<span style="font-size:13px;color:var(--p-text-2)
           <td style="text-align:right;font-weight:600;white-space:nowrap">TSh <?= number_format($price) ?></td>
           <td><span class="p-badge <?= $badge ?>"><?= h($b['status'] ?? $b['payment_status'] ?? '—') ?></span></td>
           <td>
-            <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'bookings'], 'style' => 'display:flex;gap:6px']) ?>
+            <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'bookings'], 'style' => 'display:flex;gap:6px', 'data-api' => 'PATCH /admin/bookings/' . $bid . '/status', 'data-api-strip' => 'booking_id', 'data-api-ok' => 'Booking status updated.', 'data-opt' => 'patch', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'booking', 'data-opt-badgetext' => 'raw', 'data-opt-bust' => '_bookings', 'data-api-go' => '/admin/cache-bust?scope=_bookings&go=' . urlencode('/admin/bookings')]) ?>
               <?= $this->Form->hidden('booking_id', ['value' => $bid]) ?>
               <select name="status" class="form-select form-select-sm" style="min-height:32px;min-width:120px">
                 <?php foreach (['Pending', 'Confirmed', 'Checked In', 'Completed', 'Cancelled'] as $opt): ?>

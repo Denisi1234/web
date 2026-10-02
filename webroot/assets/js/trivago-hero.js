@@ -338,7 +338,7 @@ function handleHeroDestInput(e) {
 
     const titleEl = document.getElementById('hero_recent_header_title');
     if (titleEl) {
-        titleEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-primary me-1"></i> Searching Mapbox...`;
+        titleEl.innerHTML = `<span class="p-dots" aria-hidden="true"><span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span></span> Searching Mapbox...`;
     }
 
     heroSuggestTimeout = setTimeout(() => {

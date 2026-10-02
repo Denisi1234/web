@@ -211,12 +211,48 @@
     }
 }
 
+/* 4. Single centered action loader — one professional indicator for ANY
+   slow action site-wide. Compact pill, centered, no scroll lock. */
+#fastnet-nav-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 999997;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.45);
+    pointer-events: auto;
+    font-family: 'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+#fastnet-nav-loader.visible { display: flex; }
+.fastnet-nav-card {
+    background: #fff;
+    border: 1px solid #e8eaed;
+    border-radius: 9999px;
+    padding: 12px 22px 12px 14px;
+    box-shadow: 0 8px 32px rgba(60, 64, 67, 0.20), 0 2px 8px rgba(60, 64, 67, 0.10);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.fastnet-nav-ring {
+    width: 26px;
+    height: 26px;
+    flex: none;
+    border-radius: 50%;
+    border: 3px solid #e8eaed;
+    border-top-color: #1a73e8;
+    animation: fastnet-rotate 0.8s linear infinite;
+}
+.fastnet-nav-txt { font-size: 14px; font-weight: 500; color: #3c4043; }
+
 /* Accessibility: Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
     #fastnet-top-progress,
     .fastnet-spinner-svg,
     .fastnet-spinner-circle,
-    .fastnet-bg-spinner {
+    .fastnet-bg-spinner,
+    .fastnet-nav-ring {
         animation: none !important;
         transition: none !important;
     }

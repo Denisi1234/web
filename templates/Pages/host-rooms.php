@@ -3,6 +3,23 @@ $this->assign('title', 'My Rooms');
 $this->assign('portal_title', 'Rooms');
 $this->assign('page_actions', '<a href="' . $this->Url->build('/host/rooms/add') . '" class="p-btn">Add room</a>');
 ?>
+<?php if (!empty($properties)): ?>
+<div class="p-card mb-3">
+  <?= $this->Form->create(null, ['type' => 'get', 'url' => '/host/rooms/add', 'style' => 'display:flex;gap:8px;flex-wrap:wrap;align-items:end']) ?>
+    <div style="flex:1;min-width:200px">
+      <label for="add-room-prop" style="font-size:12px;font-weight:600;color:var(--p-text-2)">Add room — pick a property first *</label>
+      <select id="add-room-prop" name="property_id" class="form-select" style="min-height:40px" required>
+        <?php foreach (($properties ?? []) as $p): ?>
+          <option value="<?= h($p['id']) ?>"><?= h($p['name']) ?> — <?= h($p['city'] ?? '') ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+    <button class="p-btn" type="submit" style="min-height:40px">Add room →</button>
+  <?= $this->Form->end() ?>
+</div>
+<?php else: ?>
+<div class="p-card mb-3"><div class="p-empty">No property yet — <a href="<?= $this->Url->build('/host/listings/add') ?>">create a property first</a>, then add rooms to it.</div></div>
+<?php endif; ?>
 <div class="p-card mb-3">
   <?= $this->Form->create(null, ['type' => 'get', 'style' => 'display:flex;gap:8px;flex-wrap:wrap;align-items:end']) ?>
     <div style="flex:1;min-width:200px">

@@ -23,6 +23,20 @@ class AccountController extends AppController
         $this->authService = new AuthService($this->apiClient);
     }
 
+    /**
+     * Session-independent auth token (persistent cookie survives session loss).
+     */
+    private function portalToken(): string
+    {
+        $session = $this->getRequest()->getSession();
+        $raw = $session->read('auth_token');
+        $token = trim((string)$raw);
+        if ($token === '') {
+            $token = $this->authService->readToken($this->getRequest());
+        }
+        return $token;
+    }
+
     public function menu()
     {
         $userProfile = $this->authService->getPersonalDetails();
@@ -33,7 +47,7 @@ class AccountController extends AppController
     public function myProfile()
     {
         $session = $this->getRequest()->getSession();
-        $token = trim((string)$session->read('auth_token'));
+        $token = $this->portalToken();
         $headers = $token !== '' ? ['Authorization' => 'Bearer ' . $token] : [];
 
         // Real profile: merge default + session (extra fields) + backend (authoritative) — no fake Deni
@@ -95,7 +109,7 @@ class AccountController extends AppController
     public function accountSecurity()
     {
         $session = $this->getRequest()->getSession();
-        $token = trim((string)$session->read('auth_token'));
+        $token = $this->portalToken();
         $userProfile = $this->authService->getPersonalDetails($token);
 
         if ($this->getRequest()->is(['post', 'put'])) {
@@ -110,11 +124,14 @@ class AccountController extends AppController
                 }
                 $this->authService->logout($session);
                 try { $session->destroy(); } catch (\Throwable $e) {}
+                $clearCookie = function (\Cake\Http\Response $resp): \Cake\Http\Response {
+                    return $this->authService->clearToken($resp);
+                };
                 if ($isJson) {
-                    return $this->response->withType('application/json')->withStringBody(json_encode(['status'=>'success','message'=>'Account deleted']));
+                    return $clearCookie($this->response->withType('application/json')->withStringBody(json_encode(['status'=>'success','message'=>'Account deleted'])));
                 }
                 $this->Flash->success(__('Your account has been deleted.'));
-                return $this->redirect('/');
+                return $clearCookie($this->redirect('/'));
             }
 
             $currentPassword = trim((string)($data['current_password'] ?? ''));
@@ -175,7 +192,7 @@ class AccountController extends AppController
     public function myBooking()
     {
         $session = $this->getRequest()->getSession();
-        $token = trim((string)$session->read('auth_token'));
+        $token = $this->portalToken();
         $userProfile = $this->authService->getPersonalDetails($token);
         $bookings = [];
 
@@ -215,7 +232,7 @@ class AccountController extends AppController
         $isJson = $this->getRequest()->is('json') || $this->getRequest()->getHeaderLine('Content-Type') === 'application/json';
         $data = $isJson ? (array)json_decode((string)$this->getRequest()->getBody(), true) : (array)$this->getRequest()->getData();
         $bookingId = trim((string)($data['booking_id'] ?? ''));
-        $token = trim((string)$this->getRequest()->getSession()->read('auth_token'));
+        $token = $this->portalToken();
         $headers = $token !== '' ? ['Authorization' => 'Bearer ' . $token] : [];
 
         if ($bookingId === '') {
@@ -299,7 +316,7 @@ class AccountController extends AppController
     public function myWishlists()
     {
         $session = $this->getRequest()->getSession();
-        $token = trim((string)$session->read('auth_token'));
+        $token = $this->portalToken();
         $userProfile = $this->authService->getPersonalDetails($token);
         $wishlists = [];
         $headers = $token !== '' ? ['Authorization' => 'Bearer ' . $token] : [];
@@ -318,7 +335,7 @@ class AccountController extends AppController
     {
         $this->request->allowMethod(['post']);
         $session = $this->getRequest()->getSession();
-        $token = trim((string)$session->read('auth_token'));
+        $token = $this->portalToken();
         $headers = $token !== '' ? ['Authorization' => 'Bearer ' . $token] : [];
         $data = json_decode((string)$this->getRequest()->getBody(), true) ?: $this->getRequest()->getData();
         $pid = (int)($data['property_id'] ?? 0);
@@ -331,7 +348,7 @@ class AccountController extends AppController
     {
         $this->request->allowMethod(['delete']);
         $session = $this->getRequest()->getSession();
-        $token = trim((string)$session->read('auth_token'));
+        $token = $this->portalToken();
         $headers = $token !== '' ? ['Authorization' => 'Bearer ' . $token] : [];
         $res = $this->apiClient->delete('/wishlist/'.rawurlencode($id), $headers);
         return $this->response->withType('application/json')->withStringBody(json_encode($res ?? ['ok'=>true]));
@@ -340,7 +357,7 @@ class AccountController extends AppController
     public function wishlistLists(): \Cake\Http\Response
     {
         $session = $this->getRequest()->getSession();
-        $token = trim((string)$session->read('auth_token'));
+        $token = $this->portalToken();
         $headers = $token !== '' ? ['Authorization'=>'Bearer '.$token] : [];
         $res = $this->apiClient->get('/wishlist-lists', [], $headers);
         return $this->response->withType('application/json')->withStringBody(json_encode($res ?? []));
@@ -350,7 +367,7 @@ class AccountController extends AppController
     {
         $this->request->allowMethod(['post']);
         $session = $this->getRequest()->getSession();
-        $token = trim((string)$session->read('auth_token'));
+        $token = $this->portalToken();
         $headers = $token !== '' ? ['Authorization' => 'Bearer ' . $token] : [];
         $data = json_decode((string)$this->getRequest()->getBody(), true) ?: $this->getRequest()->getData();
         $name = trim((string)($data['name'] ?? ''));
@@ -362,7 +379,7 @@ class AccountController extends AppController
     public function recentlyViewed()
     {
         $session = $this->getRequest()->getSession();
-        $token = trim((string)$session->read('auth_token'));
+        $token = $this->portalToken();
         $userProfile = $this->authService->getPersonalDetails($token);
         
         $recentStays = $session->read('recently_viewed_stays') ?? [];

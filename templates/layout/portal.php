@@ -8,62 +8,49 @@
   <meta name="csrfToken" content="<?= $this->request->getAttribute('csrfToken'); ?>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://api.mapbox.com">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
   <style>
     /* Instant-nav progress bar (Carbon blue-60) + swap transition */
     #pBar{position:fixed;top:0;left:0;height:3px;width:0;background:#0f62fe;z-index:2000;transition:width .25s ease,opacity .3s ease;opacity:0}
     #pBar.on{opacity:1}
-    #main-content.pjax-swap{animation:pFade .18s ease}
-    @keyframes pFade{from{opacity:.35}to{opacity:1}}
-    /* ── Self-contained loaders: inline only, system fonts, zero external
-       requests — they paint even when CDN/fonts/connection hang ── */
-    #pBoot{position:fixed;inset:0;background:#f4f4f4;z-index:3000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
-    #pBoot .mark{width:44px;height:44px;background:#0f62fe;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:20px}
-    #pBoot .ring{width:28px;height:28px;border-radius:50%;border:3px solid #e0e0e0;border-top-color:#0f62fe;animation:pSpin .8s linear infinite}
-    #pBoot .txt{font-size:13px;color:#525252}
-    @keyframes pSpin{to{transform:rotate(360deg)}}
-    .p-skel{display:grid;gap:12px;padding:4px 0}
-    .p-skel .sk{border:1px solid #e0e0e0;background:#fff;padding:16px}
-    .p-skel .ln{height:12px;background:linear-gradient(90deg,#e0e0e0 25%,#f4f4f4 50%,#e0e0e0 75%);background-size:200% 100%;animation:pShimmer 1.2s ease infinite}
-    .p-skel .ln.t{width:38%;height:16px;margin-bottom:10px}
-    .p-skel .ln.m{width:92%}.p-skel .ln.s{width:64%}
-    .p-skel .row{display:flex;gap:8px;margin-top:12px}
-    .p-skel .pill{height:32px;width:110px;background:linear-gradient(90deg,#e0e0e0 25%,#f4f4f4 50%,#e0e0e0 75%);background-size:200% 100%;animation:pShimmer 1.2s ease infinite}
-    @keyframes pShimmer{from{background-position:200% 0}to{background-position:-200% 0}}
-    .p-spin{display:inline-block;width:14px;height:14px;flex:none;border-radius:50%;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;animation:pSpin .7s linear infinite;vertical-align:-2px;margin-right:8px}
-    .p-btn.ghost .p-spin{border-color:rgba(15,98,254,.25);border-top-color:#0f62fe}
-    .p-btn[disabled]{opacity:.75;cursor:wait}
+    #main-content{transition:opacity .18s ease}
+    #main-content.pjax-swap{animation:pFade .15s ease}
+    /* Professional shift state: content softly dims while the next page
+       loads (kicks in only if the fetch outlives ~120ms, so instant
+       cache swaps never flicker). Non-blocking — no overlay, no spinner. */
+    #main-content.pjax-pending{opacity:.55;pointer-events:none}
+    /* Sidebar press feedback: instant tactile nudge on every nav tap */
+    .p-side a{transition:background-color .12s ease,transform .12s ease}
+    .p-side a:active{transform:translateX(2px)}
+    @keyframes pFade{from{opacity:.4}to{opacity:1}}
+    /* Button micro-dots loader lives in fastnet-dots.css (single source). */
+    .p-btn[disabled]{opacity:.8;cursor:wait}
     @media (prefers-reduced-motion:reduce){
-      #pBar{transition:none}#main-content.pjax-swap{animation:none}
-      #pBoot .ring,.p-skel .ln,.p-skel .pill,.p-spin{animation:none}
+      #pBar{transition:none}#main-content,#main-content.pjax-swap{animation:none;transition:none}.p-side a{transition:none}.p-side a:active{transform:none}
     }
-    #pAuthBar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#fff1f1;border-bottom:1px solid #e0e0e0;border-left:3px solid #da1e28;padding:10px 32px;font-size:13px;color:#161616}
-    #pAuthBar .p-btn{min-height:32px;font-size:13px}
-    @media(max-width:991px){#pAuthBar{padding:10px 16px}}
   </style>
   <?= $this->Html->css(['/assets/css/bootstrap.min.css', '/assets/css/fontawesome.css', '/assets/css/portal.css']) ?>
+  <?= $this->Html->css('/assets/css/fastnet-dots.css') ?>
+  <?= $this->element('api_direct') ?>
   <?= $this->fetch('meta') ?>
   <?= $this->fetch('css') ?>
 </head>
 <body class="portal">
-<div id="pBoot" role="status" aria-label="Loading portal"><div class="mark">F</div><div class="ring" aria-hidden="true"></div><div class="txt">Loading portal…</div></div>
 <div id="pBar" aria-hidden="true"></div>
 <div class="p-shell" id="pShell">
   <?= $this->element('portal_sidebar', $this->viewVars) ?>
   <div class="p-scrim" id="pScrim"></div>
   <div class="p-main">
     <?= $this->element('portal_topbar', $this->viewVars) ?>
-    <?php if (empty($isLoggedIn)): ?>
-    <div id="pAuthBar" role="note">
-      <span><strong>You are signed out.</strong> Sign in to see your live properties, bookings and earnings.</span>
-      <a class="p-btn" href="<?= $this->Url->build('/login') ?>">Sign in</a>
-    </div>
-    <?php endif; ?>
     <div class="p-flash"><?= $this->Flash->render() ?></div>
     <main class="p-content" id="main-content"><?= $this->fetch('content') ?></main>
   </div>
 </div>
 <?= $this->Html->script(['/assets/js/popper.min.js', '/assets/js/bootstrap.min.js'], ['defer' => true]) ?>
+<?= $this->Html->script('/assets/js/fastnet-api.js') ?>
 <script>
 (function () {
   var shell = document.getElementById('pShell');
@@ -77,17 +64,11 @@
   });
   if (scrim) scrim.addEventListener('click', function () { shell.classList.remove('nav-open'); });
 
-  /* ── Boot overlay: hide as soon as shell is interactive (never waits on
-     external CSS/fonts/JS). Absolute failsafe hides it regardless. ── */
-  function hideBoot() { var b = document.getElementById('pBoot'); if (b && b.parentNode) b.parentNode.removeChild(b); }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hideBoot);
-  else hideBoot();
-  setTimeout(hideBoot, 2500);
-
   /* ── Instant portal nav: hover-prefetch + content swap (no full reload) ──
      Sidebar shell, CSS, fonts and JS stay alive; only #main-content,
      flash and titles swap. Same-origin GET links only; forms do full POST.
-     In-memory cache 60s. Falls back to full load on any error. */
+     In-memory cache 60s. Falls back to full load on any error.
+     No loading screens: the current page stays put until the swap. ── */
   var bar = document.getElementById('pBar');
   var cache = new Map();
   var TTL = 60000;
@@ -95,32 +76,25 @@
   var navSeq = 0;
   var dead = false; // set on first redirected (logged-out) response: no more warming
   function barStart() { if (!bar) return; bar.classList.add('on'); bar.style.width = '15%'; requestAnimationFrame(function(){ bar.style.width = '65%'; }); }
-  function barDone() { if (!bar) return; bar.style.width = '100%'; setTimeout(function(){ bar.classList.remove('on'); bar.style.width = '0'; }, 250); }
-  // Skeleton placeholder for cold navigations: shows only if fetch outlives
-  // 150ms, so warm swaps never flash. Pure inline CSS — no network needed.
-  var skelT = null;
-  function skelStart() {
-    skelStop();
-    skelT = setTimeout(function () {
+  function barDone() { navBusy = false; pendStop(); if (!bar) return; bar.style.width = '100%'; setTimeout(function(){ bar.classList.remove('on'); bar.style.width = '0'; }, 250); }
+  // Pending shift indicator: dim the outgoing content only when loading
+  // takes perceptible time — instant swaps stay flicker-free.
+  var pendT = null;
+  function pendStart() {
+    pendStop();
+    pendT = setTimeout(function () {
       var cur = document.getElementById('main-content');
-      if (!cur || cur.dataset.skel === '1') return;
-      cur.dataset.skel = '1';
-      cur.setAttribute('aria-busy', 'true');
-      cur.innerHTML = '<div class="p-skel" aria-hidden="true">'
-        + '<div class="sk"><div class="ln t"></div><div class="ln m"></div><div class="ln s" style="margin-top:8px"></div><div class="row"><div class="pill"></div><div class="pill"></div></div></div>'
-        + '<div class="sk"><div class="ln t"></div><div class="ln m"></div><div class="ln s" style="margin-top:8px"></div></div>'
-        + '<div class="sk"><div class="ln t"></div><div class="ln m"></div></div>'
-        + '</div>';
-    }, 150);
+      if (cur) cur.classList.add('pjax-pending');
+    }, 120);
   }
-  function skelStop() {
-    if (skelT) { clearTimeout(skelT); skelT = null; }
+  function pendStop() {
+    if (pendT) { clearTimeout(pendT); pendT = null; }
     var cur = document.getElementById('main-content');
-    if (cur) { delete cur.dataset.skel; cur.removeAttribute('aria-busy'); }
+    if (cur) cur.classList.remove('pjax-pending');
   }
   function setActive(link) {
-    shell.querySelectorAll('.p-link.active').forEach(function (el) { el.classList.remove('active'); });
-    if (link) link.classList.add('active');
+    shell.querySelectorAll('.p-link.active').forEach(function (el) { el.classList.remove('active'); el.removeAttribute('aria-current'); });
+    if (link) { link.classList.add('active'); link.setAttribute('aria-current', 'page'); }
     if (isMobile()) shell.classList.remove('nav-open');
   }
   function markActiveByUrl(url) {
@@ -155,9 +129,25 @@
     try { doc = new DOMParser().parseFromString(html, 'text/html'); } catch (e) { return false; }
     var main = doc.getElementById('main-content');
     if (!main) return false;
+    // Auth-loss guard: if the current page has an admin sidebar but the
+    // fetched page does not (session expired between prefetch and render),
+    // discard the cached entry and force a full navigation so the server
+    // can redirect to /login properly instead of silently rendering a
+    // logged-out page inside the admin shell.
+    var curRole = document.querySelector('.p-role');
+    var newRole = doc.querySelector('.p-role');
+    if (curRole && newRole && curRole.textContent.trim() !== newRole.textContent.trim()) {
+      cache.delete(url);
+      return false;
+    }
+    // Also detect login-page content being swapped into the portal shell
+    if (doc.querySelector('form[action*="/login"]') || doc.querySelector('.login-form')) {
+      cache.delete(url);
+      return false;
+    }
     var cur = document.getElementById('main-content');
-    skelStop();
     cur.innerHTML = main.innerHTML;
+    pendStop();
     cur.classList.remove('pjax-swap');
     void cur.offsetWidth;
     cur.classList.add('pjax-swap');
@@ -175,7 +165,8 @@
     return true;
   }
   function prefetch(url) {
-    if (dead || cache.has(url)) return;
+    if (dead || cache.has(url) || document.hidden) return;
+    if (navigator.connection && (navigator.connection.saveData || /^(slow-2g|2g)$/.test(navigator.connection.effectiveType || ''))) return;
     try {
       fetch(url, {headers: {'X-Requested-With': 'XMLHttpRequest'}, credentials: 'same-origin'})
         .then(function (r) {
@@ -184,10 +175,16 @@
           if (!r.ok || r.redirected) { dead = true; return ''; }
           return r.text();
         })
-        .then(function (html) { if (html) cache.set(url, {html: html, ts: Date.now()}); })
+        .then(function (html) {
+          if (!html) return;
+          var curRole = document.querySelector('.p-role');
+          if (curRole && html.indexOf(curRole.textContent.trim()) === -1) { dead = true; return; }
+          cache.set(url, {html: html, ts: Date.now()});
+        })
         .catch(function () {});
     } catch (e) {}
   }
+  var navBusy = false; // true while a click-navigation fetch is in flight
   function navigate(link, url) {
     var my = ++navSeq;
     setActive(link);
@@ -205,7 +202,8 @@
       cache.delete(url);
     }
     barStart();
-    skelStart();
+    pendStart();
+    navBusy = true;
     fetch(url, {headers: {'X-Requested-With': 'XMLHttpRequest'}, credentials: 'same-origin'})
       .then(function (r) {
         // Session expired etc. → server redirects to /login: do a real
@@ -220,65 +218,121 @@
         if (!swapDoc(url, html)) window.location.href = url;
         barDone();
       })
-      .catch(function () { skelStop(); if (my === navSeq) window.location.href = url; });
+      .catch(function () { if (my === navSeq) window.location.href = url; });
   }
   // Silent background refresh for stale entries — next visit is fresh
-  function refresh(url, my) {
-    if (dead) return;
+  function refresh(url, my) {    if (dead || document.hidden) return;
+    if (navigator.connection && (navigator.connection.saveData || /^(slow-2g|2g)$/.test(navigator.connection.effectiveType || ''))) return;
     try {
       fetch(url, {headers: {'X-Requested-With': 'XMLHttpRequest'}, credentials: 'same-origin'})
         .then(function (r) {
           if (!r.ok || r.redirected) { dead = true; return ''; }
           return r.text();
         })
-        .then(function (html) { if (html && my === navSeq) cache.set(url, {html: html, ts: Date.now()}); })
+        .then(function (html) {
+          if (!html || my !== navSeq) return;
+          var curRole = document.querySelector('.p-role');
+          if (curRole && html.indexOf(curRole.textContent.trim()) === -1) { dead = true; return; }
+          cache.set(url, {html: html, ts: Date.now()});
+        })
         .catch(function () {});
     } catch (e) {}
-  }
   function isPjaxable(a) {
     if (!a || !a.href || a.target === '_blank' || a.hasAttribute('download')) return false;
     if (a.hostname !== window.location.hostname) return false;
+    var path = '';
+    try { path = new URL(a.href, window.location.origin).pathname; } catch (e) { return false; }
+    if (path === '/logout' || path.indexOf('/logout') === 0) return false;
+    if (a.hasAttribute('data-no-pjax') || a.getAttribute('role') === 'button') return false;
     return true;
   }
   document.addEventListener('click', function (e) {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    var a = e.target.closest ? e.target.closest('.p-side a, .p-brand') : null;
+    var a = e.target.closest ? e.target.closest('a[href]') : null;
     if (!a || !isPjaxable(a)) return;
-    e.preventDefault();
-    navigate(a, a.href);
+    if (a.target && a.target !== '_self') return;
+    var href = a.getAttribute('href') || '';
+    if (href.charAt(0) === '#' || href.indexOf('tel:') === 0 || href.indexOf('mailto:') === 0 || href.indexOf('javascript:') === 0) return;
+
+    var path = '';
+    try { path = new URL(a.href, window.location.origin).pathname; } catch (err) { path = ''; }
+    var isPortalNav = (path.indexOf('/host') === 0 || path.indexOf('/admin') === 0);
+
+    if (isPortalNav && (a.closest('.p-side, .p-top, #main-content') || a.classList.contains('p-brand'))) {
+      e.preventDefault();
+      navigate(a, a.href);
+      return;
+    }
+
+    // App loading indicator for every other same-origin navigation
+    // (external links, full downloads): progress bar + button dots.
+    if (a.dataset.loading === '1') return;
+    a.dataset.loading = '1';
+    // Shared dot loader (fastnet-api.js) with inline fallback.
+    if (window.FastAPI && FastAPI.btnDots) FastAPI.btnDots(a, true);
+    else if (!a.querySelector('.p-dots')) {
+      var d = document.createElement('span');
+      d.className = 'p-dots';
+      d.setAttribute('aria-hidden', 'true');
+      d.innerHTML = '<span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span>';
+      a.insertBefore(d, a.firstChild);
+    }
+    barStart();
   });
-  // Warm cache on hover / keyboard focus — page is ready before the click
+  // Warm cache on hover / press / keyboard focus — the fetch starts before
+  // the click completes, so the swap lands the moment you release.
   var hoverT = null;
   document.addEventListener('mouseover', function (e) {
-    var a = e.target.closest ? e.target.closest('.p-side a') : null;
+    var a = e.target.closest ? e.target.closest('a[href]') : null;
     if (!a || !isPjaxable(a)) return;
+    var path = '';
+    try { path = new URL(a.href, window.location.origin).pathname; } catch (err) { return; }
+    if (path.indexOf('/host') !== 0 && path.indexOf('/admin') !== 0) return;
     clearTimeout(hoverT);
-    hoverT = setTimeout(function () { prefetch(a.href); }, 120);
+    hoverT = setTimeout(function () { prefetch(a.href); }, 60);
+  }, {passive: true});
+  document.addEventListener('pointerdown', function (e) {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target.closest ? e.target.closest('a[href]') : null;
+    if (!a || !isPjaxable(a)) return;
+    var path = '';
+    try { path = new URL(a.href, window.location.origin).pathname; } catch (err) { return; }
+    if (path.indexOf('/host') === 0 || path.indexOf('/admin') === 0) prefetch(a.href);
   }, {passive: true});
   document.addEventListener('focusin', function (e) {
-    var a = e.target.closest ? e.target.closest('.p-side a') : null;
-    if (a && isPjaxable(a)) prefetch(a.href);
+    var a = e.target.closest ? e.target.closest('a[href]') : null;
+    if (!a || !isPjaxable(a)) return;
+    var path = '';
+    try { path = new URL(a.href, window.location.origin).pathname; } catch (err) { return; }
+    if (path.indexOf('/host') === 0 || path.indexOf('/admin') === 0) prefetch(a.href);
   });
-  // Seed cache with the current page (free) + warm every sidebar target
-  // on idle, 2 at a time. After warm-up each click swaps from memory (~1ms).
-  // Session lock is released server-side during slow backend calls, so these
-  // run in parallel instead of queuing.
+  // Seed cache with the current page (free) + warm top sidebar targets
+  // on idle, 2 at a time. Hover-prefetch already covers user intent, so
+  // idle warming is capped, delayed, and paused while a real navigation
+  // is in flight — previously this fired a full-page render (with backend
+  // calls) per sidebar link and serialized on the session lock, making
+  // every portal page feel slow. After warm-up each click swaps from
+  // memory (~1ms). Session lock is released server-side during slow
+  // backend calls, so these run in parallel instead of queuing.
   try {
     cache.set(window.location.href, {html: '<!doctype html>' + document.documentElement.outerHTML, ts: Date.now()});
   } catch (e) {}
+  var WARM_MAX = 2;
   function warmAll() {
     try {
-      if (dead) return;
-      if (navigator.connection && navigator.connection.saveData) return;
+      if (dead || navBusy || document.hidden) return;
+      if (navigator.connection && (navigator.connection.saveData || /^(slow-2g|2g)$/.test(navigator.connection.effectiveType || ''))) return;
       var seen = {};
       var urls = [];
       shell.querySelectorAll('.p-side a').forEach(function (a) {
+        if (urls.length >= WARM_MAX) return;
         if (isPjaxable(a) && !seen[a.href] && a.href !== window.location.href) { seen[a.href] = 1; urls.push(a.href); }
       });
       var i = 0;
       var active = 0;
       function next() {
-        while (active < 2 && i < urls.length) {
+        if (navBusy) { setTimeout(next, 1500); return; } // don't stampede during a real navigation
+        while (active < 1 && i < urls.length) {
           (function (url) {
             active++;
             if (dead) { active--; next(); return; }
@@ -287,7 +341,14 @@
                 if (!r.ok || r.redirected) { dead = true; return ''; }
                 return r.text();
               })
-              .then(function (html) { if (html) cache.set(url, {html: html, ts: Date.now()}); })
+              .then(function (html) {
+                if (!html) return;
+                // Don't cache pages where auth state has changed (e.g.
+                // session expired mid-warmup → server rendered logged-out page)
+                var curRole = document.querySelector('.p-role');
+                if (curRole && html.indexOf(curRole.textContent.trim()) === -1) { dead = true; return; }
+                cache.set(url, {html: html, ts: Date.now()});
+              })
               .catch(function () {})
               .finally(function () { active--; next(); });
           })(urls[i++]);
@@ -297,11 +358,11 @@
     } catch (e) {}
   }
   if ('requestIdleCallback' in window) {
-    requestIdleCallback(function () { setTimeout(warmAll, 400); }, {timeout: 3000});
+    requestIdleCallback(function () { setTimeout(warmAll, 3000); }, {timeout: 8000});
   } else {
-    setTimeout(warmAll, 1200);
+    setTimeout(warmAll, 4000);
   }
-  // Button loading state for full-POST forms: instant CSS spinner + disable,
+  // Button loading state for full-POST forms: instant CSS dot cycle + disable,
   // so slow submits (verify, payouts, room updates) never look dead and
   // never double-submit. Inline only — works on any connection.
   document.addEventListener('submit', function (e) {
@@ -310,16 +371,64 @@
     var btn = form.querySelector('button[type="submit"], input[type="submit"], .p-btn');
     if (btn && !btn.disabled) {
       form.dataset.loading = '1';
-      btn.disabled = true;
-      btn.setAttribute('aria-busy', 'true');
-      if (btn.tagName === 'BUTTON' && !btn.querySelector('.p-spin')) {
-        var s = document.createElement('span');
-        s.className = 'p-spin';
-        s.setAttribute('aria-hidden', 'true');
-        btn.insertBefore(s, btn.firstChild);
+      // Shared dot loader (fastnet-api.js) with inline fallback.
+      if (window.FastAPI && FastAPI.btnDots) FastAPI.btnDots(btn, true);
+      else {
+        btn.disabled = true;
+        btn.setAttribute('aria-busy', 'true');
+        if (btn.tagName === 'BUTTON' && !btn.querySelector('.p-dots')) {
+          var d = document.createElement('span');
+          d.className = 'p-dots';
+          d.setAttribute('aria-hidden', 'true');
+          d.innerHTML = '<span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span>';
+          btn.insertBefore(d, btn.firstChild);
+        }
       }
     }
     barStart();
+    if (form.getAttribute('data-pjax') === 'false' || form.enctype === 'multipart/form-data') {
+      return; // native submit proceeds; progress bar only, no overlay
+    }
+    // Intercept with fetch for fast, seamless submission
+    e.preventDefault();
+    var fd = new FormData(form);
+    var url = form.action || window.location.href;
+    var method = (form.method || 'GET').toUpperCase();
+    
+    if (method === 'GET') {
+      var params = new URLSearchParams(fd).toString();
+      var sep = url.indexOf('?') === -1 ? '?' : '&';
+      navigate(form, url + sep + params);
+      return;
+    }
+    
+    fetch(url, {
+      method: method,
+      body: fd,
+      headers: {'X-Requested-With': 'XMLHttpRequest'},
+      redirect: 'follow'
+    }).then(function(r) {
+      if (!r.ok && r.status !== 400 && r.status !== 422 && r.status !== 500 && !r.redirected) {
+        window.location.reload();
+        return;
+      }
+      var finalUrl = r.url;
+      return r.text().then(function(html) {
+        // Clean up Bootstrap modals
+        document.querySelectorAll('.modal-backdrop').forEach(function(b) { b.remove(); });
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+        
+        if (swapDoc(finalUrl, html, true)) {
+          barDone();
+        } else {
+          window.location.href = finalUrl;
+        }
+      });
+    }).catch(function() {
+      window.location.reload();
+    });
   });
   window.addEventListener('popstate', function () {
     markActiveByUrl(window.location.href);
@@ -329,7 +438,7 @@
       return;
     }
     barStart();
-    skelStart();
+    pendStart();
     fetch(window.location.href, {headers: {'X-Requested-With': 'XMLHttpRequest'}, credentials: 'same-origin'})
       .then(function (r) { return r.ok ? r.text() : ''; })
       .then(function (html) {

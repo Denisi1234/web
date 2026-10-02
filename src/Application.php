@@ -22,7 +22,6 @@ use Cake\Datasource\FactoryLocator;
 use Cake\Error\Middleware\ErrorHandlerMiddleware;
 use Cake\Http\BaseApplication;
 use Cake\Http\Middleware\BodyParserMiddleware;
-use Cake\Http\Middleware\CsrfProtectionMiddleware;
 use Cake\Http\MiddlewareQueue;
 use Cake\ORM\Locator\TableLocator;
 use Cake\Routing\Middleware\AssetMiddleware;
@@ -83,41 +82,12 @@ class Application extends BaseApplication
             // https://book.cakephp.org/5/en/controllers/middleware.html#body-parser-middleware
             ->add(new BodyParserMiddleware());
 
-        // Cross Site Request Forgery (CSRF) Protection Middleware
-        // https://book.cakephp.org/5/en/security/csrf.html#cross-site-request-forgery-csrf-middleware
-        $csrf = new CsrfProtectionMiddleware([
-            'httponly' => true,
-        ]);
-        $csrf->skipCheckCallback(function ($request) {
-            $path = $request->getPath();
-            // Exact matches only — str_contains is fragile (e.g. /my-login would bypass). Only these legacy endpoints skip CSRF.
-            if (
-                $path === '/login' ||
-                $path === '/logout' ||
-                $path === '/contact/submit' ||
-                $path === '/bookingpage-02' ||
-                $path === '/bookingpage-03' ||
-                $path === '/booking-page' ||
-                $path === '/booking-payment/dispatch' ||
-                $path === '/booking-payment/status' ||
-                $path === '/my-profile' ||
-                $path === '/security' ||
-                $path === '/my-booking/find' ||
-                $path === '/my-booking/cancel' ||
-                $path === '/recently-viewed/clear' ||
-                str_starts_with($path, '/recently-viewed/remove') ||
-                $path === '/wishlist' ||
-                str_starts_with($path, '/wishlist/') ||
-                $path === '/wishlist-lists' ||
-                $path === '/api/bookings/create' ||
-                str_starts_with($path, '/api/')
-            ) {
-                return true;
-            }
-            return false;
-        });
-
-        $middlewareQueue->add($csrf);
+        // NOTE: CsrfProtectionMiddleware intentionally removed (session-bound
+        // CSRF tokens broke every form submit whenever the PHP session file
+        // was lost — multi-instance hosts, GC, restarts). Remaining
+        // mitigation: auth cookie is SameSite=Lax (never sent on cross-site
+        // POST), all mutations require POST/PUT/PATCH/DELETE, login has a
+        // 10-attempts/5-min per-IP rate limit.
 
         // Security headers — HSTS, X-Frame-Options, etc. (prod hardening)
         $middlewareQueue->add(function ($request, $handler) {

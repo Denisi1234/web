@@ -69,7 +69,7 @@ $this->assign('page_actions', '<a href="' . $this->Url->build('/host/listings/ad
     ?>
     <article class="hp-card">
       <div class="hp-photo">
-        <img src="<?= h($img) ?>" alt="<?= h($name) ?>" loading="lazy">
+        <img src="<?= h($img) ?>" alt="<?= h($name) ?>" loading="lazy" decoding="async">
         <span class="hp-count"><?= count($rooms) ?> room<?= count($rooms) === 1 ? '' : 's' ?></span>
       </div>
       <div class="hp-body">

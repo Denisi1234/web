@@ -7,7 +7,7 @@
 (function(){
 'use strict';
 const SPEC_ALLOWED = ['city','checkin','checkout','adults','children','rooms','amenities','price_min','price_max','rating','free_cancellation','property_type','payment','meals','neighborhood','sort','lat','lng','bounds','offers'];
-const LEGACY_MAP = {destination:'city', q:'city', checkIn:'checkin', checkOut:'checkout', min_price:'price_min', max_price:'price_max'};
+const LEGACY_MAP = {destination:'city', q:'city', checkIn:'checkin', checkOut:'checkout', min_price:'price_min', max_price:'price_max', bbox:'bounds'};
 const REVERSE_MAP = {city:'destination', checkin:'checkIn', checkout:'checkOut', price_min:'min_price', price_max:'max_price'};
 const ALL_ALLOWED = [...new Set([...SPEC_ALLOWED, ...Object.keys(LEGACY_MAP), ...Object.values(LEGACY_MAP), 'destination','checkIn','checkOut','min_price','max_price','q'])];
 
@@ -94,6 +94,36 @@ function buildUrl(params){
 let _abort=null;
 let _lastFetchUrl='';
 let _lastSuccessUrl='';
+// Instant client cache: repeat searches (typing, back/forward) render in ~0ms.
+const _jsonCache=new Map();
+const _CACHE_TTL=60000, _CACHE_FRESH=20000;
+function _cacheGet(k){ const e=_jsonCache.get(k); if(!e) return null; if(Date.now()-e.t>_CACHE_TTL){ _jsonCache.delete(k); return null; } return e; }
+function _cacheSet(k,d){ if(_jsonCache.size>60){ const f=_jsonCache.keys().next().value; _jsonCache.delete(f); } _jsonCache.set(k,{t:Date.now(),d}); }
+function applyHydrateData(data){
+    if(data.html){
+      const container=document.getElementById('gh-cards-container');
+      if(container){
+        let htmlToInject=data.html;
+        try{
+          const tmp=document.createElement('div');
+          tmp.innerHTML=data.html;
+          const inner=tmp.querySelector('#gh-cards-container');
+          if(inner){ htmlToInject=inner.innerHTML; }
+        }catch(e){}
+        container.innerHTML=htmlToInject;
+      }
+    }
+    if(data.markers){
+      if(window._ghMap && typeof window.ghRefreshMarkers==='function'){
+        window.ghRefreshMarkers(data.markers);
+      } else if(window._ghMap){
+        window.dispatchEvent(new CustomEvent('fastnet:markers-update', {detail:data.markers}));
+      }
+    }
+    refreshDetailLinks();
+    const live=document.getElementById('gh_results_live');
+    if(live && data.totalCount!==undefined) live.textContent=data.totalCount + ' stays';
+}
 function showShimmer(on){
   const cards=document.getElementById('gh-cards-container');
   const shim=document.getElementById('gh-shimmer-container');
@@ -114,48 +144,34 @@ function showShimmer(on){
   }
 }
 async function hydrate(url){
-  if(_abort) _abort.abort();
-  _abort=new AbortController();
   const fetchUrl = url + (url.includes('?')?'&':'?') + 'format=json';
+  // Case-insensitive cache key: ?city=ARUSHA and ?city=arusha share one entry.
+  const cacheKey = fetchUrl.toLowerCase();
   // only skip if last successful fetch was same URL
   if(_lastSuccessUrl===fetchUrl) return;
+  // Instant hit: render cache in 0ms, skip shimmer + network when fresh.
+  const hit=_cacheGet(cacheKey);
+  if(hit && (Date.now()-hit.t)<_CACHE_FRESH){
+    try{ applyHydrateData(hit.d); }catch(e){}
+    _lastSuccessUrl=fetchUrl; _lastFetchUrl=fetchUrl;
+    return hit.d;
+  }
+  // Stale-while-revalidate: paint old results now, refresh in background.
+  if(hit){
+    try{ applyHydrateData(hit.d); }catch(e){}
+  }
+  if(_abort) _abort.abort();
+  _abort=new AbortController();
   _lastFetchUrl=fetchUrl;
   const t0=Date.now();
-  showShimmer(true);
+  if(!hit) showShimmer(true);
   try{
     const res=await fetch(fetchUrl, {signal:_abort.signal, headers:{'X-Requested-With':'XMLHttpRequest'}});
     if(!res.ok) throw new Error('fetch '+res.status);
     const data=await res.json();
-    if(data.html){
-      const container=document.getElementById('gh-cards-container');
-      const shimEl=document.getElementById('gh-shimmer-container');
-      if(container){
-        // data.html contains both #gh-shimmer-container and #gh-cards-container from element rendering;
-        // extract only the cards inner content to avoid nested duplicate IDs
-        let htmlToInject=data.html;
-        try{
-          const tmp=document.createElement('div');
-          tmp.innerHTML=data.html;
-          const inner=tmp.querySelector('#gh-cards-container');
-          if(inner){
-            htmlToInject=inner.innerHTML;
-          }
-        }catch(e){}
-        container.innerHTML=htmlToInject;
-      }
-    }
-    if(data.markers){
-      if(window._ghMap && typeof window.ghRefreshMarkers==='function'){
-        window.ghRefreshMarkers(data.markers);
-      } else if(window._ghMap){
-        window.dispatchEvent(new CustomEvent('fastnet:markers-update', {detail:data.markers}));
-      }
-    }
+    _cacheSet(cacheKey, data);
+    applyHydrateData(data);
     _lastSuccessUrl=fetchUrl;
-    refreshDetailLinks();
-    // ensure results count header live region announces
-    const live=document.getElementById('gh_results_live');
-    if(live && data.totalCount!==undefined) live.textContent=data.totalCount + ' stays';
     return data;
   }catch(e){
     if(e.name!=='AbortError'){
@@ -295,6 +311,31 @@ const FastNetState={
     const cur=aliasNormalize(parseUrl());
     const next={...cur, ...aliasNormalize(partial)};
     Object.keys(partial).forEach(k=>{ const spec=LEGACY_MAP[k]||k; if(partial[k]===''||partial[k]===null||partial[k]===undefined){ delete next[k]; delete next[spec]; if(REVERSE_MAP[k]) delete next[REVERSE_MAP[k]]; if(LEGACY_MAP[k]) delete next[LEGACY_MAP[k]]; }});
+    // City changed → drop stale map position (bounds/lat/lng) so the old
+    // viewport can never filter out the new city's backend results
+    // (e.g. Arusha search with leftover Dar bounds returned empty).
+    // Values explicitly passed by the caller (place-picker coords) are kept.
+    (function(){
+      const hasNewCity=['city','destination','q'].some(function(k){ return partial[k]!==undefined && partial[k]!==null && String(partial[k]).trim()!==''; });
+      if(!hasNewCity) return;
+      const norm=function(v){ return String(v||'').trim().toLowerCase(); };
+      const newCity=norm(partial.city!==undefined?partial.city:(partial.destination!==undefined?partial.destination:partial.q));
+      const oldCity=norm(cur.city!==undefined?cur.city:(cur.destination!==undefined?cur.destination:cur.q));
+      if(newCity==='' || newCity===oldCity) return;
+      const given={};
+      Object.keys(partial).forEach(function(k){ given[LEGACY_MAP[k]||k]=partial[k]; });
+      ['bounds','lat','lng'].forEach(function(mk){
+        const v=given[mk];
+        if(v===''||v===null||v===undefined){ delete next[mk]; }
+      });
+    })();
+    // Keep search-form hidden inputs in sync so a full submit sends the same state.
+    try{
+      const latEl=document.getElementById('gh_lat'), lngEl=document.getElementById('gh_lng'), bbEl=document.getElementById('gh_bbox');
+      if(latEl) latEl.value=next.lat||'';
+      if(lngEl) lngEl.value=next.lng||'';
+      if(bbEl) bbEl.value=next.bounds||'';
+    }catch(e){}
     const url=buildUrl(next);
     const method=opts.replace ? 'replaceState':'pushState';
     if(url!==window.location.pathname+window.location.search){
@@ -421,6 +462,28 @@ document.addEventListener('DOMContentLoaded', function(){
     }
   }
   patchDate(); setInterval(patchDate, 800);
+  // ── Fastest search: idle-prefetch popular destinations ──
+  // Warms client cache + server 90s cache + CDN so Arusha/Zanzibar/Dar open instantly.
+  function prefetchPopular(){
+    try{
+      const cur=new URLSearchParams(window.location.search);
+      const curCity=(cur.get('city')||cur.get('destination')||'').toLowerCase();
+      ['Arusha','Zanzibar','Dar es Salaam'].forEach(function(city){
+        if(curCity===city.toLowerCase()) return;
+        const u='/?city='+encodeURIComponent(city)+'&format=json';
+        const k=u.toLowerCase();
+        if(_jsonCache.has(k)) return;
+        fetch(u,{headers:{'X-Requested-With':'XMLHttpRequest'}}).then(function(r){
+          if(!r.ok) return null; return r.json();
+        }).then(function(d){ if(d) _cacheSet(k,d); }).catch(function(){});
+      });
+    }catch(e){}
+  }
+  if('requestIdleCallback' in window){
+    requestIdleCallback(prefetchPopular,{timeout:4000});
+  } else {
+    setTimeout(prefetchPopular,2500);
+  }
 });
 
 // bounds helper

@@ -1,51 +1,165 @@
 <?php
+$step = (int)($step ?? 1);
+if ($step < 1 || $step > 4) $step = 1;
+$propId = (int)($propId ?? $property['id'] ?? 0);
 $this->assign('title', 'Edit Lodge');
 $this->assign('portal_title', 'Edit lodge — ' . ($property['name'] ?? ''));
-$this->assign('page_actions', '<a href="' . $this->Url->build('/host/listings') . '" class="p-btn ghost">Back to listings</a>');
+$this->assign('page_actions', '<a href="' . $this->Url->build('/hotel-detail/' . $propId) . '" target="_blank" rel="noopener" class="p-btn ghost">View live card</a> <a href="' . $this->Url->build('/host/listings') . '" class="p-btn ghost">Back to listings</a>');
+$stepUrl = fn(int $s): string => $this->Url->build('/host/lodge/' . $propId . '/edit?step=' . $s);
+$labels = [1 => 'Basics', 2 => 'Location', 3 => 'Photos', 4 => 'Review'];
+// Done-state mirrors onboarding: a step counts once its data exists.
+$hasName = trim((string)($property['name'] ?? '')) !== '';
+$hasCity = trim((string)($property['city'] ?? '')) !== '';
+$hasCover = trim((string)($property['image_url'] ?? ($property['primary_image_url'] ?? ''))) !== '';
+$done = [1 => $hasName, 2 => $hasCity, 3 => $hasCover, 4 => false];
+$pLat = $property['latitude'] ?? ($property['lat'] ?? '-6.7924');
+$pLng = $property['longitude'] ?? ($property['lng'] ?? '39.2083');
+$amenities = $property['amenities'] ?? [];
+if (is_string($amenities)) $amenities = array_filter(array_map('trim', explode(',', $amenities)));
+$amenities = array_values((array)$amenities);
+// Rooms grouped by category (same as onboarding review).
+$revCats = [];
+foreach ((array)($rooms ?? []) as $rr) {
+    $rr = is_array($rr) ? $rr : [];
+    $t = trim((string)($rr['room_type'] ?? ($rr['type'] ?? 'Standard'))) ?: 'Standard';
+    if (!isset($revCats[$t])) $revCats[$t] = ['type' => $t, 'price' => $rr['customer_price'] ?? ($rr['price'] ?? 0), 'rooms' => []];
+    $revCats[$t]['rooms'][] = $rr;
+}
 ?>
-<style>
-.cds-chip{display:inline-flex;align-items:center;gap:6px;background:#edf5ff;border:1px solid #d0e2ff;color:#0043ce;font-size:12px;font-weight:600;padding:5px 10px}
-.cds-chip a{color:#da1e28;text-decoration:none;font-weight:700}
-</style>
-<div class="p-card" style="max-width:780px">
+<?= $this->Html->css('https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css') ?>
+<?= $this->element('host_onboard_css') ?>
+
+<div class="p-card obx">
   <h3><?= h($property['name'] ?? 'Lodge') ?></h3>
-  <div class="sub">Updates via PUT /properties/{id}.</div>
-  <?= $this->Form->create(null, ['url' => ['action' => 'editLodge', $property['id'] ?? ''], 'style' => 'display:grid;gap:12px;margin-top:16px']) ?>
-    <div class="row g-2">
-      <div class="col-md-8"><label style="font-size:12px;font-weight:600;color:var(--p-text-2)">Name *</label><input name="name" value="<?= h($property['name'] ?? '') ?>" class="form-control" style="min-height:40px" required></div>
-      <div class="col-md-4"><label style="font-size:12px;font-weight:600;color:var(--p-text-2)">City</label><input name="city" value="<?= h($property['city'] ?? '') ?>" class="form-control" style="min-height:40px"></div>
-    </div>
-    <div class="row g-2">
-      <div class="col-md-6"><label style="font-size:12px;font-weight:600;color:var(--p-text-2)">Area</label><input name="area" value="<?= h($property['area'] ?? '') ?>" class="form-control" style="min-height:40px"></div>
-      <div class="col-md-6"><label style="font-size:12px;font-weight:600;color:var(--p-text-2)">Price / night TSh *</label><input name="price_per_night" type="number" value="<?= h($property['price_per_night'] ?? '') ?>" class="form-control" style="min-height:40px" required></div>
-    </div>
-    <div><label style="font-size:12px;font-weight:600;color:var(--p-text-2)">Address</label><input name="address" value="<?= h($property['address'] ?? '') ?>" class="form-control" style="min-height:40px"></div>
-    <div><label style="font-size:12px;font-weight:600;color:var(--p-text-2)">Description</label><textarea name="description" class="form-control" style="min-height:90px"><?= h($property['description'] ?? '') ?></textarea></div>
-    <div><label style="font-size:12px;font-weight:600;color:var(--p-text-2)">Cover image URL</label><input name="image_url" value="<?= h($property['image_url'] ?? $property['primary_image_url'] ?? '') ?>" class="form-control" style="min-height:40px" placeholder="https://…"></div>
+  <div class="sub">Step <?= $step ?> of 4 — <?= h($labels[$step]) ?>. Saving a step moves you forward.</div>
 
+  <nav class="ob-steps" aria-label="Edit progress">
+    <?php for ($i = 1; $i <= 4; $i++): ?>
+      <a href="<?= $stepUrl($i) ?>" class="<?= $i === $step ? 'cur' : ($done[$i] ? 'done' : '') ?>" <?= $i === $step ? 'aria-current="step"' : '' ?>><span class="n"><?= ($done[$i] && $i !== $step) ? '✓' : $i ?></span><span class="t"><?= h($labels[$i]) ?></span></a>
+    <?php endfor; ?>
+  </nav>
+
+  <?php if ($step === 1): ?>
+  <?= $this->Form->create(null, ['url' => '/host/lodge/' . $propId . '/edit?step=1', 'class' => 'cds-form', 'data-api' => 'PUT /properties/' . $propId, 'data-api-ok' => 'Saved — continue to the next step.', 'data-api-go' => '/host/cache-bust?scope=properties&go=' . urlencode('/host/lodge/' . $propId . '/edit?step=2')]) ?>
+    <input type="hidden" name="address" value="<?= h($property['address'] ?? '') ?>">
+    <input type="hidden" name="city" value="<?= h($property['city'] ?? '') ?>">
+    <input type="hidden" name="area" value="<?= h($property['area'] ?? '') ?>">
+    <input type="hidden" name="image_url" value="<?= h($property['image_url'] ?? ($property['primary_image_url'] ?? '')) ?>">
+    <?php foreach ($amenities as $am): ?><input type="hidden" name="amenities[]" value="<?= h($am) ?>"><?php endforeach; ?>
     <div>
-      <label style="font-size:12px;font-weight:600;color:var(--p-text-2)">Amenities</label>
-      <div id="chipBox" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0">
-        <?php $amenities = $property['amenities'] ?? []; if (is_string($amenities)) $amenities = array_filter(array_map('trim', explode(',', $amenities))); foreach ((array)$amenities as $a): ?><span class="cds-chip"><?= h($a) ?> <a href="#" onclick="this.parentElement.remove();return false" aria-label="Remove">×</a><input type="hidden" name="amenities[]" value="<?= h($a) ?>"></span><?php endforeach; ?>
-      </div>
-      <div style="display:flex;gap:8px">
-        <input id="chipInput" class="form-control" style="min-height:40px" placeholder="Add amenity (Enter)">
-        <button type="button" class="p-btn ghost" onclick="addChip()">Add</button>
-      </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><?php foreach (['Wifi', 'Pool', 'Parking', 'Kitchen', 'AC', 'Gym', 'Spa', 'Beach'] as $q): ?><button type="button" class="p-btn ghost" style="min-height:32px;font-size:12px" onclick="addChipVal('<?= $q ?>')"><?= $q ?> +</button><?php endforeach; ?></div>
+      <label class="cds-label">Property name *</label>
+      <input name="name" class="form-control cds-field" required placeholder="Sunrise Lodge" value="<?= h($property['name'] ?? '') ?>">
     </div>
+    <div><label class="cds-label">Price / night TSh *</label><input name="price_per_night" type="number" min="1" class="form-control cds-field" required placeholder="150000" value="<?= h($property['price_per_night'] ?? '') ?>"></div>
+    <div><label class="cds-label">Description</label><textarea name="description" class="form-control cds-ta" placeholder="What makes this place special?"><?= h($property['description'] ?? '') ?></textarea></div>
+    <div class="ob-nav"><button class="p-btn cds-btn-flex2">Save &amp; continue → Location</button></div>
+  <?= $this->Form->end() ?>
 
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="p-btn" style="flex:1;justify-content:center">Save lodge</button>
-      <a href="<?= $this->Url->build('/host/calendar/' . $property['id']) ?>" class="p-btn ghost" style="flex:1;justify-content:center">Calendar</a>
+  <?php elseif ($step === 2): ?>
+  <?= $this->Form->create(null, ['url' => '/host/lodge/' . $propId . '/edit?step=2', 'class' => 'cds-form', 'data-api' => 'PUT /properties/' . $propId, 'data-api-num' => 'price_per_night', 'data-api-ok' => 'Saved — continue to the next step.', 'data-api-go' => '/host/cache-bust?scope=properties&go=' . urlencode('/host/lodge/' . $propId . '/edit?step=3')]) ?>
+    <input type="hidden" name="name" value="<?= h($property['name'] ?? '') ?>">
+    <input type="hidden" name="price_per_night" value="<?= h($property['price_per_night'] ?? '') ?>">
+    <input type="hidden" name="description" value="<?= h($property['description'] ?? '') ?>">
+    <input type="hidden" name="image_url" value="<?= h($property['image_url'] ?? ($property['primary_image_url'] ?? '')) ?>">
+    <?php foreach ($amenities as $am): ?><input type="hidden" name="amenities[]" value="<?= h($am) ?>"><?php endforeach; ?>
+    <div id="obMapWrap">
+      <label class="cds-label">Find it like in Bolt</label>
+      <input id="obSearch" class="form-control cds-field-lg" placeholder="Type address, area or landmark…" autocomplete="off" aria-label="Search location">
+      <div id="obSearchList" role="listbox"></div>
+    </div>
+    <div id="obMap" aria-label="Property location map"><?php if (!empty($mapPreviewUrl)): ?><img id="obStatic" src="<?= h($mapPreviewUrl) ?>" alt="" aria-hidden="true" fetchpriority="high"><?php endif; ?></div>
+    <div class="cds-geo">
+      <button type="button" class="p-btn ghost cds-btn-sm" id="obGeoBtn">Use my location</button>
+      <span id="obGeoMsg" class="cds-geo-msg"></span>
+    </div>
+    <div class="row g-2">
+      <div class="col-md-6"><label class="cds-label">City *</label><input name="city" id="obCity" class="form-control cds-field" required placeholder="Arusha" value="<?= h($property['city'] ?? '') ?>"></div>
+      <div class="col-md-6"><label class="cds-label">Area</label><input name="area" id="obArea" class="form-control cds-field" placeholder="Njiro" value="<?= h($property['area'] ?? '') ?>"></div>
+    </div>
+    <div><label class="cds-label">Street address</label><input name="address" id="obAddress" class="form-control cds-field" placeholder="Plot 123, Njiro Road" value="<?= h($property['address'] ?? '') ?>"></div>
+    <div class="row g-2">
+      <div class="col-6"><label class="cds-label">Latitude (auto)</label><input name="latitude" id="obLat" class="form-control locked cds-field" value="<?= h($pLat) ?>" readonly></div>
+      <div class="col-6"><label class="cds-label">Longitude (auto)</label><input name="longitude" id="obLng" class="form-control locked cds-field" value="<?= h($pLng) ?>" readonly></div>
+    </div>
+    <div class="ob-nav">
+      <a href="<?= $stepUrl(1) ?>" class="p-btn ghost cds-btn-flex">← Back</a>
+      <button class="p-btn cds-btn-flex2">Save &amp; continue → Photos</button>
     </div>
   <?= $this->Form->end() ?>
+
+  <?php elseif ($step === 3): ?>
+  <?= $this->Form->create(null, ['url' => '/host/lodge/' . $propId . '/edit?step=3', 'id' => 'obPhotoForm', 'class' => 'cds-form', 'data-api' => 'PUT /properties/' . $propId, 'data-api-num' => 'price_per_night,latitude,longitude', 'data-api-ok' => 'Saved — continue to the next step.', 'data-api-go' => '/host/cache-bust?scope=properties&go=' . urlencode('/host/lodge/' . $propId . '/edit?step=4')]) ?>
+    <input type="hidden" name="name" value="<?= h($property['name'] ?? '') ?>">
+    <input type="hidden" name="price_per_night" value="<?= h($property['price_per_night'] ?? '') ?>">
+    <input type="hidden" name="description" value="<?= h($property['description'] ?? '') ?>">
+    <input type="hidden" name="city" value="<?= h($property['city'] ?? '') ?>">
+    <input type="hidden" name="area" value="<?= h($property['area'] ?? '') ?>">
+    <input type="hidden" name="address" value="<?= h($property['address'] ?? '') ?>">
+    <input type="hidden" name="latitude" value="<?= h($pLat) ?>">
+    <input type="hidden" name="longitude" value="<?= h($pLng) ?>">
+    <?php foreach ($amenities as $am): ?><input type="hidden" name="amenities[]" value="<?= h($am) ?>"><?php endforeach; ?>
+    <div>
+      <label class="cds-label">Cover photo * — drag &amp; drop or click</label>
+      <div id="obDrop" role="button" tabindex="0" aria-label="Upload cover photo">
+        <div class="ob-drop-ic" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 13.5v-9m0 0L6.5 8M10 4.5L13.5 8" stroke="#0f62fe" stroke-width="1.8" stroke-linecap="square"/><path d="M3.5 12.5v3a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-3" stroke="#161616" stroke-width="1.8"/></svg></div>
+        <div class="ob-drop-t">Drop photo here or click to browse</div>
+        <div class="ob-drop-s">JPG / PNG / WebP · max 10 MB · stored immediately</div>
+        <input type="file" id="obFile" accept="image/jpeg,image/png,image/webp,image/gif">
+      </div>
+      <div id="obUpBar"><i></i></div>
+      <div id="obPrev"></div>
+      <input type="hidden" name="image_url" id="obCover" value="<?= h($property['image_url'] ?? ($property['primary_image_url'] ?? '')) ?>">
+      <div class="field-err" id="obPhotoErr">Please upload a cover photo before continuing.</div>
+    </div>
+    <div class="ob-nav">
+      <a href="<?= $stepUrl(2) ?>" class="p-btn ghost cds-btn-flex">← Back</a>
+      <button class="p-btn cds-btn-flex2">Save &amp; continue → Review</button>
+    </div>
+  <?= $this->Form->end() ?>
+
+  <?php else: ?>
+  <?= $this->Form->create(null, ['url' => '/host/lodge/' . $propId . '/edit?step=4', 'id' => 'obReviewForm', 'class' => 'cds-form', 'data-api' => 'PUT /properties/' . $propId, 'data-api-num' => 'price_per_night,latitude,longitude', 'data-api-ok' => 'Lodge updated.', 'data-api-go' => '/host/cache-bust?scope=properties&go=' . urlencode('/host/listings')]) ?>
+    <input type="hidden" name="name" value="<?= h($property['name'] ?? '') ?>">
+    <input type="hidden" name="price_per_night" value="<?= h($property['price_per_night'] ?? '') ?>">
+    <input type="hidden" name="description" value="<?= h($property['description'] ?? '') ?>">
+    <input type="hidden" name="city" value="<?= h($property['city'] ?? '') ?>">
+    <input type="hidden" name="area" value="<?= h($property['area'] ?? '') ?>">
+    <input type="hidden" name="address" value="<?= h($property['address'] ?? '') ?>">
+    <input type="hidden" name="latitude" value="<?= h($pLat) ?>">
+    <input type="hidden" name="longitude" value="<?= h($pLng) ?>">
+    <?php $coverInit = $property['image_url'] ?? ($property['primary_image_url'] ?? ''); ?>
+    <input type="hidden" name="image_url" id="obCoverStatic" value="<?= h($coverInit) ?>">
+    <dl class="ob-review">
+      <div><dt>Property</dt><dd><?= h(($property['name'] ?? '—') . ' (' . ($property['property_type'] ?? $property['type'] ?? 'Lodge') . ')') ?></dd></div>
+      <div><dt>Location</dt><dd><?= h(trim(($property['address'] ?? '') . ', ' . ($property['area'] ?? '') . ', ' . ($property['city'] ?? ''), ', ')) ?><br><span class="ob-dim"><?= h($pLat . ', ' . $pLng) ?></span></dd></div>
+      <div><dt>Price</dt><dd>TSh <?= number_format((float)($property['price_per_night'] ?? 0)) ?> / night</dd></div>
+      <?php $cover = $property['image_url'] ?? ($property['primary_image_url'] ?? ''); if ($cover !== ''): ?><div><dt>Cover</dt><dd><img src="<?= h($cover) ?>" alt="Cover photo"></dd></div><?php endif; ?>
+      <?php if (!empty($property['description'])): ?><div><dt>About</dt><dd class="ob-dim-nm"><?= h($property['description']) ?></dd></div><?php endif; ?>
+    </dl>
+    <div class="ob-sec-h">Rooms (<?= count((array)($rooms ?? [])) ?>) — select to edit</div>
+    <?php if (empty($rooms)): ?>
+      <div class="p-card"><div class="p-empty">No rooms yet — <a href="<?= $this->Url->build('/host/rooms/add?property_id=' . $propId) ?>">add the first room</a>.</div></div>
+    <?php else: ?>
+      <?php foreach ($revCats as $rc): ?>
+      <div class="ob-room ob-tight">
+        <div class="ob-room-h"><span class="p-badge blue"><?= h($rc['type']) ?></span><b>TSh <?= number_format((float)$rc['price']) ?> / night</b></div>
+        <div class="ob-rooms-line">Rooms:
+          <?php foreach ($rc['rooms'] as $rr): ?><?php $rid = (int)($rr['id'] ?? 0); ?><?php if ($rid > 0): ?><a href="<?= $this->Url->build('/host/rooms/' . $rid) ?>"><strong><?= h($rr['room_number'] ?? $rr['name'] ?? '—') ?></strong></a><?php else: ?><strong><?= h($rr['room_number'] ?? $rr['name'] ?? '—') ?></strong><?php endif; ?> <?php endforeach; ?>
+        </div>
+      </div>
+      <?php endforeach; ?>
+    <?php endif; ?>
+    <div><label class="cds-label">Amenities (comma separated)</label><input name="amenities_raw" id="amen_raw" class="form-control cds-field" placeholder="Wifi, Pool, Parking" value="<?= h(implode(', ', $amenities)) ?>"></div>
+    <div class="ob-nav">
+      <a href="<?= $stepUrl(3) ?>" class="p-btn ghost cds-btn-flex">← Back</a>
+      <button class="p-btn cds-btn-flex2">Save &amp; finish</button>
+    </div>
+  <?= $this->Form->end() ?>
+  <?php endif; ?>
 </div>
 
-<?php if (!empty($rooms)): ?>
-<div class="p-card mt-3" style="max-width:780px">
-  <h3>Rooms in this lodge (<?= count($rooms) ?>)</h3>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><?php foreach ($rooms as $r): ?><span class="cds-chip"><?= h($r['room_number'] ?? $r['name'] ?? 'Room') ?> — TSh <?= number_format((float)($r['price'] ?? 0)) ?></span><?php endforeach; ?></div>
-</div>
+<?= $this->Html->script('https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js') ?>
+<?php if (($step ?? 1) === 2 && !empty($mapToken)): ?>
+<script>window.MAPBOX_TOKEN = <?= json_encode($mapToken) ?>;window.MAPBOX_STYLE = <?= json_encode($mapStyle ?? 'mapbox://styles/mapbox/streets-v12') ?>;</script>
 <?php endif; ?>
-<script>function addChipVal(v){document.getElementById('chipInput').value=v;addChip()}function addChip(){const i=document.getElementById('chipInput'),v=i.value.trim();if(!v)return;const b=document.getElementById('chipBox'),s=document.createElement('span');s.className='cds-chip';s.innerHTML=`${v} <a href="#" onclick="this.parentElement.remove();return false">×</a><input type="hidden" name="amenities[]" value="${v.replace(/"/g,'&quot;')}">`;b.appendChild(s);i.value=''}document.getElementById('chipInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addChip()}})</script>
+<?= $this->element('host_onboard_js') ?>

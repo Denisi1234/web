@@ -22,6 +22,7 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-pl
 
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
 COPY docker/php.ini /usr/local/etc/php/conf.d/99_custom.ini
+COPY docker/php-fpm-www.conf /usr/local/etc/php-fpm.d/zz-fastnet.conf
 COPY docker/supervisord.conf /etc/supervisord.conf
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh \

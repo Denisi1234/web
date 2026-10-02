@@ -201,7 +201,9 @@
 
         <?= $this->Html->css('/assets/css/ui-tokens.css') ?>
         <?= $this->Html->css('/assets/css/app-loader.css') ?>
+        <?= $this->Html->css('/assets/css/fastnet-dots.css') ?>
         <?= $this->fetch('meta') ?>
+        <?= $this->element('api_direct') ?>
         <?= $this->fetch('css') ?>
         <?= $this->Html->css('/assets/css/site-spacing.css') ?>
         <!-- IBM Carbon LAST so components win over page CSS (Baymard layout untouched) -->
@@ -214,6 +216,8 @@
 
         <!-- Universal App Loader Engine -->
         <?= $this->Html->script('/assets/js/app-loader.js') ?>
+        <!-- Direct-to-backend forms (Bearer in JS, CakePHP proxy as fallback) -->
+        <?= $this->Html->script('/assets/js/fastnet-api.js') ?>
 
         <!-- Mapbox GL JS — production CSS & JS -->
         <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css" rel="stylesheet">

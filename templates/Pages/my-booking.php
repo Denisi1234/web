@@ -342,7 +342,7 @@ function handleFindBooking(e) {
     const btn = document.getElementById('btnFindBooking');
 
     btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Searching...';
+    btn.innerHTML = '<span class="p-dots" aria-hidden="true"><span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span></span> Searching...';
     showBookingToast('Searching for booking #' + num + '...');
 
     fetch('<?= $this->Url->build('/my-booking/find'); ?>', {

@@ -16,7 +16,7 @@ $this->assign('portal_title', 'Profile');
 <div class="p-card" style="max-width:720px">
   <h3>Edit profile</h3>
   <div class="sub">Syncs via PUT /user/profile.</div>
-  <?= $this->Form->create(null, ['url' => ['action' => 'profile'], 'type' => 'file', 'style' => 'display:grid;gap:12px;margin-top:16px']) ?>
+  <?= $this->Form->create(null, ['url' => ['action' => 'profile'], 'type' => 'file', 'style' => 'display:grid;gap:12px;margin-top:16px', 'data-api' => 'PATCH /profile', 'data-api-build' => 'profile', 'data-api-ok' => 'Profile updated.', 'data-opt' => 'refresh', 'data-opt-bust' => 'profile', 'data-api-go' => '/host/cache-bust?scope=profile&go=' . urlencode('/host/profile')]) ?>
     <div class="row g-2">
       <div class="col-md-6"><label style="font-size:12px;font-weight:600;color:var(--p-text-2)">Name</label><input name="name" value="<?= h($me['name'] ?? '') ?>" class="form-control" style="min-height:40px"></div>
       <div class="col-md-6"><label style="font-size:12px;font-weight:600;color:var(--p-text-2)">Email</label><input name="email" type="email" value="<?= h($me['email'] ?? '') ?>" class="form-control" style="min-height:40px"></div>

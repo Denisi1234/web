@@ -5,7 +5,9 @@ namespace App\Controller;
 
 use App\Service\AuthService;
 use App\Service\FastnetApiClient;
+use App\Service\PortalService;
 use App\Service\RoleService;
+use Cake\Cache\Cache;
 use Cake\Event\EventInterface;
 
 /**
@@ -19,6 +21,10 @@ class AdminOwnerController extends AppController
     protected FastnetApiClient $apiClient;
     protected AuthService $authService;
     protected RoleService $roleService;
+    protected PortalService $portal;
+
+    /** Per-request profile memo — sidebar/topbar read it several times per page. */
+    private static array $profileMemo = [];
 
     public function initialize(): void
     {
@@ -26,6 +32,7 @@ class AdminOwnerController extends AppController
         $this->apiClient = new FastnetApiClient();
         $this->authService = new AuthService($this->apiClient);
         $this->roleService = new RoleService($this->apiClient, $this->authService);
+        $this->portal = new PortalService($this->apiClient);
         $this->viewBuilder()->setLayout('portal');
     }
 
@@ -35,6 +42,10 @@ class AdminOwnerController extends AppController
         // Session should hold raw token, but tolerate "Bearer xxx" if ever stored prefixed
         if (stripos($token, 'Bearer ') === 0) {
             $token = trim(substr($token, 7));
+        }
+        // Session-independent fallback (see HostController::rawToken).
+        if ($token === '') {
+            $token = $this->authService->readToken($this->getRequest());
         }
         return $token;
     }
@@ -46,30 +57,70 @@ class AdminOwnerController extends AppController
     }
 
     /**
-     * Session-cached profile (120s TTL) — backend /user/personal-details
-     * takes ~2.3s; sidebar/topbar only need it for display.
-     * Releases the session lock before/after slow I/O so parallel
-     * portal requests (prefetch) don't serialize on the session file.
+     * Cache-bust bridge for direct-API saves (see HostController::cacheBust).
+     * Fast, no backend call — invalidates matching portal scopes, then
+     * redirects to a validated local path.
+     */
+    public function cacheBust()
+    {
+        $q = $this->getRequest()->getQueryParams();
+        $scope = array_values(array_filter(array_map('trim', explode(',', (string)($q['scope'] ?? '')))));
+        if ($scope !== []) {
+            $this->portal->clear($scope);
+        }
+        // quiet=1: background bust after an optimistic save — no redirect.
+        if (!empty($q['quiet'])) {
+            $this->autoRender = false;
+            return $this->response->withStatus(204);
+        }
+        $go = (string)($q['go'] ?? '/admin/dashboard');
+        if (!str_starts_with($go, '/') || str_starts_with($go, '//')) {
+            $go = '/admin/dashboard';
+        }
+        return $this->redirect($go);
+    }
+
+    /**
+     * Session-independent profile (120s shared cache) — backend
+     * /user/personal-details takes ~2.3s; sidebar/topbar only need it
+     * for display. No session reads/writes: works on any instance,
+     * survives session loss. Backend stays source of truth on refresh.
      */
     private function cachedProfile(): array
     {
-        if ($this->rawToken() === '') return [];
-        $session = $this->getRequest()->getSession();
-        $cached = $session->read('UserProfile');
-        $ts = (int)$session->read('UserProfileTs');
-        if (is_array($cached) && !empty($cached) && $ts > time() - 120) {
-            $session->close();
-            return $cached;
+        $token = $this->rawToken();
+        if ($token === '') return [];
+        $key = 'portal_profile_' . md5($token);
+        if (isset(self::$profileMemo[$key])) {
+            return self::$profileMemo[$key];
         }
-        $session->close();
-        $fresh = $this->authService->getPersonalDetails($this->rawToken());
+        try {
+            $hit = Cache::read($key, 'default');
+            if (is_array($hit) && isset($hit['exp'], $hit['data']) && $hit['exp'] > time() && !empty($hit['data'])) {
+                self::$profileMemo[$key] = $hit['data'];
+                return $hit['data'];
+            }
+        } catch (\Throwable $e) {
+        }
+        $fresh = $this->authService->getPersonalDetails($token);
         if (!empty($fresh) && !empty($fresh['id'])) { // id required: public personal-details returns a demo profile (null id) for bad tokens
-            $session->write('UserProfile', $fresh);
-            $session->write('UserProfileTs', time());
-            $session->close();
+            $entry = ['exp' => time() + 120, 'data' => $fresh];
+            self::$profileMemo[$key] = $fresh;
+            try {
+                Cache::write($key, $entry, 'default');
+            } catch (\Throwable $e) {
+            }
             return $fresh;
         }
-        return is_array($cached) && !empty($cached) ? $cached : $fresh;
+        // Backend failed: serve last-good entry (even expired) over a blank profile.
+        try {
+            $stale = Cache::read($key, 'default');
+            if (is_array($stale) && !empty($stale['data'])) {
+                return $stale['data'];
+            }
+        } catch (\Throwable $e) {
+        }
+        return $fresh;
     }
 
     /**
@@ -108,18 +159,20 @@ class AdminOwnerController extends AppController
         $headers = $this->hostHeaders();
         $userProfile = $this->cachedProfile();
 
-        $propRes = $this->apiClient->get('/admin/properties', [], $headers);
+        // Backend owns aggregation; reads cached 60s (was 3 sequential HTTP calls per view).
+        $propRes = $this->portal->get('/admin/properties', [], $headers, 60);
+        if ($bounce = $this->bounceOnUnauth($propRes, '/admin/dashboard')) return $bounce;
         if (empty($propRes) || !empty($propRes['_status'])) {
-            $propRes = $this->apiClient->get('/properties', [], $headers);
+            $propRes = $this->portal->get('/properties', [], $headers, 60);
         }
         $properties = $propRes['data'] ?? (isset($propRes[0]) ? $propRes : []);
         if (!is_array($properties)) $properties = [];
 
-        $bookRes = $this->apiClient->get('/admin/bookings', [], $headers);
+        $bookRes = $this->portal->get('/admin/bookings', [], $headers, 60);
         $bookings = $bookRes['data'] ?? (isset($bookRes[0]) ? $bookRes : []);
         if (!is_array($bookings)) $bookings = [];
 
-        $userRes = $this->apiClient->get('/admin/users', ['role' => 'owner'], $headers);
+        $userRes = $this->portal->get('/admin/users', ['role' => 'owner'], $headers, 60);
         $owners = $userRes['data'] ?? (isset($userRes[0]) ? $userRes : []);
         if (!is_array($owners)) $owners = [];
 
@@ -152,12 +205,13 @@ class AdminOwnerController extends AppController
         if ($search !== '') $params['search'] = $search;
         if ($status !== '') $params['status'] = $status;
 
-        // Try admin users + financial summary for richer data
-        $res = $this->apiClient->get('/admin/users', $params, $headers);
+        // Try admin users + financial summary for richer data (cached 30s)
+        $res = $this->portal->get('/admin/users', $params, $headers, 30);
+        if ($bounce = $this->bounceOnUnauth($res, '/admin/owners')) return $bounce;
         $users = $res['data'] ?? (isset($res[0]) ? $res : []);
         if (!is_array($users)) $users = [];
 
-        $finRes = $this->apiClient->get('/admin/owners/financial-summary', $params, $headers);
+        $finRes = $this->portal->get('/admin/owners/financial-summary', $params, $headers, 30);
         $financial = $finRes['data'] ?? $finRes;
         if (!is_array($financial)) $financial = [];
 
@@ -178,7 +232,8 @@ class AdminOwnerController extends AppController
         if ($search !== '') $params['search'] = $search;
         if ($status !== '') $params['status'] = $status;
 
-        $res = $this->apiClient->get('/admin/properties', $params, $headers);
+        $res = $this->portal->get('/admin/properties', $params, $headers, 60);
+        if ($bounce = $this->bounceOnUnauth($res, '/admin/lodges')) return $bounce;
         $properties = $res['data'] ?? (isset($res[0]) ? $res : []);
         if (!is_array($properties)) $properties = [];
         if (empty($properties) && !empty($res) && empty($res['_status'])) $properties = $res;
@@ -198,9 +253,9 @@ class AdminOwnerController extends AppController
         if (!empty($q['date_from'])) $params['date_from'] = $q['date_from'];
         if (!empty($q['date_to'])) $params['date_to'] = $q['date_to'];
 
-        $res = $this->apiClient->get('/finance/overview', $params, $headers);
+        $res = $this->portal->get('/finance/overview', $params, $headers, 120);
         if (empty($res) || !empty($res['_status'])) {
-            $res = $this->apiClient->get('/admin/dashboard-stats', $params, $headers);
+            $res = $this->portal->get('/admin/dashboard-stats', $params, $headers, 120);
         }
         $finance = $res['data'] ?? $res;
         if (!is_array($finance)) $finance = [];
@@ -222,7 +277,7 @@ class AdminOwnerController extends AppController
         if (empty($params['per_page'])) $params['per_page'] = 15;
         if (empty($params['page'])) $params['page'] = 1;
 
-        $res = $this->apiClient->get('/finance/ledger', $params, $headers);
+        $res = $this->portal->get('/finance/ledger', $params, $headers, 30);
         $ledger = $res['data'] ?? $res;
         if (!is_array($ledger)) $ledger = [];
         $transactions = $ledger['data'] ?? $ledger;
@@ -250,10 +305,12 @@ class AdminOwnerController extends AppController
                 $payload = ['status' => $status];
                 if ($notes !== '') $payload['notes'] = $notes;
                 $up = $this->apiClient->patch('/payouts/' . $id . '/status', $payload, $headers);
+                if ($bounce = $this->bounceOnUnauth($up, '/admin/finance/payouts')) return $bounce;
                 if (!empty($up['_status']) && (int)$up['_status'] >= 400) {
                     $this->Flash->error(__($up['message'] ?? 'Could not update payout.'));
                 } else {
                     $this->Flash->success(__('Payout updated.'));
+                    $this->portal->clear(['_payouts', 'finance', 'dashboard']);
                     return $this->redirect(['action' => 'payouts']);
                 }
             }
@@ -264,12 +321,13 @@ class AdminOwnerController extends AppController
         $params = [];
         if ($status !== '') $params['status'] = $status;
 
-        $res = $this->apiClient->get('/payouts', $params, $headers);
+        $res = $this->portal->get('/payouts', $params, $headers, 30);
+        if ($bounce = $this->bounceOnUnauth($res, '/admin/finance/payouts')) return $bounce;
         $payouts = $res['data'] ?? (isset($res[0]) ? $res : []);
         if (!is_array($payouts)) $payouts = [];
 
-        // Also fetch finance overview for cards
-        $fin = $this->apiClient->get('/finance/overview', [], $headers);
+        // Also fetch finance overview for cards (cached 120s)
+        $fin = $this->portal->get('/finance/overview', [], $headers, 120);
         $finance = $fin['data'] ?? $fin;
         if (!is_array($finance)) $finance = [];
 
@@ -290,10 +348,12 @@ class AdminOwnerController extends AppController
                 $msg = trim((string)($data['message'] ?? ''));
                 if ($msg !== '') {
                     $rep = $this->apiClient->post('/tickets/' . $tid . '/reply', ['message' => $msg], $headers);
+                    if ($bounce = $this->bounceOnUnauth($rep, '/admin/support')) return $bounce;
                     if (!empty($rep['_status']) && (int)$rep['_status'] >= 400) {
                         $this->Flash->error(__($rep['message'] ?? 'Could not send reply.'));
                     } else {
                         $this->Flash->success(__('Reply sent.'));
+                        $this->portal->clear('_tickets');
                         return $this->redirect(['action' => 'support']);
                     }
                 }
@@ -301,21 +361,24 @@ class AdminOwnerController extends AppController
                 $tid = (int)$data['ticket_id'];
                 $st = trim((string)($data['status'] ?? ''));
                 $pat = $this->apiClient->patch('/tickets/' . $tid . '/status', ['status' => $st], $headers);
+                if ($bounce = $this->bounceOnUnauth($pat, '/admin/support')) return $bounce;
                 if (!empty($pat['_status']) && (int)$pat['_status'] >= 400) {
                     $this->Flash->error(__($pat['message'] ?? 'Could not update ticket.'));
                 } else {
                     $this->Flash->success(__('Ticket updated.'));
+                    $this->portal->clear('_tickets');
                     return $this->redirect(['action' => 'support']);
                 }
             }
         }
 
-        $tRes = $this->apiClient->get('/tickets', [], $headers);
+        $tRes = $this->portal->get('/tickets', [], $headers, 60);
+        if ($bounce = $this->bounceOnUnauth($tRes, '/admin/support')) return $bounce;
         $tickets = $tRes['data'] ?? (isset($tRes[0]) ? $tRes : []);
         if (!is_array($tickets)) $tickets = [];
 
-        // Messages threads for admin
-        $mRes = $this->apiClient->get('/messages/threads', [], $headers);
+        // Messages threads for admin (cached 60s)
+        $mRes = $this->portal->get('/messages/threads', [], $headers, 60);
         $threads = $mRes['data'] ?? (isset($mRes[0]) ? $mRes : []);
         if (!is_array($threads)) $threads = [];
 
@@ -328,7 +391,7 @@ class AdminOwnerController extends AppController
         $headers = $this->hostHeaders();
         $userProfile = $this->cachedProfile();
 
-        $res = $this->apiClient->get('/admin/reviews', [], $headers);
+        $res = $this->portal->get('/admin/reviews', [], $headers, 120);
         $reviews = $res['data'] ?? (isset($res[0]) ? $res : []);
         if (!is_array($reviews)) $reviews = [];
 
@@ -390,6 +453,7 @@ class AdminOwnerController extends AppController
             $this->Flash->error(__($res['message'] ?? 'Verification failed.'));
         } else {
             $this->Flash->success(__('Verification updated.'));
+            $this->portal->clear();
         }
         if ($type === 'lodge' || $type === 'property') {
             return $this->redirect(['action' => 'lodges']);
@@ -412,10 +476,12 @@ class AdminOwnerController extends AppController
             if ($bid !== '' && $status !== '') {
                 // Backend source of truth: PATCH /admin/bookings/{id}/status
                 $res = $this->apiClient->patch('/admin/bookings/' . $bid . '/status', ['status' => $status], $headers);
+                if ($bounce = $this->bounceOnUnauth($res, '/admin/bookings')) return $bounce;
                 if (!empty($res['_status']) && (int)$res['_status'] >= 400) {
                     $this->Flash->error(__($res['message'] ?? 'Could not update booking.'));
                 } else if ($res !== null) {
                     $this->Flash->success(__('Booking status updated.'));
+                    $this->portal->clear(['_bookings', 'finance', 'dashboard']);
                     return $this->redirect(['action' => 'bookings']);
                 }
             }
@@ -425,23 +491,20 @@ class AdminOwnerController extends AppController
         $search = trim((string)($q['search'] ?? ''));
         $status = trim((string)($q['status'] ?? ''));
 
-        $res = $this->apiClient->get('/admin/bookings', [], $headers);
+        // Backend owns filtering — search/status go to the API (cached 30s).
+        $listParams = [];
+        if ($search !== '') $listParams['search'] = $search;
+        if ($status !== '' && $status !== 'all') $listParams['status'] = $status;
+
+        $res = $this->portal->get('/admin/bookings', $listParams, $headers, 30);
+        if ($bounce = $this->bounceOnUnauth($res, '/admin/bookings')) return $bounce;
         $bookings = $res['data'] ?? (isset($res[0]) ? $res : []);
         if (!is_array($bookings)) $bookings = [];
         // Fallback to generic bookings
         if (empty($bookings) && !empty($res['_status'])) {
-            $r2 = $this->apiClient->get('/bookings', [], $headers);
+            $r2 = $this->portal->get('/bookings', $listParams, $headers, 30);
             $bookings = $r2['data'] ?? (isset($r2[0]) ? $r2 : []);
             if (!is_array($bookings)) $bookings = [];
-        }
-
-        // Search/status filter (client-side mirror fastnet_admin_portal bookings_screen.dart)
-        if ($search !== '') {
-            $low = strtolower($search);
-            $bookings = array_values(array_filter($bookings, fn($b) => str_contains(strtolower(json_encode($b)), $low)));
-        }
-        if ($status !== '' && $status !== 'all') {
-            $bookings = array_values(array_filter($bookings, fn($b) => strtolower((string)($b['status'] ?? $b['payment_status'] ?? '')) === strtolower($status)));
         }
 
         $this->set(compact('userProfile', 'bookings', 'search', 'status'));
@@ -468,18 +531,22 @@ class AdminOwnerController extends AppController
                     if ($action === 'update' && !empty($data['staff_id'])) {
                         $sid = trim((string)$data['staff_id']);
                         $res = $this->apiClient->patch('/staff/' . $sid, $payload, $headers);
+                        if ($bounce = $this->bounceOnUnauth($res, '/admin/staff')) return $bounce;
                         if (!empty($res['_status']) && (int)$res['_status'] >= 400) {
                             $this->Flash->error(__($res['message'] ?? 'Could not update staff.'));
                         } else {
                             $this->Flash->success(__('Staff updated.'));
+                            $this->portal->clear('_staff');
                             return $this->redirect(['action' => 'staff']);
                         }
                     } else {
                         $res = $this->apiClient->post('/staff', $payload, $headers);
+                        if ($bounce = $this->bounceOnUnauth($res, '/admin/staff')) return $bounce;
                         if (!empty($res['_status']) && (int)$res['_status'] >= 400) {
                             $this->Flash->error(__($res['message'] ?? 'Could not add staff.'));
                         } else {
                             $this->Flash->success(__('Staff added.'));
+                            $this->portal->clear('_staff');
                             return $this->redirect(['action' => 'staff']);
                         }
                     }
@@ -487,16 +554,19 @@ class AdminOwnerController extends AppController
             } elseif ($action === 'delete' && !empty($data['staff_id'])) {
                 $sid = trim((string)$data['staff_id']);
                 $res = $this->apiClient->delete('/staff/' . $sid, $headers);
+                if ($bounce = $this->bounceOnUnauth($res, '/admin/staff')) return $bounce;
                 if (!empty($res['_status']) && (int)$res['_status'] >= 400) {
                     $this->Flash->error(__($res['message'] ?? 'Could not delete staff.'));
                 } else {
                     $this->Flash->success(__('Staff deleted.'));
+                    $this->portal->clear('_staff');
                     return $this->redirect(['action' => 'staff']);
                 }
             }
         }
 
-        $res = $this->apiClient->get('/staff', [], $headers);
+        $res = $this->portal->get('/staff', [], $headers, 60);
+        if ($bounce = $this->bounceOnUnauth($res, '/admin/staff')) return $bounce;
         $staff = $res['data'] ?? (isset($res[0]) ? $res : []);
         if (!is_array($staff)) $staff = [];
 
@@ -516,10 +586,12 @@ class AdminOwnerController extends AppController
             if ($rid !== '' && $status !== '') {
                 // Backend source of truth: PATCH /lodge-requests/{id}/status
                 $res = $this->apiClient->patch('/lodge-requests/' . $rid . '/status', ['status' => $status], $headers);
+                if ($bounce = $this->bounceOnUnauth($res, '/admin/requests')) return $bounce;
                 if (!empty($res['_status']) && (int)$res['_status'] >= 400) {
                     $this->Flash->error(__($res['message'] ?? 'Could not update request.'));
                 } else if ($res !== null) {
                     $this->Flash->success(__('Request updated.'));
+                    $this->portal->clear(['_lodge_requests', 'properties', 'dashboard']);
                     return $this->redirect(['action' => 'lodgeRequests']);
                 } else {
                     $this->Flash->error(__('Lodge requests update not yet supported by backend — showing local.'));
@@ -532,20 +604,16 @@ class AdminOwnerController extends AppController
         $status = trim((string)($q['status'] ?? ''));
         $type = trim((string)($q['type'] ?? ''));
 
-        $res = $this->apiClient->get('/lodge-requests', [], $headers);
+        // Backend owns filtering (cached 30s per filter combo).
+        $listParams = [];
+        if ($search !== '') $listParams['search'] = $search;
+        if ($status !== '' && $status !== 'all') $listParams['status'] = $status;
+        if ($type !== '' && $type !== 'all') $listParams['type'] = $type;
+
+        $res = $this->portal->get('/lodge-requests', $listParams, $headers, 30);
+        if ($bounce = $this->bounceOnUnauth($res, '/admin/requests')) return $bounce;
         $requests = $res['data'] ?? (isset($res[0]) ? $res : []);
         if (!is_array($requests)) $requests = [];
-
-        if ($search !== '') {
-            $low = strtolower($search);
-            $requests = array_values(array_filter($requests, fn($r) => str_contains(strtolower(json_encode($r)), $low)));
-        }
-        if ($status !== '' && $status !== 'all') {
-            $requests = array_values(array_filter($requests, fn($r) => strtolower((string)($r['status'] ?? '')) === strtolower($status)));
-        }
-        if ($type !== '' && $type !== 'all') {
-            $requests = array_values(array_filter($requests, fn($r) => strtolower((string)($r['type'] ?? $r['room_type'] ?? '')) === strtolower($type)));
-        }
 
         // Dynamic type options for filter
         $typeOptions = ['all'];

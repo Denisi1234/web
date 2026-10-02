@@ -20,16 +20,17 @@ class MapService
     }
 
     /**
-     * Resolve authoritative Mapbox Access Token and Mapbox Streets v12 style
+     * Resolve authoritative Mapbox Access Token and Mapbox Streets v12 style.
+     * $timeout caps the backend /map-config call (fail-fast for page renders).
      */
-    public function getMapConfig(): array
+    public function getMapConfig(?int $timeout = null): array
     {
         $mapboxToken = null;
         $mapboxStyle = (string)Configure::read('App.mapboxStyle', env('MAPBOX_STYLE', 'mapbox://styles/mapbox/streets-v12'));
 
         // 1. Fetch real token from backend microservice
         try {
-            $cfg = $this->apiClient->get('/map-config');
+            $cfg = $this->apiClient->get('/map-config', [], [], $timeout);
             if (is_array($cfg)) {
                 $candidate = $cfg['mapbox_token'] ?? $cfg['mapboxToken'] ?? $cfg['token'] ?? $cfg['access_token'] ?? null;
                 if (!$candidate && isset($cfg['data']) && is_array($cfg['data'])) {

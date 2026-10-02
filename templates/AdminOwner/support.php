@@ -20,7 +20,7 @@ $this->assign('page_actions', '<span style="font-size:13px;color:var(--p-text-2)
           <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><strong style="font-size:13px">#<?= h($tid) ?> <?= h($t['subject'] ?? '—') ?></strong><span class="p-badge <?= $badge ?>"><?= h($st) ?></span></div>
           <div style="font-size:12px;color:var(--p-text-2);margin-top:4px"><?= h(substr((string)($t['message'] ?? $t['description'] ?? ''), 0, 140)) ?></div>
           <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-            <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'support'], 'style' => 'display:flex;gap:6px']) ?>
+            <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'support'], 'style' => 'display:flex;gap:6px', 'data-api' => 'PATCH /tickets/' . $tid . '/status', 'data-api-strip' => 'action,ticket_id', 'data-api-ok' => 'Ticket updated.', 'data-opt' => 'patch', 'data-opt-scope' => 'closest:.ticket-card', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'ticket', 'data-opt-badgetext' => 'lower', 'data-opt-bust' => '_tickets', 'data-api-go' => '/admin/cache-bust?scope=_tickets&go=' . urlencode('/admin/support')]) ?>
               <?= $this->Form->hidden('action', ['value' => 'status']) ?><?= $this->Form->hidden('ticket_id', ['value' => $tid]) ?>
               <select name="status" class="form-select form-select-sm" style="min-height:32px;width:auto">
                 <?php foreach (['Open', 'In Progress', 'Resolved'] as $opt): ?><option value="<?= $opt ?>" <?= $st === strtolower($opt) ? 'selected' : '' ?>><?= $opt ?></option><?php endforeach; ?>
@@ -28,7 +28,7 @@ $this->assign('page_actions', '<span style="font-size:13px;color:var(--p-text-2)
               <button class="p-btn" style="min-height:32px;font-size:12px">Update</button>
             <?= $this->Form->end() ?>
           </div>
-          <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'support'], 'style' => 'display:flex;gap:6px;margin-top:6px']) ?>
+          <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'support'], 'style' => 'display:flex;gap:6px;margin-top:6px', 'data-api' => 'POST /tickets/' . $tid . '/reply', 'data-api-strip' => 'action,ticket_id', 'data-api-ok' => 'Reply sent.', 'data-opt' => 'refresh', 'data-opt-bust' => '_tickets', 'data-api-go' => '/admin/cache-bust?scope=_tickets&go=' . urlencode('/admin/support')]) ?>
             <?= $this->Form->hidden('action', ['value' => 'reply']) ?><?= $this->Form->hidden('ticket_id', ['value' => $tid]) ?>
             <input name="message" placeholder="Reply…" class="form-control form-control-sm" style="min-height:32px" required><button class="p-btn" style="min-height:32px;font-size:12px">Send</button>
           <?= $this->Form->end() ?>

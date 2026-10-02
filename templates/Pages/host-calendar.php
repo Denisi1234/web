@@ -31,7 +31,7 @@ $this->assign('page_actions', '<a href="' . $this->Url->build('/host/listings') 
         <div class="cds-day <?= $blocked ? 'off' : 'ok' ?>" title="Day <?= $d ?> — <?= $blocked ? 'Blocked' : 'Available' ?>"><span><?= $d ?></span><small>TSh <?= number_format($rprice / 1000, 1) ?>k</small></div>
       <?php endfor; ?>
     </div>
-    <?= $this->Form->create(null, ['url' => ['action' => 'calendar', $property['id'] ?? null], 'style' => 'display:flex;gap:8px;flex-wrap:wrap;align-items:end']) ?>
+    <?= $this->Form->create(null, ['url' => ['action' => 'calendar', $property['id'] ?? null], 'style' => 'display:flex;gap:8px;flex-wrap:wrap;align-items:end', 'data-api' => 'PUT /rooms/' . $rid, 'data-api-strip' => 'room_id', 'data-api-ok' => 'Room updated.', 'data-opt' => 'refresh', 'data-opt-bust' => 'rooms,properties', 'data-api-go' => '/host/cache-bust?scope=rooms,properties&go=' . urlencode('/host/calendar/' . ($property['id'] ?? ''))]) ?>
       <?= $this->Form->hidden('room_id', ['value' => $rid]) ?>
       <div style="flex:1;min-width:160px">
         <label style="font-size:12px;font-weight:600;color:var(--p-text-2)">Price TSh</label>

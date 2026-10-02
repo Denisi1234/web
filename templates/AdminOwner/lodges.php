@@ -59,13 +59,13 @@ $this->assign('page_actions', '<span style="font-size:13px;color:var(--p-text-2)
           <?php endif; ?>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;padding:16px;margin-top:auto">
-          <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'verify', 'lodge', $pid], 'style' => 'display:inline']) ?>
+          <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'verify', 'lodge', $pid], 'style' => 'display:inline', 'data-api' => 'POST /admin/verification/lodge/' . $pid, 'data-api-omit-empty' => 'reason', 'data-api-ok' => 'Verification updated.', 'data-opt' => 'patch', 'data-opt-scope' => 'closest:div.p-card', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'lodge', 'data-opt-badgetext' => 'lower', 'data-opt-bust' => 'properties', 'data-api-go' => '/admin/cache-bust?scope=properties&go=' . urlencode('/admin/lodges')]) ?>
             <?= $this->Form->hidden('status', ['value' => 'approved']) ?><button class="p-btn" style="min-height:36px;font-size:13px">Approve</button>
           <?= $this->Form->end() ?>
-          <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'verify', 'lodge', $pid], 'style' => 'display:inline']) ?>
+          <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'verify', 'lodge', $pid], 'style' => 'display:inline', 'data-api' => 'POST /admin/verification/lodge/' . $pid, 'data-api-omit-empty' => 'reason', 'data-api-ok' => 'Verification updated.', 'data-opt' => 'patch', 'data-opt-scope' => 'closest:div.p-card', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'lodge', 'data-opt-badgetext' => 'lower', 'data-opt-bust' => 'properties', 'data-api-go' => '/admin/cache-bust?scope=properties&go=' . urlencode('/admin/lodges')]) ?>
             <?= $this->Form->hidden('status', ['value' => 'rejected']) ?><input type="hidden" name="reason" value="Rejected"><button class="p-btn ghost" style="min-height:36px;font-size:13px">Reject</button>
           <?= $this->Form->end() ?>
-          <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'verify', 'lodge', $pid], 'style' => 'display:inline']) ?>
+          <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'verify', 'lodge', $pid], 'style' => 'display:inline', 'data-api' => 'POST /admin/verification/lodge/' . $pid, 'data-api-omit-empty' => 'reason', 'data-api-ok' => 'Verification updated.', 'data-opt' => 'patch', 'data-opt-scope' => 'closest:div.p-card', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'lodge', 'data-opt-badgetext' => 'lower', 'data-opt-bust' => 'properties', 'data-api-go' => '/admin/cache-bust?scope=properties&go=' . urlencode('/admin/lodges')]) ?>
             <?= $this->Form->hidden('status', ['value' => 'changes_requested']) ?><input type="hidden" name="reason" value="Please update details"><button class="p-btn ghost" style="min-height:36px;font-size:13px">Request changes</button>
           <?= $this->Form->end() ?>
         </div>

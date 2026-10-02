@@ -174,7 +174,7 @@
 
 			if (!items || items.length === 0) {
 				if (query && query.length >= 2) {
-					suggestionsBox.innerHTML = `<div class="p-3 text-xs text-muted text-center"><i class="fa-solid fa-spinner fa-spin me-1"></i> Searching Mapbox places...</div>`;
+					suggestionsBox.innerHTML = `<div class="p-3 text-xs text-muted text-center"><span class="p-dots" aria-hidden="true"><span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span></span> Searching Mapbox places...</div>`;
 					suggestionsBox.style.display = 'block';
 				} else {
 					suggestionsBox.style.display = 'none';
@@ -236,7 +236,7 @@
 				return;
 			}
 
-			suggestionsBox.innerHTML = `<div class="p-3 text-xs text-muted text-center"><i class="fa-solid fa-spinner fa-spin me-1 text-primary"></i> Geocoding place...</div>`;
+			suggestionsBox.innerHTML = `<div class="p-3 text-xs text-muted text-center"><span class="p-dots" aria-hidden="true"><span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span></span> Geocoding place...</div>`;
 			suggestionsBox.style.display = 'block';
 
 			debounceTimer = setTimeout(() => {

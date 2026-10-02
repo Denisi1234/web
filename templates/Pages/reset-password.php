@@ -151,7 +151,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			}
 
 			resetBtn.disabled = true;
-			resetBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving New Password...';
+			resetBtn.innerHTML = '<span class="p-dots" aria-hidden="true"><span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span></span>Saving New Password...';
 
 			try {
 				const endpoint = (typeof window.API_URL === 'function') 

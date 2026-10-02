@@ -22,10 +22,17 @@ async function toggleWishlist(propertyId, btnEl) {
     let ids = getGlobalWishlistIds();
     const isSaved = ids.includes(id);
     const csrf = document.querySelector('meta[name="csrfToken"]')?.content || '';
-    // instant loading feedback on heart
+    // instant loading feedback on heart (canonical p-dots; placeholder <i> restored below for sync)
     const icon = btnEl ? btnEl.querySelector('i') : null;
     const origIcon = icon ? icon.className : '';
-    if (icon) { icon.className = 'fa-solid fa-spinner fa-spin text-danger'; }
+    let dotsPh = null;
+    if (icon) {
+        dotsPh = document.createElement('span');
+        dotsPh.className = 'p-dots sm';
+        dotsPh.setAttribute('aria-hidden', 'true');
+        dotsPh.innerHTML = '<span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span>';
+        icon.replaceWith(dotsPh);
+    }
     if (btnEl) btnEl.disabled = true;
 
     if (isSaved) {
@@ -54,6 +61,7 @@ async function toggleWishlist(propertyId, btnEl) {
             showWishlistToast('Saved to your Wishlist! ❤️');
         } catch(e) { showWishlistToast('Saved (local) ❤️'); }
     }
+    if (dotsPh) { const ph = document.createElement('i'); if (origIcon) ph.className = origIcon; dotsPh.replaceWith(ph); }
     syncWishlistButtons();
     if (btnEl) btnEl.disabled = false;
     // icon restored by syncWishlistButtons

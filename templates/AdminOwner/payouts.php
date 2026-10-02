@@ -47,13 +47,13 @@ $this->assign('page_actions', '<span style="font-size:13px;color:var(--p-text-2)
           <td><span class="p-badge <?= $badge ?>"><?= h($st) ?></span></td>
           <td>
             <div style="display:flex;gap:6px;flex-wrap:wrap">
-              <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'payouts'], 'style' => 'display:inline']) ?>
+              <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'payouts'], 'style' => 'display:inline', 'data-api' => 'PATCH /payouts/' . $pid . '/status', 'data-api-strip' => 'payout_id', 'data-api-ok' => 'Payout updated.', 'data-opt' => 'patch', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'payout', 'data-opt-badgetext' => 'raw', 'data-opt-bust' => '_payouts', 'data-api-go' => '/admin/cache-bust?scope=_payouts&go=' . urlencode('/admin/finance/payouts')]) ?>
                 <?= $this->Form->hidden('payout_id', ['value' => $pid]) ?><input type="hidden" name="status" value="PROCESSING"><button class="p-btn ghost" style="min-height:32px;font-size:12px" <?= $st === 'PAID' ? 'disabled' : '' ?>>Processing</button>
               <?= $this->Form->end() ?>
-              <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'payouts'], 'style' => 'display:inline']) ?>
+              <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'payouts'], 'style' => 'display:inline', 'data-api' => 'PATCH /payouts/' . $pid . '/status', 'data-api-strip' => 'payout_id', 'data-api-ok' => 'Payout updated.', 'data-opt' => 'patch', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'payout', 'data-opt-badgetext' => 'raw', 'data-opt-bust' => '_payouts', 'data-api-go' => '/admin/cache-bust?scope=_payouts&go=' . urlencode('/admin/finance/payouts')]) ?>
                 <?= $this->Form->hidden('payout_id', ['value' => $pid]) ?><input type="hidden" name="status" value="PAID"><button class="p-btn" style="min-height:32px;font-size:12px">Mark paid</button>
               <?= $this->Form->end() ?>
-              <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'payouts'], 'style' => 'display:inline']) ?>
+              <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'payouts'], 'style' => 'display:inline', 'data-api' => 'PATCH /payouts/' . $pid . '/status', 'data-api-strip' => 'payout_id', 'data-api-ok' => 'Payout updated.', 'data-opt' => 'patch', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'payout', 'data-opt-badgetext' => 'raw', 'data-opt-bust' => '_payouts', 'data-api-go' => '/admin/cache-bust?scope=_payouts&go=' . urlencode('/admin/finance/payouts')]) ?>
                 <?= $this->Form->hidden('payout_id', ['value' => $pid]) ?><input type="hidden" name="status" value="FAILED"><button class="p-btn ghost" style="min-height:32px;font-size:12px">Fail</button>
               <?= $this->Form->end() ?>
             </div>

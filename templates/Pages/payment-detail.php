@@ -33,7 +33,7 @@ $this->assign('title', 'Payment Details');
 						<div class="row justify-content-start g-3" id="payment-methods-list">
 							<!-- Spinner -->
 							<div class="col-12 text-center py-4" id="pm-loading">
-								<div class="spinner-border text-primary spinner-border-sm" role="status"></div>
+								<span class="p-dots" aria-hidden="true"><span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span></span>
 							</div>
 						</div>
 					</div>
@@ -59,7 +59,7 @@ $this->assign('title', 'Payment Details');
 								<tbody id="billing-history-rows">
 									<tr>
 										<td colspan="5" class="text-center py-4">
-											<div class="spinner-border text-primary spinner-border-sm" role="status"></div>
+											<span class="p-dots" aria-hidden="true"><span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span></span>
 										</td>
 									</tr>
 								</tbody>

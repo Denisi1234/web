@@ -23,5 +23,15 @@
     </div>
 </div>
 
+<!-- 4. Single centered action loader — shown automatically on ANY slow
+     navigation/submit (>300ms) across the whole site. Small, no scroll
+     lock; full modal above stays reserved for explicit flows. -->
+<div id="fastnet-nav-loader" aria-hidden="true" role="status" aria-label="Loading">
+    <div class="fastnet-nav-card">
+        <span class="fastnet-nav-ring" aria-hidden="true"></span>
+        <span class="fastnet-nav-txt">Loading…</span>
+    </div>
+</div>
+
 <!-- 3. Floating Background Task Pill Indicator Container -->
 <div id="fastnet-bg-loader" role="status" aria-live="polite" aria-atomic="true"></div>

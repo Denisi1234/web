@@ -116,6 +116,8 @@
          * Hide Full-Screen App Loading Modal
          */
         hide: function () {
+            var nav = document.getElementById('fastnet-nav-loader');
+            if (nav) { nav.classList.remove('visible'); nav.setAttribute('aria-hidden', 'true'); }
             const els = getElements();
             if (els.modal) {
                 els.modal.classList.remove('visible');
@@ -212,6 +214,8 @@
     window.hideAppLoading = function () { FastnetLoader.hide(); };
     window.startBgLoading = function (msg) { return FastnetLoader.bg(msg); };
     window.stopBgLoading = function (id) { FastnetLoader.bgDone(id); };
+    window.showNavLoading = function () { if (typeof navShow === 'function') navShow(); };
+    window.hideNavLoading = function () { if (typeof navHide === 'function') navHide(); };
 
     // Initial page load progress lifecycle
     FastnetLoader.bar.start();
@@ -230,9 +234,34 @@
     });
 
     // Auto-progress on navigation links & form submissions
+    // Single centered loader: shown only when the next paint is slow
+    // (>300ms) so instant swaps never flash. AJAX-managed zones
+    // (home search, filter chips) keep their own shimmer — never covered.
+    var navTimer = null;
+    function managedZone(el) {
+        if (!el || !el.closest) return false;
+        return !!el.closest('#gh_search_form, #fnsFiltersModal, #fns_mobile_sheet, [data-no-loader]');
+    }
+    function navShow() {
+        var el = document.getElementById('fastnet-nav-loader');
+        if (!el) return;
+        el.classList.add('visible');
+        el.setAttribute('aria-hidden', 'false');
+    }
+    function navHide() {
+        if (navTimer) { clearTimeout(navTimer); navTimer = null; }
+        var el = document.getElementById('fastnet-nav-loader');
+        if (el) { el.classList.remove('visible'); el.setAttribute('aria-hidden', 'true'); }
+    }
+    function navSchedule() {
+        if (navTimer) return;
+        navTimer = setTimeout(navShow, 300);
+    }
+    window.addEventListener('pageshow', navHide);
     document.addEventListener('click', function (e) {
-        const link = e.target.closest('a');
-        if (!link) return;
+        if (e.defaultPrevented || (e.button !== undefined && e.button !== 0) || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        var link = e.target.closest ? e.target.closest('a') : null;
+        if (!link || managedZone(link)) return;
         const href = link.getAttribute('href');
         const target = link.getAttribute('target');
 
@@ -244,13 +273,17 @@
         // Internal navigation detected -> start top progress bar
         if (href.startsWith('/') || href.startsWith(window.location.origin)) {
             FastnetLoader.bar.start();
+            navSchedule();
         }
     });
 
     // Auto-progress on form submit
     document.addEventListener('submit', function (e) {
         const form = e.target;
-        if (form && !form.hasAttribute('data-no-loader')) {
+        if (form && !form.hasAttribute('data-no-loader') && !managedZone(form)) {
+            FastnetLoader.bar.start();
+            navSchedule();
+        } else if (form && !form.hasAttribute('data-no-loader')) {
             FastnetLoader.bar.start();
         }
     });

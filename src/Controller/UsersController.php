@@ -42,7 +42,8 @@ class UsersController extends AppController
         $authService->logout($session);
 
         $this->Flash->success(__('You have been successfully logged out.'));
-        return $this->redirect('/');
+        $resp = $this->redirect('/');
+        return $authService->clearToken($resp);
     }
 
     /**

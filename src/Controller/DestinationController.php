@@ -3,74 +3,69 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Service\FastnetApiClient;
+use Cake\Cache\Cache;
+
 /**
- * Destination Controller - Tanzanian Travel Hubs & Stays
+ * Destination Controller — backend-driven travel hubs.
+ * All destination data comes from the backend API (/destinations);
+ * nothing is hardcoded in the frontend.
  */
 class DestinationController extends AppController
 {
     public function detail($slug = null)
     {
-        $trips = [
-            [
-                'id' => 1,
-                'img' => 'assets/img/city/ct-6.png', 
-                'title' => 'Zanzibar Beach Escape & Stone Town Stays', 
-                'price' => '350000', 
-                'for' => 'Per Night / 2 Guests',
-                'city' => 'Zanzibar' 
-            ],
-            [
-                'id' => 2,
-                'img' => 'assets/img/city/ct-12.png', 
-                'title' => 'Serengeti Safari & Luxury Camp Retreat', 
-                'price' => '520000', 
-                'for' => 'Per Night / 2 Guests',
-                'city' => 'Serengeti' 
-            ],
-            [
-                'id' => 3,
-                'img' => 'assets/img/city/ct-9.png', 
-                'title' => 'Mount Meru & Arusha National Park Stays', 
-                'price' => '220000', 
-                'for' => 'Per Night / 2 Guests',
-                'city' => 'Arusha' 
-            ],
-            [
-                'id' => 4,
-                'img' => 'assets/img/city/ct-8.png', 
-                'title' => 'Dar es Salaam Executive & Beachfront Lodges', 
-                'price' => '160000', 
-                'for' => 'Per Night / 2 Guests',
-                'city' => 'Dar es Salaam' 
-            ],
-            [
-                'id' => 5,
-                'img' => 'assets/img/city/c-4.png', 
-                'title' => 'Mount Kilimanjaro Base Camp & Nature Lodges', 
-                'price' => '280000', 
-                'for' => 'Per Night / 2 Guests',
-                'city' => 'Kilimanjaro' 
-            ],
-            [
-                'id' => 6,
-                'img' => 'assets/img/city/c-7.png', 
-                'title' => 'Pemba Island Coral Reef Eco Resort', 
-                'price' => '390000', 
-                'for' => 'Per Night / 2 Guests',
-                'city' => 'Pemba' 
-            ],
-        ];
+        // Backend is source of truth — destinations list comes from the API.
+        // Cached 5 min; empty backend means empty page (no hardcoded trips).
+        $items = [];
+        try {
+            $cached = Cache::read('backend_destinations', 'default');
+            if (is_array($cached) && isset($cached['exp'], $cached['data']) && $cached['exp'] > time()) {
+                $items = $cached['data'];
+            } else {
+                $res = (new FastnetApiClient())->get('/destinations', [], [], 4);
+                if (is_array($res)) {
+                    $items = $res['data'] ?? ($res['items'] ?? []);
+                }
+                if (!is_array($items)) {
+                    $items = [];
+                }
+                try {
+                    Cache::write('backend_destinations', ['exp' => time() + 300, 'data' => $items], 'default');
+                } catch (\Throwable $e) {
+                }
+            }
+        } catch (\Throwable $e) {
+            $items = [];
+        }
 
-        $article = $trips[0]; // Default value
+        $trips = [];
+        foreach ($items as $d) {
+            if (!is_array($d)) {
+                continue;
+            }
+            $trips[] = [
+                'id' => $d['id'] ?? null,
+                'img' => $d['image_url'] ?? ($d['img'] ?? ''),
+                'title' => $d['name'] ?? ($d['title'] ?? ''),
+                'price' => $d['price'] ?? ($d['price_per_night'] ?? ''),
+                'for' => $d['for'] ?? '',
+                'city' => $d['city'] ?? '',
+            ];
+        }
 
+        $article = null;
         if ($slug !== null) {
             foreach ($trips as $item) {
-                $slugifiedTitle = strtolower(str_replace(' ', '-', $item['title']));
-                if ($slugifiedTitle === strtolower($slug) || strtolower($item['city']) === strtolower($slug)) {
+                $slugifiedTitle = strtolower(str_replace(' ', '-', (string)($item['title'] ?? '')));
+                if ($slugifiedTitle === strtolower($slug) || strtolower((string)($item['city'] ?? '')) === strtolower($slug)) {
                     $article = $item;
                     break;
                 }
             }
+        }
+        if ($article === null && !empty($trips[0])) {
+            $article = $trips[0];
         }
 
         $this->set(compact('article', 'trips'));

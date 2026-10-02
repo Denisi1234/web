@@ -51,16 +51,16 @@ if (empty($list)) $list = $users;
           <td style="text-align:right"><div style="font-weight:600">TSh <?= number_format((float)$gross) ?></div><div style="font-size:11px;color:var(--p-text-2)">Net TSh <?= number_format((float)$net) ?></div></td>
           <td>
             <div style="display:flex;gap:6px;flex-wrap:wrap">
-              <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'verify', 'owner', $oid], 'style' => 'display:inline']) ?>
+              <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'verify', 'owner', $oid], 'style' => 'display:inline', 'data-api' => 'POST /admin/verification/owner/' . $oid, 'data-api-omit-empty' => 'reason', 'data-api-ok' => 'Verification updated.', 'data-opt' => 'patch', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'verify', 'data-opt-badgetext' => 'lower', 'data-opt-bust' => 'users,owners', 'data-api-go' => '/admin/cache-bust?scope=users,owners&go=' . urlencode('/admin/owners')]) ?>
                 <?= $this->Form->hidden('status', ['value' => 'approved']) ?><button class="p-btn" style="min-height:32px;font-size:12px">Approve</button>
               <?= $this->Form->end() ?>
-              <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'verify', 'owner', $oid], 'style' => 'display:inline']) ?>
+              <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'verify', 'owner', $oid], 'style' => 'display:inline', 'data-api' => 'POST /admin/verification/owner/' . $oid, 'data-api-omit-empty' => 'reason', 'data-api-ok' => 'Verification updated.', 'data-opt' => 'patch', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'verify', 'data-opt-badgetext' => 'lower', 'data-opt-bust' => 'users,owners', 'data-api-go' => '/admin/cache-bust?scope=users,owners&go=' . urlencode('/admin/owners')]) ?>
                 <?= $this->Form->hidden('status', ['value' => 'rejected']) ?><input type="hidden" name="reason" value="Rejected by admin"><button class="p-btn ghost" style="min-height:32px;font-size:12px">Reject</button>
               <?= $this->Form->end() ?>
               <button class="p-btn ghost" style="min-height:32px;font-size:12px" onclick="document.getElementById('reason-<?= $oid ?>').classList.toggle('d-none')">Request changes</button>
             </div>
             <div id="reason-<?= $oid ?>" class="d-none mt-2">
-              <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'verify', 'owner', $oid], 'style' => 'display:flex;gap:6px']) ?>
+              <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'verify', 'owner', $oid], 'style' => 'display:flex;gap:6px', 'data-api' => 'POST /admin/verification/owner/' . $oid, 'data-api-omit-empty' => 'reason', 'data-api-ok' => 'Verification updated.', 'data-opt' => 'patch', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'verify', 'data-opt-badgetext' => 'lower', 'data-opt-bust' => 'users,owners', 'data-api-go' => '/admin/cache-bust?scope=users,owners&go=' . urlencode('/admin/owners')]) ?>
                 <?= $this->Form->hidden('status', ['value' => 'changes_requested']) ?>
                 <input name="reason" placeholder="Reason" class="form-control form-control-sm" style="min-height:32px"><button class="p-btn" style="min-height:32px;font-size:12px">Send</button>
               <?= $this->Form->end() ?>

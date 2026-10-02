@@ -322,9 +322,9 @@ if (!function_exists('ghPropImages')) {
     <?php endforeach; ?>
 <?php else: ?>
     <?php
-    // Baymard: empty state must preserve search (dates/guests) while clearing only filters
+    // Baymard: empty state must preserve search (city/dates/guests) while clearing filters AND stale map position
     $clearQP = [];
-    foreach (['city','destination','checkin','checkout','checkIn','checkOut','adults','children','rooms','lat','lng'] as $k) {
+    foreach (['city','destination','checkin','checkout','checkIn','checkOut','adults','children','rooms'] as $k) {
         if (isset($queryParams[$k]) && $queryParams[$k] !== '' && $queryParams[$k] !== null) $clearQP[$k] = $queryParams[$k];
     }
     if (empty($clearQP['destination']) && !empty($clearQP['city'])) $clearQP['destination'] = $clearQP['city'];

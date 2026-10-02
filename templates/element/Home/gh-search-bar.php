@@ -542,7 +542,7 @@ function fnsMbxSuggest(ql){
     var box=document.getElementById('fns_dd_mbx');
     var popOpen=false;
     try{ popOpen=document.getElementById('fns_pop_dest').classList.contains('open'); }catch(e){}
-    if(box && popOpen) box.innerHTML='<div style="padding:10px 16px;color:var(--fns-text-sec);font-size:13px;"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:6px;"></i>Searching real places…</div>';
+    if(box && popOpen) box.innerHTML='<div style="padding:10px 16px;color:var(--fns-text-sec);font-size:13px;"><span class="p-dots" style="margin-right:6px" aria-hidden="true"><span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span></span>Searching real places…</div>';
     try{ _mbxAbort=new AbortController(); }catch(e){ _mbxAbort=null; }
     var params='country=tz&limit=6&types=place,locality,neighborhood,address,poi&language=en&bbox=28.85,-11.75,40.5,-0.95&session_token='+encodeURIComponent(_mbxSession)+'&access_token='+encodeURIComponent(mbxToken());
     fetch('https://api.mapbox.com/geocoding/v5/mapbox.places/'+encodeURIComponent(q)+'.json?'+params, {signal:_mbxAbort?_mbxAbort.signal:undefined})
@@ -924,7 +924,7 @@ window.fnsClearAllMobile=function(){
   var t=new Date(); _ci=t.toISOString().slice(0,10); var c=new Date(t); c.setDate(c.getDate()+1); _co=c.toISOString().slice(0,10);
   _ad=2; _ch=0; _rm=1;
   syncDate(); syncGuests(); renderDest(''); renderMobileCal();
-  if(window.FastNetState) FastNetState.replaceState({city:'', destination:'', checkin:_ci, checkout:_co, adults:'2', children:'0', rooms:'1'});
+  if(window.FastNetState) FastNetState.replaceState({city:'', destination:'', bounds:'', bbox:'', lat:'', lng:'', checkin:_ci, checkout:_co, adults:'2', children:'0', rooms:'1'});
 };
 window.fnsMobileSearch=function(){
   document.getElementById('gh_city').value=document.getElementById('fns_m_input').value || document.getElementById('gh_dest').value;

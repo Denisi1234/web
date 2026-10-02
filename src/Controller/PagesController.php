@@ -111,6 +111,14 @@ class PagesController extends AppController
         if (mb_strlen($destination) > 120) {
             $destination = mb_substr($destination, 0, 120);
         }
+        // Case-insensitive + prefix-tolerant: ARUSHA / arusha / ArU / arusa → "Arusha".
+        // Normalizing here guarantees backend q + local filter + cache all see the same value.
+        if ($destination !== '' && strtolower($destination) !== 'tanzania') {
+            $canonLabel = \App\Utility\CityAliases::resolveLabel($destination);
+            if ($canonLabel !== null) {
+                $destination = $canonLabel;
+            }
+        }
         // Legacy mobile tabs → real working redirects (Apartment/Home/Lodge)
         if (array_key_exists('explore', $input)) {
             $c = ($destination !== '' && $destination !== 'Vacation') ? $destination : '';
@@ -234,13 +242,22 @@ class PagesController extends AppController
             'children'=> $children,
             'rooms'   => $rooms,
         ];
-        if (!$isAllTanzania) $apiPayload['q'] = $destination;
+        if (!$isAllTanzania) {
+            // Backend is source of truth: send the canonical label (ARUSHA/ArU
+            // already normalized to Arusha above) under every key the API
+            // may read (q / city / destination).
+            $apiPayload['q'] = $destination;
+            $apiPayload['city'] = $destination;
+            $apiPayload['destination'] = $destination;
+        }
         // Sort forwarded — backend PropertySearchService: price_asc/price_desc/rating; omitted = Recommended (reviews_avg_rating DESC)
         $sortMap = ['price_asc' => 'price_asc', 'price_desc' => 'price_desc', 'rating' => 'rating'];
         if (!empty($sortMap[$sortBy])) $apiPayload['sort'] = $sortMap[$sortBy];
         // Paginate server-side (backend max 100) — 48 fills list + map (client marker cap 60) without rendering everything
         $apiPayload['per_page'] = 48;
-        // property_type handled locally solid with name fallback — do not forward to API (API type field is null for seeded data)
+        // Backend owns ALL filtering (city, price, rating, amenities, type).
+        // Every filter is forwarded — the frontend never second-guesses results.
+        if ($propertyType !== '') $apiPayload['property_type'] = $propertyType;
         if (!empty($currentAmenities)) $apiPayload['amenities'] = implode(',', $currentAmenities);
         // Rating filter was dead: backend only reads min_rating (keeps unreviewed lodges)
         if ($selectedRating !== '') {
@@ -280,7 +297,9 @@ class PagesController extends AppController
         $mapboxStyle = (string)Configure::read('App.mapboxStyle', 'mapbox://styles/mapbox/streets-v12');
         $osmFallbackStyle = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
         try {
-            $cfg = $this->apiClient->get('/map-config');
+            // Fail-fast 2s: map token must never block search results (was 10s default).
+            // Cached 5min in FastnetApiClient; env fallback covers cold miss.
+            $cfg = $this->apiClient->get('/map-config', [], [], 2);
             if (is_array($cfg)) {
                 $candidate = $cfg['mapbox_token'] ?? $cfg['mapboxToken'] ?? $cfg['token'] ?? $cfg['access_token'] ?? null;
                 if (!$candidate && isset($cfg['data']) && is_array($cfg['data'])) {
@@ -309,167 +328,19 @@ class PagesController extends AppController
             $mapboxStyle = $osmFallbackStyle;
         }
         
-        // ── Demo preview: one product with full gallery + map pin for visual QA (shown when API empty, even in prod, via ?demo=1) ──
-        $isDemoPreview = isset($input['demo']) && $input['demo'] !== '0' && $input['demo'] !== 'false';
-        // Demo hotel adapts to requested city for solid professional demo — Arusha query never shows Dar es Salaam
-        $demoCity = ($destination !== '' && strtolower($destination) !== 'tanzania') ? $destination : 'Dar es Salaam';
-        $demoCoords = [
-            'dar es salaam' => [-6.7760, 39.2828, 'Msasani Peninsula'],
-            'arusha' => [-3.3869, 36.6829, 'Sekei'],
-            'zanzibar' => [-6.1659, 39.1996, 'Stone Town'],
-            'dodoma' => [-6.1730, 35.7416, 'Central'],
-            'mwanza' => [-2.5167, 32.9000, 'Capri Point'],
-            'kilimanjaro' => [-3.0674, 37.3556, 'Moshi'],
-            'serengeti' => [-2.3333, 34.8333, 'Seronera'],
-        ];
-        $demoKey = strtolower(trim($demoCity));
-        $demoLatLng = $demoCoords[$demoKey] ?? $demoCoords['dar es salaam'];
-        $demoHotel = [
-            'id' => 1,
-            'name' => 'The Serena Hotel ' . $demoCity,
-            'city' => $demoCity,
-            'area' => $demoLatLng[2],
-            'address' => 'Plot 123, ' . $demoLatLng[2] . ', ' . $demoCity . ', Tanzania',
-            'latitude' => $demoLatLng[0], 'longitude' => $demoLatLng[1], 'lat' => $demoLatLng[0], 'lng' => $demoLatLng[1],
-            'star_rating' => 5,
-            'rating' => 4.7, 'reviews_avg_rating' => 4.7,
-            'review_count' => 285, 'reviews_count' => 285,
-            'price_per_night' => 85000, 'customer_price_per_night' => 85000, 'price' => 85000,
-            'primary_image_url' => 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop',
-            'image_url' => 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop',
-            'cover_image' => 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop',
-            'images' => [
-                'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1200&h=800&fit=crop',
-                'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&h=600&fit=crop',
-                'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop',
-                'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop',
-                'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&h=600&fit=crop',
-                'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop',
-                'https://images.unsplash.com/photo-1551882547-b79c417633b0?w=800&h=600&fit=crop',
-                'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop',
-            ],
-            'amenities' => ['WiFi', 'Pool', 'Fitness Center', 'Restaurant', 'Breakfast', 'Air conditioning', 'Free parking', 'Pet-friendly', 'Spa', 'Room service'],
-            'description' => 'Luxury 5-star hotel, apartment, villa and safari lodge options in the heart of ' . $demoCity . ' with oceanfront views, infinity pool, spa and fine dining. Real map pin at ' . $demoLatLng[2] . '.',
-            'property_type' => ($propertyType !== '' ? $propertyType : 'Hotel'),
-            'free_cancellation' => true,
-        ];
+        // Backend is source of truth — empty backend means empty results
+        // ("No stays found"). No demo/mock data is ever injected.
 
-        if (empty($properties)) {
-            if ($isDemoPreview || Configure::read('debug')) {
-                // Demo mode or debug only: show full gallery + map
-                $properties = [$demoHotel];
-                if ($isDemoPreview) {
-                    $searchErrors[] = 'Demo preview: showing one real hotel with full gallery and map pin. Remove ?demo=1 to see live data.';
-                }
-            } else {
-                // Prod real: no fake — empty stays shows "No stays found" (real backend empty)
-                $properties = [];
-            }
-            // If debug true and not demo, expand to 6 for fuller grid QA
-            if (Configure::read('debug') && !$isDemoPreview && count($properties) === 1) {
-                $properties = [
-                    $demoHotel,
-                    [
-                        'id' => 2,
-                        'name' => 'Hyatt Regency Dar es Salaam',
-                        'city' => 'Dar es Salaam',
-                        'latitude' => -6.8010, 'longitude' => 39.2833, 'lat' => -6.8010, 'lng' => 39.2833,
-                        'image_url' => 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=300&h=200&fit=crop',
-                        'rating' => 4.5,
-                        'review_count' => 156,
-                        'price_per_night' => 72000,
-                        'customer_price_per_night' => 72000,
-                        'amenities' => ['WiFi', 'Pool', 'Gym', 'Bar', 'Business Center'],
-                        'description' => '4-star hotel with modern amenities and excellent service'
-                    ],
-                    [
-                        'id' => 3,
-                        'name' => 'Dar Boutique Hotel',
-                        'city' => 'Dar es Salaam',
-                        'latitude' => -6.7690, 'longitude' => 39.2500, 'lat' => -6.7690, 'lng' => 39.2500,
-                        'image_url' => 'https://images.unsplash.com/photo-1570129477492-45a003537e1f?w=300&h=200&fit=crop',
-                        'rating' => 4.3,
-                        'review_count' => 98,
-                        'price_per_night' => 45000,
-                        'customer_price_per_night' => 45000,
-                        'amenities' => ['WiFi', 'Breakfast', 'Air Conditioning', 'Restaurant'],
-                        'description' => 'Charming boutique hotel in Stone Town with personalized service'
-                    ],
-                ];
-            }
-        }
-
-        // SOLID professional city filter — Arusha only returns Arusha (exact city match, no "like" leakage)
-        // UX-2: canonical alias map lives in App\Utility\CityAliases (unit-tested) so misspells/short codes
-        // resolve (arusa→arusha, dsm→dar, znz→zanzibar, moshi→kilimanjaro) instead of zeroing results
-        if ($destination !== '' && strtolower($destination) !== 'tanzania') {
-            $properties = array_values(array_filter($properties, function ($p) use ($destination) {
-                return \App\Utility\CityAliases::matches(
-                    $destination,
-                    (string)($p['city'] ?? ''),
-                    (string)($p['area'] ?? '')
-                );
-            }));
-        }
-
-        // Client-side amenity filter
-        if (!empty($currentAmenities)) {
-            $properties = array_values(array_filter($properties, function ($prop) use ($currentAmenities) {
-                $rawAm = $prop['amenities'] ?? [];
-                if (is_string($rawAm)) {
-                    $decoded = json_decode($rawAm, true);
-                    $propAms = is_array($decoded) ? $decoded : explode(',', $rawAm);
-                } else {
-                    $propAms = is_array($rawAm) ? $rawAm : [];
-                }
-                $propAmText = strtolower(implode(' ', $propAms) . ' ' . ($prop['description'] ?? ''));
-                foreach ($currentAmenities as $req) {
-                    if (!empty($req) && !str_contains($propAmText, strtolower($req))) {
-                        return false;
-                    }
-                }
-                return true;
-            }));
-        }
-        if ($minPrice !== '') {
-            $properties = array_values(array_filter($properties, fn($p) => ((float)($p['price_per_night'] ?? ($p['price'] ?? 0))) >= (float)$minPrice));
-        }
-        if ($maxPrice !== '') {
-            $properties = array_values(array_filter($properties, fn($p) => ((float)($p['price_per_night'] ?? ($p['price'] ?? 0))) <= (float)$maxPrice));
-        }
-        if ($selectedRating !== '') {
-            $properties = array_values(array_filter($properties, fn($p) => ((float)($p['reviews_avg_rating'] ?? ($p['rating'] ?? 8.5))) >= (float)$selectedRating));
-        }
-        if ($freeCancel) {
-            $properties = array_values(array_filter($properties, fn($p) => !empty($p['free_cancellation']) || (!empty($p['cancellation_policy']) && stripos((string)$p['cancellation_policy'], 'free') !== false)));
-        }
-        // Property type filter — solid exact, with fallback to name when type field missing (API has null)
-        if ($propertyType !== '') {
-            $needle = strtolower(trim($propertyType));
-            $properties = array_values(array_filter($properties, function($p) use ($needle){
-                $pt = strtolower(trim((string)($p['property_type'] ?? ($p['type'] ?? ''))));
-                if ($pt !== '') return $pt === $needle;
-                // type missing — infer from name (sunrise lodge → Safari Lodge)
-                $name = strtolower((string)($p['name'] ?? ''));
-                if ($needle === 'safari lodge' && str_contains($name, 'lodge')) return true;
-                if ($needle === 'apartment' && str_contains($name, 'apartment')) return true;
-                if ($needle === 'hotel' && (str_contains($name, 'hotel') || str_contains($name, 'lodge'))) return true;
-                return false;
-            }));
-        }
-        // Extended filters (meals/payment/neighborhood) — soft filter if mock data lacks fields
-        if ($paymentOpt !== '' && $paymentOpt === 'pay_at_property') {
-            // if property explicitly marks pay_at_property, filter; otherwise keep all (mock data neutral)
-            $hasAny = count(array_filter($properties, fn($p)=>!empty($p['pay_at_property'])))>0;
-            if ($hasAny) $properties = array_values(array_filter($properties, fn($p)=>!empty($p['pay_at_property'])));
-        }
+        // Backend is source of truth — results arrive already filtered
+        // (city, price, rating, amenities, type). No local post-filtering.
 
         $totalCount = count($properties);
-        // Honest counts: backend paginator total (all hits) vs shown (page + local filters). Header shows "X of Y" when partial.
+        // Honest counts: backend paginator total (all hits) vs shown on this page. Header shows "X of Y" when partial.
         $totalHits = $this->staysService->lastTotal;
         if ($totalHits !== null && $totalHits < $totalCount) $totalHits = $totalCount;
 
         // JSON hydration for FastNetState AJAX — ?format=json
+        // 30s public cache + ETag: CDN/browser serves repeats instantly, revalidates after.
         if (($this->getRequest()->getQuery('format') ?? '') === 'json') {
             $view = $this->createView($this->viewBuilder()->getClassName());
             $view->set(['properties' => $properties, 'queryParams' => $queryParams, 'totalCount' => $totalCount, 'totalHits' => $totalHits, 'destination' => $destination]);
@@ -483,7 +354,16 @@ class PagesController extends AppController
                 $markers[] = ['id' => (int)($p['id'] ?? 0), 'lat' => $lat, 'lng' => $lng, 'label' => 'TSH ' . number_format($price), 'title' => $p['name'] ?? ''];
             }
             $payload = ['html' => $html, 'markers' => $markers, 'totalCount' => $totalCount, 'totalHits' => $totalHits, 'queryParams' => $queryParams, 'mapboxToken' => $mapboxToken, 'mapboxStyle' => $mapboxStyle];
-            return $this->response->withType('application/json')->withStringBody((string)json_encode($payload));
+            $body = (string)json_encode($payload);
+            $etag = '"' . md5($body) . '"';
+            if (trim((string)$this->getRequest()->getHeaderLine('If-None-Match')) === $etag) {
+                return $this->response->withStatus(304);
+            }
+            return $this->response
+                ->withType('application/json')
+                ->withHeader('Cache-Control', 'public, max-age=30, stale-while-revalidate=60')
+                ->withHeader('ETag', $etag)
+                ->withStringBody($body);
         }
 
         $session = $this->getRequest()->getSession();
@@ -523,6 +403,9 @@ class PagesController extends AppController
         $rawToken = trim((string)$session->read('auth_token'));
         if (stripos($rawToken, 'Bearer ') === 0) {
             $rawToken = trim(substr($rawToken, 7));
+        }
+        if ($rawToken === '') {
+            $rawToken = $this->authService->readToken($this->getRequest());
         }
         $isLoggedIn = !$session->read('is_logged_out') && !empty($sessionUser);
         $userRole = strtolower((string)($sessionUser['role'] ?? ''));
@@ -726,10 +609,13 @@ class PagesController extends AppController
                 // tab. Fixation risk is negligible (httponly + SameSite=Lax + 8h).
                 $this->authService->syncSession($session, $user);
 
-                return $this->response->withType('application/json')->withStringBody((string)json_encode([
+                // Persistent login cookie — auth survives session loss
+                // (multi-instance file sessions, browser restarts).
+                $loginResp = $this->response->withType('application/json')->withStringBody((string)json_encode([
                     'success' => true,
                     'user' => $user
                 ]));
+                return $this->authService->persistToken($loginResp, $token);
             }
 
             // 2. Handle Traditional Form Login
@@ -765,16 +651,21 @@ class PagesController extends AppController
                     // previous session file, instantly logging out every other open tab.
                     $this->authService->syncSession($session, $user);
                     $this->Flash->success(__('Login successful. Welcome back!'));
+                    // Persistent login cookie — portal auth no longer depends
+                    // on the PHP session file surviving.
+                    $persist = function (\Cake\Http\Response $resp) use ($authToken): \Cake\Http\Response {
+                        return $this->authService->persistToken($resp, (string)$authToken);
+                    };
                     $redirect = $this->safeRedirect(trim((string)$this->getRequest()->getQuery('redirect', '')));
                     if ($redirect !== '') {
-                        return $this->redirect($redirect);
+                        return $persist($this->redirect($redirect));
                     }
                     $role = strtolower((string)($user['role'] ?? ''));
-                    if ($role === 'admin') return $this->redirect('/admin/dashboard');
-                    if ($role === 'owner') return $this->redirect('/host/dashboard');
+                    if ($role === 'admin') return $persist($this->redirect('/admin/dashboard'));
+                    if ($role === 'owner') return $persist($this->redirect('/host/dashboard'));
                     // Host-intent sign-in but plain customer account → convert page
-                    if ($loginRole === 'owner') return $this->redirect('/join-us');
-                    return $this->redirect('/');
+                    if ($loginRole === 'owner') return $persist($this->redirect('/join-us'));
+                    return $persist($this->redirect('/'));
                 }
                 $this->Flash->error(__('Invalid email or password.'));
             }

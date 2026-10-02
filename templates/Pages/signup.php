@@ -167,7 +167,7 @@ html, body { height: auto !important; overflow-y: auto !important; }
 										if (password.length < 8) return fail('Password must be at least 8 characters.');
 
 										submitBtn.disabled = true;
-										submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>' + (isHostFlow ? 'Creating host account...' : 'Creating Account...');
+										submitBtn.innerHTML = '<span class="p-dots" aria-hidden="true"><span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span></span>' + (isHostFlow ? 'Creating host account...' : 'Creating Account...');
 
 										const payload = {
 											name: name,

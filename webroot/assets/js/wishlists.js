@@ -237,7 +237,7 @@ async function submitCreateList() {
     const origText = btn ? btn.innerText : 'Create';
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Creating...';
+        btn.innerHTML = '<span class="p-dots" aria-hidden="true"><span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span></span>Creating...';
     }
     if (window.FastnetLoader && window.FastnetLoader.bar) {
         window.FastnetLoader.bar.start();

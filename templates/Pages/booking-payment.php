@@ -30,7 +30,7 @@
             <h1 id="payment-title" class="trivago-card-title">Approve your mobile payment</h1>
             <p id="payment-status-text" class="trivago-card-subtitle">Sending payment request to your phone...</p>
             <div id="payment-status" class="alert alert-info" role="status" aria-live="polite">
-                <span class="spinner-border spinner-border-sm me-2" role="status"></span> Sending USSD push to your phone...
+                <span class="p-dots" aria-hidden="true"><span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span></span> Sending USSD push to your phone...
             </div>
             <p style="font-size:12px;color:#9aa0a6;margin-top:10px">You'll receive a USSD push — enter your wallet PIN to authorize. Matches mobile <code style="background:#F8FAFC;padding:2px 6px;border-radius:6px">booking_checkout.dart:312</code> flow.</p>
             <a href="<?= $this->Url->build('/hotel-list-01') ?>" class="btn mt-3" style="background:#fff;border:1px solid #e8eaed;border-radius:30px;padding:10px 20px;color:#1a1d25">Return to search</a>

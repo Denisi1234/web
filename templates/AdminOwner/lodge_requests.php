@@ -48,7 +48,7 @@ $this->assign('portal_title', 'Lodge requests');
           <td><span class="p-badge <?= $badge ?>"><?= h($r['status'] ?? '') ?></span></td>
           <td style="font-size:12px;color:var(--p-text-2)"><?= h(substr((string)($r['created_at'] ?? ''), 0, 10)) ?></td>
           <td>
-            <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'lodgeRequests'], 'style' => 'display:flex;gap:6px']) ?>
+            <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'lodgeRequests'], 'style' => 'display:flex;gap:6px', 'data-api' => 'PATCH /lodge-requests/' . $rid . '/status', 'data-api-strip' => 'request_id', 'data-api-ok' => 'Request updated.', 'data-opt' => 'patch', 'data-opt-badge' => '.p-badge', 'data-opt-badge-idx' => '1', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'request', 'data-opt-badgetext' => 'raw', 'data-opt-bust' => '_lodge_requests', 'data-api-go' => '/admin/cache-bust?scope=_lodge_requests&go=' . urlencode('/admin/requests')]) ?>
               <?= $this->Form->hidden('request_id', ['value' => $rid]) ?>
               <select name="status" class="form-select form-select-sm" style="min-height:32px;min-width:120px">
                 <?php foreach (['Pending', 'In Progress', 'Completed', 'Cancelled'] as $opt): ?>

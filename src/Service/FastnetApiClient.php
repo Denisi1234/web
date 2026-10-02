@@ -48,10 +48,11 @@ class FastnetApiClient
 
     /**
      * Perform GET request to backend API
+     * $timeout overrides default (search passes 4s for fail-fast).
      */
-    public function get(string $endpoint, array $queryParams = [], array $headers = []): ?array
+    public function get(string $endpoint, array $queryParams = [], array $headers = [], ?int $timeout = null): ?array
     {
-        return $this->request('GET', $endpoint, $queryParams, $headers);
+        return $this->request('GET', $endpoint, $queryParams, $headers, $timeout);
     }
 
     /**
@@ -74,6 +75,49 @@ class FastnetApiClient
         return $res;
     }
 
+    /**
+     * Perform concurrent POST requests to prevent PHP worker blocking on loops.
+     */
+    public function postMulti(array $requests, array $headers = []): array
+    {
+        $mh = curl_multi_init();
+        $chList = [];
+        foreach ($requests as $i => $req) {
+            $ch = curl_init($this->baseUrl . '/' . ltrim($req['endpoint'], '/'));
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($req['data'] ?? []));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 6);
+            
+            $reqHeaders = array_merge(['Accept: application/json', 'Content-Type: application/json'], $headers);
+            $flatHeaders = [];
+            foreach ($reqHeaders as $k => $v) {
+                $flatHeaders[] = is_int($k) ? $v : "$k: $v";
+            }
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $flatHeaders);
+            
+            curl_multi_add_handle($mh, $ch);
+            $chList[$i] = $ch;
+        }
+        
+        $active = null;
+        do { curl_multi_exec($mh, $active); } while ($active);
+        
+        $results = [];
+        foreach ($chList as $i => $ch) {
+            $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $json = json_decode((string)curl_multi_getcontent($ch), true);
+            curl_multi_remove_handle($mh, $ch);
+            curl_close($ch);
+            if (is_array($json) && $status >= 400) $json['_status'] = $status;
+            $results[$i] = $json;
+        }
+        curl_multi_close($mh);
+        
+        $this->clearPropertiesCache();
+        return $results;
+    }
+
     public function patch(string $endpoint, array $data = [], array $headers = []): ?array
     {
         $res = $this->request('PATCH', $endpoint, $data, $headers);
@@ -92,7 +136,7 @@ class FastnetApiClient
      * data (properties, rooms, bookings, finance, users) is always live.
      * 4xx/5xx bubble as JSON with _status so callers never fallback to mocks silently.
      */
-    protected function request(string $method, string $endpoint, array $data = [], array $headers = []): ?array
+    protected function request(string $method, string $endpoint, array $data = [], array $headers = [], ?int $timeout = null): ?array
     {
         $url = $this->baseUrl . '/' . ltrim($endpoint, '/');
         $isGet = strtoupper($method) === 'GET';
@@ -103,24 +147,37 @@ class FastnetApiClient
             $cached = \Cake\Cache\Cache::read($cacheKey, 'default');
             if (is_array($cached)) return $cached;
         }
+        // Fail-fast client for search: short timeout avoids blocking page on slow backend.
+        $http = $this->http;
+        if ($timeout !== null && $timeout !== $this->timeout) {
+            $http = new Client([
+                'timeout' => $timeout,
+                'headers' => [
+                    'Accept'     => 'application/json',
+                    'User-Agent' => 'FastNetStays/1.0 (CakePHP 5; fastnetstays.com)'
+                ]
+            ]);
+        }
         $options = [
             'headers' => array_merge(['Accept' => 'application/json'], $headers)
         ];
 
         $attempts = 0;
-        $maxAttempts = 2;
+        // Retry transient timeouts only for idempotent methods — retrying
+        // POST can execute a write twice (double booking/payment/room).
+        $maxAttempts = strtoupper($method) === 'POST' ? 1 : 2;
         while ($attempts < $maxAttempts) {
             try {
                 if (strtoupper($method) === 'POST') {
-                    $response = $this->http->post($url, $data, $options);
+                    $response = $http->post($url, $data, $options);
                 } elseif (strtoupper($method) === 'PUT') {
-                    $response = $this->http->put($url, $data, $options);
+                    $response = $http->put($url, $data, $options);
                 } elseif (strtoupper($method) === 'PATCH') {
-                    $response = $this->http->patch($url, $data, $options);
+                    $response = $http->patch($url, $data, $options);
                 } elseif (strtoupper($method) === 'DELETE') {
-                    $response = $this->http->delete($url, $options);
+                    $response = $http->delete($url, $options);
                 } else {
-                    $response = $this->http->get($url, $data, $options);
+                    $response = $http->get($url, $data, $options);
                 }
 
                 $status = $response->getStatusCode();

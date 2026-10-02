@@ -5,7 +5,7 @@ $this->assign('page_actions', '<button class="p-btn" data-bs-toggle="modal" data
 ?>
 <div class="modal fade" id="addStaffModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
   <div class="modal-header"><h5 style="font-weight:600">Add staff</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
-  <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'staff']]) ?>
+  <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'staff'], 'data-api' => 'POST /staff', 'data-api-strip' => 'action', 'data-api-ok' => 'Staff added.', 'data-opt' => 'go', 'data-api-go' => '/admin/cache-bust?scope=_staff&go=' . urlencode('/admin/staff')]) ?>
   <div class="modal-body" style="display:grid;gap:8px">
     <?= $this->Form->hidden('action', ['value' => 'add']) ?>
     <input name="name" placeholder="Name *" class="form-control" style="min-height:40px" required>
@@ -41,13 +41,13 @@ $this->assign('page_actions', '<button class="p-btn" data-bs-toggle="modal" data
           <td>
             <div style="display:flex;gap:6px;flex-wrap:wrap">
               <button class="p-btn ghost" style="min-height:32px;font-size:12px" data-bs-toggle="modal" data-bs-target="#editStaff<?= h($sid) ?>">Edit</button>
-              <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'staff'], 'style' => 'display:inline', 'onsubmit' => "return confirm('Delete staff?')"]) ?>
+              <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'staff'], 'style' => 'display:inline', 'data-api' => 'DELETE /staff/' . $sid, 'data-api-strip' => 'action,staff_id', 'data-api-ok' => 'Staff deleted.', 'data-api-confirm' => 'Delete staff?', 'data-opt' => 'remove', 'data-opt-bust' => '_staff', 'data-api-go' => '/admin/cache-bust?scope=_staff&go=' . urlencode('/admin/staff')]) ?>
                 <?= $this->Form->hidden('action', ['value' => 'delete']) ?><?= $this->Form->hidden('staff_id', ['value' => $sid]) ?><button class="p-btn ghost" style="min-height:32px;font-size:12px">Delete</button>
               <?= $this->Form->end() ?>
             </div>
             <div class="modal fade" id="editStaff<?= h($sid) ?>" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
               <div class="modal-header"><h5 style="font-weight:600">Edit staff #<?= h($sid) ?></h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
-              <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'staff']]) ?>
+              <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'staff'], 'data-api' => 'PATCH /staff/' . $sid, 'data-api-strip' => 'action,staff_id', 'data-api-ok' => 'Staff updated.', 'data-opt' => 'refresh', 'data-opt-close' => 'closest:.modal', 'data-opt-bust' => '_staff', 'data-api-go' => '/admin/cache-bust?scope=_staff&go=' . urlencode('/admin/staff')]) ?>
               <div class="modal-body" style="display:grid;gap:8px">
                 <?= $this->Form->hidden('action', ['value' => 'update']) ?><?= $this->Form->hidden('staff_id', ['value' => $sid]) ?>
                 <input name="name" value="<?= h($s['name'] ?? '') ?>" class="form-control" style="min-height:40px" required>

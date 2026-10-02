@@ -2,13 +2,12 @@
 /**
  * portal_topbar — slim portal header: menu toggle, page title, actions, account menu.
  * Slots: portal_title (assign in template), page_actions (optional HTML).
+ * Session-independent: uses controller-provided $userProfile (backend).
  */
-$session = $this->getRequest()->getSession();
-$sessionUser = $session->read('User');
-$profile = $userProfile ?? $sessionUser ?? [];
-$role = strtolower((string)($profile['role'] ?? $sessionUser['role'] ?? ''));
+$profile = $userProfile ?? [];
+$role = strtolower((string)($profile['role'] ?? ''));
 $isAdmin = $role === 'admin';
-$name = trim((string)($profile['name'] ?? $profile['full_name'] ?? $sessionUser['name'] ?? 'Portal user')) ?: 'Portal user';
+$name = trim((string)($profile['name'] ?? $profile['full_name'] ?? 'Portal user')) ?: 'Portal user';
 $initial = strtoupper(substr($name, 0, 1));
 $title = $this->fetch('portal_title');
 if ($title === '') $title = $this->fetch('title');

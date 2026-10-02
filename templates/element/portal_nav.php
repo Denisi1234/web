@@ -2,12 +2,10 @@
 /**
  * portal_nav — Real working Admin/Owner portal navigation.
  * Shows role-aware tabs for /admin/* and /host/* with active states.
- * Expects $userProfile (array) optionally; falls back to session.
+ * Session-independent: uses controller-provided $userProfile (backend).
  */
-$session = $this->getRequest()->getSession();
-$sessionUser = $session->read('User');
-$profile = $userProfile ?? $sessionUser ?? [];
-$role = strtolower((string)($profile['role'] ?? $sessionUser['role'] ?? ''));
+$profile = $userProfile ?? [];
+$role = strtolower((string)($profile['role'] ?? ''));
 $path = $this->getRequest()->getPath() ?: '/';
 $isAdminSection = str_starts_with($path, '/admin');
 $isHostSection = str_starts_with($path, '/host') || str_starts_with($path, '/owner');
@@ -38,8 +36,8 @@ $links = $isAdminSection ? $adminLinks : $hostLinks;
 // Admins browsing host section still get cross-link to admin
 $showCrossAdmin = ($role === 'admin' && $isHostSection);
 $showCrossHost = ($role === 'admin' || $role === 'owner') && $isAdminSection;
-$name = $profile['name'] ?? $profile['full_name'] ?? $sessionUser['name'] ?? 'Portal user';
-$email = $profile['email'] ?? $sessionUser['email'] ?? '';
+$name = $profile['name'] ?? $profile['full_name'] ?? 'Portal user';
+$email = $profile['email'] ?? '';
 ?>
 <style>.portal-nav{position:sticky;top:64px;z-index:50;background:#fff;border-bottom:1px solid #e8eaed}.portal-nav-scroll{display:flex;gap:8px;overflow-x:auto;padding:10px 0;scrollbar-width:none}.portal-nav-scroll::-webkit-scrollbar{display:none}.portal-pill{white-space:nowrap;border-radius:9999px;padding:8px 14px;font-size:12px;font-weight:700;border:1px solid #e8eaed;background:#fff;color:#5f6368;text-decoration:none}.portal-pill.active{background:#2563EB;border-color:#2563EB;color:#fff}.portal-pill:hover{border-color:#2563EB;color:#2563EB}.portal-pill.active:hover{color:#fff}</style>
 <div class="portal-nav">

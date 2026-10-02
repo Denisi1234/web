@@ -126,15 +126,18 @@ html, body { height: auto !important; overflow-y: auto !important; }
 <script>
 // Become-a-host loading state: instant feedback + no double submit (inline, no deps)
 (function () {
+  function arm(btn, label) {
+    if (!btn || btn.disabled) return;
+    if (window.FastAPI && FastAPI.btnDots) { FastAPI.btnDots(btn, true); return; }
+    btn.disabled = true; btn.textContent = label;
+  }
   var f = document.getElementById('becomeHostForm');
   if (f) f.addEventListener('submit', function () {
-    var b = document.getElementById('becomeHostBtn');
-    if (b && !b.disabled) { b.disabled = true; b.textContent = 'Upgrading…'; }
+    arm(document.getElementById('becomeHostBtn'), 'Upgrading…');
   });
   var cta = document.getElementById('becomeHostCtaForm');
   if (cta) cta.addEventListener('submit', function () {
-    var b = document.getElementById('becomeHostCtaBtn');
-    if (b && !b.disabled) { b.disabled = true; b.textContent = 'Upgrading…'; }
+    arm(document.getElementById('becomeHostCtaBtn'), 'Upgrading…');
   });
 })();
 </script>

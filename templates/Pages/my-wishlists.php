@@ -66,7 +66,7 @@ $this->assign('title', 'Your favourites - FastNet Stays');
 
                 <!-- Loading indicator — visible during silent fetch, not silent waiting -->
                 <div id="favLoading" style="display:none;align-items:center;gap:10px;padding:14px 0;color:#64748b;font-size:13px">
-                    <span class="spinner-border spinner-border-sm" style="width:16px;height:16px;border-width:2px;color:#007fad"></span>
+                    <span class="p-dots" aria-hidden="true"><span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span></span>
                     <span>Loading your favourites...</span>
                 </div>
                 <!-- Favourite Lists Container (local custom lists) -->

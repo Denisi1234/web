@@ -7,6 +7,29 @@ use Cake\Log\Engine\FileLog;
 use Cake\Mailer\Transport\MailTransport;
 use function Cake\Core\env;
 
+    /**
+     * Parse REDIS_URL (Railway plugin format) into Cake Redis engine config.
+     */
+    $redisConfig = (static function (string $prefix): array {
+        $url = env('CACHE_URL', env('REDIS_URL', ''));
+        if ($url === '') return [];
+        $parts = parse_url($url);
+        if (empty($parts['host'])) return [];
+        $cfg = [
+            'className' => 'Redis',
+            'host' => $parts['host'],
+            'port' => $parts['port'] ?? 6379,
+            'prefix' => $prefix,
+            'duration' => '+1 hour',
+        ];
+        if (!empty($parts['pass'])) $cfg['password'] = $parts['pass'];
+        if (!empty($parts['path']) && trim($parts['path'], '/') !== '') {
+            $db = (int)trim($parts['path'], '/');
+            if ($db > 0) $cfg['database'] = $db;
+        }
+        return $cfg;
+    });
+
 return [
     /*
      * Debug Level:
@@ -106,11 +129,33 @@ return [
      * Configure the cache adapters.
      */
     'Cache' => [
-        'default' => [
-            'className' => FileEngine::class,
-            'path' => CACHE,
-            'url' => env('CACHE_DEFAULT_URL', null),
-        ],
+        // Redis when CACHE_URL/REDIS_URL is set (Railway plugin) — required for
+        // multi-instance + shared portal caches. Falls back to files locally.
+        'default' => (static function () use ($redisConfig) {
+            $redis = $redisConfig('fastnet_');
+            if ($redis !== []) return $redis;
+            return [
+                'className' => FileEngine::class,
+                'path' => CACHE,
+                'url' => env('CACHE_DEFAULT_URL', null),
+            ];
+        })(),
+
+        // Backs shared sessions (SESSION_HANDLER=cache). Redis when available,
+        // otherwise files (single-instance only).
+        'session' => (static function () use ($redisConfig) {
+            $redis = $redisConfig('fastnet_sess_');
+            if ($redis !== []) {
+                $redis['duration'] = '+8 hours';
+                return $redis;
+            }
+            return [
+                'className' => FileEngine::class,
+                'path' => CACHE . 'sessions' . DS,
+                'prefix' => 'phpsess_',
+                'duration' => '+8 hours',
+            ];
+        })(),
 
         /*
          * Configure the cache used for general framework caching.
@@ -420,12 +465,21 @@ return [
      *
      * To use database sessions, load the SQL file located at config/schema/sessions.sql
      */
-    'Session' => [
-        'defaults' => 'php',
-        // Portal users work long shifts: 8h idle timeout instead of PHP's 24min,
-        // otherwise every portal click after a pause bounces to login.
-        'timeout' => 480,
-    ],
+    'Session' => (static function () {
+        $base = [
+            'defaults' => 'php',
+            // Portal users work long shifts: 8h idle timeout instead of PHP's 24min,
+            // otherwise every portal click after a pause bounces to login.
+            'timeout' => 480,
+        ];
+        // SESSION_HANDLER=cache → shared sessions via Cache::session (needs Redis).
+        // Required when running 2+ instances behind a load balancer.
+        if (env('SESSION_HANDLER', '') === 'cache') {
+            $base['defaults'] = 'cache';
+            $base['handler'] = ['config' => 'session'];
+        }
+        return $base;
+    })(),
 
     /**
      * DebugKit configuration.

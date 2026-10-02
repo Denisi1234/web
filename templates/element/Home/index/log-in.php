@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", function() {
             e.preventDefault();
             modalAlert.innerHTML = '';
             modalBtn.disabled = true;
-            modalBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Signing in...';
+            modalBtn.innerHTML = '<span class="p-dots" aria-hidden="true"><span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span></span>Signing in...';
 
             const payload = {
                 email: document.getElementById("modal-login-email").value.trim(),

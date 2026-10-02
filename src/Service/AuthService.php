@@ -3,6 +3,10 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use Cake\Core\Configure;
+use Cake\Http\Cookie\Cookie;
+use Cake\Http\Response;
+use Cake\Http\ServerRequest;
 use Cake\Http\Session;
 
 /**
@@ -83,6 +87,122 @@ class AuthService
         $session->delete('User');
         $session->delete('auth_token');
         $session->delete('token');
+    }
+
+    /**
+     * Persistent login cookie name. Auth no longer depends on the PHP
+     * session file surviving (multi-instance hosts give each instance its
+     * own files, which randomly logged users out). The cookie carries the
+     * backend token; sessions remain only as a fast cache.
+     */
+    public const TOKEN_COOKIE = 'fn_token';
+    private const TOKEN_TTL = 2592000; // 30 days
+
+    /**
+     * Attach the persistent login cookie to a response.
+     */
+    public function persistToken(Response $response, string $token): Response
+    {
+        $token = trim($token);
+        if ($token === '') {
+            return $response;
+        }
+        $secure = str_starts_with((string)Configure::read('App.fullBaseUrl', ''), 'https://');
+        $cookie = Cookie::create(static::TOKEN_COOKIE, $token, [
+            'expires' => time() + static::TOKEN_TTL,
+            'path' => '/',
+            'httponly' => true,
+            'secure' => $secure,
+            'samesite' => 'Lax',
+        ]);
+        return $response->withCookie($cookie);
+    }
+
+    /**
+     * Expire the persistent login cookie.
+     */
+    public function clearToken(Response $response): Response
+    {
+        $cookie = Cookie::create(static::TOKEN_COOKIE, '', [
+            'expires' => time() - 3600,
+            'path' => '/',
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+        return $response->withCookie($cookie);
+    }
+
+    /**
+     * Read the persistent token (raw, no Bearer prefix) or '' when absent.
+     */
+    public function readToken(ServerRequest $request): string
+    {
+        $cookies = $request->getCookieParams();
+        $token = trim((string)($cookies[static::TOKEN_COOKIE] ?? ''));
+        if (stripos($token, 'Bearer ') === 0) {
+            $token = trim(substr($token, 7));
+        }
+        return (strlen($token) >= 10 && strlen($token) <= 4096) ? $token : '';
+    }
+
+    /**
+     * Rebuild session auth from the persistent cookie token (transparent
+     * re-login after session loss). Returns the restored user or null.
+     * Verified users are cached 120s by token hash — never hits backend
+     * twice for the same token. Never throws.
+     */
+    public function restoreSession(Session $session, string $token): ?array
+    {
+        $token = trim($token);
+        if ($token === '' || $session->read('is_logged_out')) {
+            return null;
+        }
+        $cacheKey = 'auth_restore_' . md5($token);
+        try {
+            $cached = \Cake\Cache\Cache::read($cacheKey, 'default');
+            if (is_array($cached) && isset($cached['exp'], $cached['user']) && $cached['exp'] > time()) {
+                $user = $cached['user'];
+                $session->write('User', $user);
+                $session->write('auth_token', $token);
+                return $user;
+            }
+        } catch (\Throwable $e) {
+        }
+        try {
+            $me = $this->apiClient->get('/me', [], ['Authorization' => 'Bearer ' . $token], 3);
+            $cand = null;
+            if (is_array($me) && empty($me['_status'])) {
+                $cand = $me['user'] ?? $me['data'] ?? $me;
+            }
+            if (!is_array($cand) || (empty($cand['email']) && empty($cand['id']))) {
+                // No secrets logged — key names + status only.
+                $keys = is_array($me) ? implode(',', array_keys($me)) : gettype($me);
+                $ckeys = is_array($cand) ? implode(',', array_keys($cand)) : gettype($cand);
+                \Cake\Log\Log::debug(sprintf('[auth] restore rejected: me_keys=[%s] cand_keys=[%s] status=%s', $keys, $ckeys, $me['_status'] ?? 'ok'));
+                return null;
+            }
+            $allow = ['id','name','first_name','last_name','full_name','email','phone','phone_number','city','country','avatar','avatar_bg','avatar_color','email_verified','role','status'];
+            $user = [];
+            foreach ($allow as $k) {
+                if (array_key_exists($k, $cand)) $user[$k] = $cand[$k];
+            }
+            if (!empty($user['role'])) $user['role'] = strtolower((string)$user['role']);
+            if (empty($user['phone']) && !empty($user['phone_number'])) $user['phone'] = $user['phone_number'];
+            if (empty($user['name']) && !empty($user['full_name'])) $user['name'] = $user['full_name'];
+            if (empty($user['first_name']) && !empty($user['name'])) {
+                $user['first_name'] = explode(' ', trim($user['name']))[0];
+            }
+            $user['token'] = $token;
+            $session->write('User', $user);
+            $session->write('auth_token', $token);
+            try {
+                \Cake\Cache\Cache::write($cacheKey, ['exp' => time() + 120, 'user' => $user], 'default');
+            } catch (\Throwable $e) {
+            }
+            return $user;
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     /**

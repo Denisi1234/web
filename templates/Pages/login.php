@@ -148,7 +148,7 @@ html, body { height: auto !important; overflow-y: auto !important; }
 										e.preventDefault();
 										alertBox.innerHTML = '';
 										submitBtn.disabled = true;
-										submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Logging in...';
+										submitBtn.innerHTML = '<span class="p-dots" aria-hidden="true"><span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span></span>Logging in...';
 
 										const payload = {
 											email: document.getElementById("login-email").value.trim(),

@@ -1,0 +1,26 @@
+/* FastNet canonical loading dots — the ONE loader used across portal + site.
+ * Dot-pulse cycle: professional, dependency-free, offline-safe, honors
+ * reduced-motion. Use: <span class="p-dots" aria-hidden="true"><span
+ * class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span></span>
+ * Add .on-dark when dots sit on a dark/blue button.
+ */
+.p-dots{display:inline-flex;align-items:center;justify-content:center;gap:6px;vertical-align:middle}
+.p-dots .p-dot{width:7px;height:7px;border-radius:50%;background-color:#0f62fe;animation:pDotPulse .85s ease-in-out infinite both}
+.p-dots .p-dot:nth-child(2){animation-delay:.15s}
+.p-dots .p-dot:nth-child(3){animation-delay:.3s}
+.p-dots.on-dark .p-dot{background-color:#fff}
+@keyframes pDotPulse{
+  0%,80%,100%{transform:scale(.55);opacity:.35}
+  40%{transform:scale(1.15);opacity:1}
+}
+/* Compact variant for icon slots and inline rows */
+.p-dots.sm{gap:3px}
+.p-dots.sm .p-dot{width:5px;height:5px}
+button .p-dots,.btn .p-dots,.p-btn .p-dots,.cx-btn .p-dots{margin-right:6px}
+button .p-dots .p-dot,.btn .p-dots .p-dot{width:5px;height:5px}
+.btn-primary .p-dots .p-dot,.btn-dark .p-dots .p-dot,.cx-btn .p-dots .p-dot,.p-btn:not(.ghost) .p-dots .p-dot{background-color:#fff}
+.p-btn.ghost .p-dots .p-dot{background-color:#0f62fe}
+button[disabled]{cursor:wait}
+@media (prefers-reduced-motion:reduce){
+  .p-dots .p-dot{animation:none;opacity:1}
+}

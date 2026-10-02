@@ -218,7 +218,7 @@ $amenityOptions = [
     }
     if (typeof buildHist === 'function') { try { buildHist(); } catch (e) {} }
     if (window.FastNetState) {
-      FastNetState.pushState({price_min:'',price_max:'',min_price:'',max_price:'',amenities:'',rating:'',free_cancellation:'',property_type:'',payment:'',meals:'',neighborhood:''});
+      FastNetState.pushState({price_min:'',price_max:'',min_price:'',max_price:'',amenities:'',rating:'',free_cancellation:'',property_type:'',payment:'',meals:'',neighborhood:'',bounds:'',bbox:'',lat:'',lng:''});
       var m = null;
       try { m = bootstrap.Modal.getInstance(document.getElementById('fnsFiltersModal')); } catch (e) {}
       if (m) m.hide();

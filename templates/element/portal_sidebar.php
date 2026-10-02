@@ -1,15 +1,13 @@
 <?php
 /**
  * portal_sidebar — dark Carbon-style sidebar, role-based menu.
- * Expects $userProfile optionally; falls back to session User.
+ * Session-independent: uses controller-provided $userProfile (backend).
  */
-$session = $this->getRequest()->getSession();
-$sessionUser = $session->read('User');
-$profile = $userProfile ?? $sessionUser ?? [];
-$role = strtolower((string)($profile['role'] ?? $sessionUser['role'] ?? ''));
+$profile = $userProfile ?? [];
+$role = strtolower((string)($profile['role'] ?? ''));
 $isAdmin = $role === 'admin';
 $path = $this->getRequest()->getPath() ?: '/';
-$name = trim((string)($profile['name'] ?? $profile['full_name'] ?? $sessionUser['name'] ?? 'Portal user')) ?: 'Portal user';
+$name = trim((string)($profile['name'] ?? $profile['full_name'] ?? 'Portal user')) ?: 'Portal user';
 $initial = strtoupper(substr($name, 0, 1));
 
 $menu = $isAdmin ? [
