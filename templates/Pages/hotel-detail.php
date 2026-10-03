@@ -7,7 +7,17 @@ $propCity = \App\Utility\TextFormatter::formatTitle((string)($property['city'] ?
 $propArea = \App\Utility\TextFormatter::formatTitle((string)($property['area'] ?? $propCity));
 $actualReviews = !empty($reviews) && is_array($reviews) ? $reviews : [];
 $reviewsCount = count($actualReviews) > 0 ? count($actualReviews) : (int)($property['reviews_count'] ?? $property['review_count'] ?? 0);
-$propRating = !empty($property['rating']) ? (float)$property['rating'] : ($reviewsCount > 0 ? array_sum(array_map(fn($r)=>(float)($r['rating']??5), $actualReviews)) / max(1, count($actualReviews)) : 0.0);
+// Average only reviews that actually carry a rating. This substituted 5 for
+// any missing rating, which inflated the displayed score.
+$ratedReviews = array_values(array_filter(
+    $actualReviews,
+    fn($r) => isset($r['rating']) && is_numeric($r['rating']) && (float)$r['rating'] > 0
+));
+$propRating = !empty($property['rating'])
+    ? (float)$property['rating']
+    : (count($ratedReviews) > 0
+        ? array_sum(array_map(fn($r) => (float)$r['rating'], $ratedReviews)) / count($ratedReviews)
+        : 0.0);
 $score10 = ($propRating <= 5.0) ? round($propRating * 2, 1) : round($propRating, 1);
 $score10Fmt = number_format($score10, 1);
 $ratingLabel = $score10 >= 9.0 ? 'Exceptional' : ($score10 >= 8.0 ? 'Excellent' : ($score10 >= 7.0 ? 'Very Good' : 'Good'));
@@ -28,7 +38,9 @@ if (!empty($rooms) && is_array($rooms)) {
     }
 }
 if ($propPrice <= 0) $propPrice = $propBase;
-$propPrice = $propPrice > 0 ? $propPrice : 275;
+// No invented fallback price. A property whose rooms carry no rate now shows
+// "Price on request" instead of a fabricated 275.
+$propPrice = $propPrice > 0 ? $propPrice : 0.0;
 $firstRoomId = !empty($rooms[0]['id']) ? $rooms[0]['id'] : null;
 $detailPropertyId = (int)($propertyId ?? 0);
 $rawAddr = trim((string)($property['address'] ?? ''));
@@ -329,17 +341,18 @@ img{max-width:100%;height:auto}
 <?= $this->element('Home/home-loader') ?>
 <script>
 (function () {
+  // The progress bar delegates to FastnetLoading. This page previously kept its
+  // own #home-top-loader-bar with hardcoded 65% / 150ms / 300ms timings, so
+  // the same journey showed different loading behaviour on the listing and
+  // detail pages. The mobile pill stays local — it is a separate surface.
   function pill(on, text) {
     var p = document.getElementById('home-mobile-loader-pill');
     if (p) {
       p.classList.toggle('pill-hidden', !on);
       if (on && text) { var t = p.querySelector('.mobile-loader-text'); if (t) t.textContent = text; }
     }
-    var bar = document.getElementById('home-top-loader-bar');
-    if (bar) {
-      if (on) { bar.style.display = 'block'; bar.style.opacity = '1'; bar.style.width = '65%'; }
-      else { bar.style.width = '100%'; setTimeout(function(){ bar.style.opacity = '0'; setTimeout(function(){ bar.style.display = 'none'; }, 300); }, 150); }
-    }
+    if (on) FastnetLoading.bar.start();
+    else FastnetLoading.bar.done();
   }
   pill(true, 'Loading stay details…');
   function done() { pill(false); }
@@ -355,34 +368,16 @@ img{max-width:100%;height:auto}
     e.preventDefault();
     pill(true, 'Loading booking…');
     var href = a.href;
-    setTimeout(function () { window.location.href = href; }, 140);
+    // Wait one painted frame so the loader is visible before unload. This was
+    // a flat 140ms hold on every booking click; a double rAF is ~16ms.
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { window.location.href = href; });
+    });
   });
 })();
 </script>
 
-<!-- Mobile breadcrumb AFTER header: Home > Dar es Salaam Hotels -->
-<nav class="agoda-breadcrumb agoda-breadcrumb-mobile d-md-none" aria-label="Breadcrumb" style="padding:8px 0 !important;margin:0 !important;">
-  <div class="agoda-bc-inner" style="padding:8px 16px !important;padding-left:calc(16px + env(safe-area-inset-left,0px)) !important;">
-    <div class="agoda-bc-trail" style="font-size:11px !important;">
-      <a href="/">Home</a> <span class="agoda-bc-sep">›</span>
-      <span class="agoda-bc-current"><?= h($propCity ?: 'Dar es Salaam') ?> Hotels</span>
-    </div>
-  </div>
-</nav>
-
-<!-- Breadcrumb — dynamic + scoped classes for CSS isolation. Counts are real backend totals, hidden when unknown. -->
-<nav class="agoda-breadcrumb agoda-breadcrumb-desktop">
-  <div class="agoda-bc-inner">
-    <div class="agoda-bc-trail">
-      <a href="/">Home</a> <span class="agoda-bc-sep">›</span>
-      <a href="/?destination=<?= urlencode($propCity) ?>"><?= h($propCity) ?> Hotels</a><?php if (isset($cityPropertyCount) && $cityPropertyCount !== null): ?> <span class="agoda-bc-count">(<?= number_format((int)$cityPropertyCount) ?>)</span><?php endif; ?> <span class="agoda-bc-sep">›</span>
-      <a href="/?destination=<?= urlencode($propCity) ?>&amp;property_type=Resort"><?= h($propCity) ?> Resorts</a> <span class="agoda-bc-sep">›</span>
-      <span class="agoda-bc-current">Book <?= h($propTitle) ?></span>
-    </div>
-    <a href="/?destination=<?= urlencode($propCity) ?>" class="agoda-bc-seeall">See all<?php if (isset($cityPropertyCount) && $cityPropertyCount !== null): ?> <?= number_format((int)$cityPropertyCount) ?> <?= ((int)$cityPropertyCount === 1 ? 'property' : 'properties') ?><?php endif; ?> in <?= h($propCity) ?></a>
-  </div>
-</nav>
-
+<?= $this->element('breadcrumb-schema', ['label' => $propTitle]) ?>
 <!-- Gallery — 8 photos mosaic -->
 <div class="agoda-gallery" id="agoda_gallery">
   <div class="agoda-gallery-hero" onclick="openPhotoLightbox(0)" style="cursor:pointer">
@@ -415,14 +410,14 @@ img{max-width:100%;height:auto}
   <button class="agoda-tab" data-tab="location">Location</button>
   <button class="agoda-tab" data-tab="policies">Policies</button>
   <div class="agoda-deal-cta">
-    <span class="agoda-deal-price">from <b>TSh <?= number_format($propPrice) ?></b></span>
+    <span class="agoda-deal-price"><?php if ($propPrice > 0): ?>from <b>TSh <?= number_format($propPrice) ?></b><?php else: ?><b>Price on request</b><?php endif; ?></span>
     <button class="agoda-view-deal" onclick="document.getElementById('rooms-section')?.scrollIntoView({behavior:'smooth'})">VIEW THIS DEAL</button>
   </div>
 </div>
 
 <!-- Mobile sticky price bar — visible only <768px -->
 <div class="agoda-mobile-bar" id="agoda_mobile_bar" aria-hidden="true">
-  <div class="agoda-mobile-bar-price"><span>from</span><b>TSh <?= number_format($propPrice) ?></b></div>
+  <div class="agoda-mobile-bar-price"><span><?= $propPrice > 0 ? 'from' : '' ?></span><b><?= $propPrice > 0 ? 'TSh ' . number_format($propPrice) : 'Price on request' ?></b></div>
   <button class="agoda-view-deal" onclick="document.getElementById('rooms-section')?.scrollIntoView({behavior:'smooth'})">VIEW THIS DEAL</button>
 </div>
 
@@ -433,7 +428,11 @@ img{max-width:100%;height:auto}
     <!-- Title card -->
     <div class="agoda-card" id="overview-section">
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <?php /* Rendered unconditionally before, so every property claimed to
+                 be a best seller. Only shown when the record actually says so. */ ?>
+        <?php if (!empty($property['is_best_seller'])): ?>
         <span class="agoda-badge-bestseller">Best seller</span>
+        <?php endif; ?>
         <button style="margin-left:auto;background:none;border:1px solid #e8eaed;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="toggleWishlist(<?= $detailPropertyId ?>,this)" aria-label="Save"><i class="fa-regular fa-heart" style="color:#5f6368;font-size:16px"></i></button>
       </div>
       <div class="agoda-title"><?= h($propTitle) ?> <span class="agoda-stars"><?= str_repeat('★', $propStars) ?><?= $propStars<5 ? str_repeat('☆',5-$propStars) : '' ?></span></div>
@@ -460,7 +459,11 @@ img{max-width:100%;height:auto}
     <!-- Select your room header -->
     <div class="agoda-rooms-header" id="rooms-section">
       <h2>Select your room</h2>
+      <?php /* Removed: an unconditional "We price match!" promise on every
+               property, which is a commercial claim we never actually honour. */ ?>
+      <?php if (!empty($property['price_match'])): ?>
       <span class="agoda-price-match"><i class="fa-solid fa-badge-check" style="font-size:16px"></i> We price match!</span>
+      <?php endif; ?>
     </div>
     <div class="agoda-card" style="padding:14px">
       <?= $this->element('Listing/Hotel/hotel-detail/rooms') ?>
@@ -473,9 +476,24 @@ img{max-width:100%;height:auto}
     </div>
     <div id="policies-section" class="agoda-card">
       <div style="font-size:16px;font-weight:800;color:#202124;margin-bottom:10px">Policies</div>
+      <?php /* Removed: check-in/out times and a free-cancellation window that
+               were printed on every property regardless of what it had agreed
+               to. BookingCalculationService also used to assert "Free
+               cancellation before {date}" in every quote. Both now read from
+               the property record (properties.cancellation_policy). */ ?>
       <div style="font-size:13px;color:#5f6368;line-height:1.6">
-        Check-in from 2:00 PM · Check-out until 11:00 AM<br>
-        Free cancellation until 24h before check-in. Pets allowed on request.
+        <?php
+        $policyLines = array_filter([
+            !empty($property['check_in_time'])  ? 'Check-in from ' . $property['check_in_time'] : null,
+            !empty($property['check_out_time']) ? 'Check-out until ' . $property['check_out_time'] : null,
+            !empty($property['cancellation_policy']) ? $property['cancellation_policy'] : null,
+        ]);
+        // Escape each line, then join - escaping the joined string would also
+        // escape the <br> separators.
+        echo $policyLines
+            ? implode('<br>', array_map('h', $policyLines))
+            : '<span style="color:#9aa0a6">Contact the property for check-in and cancellation details.</span>';
+        ?>
       </div>
     </div>
   </div>
@@ -490,36 +508,43 @@ img{max-width:100%;height:auto}
         <div class="agoda-rating-label"><b><?= h($ratingLabel) ?></b><span><?= number_format($reviewsCount) ?> verified reviews</span></div>
         <a href="#reviews-section" class="agoda-see-all-reviews">See all</a>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 24px">
-        <div>
-          <div class="agoda-bar-row"><span>Cleanliness</span><span style="color:#0f62fe"><?= number_format(min(10, $score10 + 0.1), 1) ?></span></div>
-          <div class="agoda-bar-bg"><div class="agoda-bar-fill" style="width:<?= min(100, round(($score10 + 0.1) * 10)) ?>%"></div></div>
-        </div>
-        <div>
-          <div class="agoda-bar-row"><span>Facilities</span><span style="color:#0f62fe"><?= number_format(max(7.0, min(10, $score10 - 0.1)), 1) ?></span></div>
-          <div class="agoda-bar-bg"><div class="agoda-bar-fill" style="width:<?= max(70, min(100, round(($score10 - 0.1) * 10))) ?>%"></div></div>
-        </div>
-        <div>
-          <div class="agoda-bar-row"><span>Service</span><span style="color:#0f62fe"><?= number_format(min(10, $score10), 1) ?></span></div>
-          <div class="agoda-bar-bg"><div class="agoda-bar-fill" style="width:<?= min(100, round($score10 * 10)) ?>%"></div></div>
-        </div>
-        <div>
-          <div class="agoda-bar-row"><span>Value for money</span><span style="color:#0f62fe"><?= number_format(max(7.0, min(10, $score10 - 0.3)), 1) ?></span></div>
-          <div class="agoda-bar-bg"><div class="agoda-bar-fill" style="width:<?= max(70, min(100, round(($score10 - 0.3) * 10))) ?>%"></div></div>
-        </div>
-      </div>
+      <!-- Per-category score bars removed.
+
+           They were computed arithmetically from the single overall score
+           (Cleanliness = score+0.1, Service = score, Facilities = score-0.1,
+           Value = score-0.3) and floored at 7.0, so nothing could ever score
+           badly. The reviews table stores one rating and no category scores,
+           so these bars had no data behind them. They should return only once
+           categories are genuinely collected. -->
       <div style="position:relative;margin-top:14px">
         <div class="agoda-review-scroll" id="agoda_review_scroll">
-          <?php foreach (array_slice($actualReviews, 0, 4) as $snip): 
-            $sAuthor = \App\Utility\TextFormatter::formatTitle((string)($snip['user_name'] ?? $snip['guest_name'] ?? 'Verified Guest'));
-            $sComment = trim((string)($snip['comment'] ?? 'Wonderful experience.'));
+          <?php foreach (array_slice($actualReviews, 0, 4) as $snip):
+            // No invented author or comment text. Previously an unnamed
+            // reviewer became "Verified Guest" and an empty comment became
+            // "Wonderful experience.", both indistinguishable from real content.
+            $sAuthor = trim((string)($snip['user_name'] ?? $snip['guest_name'] ?? ''));
+            $sComment = trim((string)($snip['comment'] ?? ''));
+            if ($sAuthor === '' && $sComment === '') {
+                continue; // nothing real to show for this review
+            }
             if (mb_strlen($sComment) > 110) {
                 $sComment = mb_substr($sComment, 0, 107) . '...';
             }
           ?>
           <div class="agoda-review-snippet">
-            "<?= h($sComment) ?>"
-            <div class="agoda-review-author"><span style="font-size:14px">🇹🇿</span> <b><?= h($sAuthor) ?></b> <span style="color:#9aa0a6">|</span> Verified Guest</div>
+            <?php if ($sComment !== ''): ?>
+              &ldquo;<?= h($sComment) ?>&rdquo;
+            <?php endif; ?>
+            <?php /* No hardcoded flag and no unconditional "Verified Guest"
+                     badge. Verification status is a property of the record, so
+                     it is only shown when the backend actually marks the
+                     reviewer verified. */ ?>
+            <div class="agoda-review-author">
+              <?php if ($sAuthor !== ''): ?><b><?= h($sAuthor) ?></b><?php endif; ?>
+              <?php if (!empty($snip['is_verified'])): ?>
+                <span style="color:#9aa0a6">|</span> Verified stay
+              <?php endif; ?>
+            </div>
           </div>
           <?php endforeach; ?>
         </div>
@@ -536,7 +561,6 @@ img{max-width:100%;height:auto}
       </div>
       <?php endif; ?>
     </div>
-
 
   </div>
 </div>

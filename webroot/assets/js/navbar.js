@@ -61,10 +61,18 @@ async function toggleWishlist(propertyId, btnEl) {
             showWishlistToast('Saved to your Wishlist! ❤️');
         } catch(e) { showWishlistToast('Saved (local) ❤️'); }
     }
-    if (dotsPh) { const ph = document.createElement('i'); if (origIcon) ph.className = origIcon; dotsPh.replaceWith(ph); }
-    syncWishlistButtons();
+    // Restore the icon slot. Previously this built a bare <i> when origIcon
+    // was empty, which left the button showing an empty gap until the next
+    // sync pass — a permanently broken-looking control. Delegating to the
+    // canonical indicator also guarantees the teardown runs even if one of the
+    // branches above throws.
     if (btnEl) btnEl.disabled = false;
-    // icon restored by syncWishlistButtons
+    if (icon) {
+        const ph = document.createElement('i');
+        ph.className = origIcon || 'fa-regular fa-heart';
+        if (dotsPh && dotsPh.parentNode) dotsPh.replaceWith(ph);
+    }
+    syncWishlistButtons();
 }
 
 function syncWishlistButtons() {

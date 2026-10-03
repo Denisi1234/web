@@ -9,6 +9,7 @@ $this->assign('page_actions', '<a href="' . $this->Url->build('/host/listings') 
 .cds-day small{font-size:10px;font-weight:400;color:inherit;opacity:.8}
 .cds-day.ok{background:#defbe6;color:#0e6027;border-color:#a7e8b7}
 .cds-day.off{background:#fdecea;color:#a2191f;border-color:#f4b0b1}
+.cds-day.today{outline:2px solid var(--p-blue);outline-offset:-2px}
 @media(max-width:480px){.cds-day-grid{gap:6px}.cds-day{font-size:11px}}
 </style>
 <?php if (empty($rooms)): ?>
@@ -26,9 +27,24 @@ $this->assign('page_actions', '<a href="' . $this->Url->build('/host/listings') 
       <div style="font-size:15px;font-weight:600"><?= $rname ?> <span style="font-size:12px;font-weight:400;color:var(--p-text-2)">#<?= $rid ?></span></div>
       <span class="p-badge <?= $isBlocked ? 'red' : 'green' ?>"><?= $isBlocked ? 'Blocked' : 'Available' ?></span>
     </div>
-    <div class="cds-day-grid mb-3" role="grid" aria-label="Availability for <?= $rname ?>">
-      <?php for ($d = 1; $d <= 31; $d++): $blocked = ($d % 7 === 0); ?>
-        <div class="cds-day <?= $blocked ? 'off' : 'ok' ?>" title="Day <?= $d ?> — <?= $blocked ? 'Blocked' : 'Available' ?>"><span><?= $d ?></span><small>TSh <?= number_format($rprice / 1000, 1) ?>k</small></div>
+    <?php
+$monthLabel = date('F Y');
+$daysInMonth = (int)date('t');
+$todayKey = date('Y-m-d');
+$yearMonth = date('Y-m');
+$bookedDays = is_array($bookedDays ?? null) ? $bookedDays : [];
+?>
+    <div style="font-size:13px;font-weight:600;color:var(--p-text-2);margin-bottom:8px"><?= h($monthLabel) ?> · green = free, red = booked or blocked</div>
+    <div class="cds-day-grid mb-3" role="grid" aria-label="Availability for <?= $rname ?> in <?= h($monthLabel) ?>">
+      <?php for ($d = 1; $d <= $daysInMonth; $d++):
+        $key = sprintf('%s-%02d', $yearMonth, $d);
+        $isBooked = !empty($bookedDays[$rid][$key]);
+        $isMaint = !$isBooked && $isBlocked;
+        $cls = ($isBooked || $isMaint) ? 'off' : 'ok';
+        $why = $isBooked ? 'Booked' : ($isMaint ? 'Blocked' : 'Available');
+        if ($key === $todayKey) $cls .= ' today';
+      ?>
+        <div class="cds-day <?= $cls ?>" title="<?= h($monthLabel) ?> <?= $d ?> — <?= $why ?>"><span><?= $d ?></span><small>TSh <?= number_format($rprice) ?></small></div>
       <?php endfor; ?>
     </div>
     <?= $this->Form->create(null, ['url' => ['action' => 'calendar', $property['id'] ?? null], 'style' => 'display:flex;gap:8px;flex-wrap:wrap;align-items:end', 'data-api' => 'PUT /rooms/' . $rid, 'data-api-strip' => 'room_id', 'data-api-ok' => 'Room updated.', 'data-opt' => 'refresh', 'data-opt-bust' => 'rooms,properties', 'data-api-go' => '/host/cache-bust?scope=rooms,properties&go=' . urlencode('/host/calendar/' . ($property['id'] ?? ''))]) ?>

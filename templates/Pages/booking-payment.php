@@ -2,13 +2,8 @@
 <?= $this->Html->css('/assets/css/google-travel-layout.css') ?>
 <?= $this->Html->css('/assets/css/google-travel-home.css') ?>
 <?= $this->element('navbar') ?>
-<nav aria-label="Breadcrumb" class="container-fluid px-2 px-lg-2" style="max-width:100%;margin:0 auto;background:#f8f9fa;">
-  <ol class="breadcrumb mb-0 py-1" style="background:transparent;font-size:12px;line-height:1.2;--bs-breadcrumb-divider:'›';" itemscope itemtype="https://schema.org/BreadcrumbList">
-    <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="/" itemprop="item" style="color:#5f6368;text-decoration:none;"><span itemprop="name">Home</span></a><meta itemprop="position" content="1"></li>
-    <li class="breadcrumb-item active" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><span itemprop="name">Booking Payment</span><meta itemprop="position" content="2"></li>
-  </ol>
-</nav>
-<main id="main-content" style="background:#f8f9fa;min-height:85vh;" role="main">
+<?= $this->element('breadcrumb-schema', ['label' => 'Payment']) ?>
+<main id="main-content" style="background:var(--cds-gray-10);min-height:85vh;" role="main">
 <link rel="stylesheet" href="<?= $this->Url->build('/assets/css/trivago-checkout.css') ?>">
 <style>
 /* Phase 4 — payment pending parity with mobile USSD dialog (#EBF5FF circle, r16, r30) */
@@ -81,15 +76,31 @@
                     statusEl.className = 'alert alert-success';
                     statusEl.textContent = '✅ Payment confirmed! Opening your booking...';
                     finished = true;
-                    window.location.href = <?= json_encode($this->Url->build('/bookingpage-success')) ?> + '?booking_id=' + encodeURIComponent(data.booking_id);
+                    let dest = <?= json_encode($this->Url->build('/bookingpage-success')) ?> + '?booking_id=' + encodeURIComponent(data.booking_id);
+                    if (data.email) dest += '&email=' + encodeURIComponent(data.email);
+                    window.location.href = dest;
                     return;
                 }
-                if (data.status === 'failed' || data.status === 'expired' || attempts >= 40) {
+                if (data.status === 'review') {
+                    statusEl.className = 'alert alert-warning';
+                    statusEl.textContent = 'We received your payment and are verifying the amount with our team.';
+                    textEl.textContent = 'Do not pay again. Our support team will confirm your booking shortly.';
+                    finished = true;
+                    return;
+                }
+                if (data.status === 'failed' || data.status === 'expired') {
                     statusEl.className = 'alert alert-danger';
-                    statusEl.textContent = data.status === 'expired' || attempts >= 40
-                        ? 'Payment timed out. Please start again.'
+                    statusEl.textContent = data.status === 'expired'
+                        ? 'The payment request expired before it was approved.'
                         : 'Payment was not approved.';
                     textEl.textContent = 'Your room was not confirmed. No successful payment was recorded.';
+                    finished = true;
+                    return;
+                }
+                if (attempts >= 40) {
+                    statusEl.className = 'alert alert-warning';
+                    statusEl.textContent = 'Still waiting for your mobile-money confirmation.';
+                    textEl.textContent = 'If you approved the request on your phone, your booking will confirm automatically. Contact support if it does not.';
                     finished = true;
                     return;
                 }

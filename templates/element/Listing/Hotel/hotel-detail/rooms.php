@@ -246,10 +246,10 @@ foreach ($roomList as $rItem) {
           $u = $normImgUrl((string)$property['image_url']);
           if ($u !== '') $roomPhotos[] = $u;
       }
-      if (empty($roomPhotos)) {
-          $roomPhotos[] = 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop';
-      }
-      $mainImg = $roomPhotos[0];
+      // Removed: a stock Unsplash room photo was injected into every room
+      // without one, so unphotographed rooms looked real. With no photo the
+      // card simply has no image.
+      $mainImg = $roomPhotos[0] ?? '';
 
       // Category facilities: union across all units in the type
       $amenitiesRaw = $group['amenities'] ?? [];
@@ -263,9 +263,9 @@ foreach ($roomList as $rItem) {
       } else {
           $roomAmenities = [];
       }
-      if (empty($roomAmenities)) {
-          $roomAmenities = ['Air conditioning', 'Wi-Fi', 'Private bathroom', 'Shower'];
-      }
+      // Removed: four fabricated amenities ("Air conditioning", "Wi-Fi",
+      // "Private bathroom", "Shower") were shown on any room that had none
+      // recorded, implying facilities the property may not have.
 
       // Base price: bookable unit customer rate (fee-inclusive). No invented packages,
       // no strike prices — one honest rate built only from real signals.
@@ -274,7 +274,9 @@ foreach ($roomList as $rItem) {
       $hasBreakfast = str_contains($amenText, 'breakfast');
       $hasWifi = str_contains($amenText, 'wi-fi') || str_contains($amenText, 'wifi');
       $cancelPolicy = trim((string)($calculation['cancellation_policy'] ?? ($quote['calculation']['cancellation_policy'] ?? '')));
-      $hasFreeCancel = $cancelPolicy !== ''
+      // cancellation_policy is now a real (nullable) property field, so test it
+      // properly - a bare !== '' comparison is true for null.
+      $hasFreeCancel = ($cancelPolicy !== null && trim((string)$cancelPolicy) !== '')
           || !empty($property['free_cancellation'])
           || str_contains(strtolower((string)($property['cancellation_policy'] ?? '')), 'free');
 
@@ -284,12 +286,15 @@ foreach ($roomList as $rItem) {
           : '';
       $offers = [
           [
-              'title' => 'Standard Rate',
+              // No invented rate-plan name; use the room's own title.
+              'title' => $title ?: 'Room',
               'unit' => $unitDisplay,
               'adults' => min($maxAdults, $adultsCount),
               'breakfast' => $hasBreakfast ? 'Breakfast included' : '',
-              'cancel' => $hasFreeCancel ? ($cancelPolicy !== '' ? $cancelPolicy : 'Free cancellation') : 'Non-refundable rate',
-              'pay' => 'Pay online with mobile money',
+              // Report the real policy. Never assert "Free cancellation" or
+              // "Non-refundable" when the property has not stated a policy.
+              'cancel' => $hasFreeCancel ? $cancelPolicy : '',
+              'pay' => '',
               'wifi' => $hasWifi ? 'Wi-Fi' : '',
               'price' => $priceBase,
               'strike' => null,
@@ -307,7 +312,7 @@ foreach ($roomList as $rItem) {
     <div style="padding:14px;border-right:1px solid #e8eaed;display:flex;flex-direction:column;justify-content:space-between;background:#fafafa">
       <div>
         <div class="room-hero-wrap" style="position:relative;border-radius:16px;overflow:hidden;height:165px;background:#e5e7eb" data-room-photos="<?= htmlspecialchars(json_encode($roomPhotos), ENT_QUOTES, 'UTF-8') ?>" data-room-id="<?= $roomId ?>">
-          <img id="room_img_<?= $roomId ?>" src="<?= h($mainImg) ?>" alt="<?= h($title) ?>" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;background:#e5e7eb" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop'">
+          <img id="room_img_<?= $roomId ?>" src="<?= h($mainImg) ?>" alt="<?= h($title) ?>" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;background:#e5e7eb" loading="lazy" onerror="this.onerror=null;this.removeAttribute('src');this.style.background='#e5e7eb';this.alt='No photo available'">
           <div style="position:absolute;top:10px;left:10px;display:flex;flex-wrap:wrap;gap:6px">
             <?php if ($groupAvail <= 0): ?><span style="background:#f4f4f4;color:#525252;font-size:11px;font-weight:700;border-radius:6px;padding:5px 8px;">Unavailable for these dates</span><?php elseif ($groupAvail <= 2): ?><span style="background:rgba(232,212,201,0.95);color:#9A4B2F;font-size:11px;font-weight:700;border-radius:6px;padding:5px 8px;">Only <?= $groupAvail ?> left!</span><?php endif; ?>
             <?php if ($hasFreeCancel): ?><span style="background:rgba(231,219,248,0.95);color:#7B3FE4;font-size:11px;font-weight:700;border-radius:6px;padding:5px 8px;">Free cancellation</span><?php endif; ?>

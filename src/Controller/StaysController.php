@@ -295,15 +295,22 @@ class StaysController extends AppController
             if (!is_array($recent)) $recent = [];
             // filter out existing entry with same id
             $recent = array_values(array_filter($recent, fn($item) => (int)($item['id'] ?? 0) !== $propertyId));
-            $coverImg = !empty($galleryImages[0]) ? $galleryImages[0] : ($property['image_url'] ?? ($property['primary_image_url'] ?? ''));
+            // $propTitle/$propCity/$propArea/$propPrice/$propRating/$reviewsCount and
+            // $galleryImages are all defined in hotel-detail.php, never here. Every
+            // `$x ?? fallback` below therefore evaluated the fallback, so this
+            // session record stored invented values: a hardcoded 85,000 TSh
+            // price, "Tanzania" and "Stay". Read the property record directly.
+            $coverImg = $property['primary_image_url'] ?? ($property['image_url'] ?? '');
             array_unshift($recent, [
                 'id' => $propertyId,
-                'name' => $propTitle ?? ($property['name'] ?? 'Stay'),
-                'city' => $propCity ?? ($property['city'] ?? 'Tanzania'),
-                'area' => $propArea ?? ($property['area'] ?? ''),
-                'price_per_night' => $propPrice ?? ($property['price_per_night'] ?? 85000),
-                'rating' => $propRating ?? ($property['rating'] ?? null),
-                'reviews_count' => $reviewsCount ?? ($property['reviews_count'] ?? 0),
+                'name' => $property['name'] ?? null,
+                'city' => $property['city'] ?? null,
+                'area' => $property['area'] ?? null,
+                'price_per_night' => isset($property['price_per_night'])
+                    ? (float)$property['price_per_night']
+                    : null,
+                'rating' => isset($property['rating']) ? (float)$property['rating'] : null,
+                'reviews_count' => (int)($property['reviews_count'] ?? $property['review_count'] ?? 0),
                 'image_url' => $coverImg,
                 'viewed_at' => time(),
             ]);

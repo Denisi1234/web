@@ -7,6 +7,7 @@ use App\Service\FastnetApiClient;
 use App\Service\BookingQuoteService;
 use App\Service\PaymentService;
 use Cake\Http\Response;
+use Cake\Http\Exception\BadRequestException;
 use Cake\Http\Exception\NotFoundException;
 
 /**
@@ -127,6 +128,57 @@ class BookingsController extends AppController
             $property = $quote['property'];
             $room = $quote['room'];
             $calculation = $quote['calculation'];
+
+            /*
+             * Hold the room while the guest completes checkout.
+             *
+             * Without this the hold endpoints were dead: nothing reserved
+             * inventory between "guest selects a room" and "guest pays", so two
+             * guests could both pass the availability check for the last unit
+             * and the second payment would land on an already-sold room. The
+             * hold expires after 10 minutes, so abandoning checkout releases it.
+             *
+             * Only attempted for a signed-in guest - the endpoint is behind
+             * auth:sanctum. A guest booking is still protected by the
+             * availability re-check inside POST /bookings/create.
+             */
+            $lockResult = null;
+            $lockToken = $this->bearerToken();
+            if ($lockToken !== '' && !empty($roomId) && !empty($quote['check_in'])) {
+                $lockRes = $this->apiClient->post('/bookings/lock', [
+                    'room_id'    => (int) $roomId,
+                    'check_in'   => $quote['check_in'],
+                    'check_out'  => $quote['check_out'],
+                ], ['Authorization' => 'Bearer ' . $lockToken, 'Accept' => 'application/json']);
+
+                if (!empty($lockRes) && empty($lockRes['_status'])) {
+                    $lockResult = ['held' => true];
+                    $this->getRequest()->getSession()->write('booking_lock', [
+                        'room_id'   => (int) $roomId,
+                        'check_in'  => $quote['check_in'],
+                        'check_out' => $quote['check_out'],
+                        'held_at'   => time(),
+                    ]);
+                } elseif ((int)($lockRes['_status'] ?? 0) === 409) {
+                    // Someone else holds it - tell the guest plainly rather than
+                    // letting them fill the form for a room they cannot have.
+                    $this->getRequest()->getSession()->delete('booking_quotes.' . $quote['quote_id']);
+                    $this->Flash->error(__($lockRes['message'] ?? 'That room was just taken. Please choose another room or date.'));
+                    // Stay context for the bounce-back link.
+                    $back = array_filter([
+                        'city'      => $queryParams['city'] ?? ($queryParams['destination'] ?? null),
+                        'checkin'   => $queryParams['checkIn'] ?? ($queryParams['check_in'] ?? ($queryParams['checkin'] ?? null)),
+                        'checkout'  => $queryParams['checkOut'] ?? ($queryParams['check_out'] ?? ($queryParams['checkout'] ?? null)),
+                        'property_id' => $propertyId ?: null,
+                    ]);
+
+                    return $this->redirect(
+                        $propertyId
+                            ? ['controller' => 'Stays', 'action' => 'detail', $propertyId, '?' => $back]
+                            : ['controller' => 'Pages', 'action' => 'index', '?' => $back]
+                    );
+                }
+            }
         } catch (\Throwable $exception) {
             // No fake fallback quote: booking without an authoritative backend price would charge
             // the wrong amount. Send the guest back to the stay with an honest reason instead.
@@ -209,21 +261,17 @@ class BookingsController extends AppController
             if (empty($fullName)) $fullName = 'Guest Traveler';
 
             $paymentMethod = trim($postData['payment_method'] ?? $postData['pay_method'] ?? 'vodacom');
-            $isCard = $paymentMethod === 'card';
-            if ($isCard) {
-                $cardHolder = trim((string)($postData['card_holder'] ?? ''));
-                if ($cardHolder !== '') $fullName = $cardHolder;
-                if (empty($postData['card_number']) || empty($postData['expiry']) || empty($postData['cvc'])) {
-                    $this->Flash->error(__('Please fill all card details.'));
-                    return $this->redirect(['action' => 'bookingpage03', '?' => ['quote_id' => $quoteId]]);
-                }
-                $paymentPhone = trim((string)($postData['payment_phone'] ?? ($postData['phone'] ?? '')));
-            } else {
-                $paymentPhone = trim((string)($postData['payment_phone'] ?? ($postData['phone'] ?? '')));
-                if ($paymentPhone === '') {
-                    $this->Flash->error(__('Enter the mobile number that should receive the payment request.'));
-                    return $this->redirect(['action' => 'bookingPage', '?' => ['quote_id' => $quoteId]]);
-                }
+            // Card is not offered: there is no card gateway, so card details
+            // would be collected and dropped. Reject it outright rather than
+            // stranding the booking in a pending state that can never settle.
+            if ($paymentMethod === 'card') {
+                $this->Flash->error(__('Card payments are not available right now. Please choose a mobile money option.'));
+                return $this->redirect(['action' => 'bookingpage03', '?' => ['quote_id' => $quoteId]]);
+            }
+            $paymentPhone = trim((string)($postData['payment_phone'] ?? ($postData['phone'] ?? '')));
+            if ($paymentPhone === '') {
+                $this->Flash->error(__('Enter the mobile number that should receive the payment request.'));
+                return $this->redirect(['action' => 'bookingPage', '?' => ['quote_id' => $quoteId]]);
             }
             $guestEmail = trim((string)($postData['email'] ?? ''));
             $guestPhone = trim((string)($postData['phone'] ?? $paymentPhone));
@@ -243,6 +291,8 @@ class BookingsController extends AppController
                 'guests' => (int)$quote['adults'] + (int)$quote['children'],
                 'rooms' => (int)$quote['rooms'],
                 'special_requests' => $postData['special_requests'] ?? null,
+                'room_preference' => $postData['room_preference'] ?? null,
+                'bed_preference' => $postData['bed_preference'] ?? null,
             ];
 
             // Create a pending booking via authoritative Laravel API POST /api/bookings/create (maps to POST /api/v1/bookings per spec)
@@ -282,27 +332,15 @@ class BookingsController extends AppController
                     $this->getRequest()->getSession()->write('booking_invoices.' . $bookingCode, $bData['invoice_url']);
                 }
 
-                if ($isCard) {
-                    // Card payment — do not use AzamPay mobile Money.
-                    $paymentId = 'card-' . $bookingId;
-                    $request->getSession()->write('pending_payments.' . $paymentId, [
-                        'booking_id'     => $bookingId,
-                        'booking_code'   => $bookingCode,
-                        'created_at'     => time(),
-                        'method'         => 'card',
-                    ]);
-                    $request->getSession()->delete('booking_quotes.' . $quoteId);
-                    return $this->redirect(['action' => 'paymentPending', '?' => ['payment_id' => $paymentId]]);
-                }
-
-                // Mobile money: generate a synthetic payment ID immediately and redirect to pending page.
+// Mobile money: generate a synthetic payment ID immediately and redirect to pending page.
                 // The payment-pending page fires the AzamPay USSD push via AJAX — no blocking wait here.
                 $paymentId = 'TX-AZAM-' . strtoupper(substr(md5(uniqid('', true)), 0, 10));
                 $request->getSession()->write('pending_payments.' . $paymentId, [
-                    'booking_id'       => $bookingId,
-                    'booking_code'     => $bookingCode,
-                    'amount'           => $totalAmount,
-                    'payment_method'   => $paymentMethod,
+                    'booking_id' => $bookingId,
+                    'booking_code' => $bookingCode,
+                    'amount' => $totalAmount,
+                    'guest_email' => $guestEmail,
+                    'payment_method' => $paymentMethod,
                     'payment_phone'    => $paymentPhone,
                     'account_name'     => $paymentAccountName,
                     'created_at'       => time(),
@@ -360,7 +398,7 @@ class BookingsController extends AppController
         $this->getRequest()->getSession()->write('pending_payments.' . $paymentId, $pending);
 
         // Fire AzamPay USSD push (non-blocking from user perspective — page is already shown)
-        $this->paymentService->initiate([
+        $checkout = $this->paymentService->initiate([
             'booking_id'     => $pending['booking_id'],
             'amount'         => $pending['amount'] ?? 0,
             'payment_method' => $pending['payment_method'] ?? 'vodacom',
@@ -368,33 +406,88 @@ class BookingsController extends AppController
             'account_name'   => $pending['account_name'] ?? '',
         ]);
 
+        // The checkout response mints the gateway transaction id (TX-AZAM-…).
+        // Keep it: status polling must use THIS id, not the synthetic session
+        // key. Using the session key made every poll 404, so the page could
+        // never leave "pending" even after a successful webhook payment.
+        if (is_array($checkout)) {
+            $txn = trim((string)(
+                $checkout['transaction_id']
+                ?? $checkout['data']['transaction_id']
+                ?? ''
+            ));
+            if ($txn !== '') {
+                $pending['gateway_txn'] = $txn;
+                $this->getRequest()->getSession()->write('pending_payments.' . $paymentId, $pending);
+            }
+        }
+
         return $this->response->withType('application/json')
             ->withStringBody(json_encode(['ok' => true]));
     }
 
     public function paymentStatus(): Response
     {
+        $session = $this->getRequest()->getSession();
         $paymentId = trim((string)$this->getRequest()->getQuery('payment_id', ''));
-        $pending = $paymentId !== '' ? $this->getRequest()->getSession()->read('pending_payments.' . $paymentId) : null;
+        $pending = $paymentId !== '' ? $session->read('pending_payments.' . $paymentId) : null;
         if (!is_array($pending)) {
             return $this->response->withStatus(404)->withType('application/json')->withStringBody(json_encode(['status' => 'expired']));
         }
 
-        $result = $this->paymentService->status($paymentId, (string)$pending['booking_id']);
+        // Terminal states are latched on first observation. Without this a
+        // gateway status string we fail to recognise later in the flow can
+        // drag a settled payment back to "pending" and the page then tells the
+        // guest their money was never received.
+        $terminal = ['paid', 'failed', 'expired', 'review'];
+        $latched = (string)($pending['status'] ?? '');
+        if ($latched !== '' && in_array($latched, $terminal, true)) {
+            return $this->paymentStatusResponse($latched, (int)($pending['booking_id'] ?? 0), $pending['payment_status'] ?? null);
+        }
+
+        $result = $this->paymentService->status(
+            // Prefer the gateway transaction id minted by checkout; the
+            // synthetic session key never resolves server-side.
+            (string)($pending['gateway_txn'] ?? $paymentId),
+            (string)$pending['booking_id']
+        );
         $data = is_array($result) ? ($result['data'] ?? $result) : [];
-        $status = strtolower((string)($data['status'] ?? ($data['payment_status'] ?? ($data['transactionStatus'] ?? ($data['paymentStatus'] ?? 'pending')))));
-        $normalized = match ($status) {
-            'paid', 'success', 'successful', 'completed', 'confirmed' => 'paid',
-            'failed', 'cancelled', 'canceled', 'declined' => 'failed',
+        $raw = strtolower((string)($data['status'] ?? ($data['payment_status'] ?? ($data['transactionStatus'] ?? ($data['paymentStatus'] ?? 'pending')))));
+
+        $normalized = match ($raw) {
+            'paid', 'success', 'successful', 'completed', 'confirmed', 'settled', 'authorized', '00' => 'paid',
+            'failed', 'cancelled', 'canceled', 'declined', 'rejected', 'error' => 'failed',
             'expired', 'timeout', 'timed_out' => 'expired',
+            // Money arrived but the amount did not match. Not a retry - a human
+            // has to reconcile it, so surface it instead of looping to timeout.
+            'amount_mismatch' => 'review',
             default => 'pending',
         };
-        if ($normalized === 'paid') {
-            $this->getRequest()->getSession()->delete('pending_payments.' . $paymentId);
+
+        if ($normalized !== 'pending') {
+            $session->write('pending_payments.' . $paymentId . '.status', $normalized);
         }
+        if ($normalized === 'paid') {
+            $session->delete('pending_payments.' . $paymentId);
+        }
+
+        return $this->paymentStatusResponse(
+            $normalized,
+            (int)$pending['booking_id'],
+            $raw,
+            // The success page needs the booking email to verify a guest
+            // booking that has no session. Without it every paid guest 404s.
+            (string)($pending['guest_email'] ?? '')
+        );
+    }
+
+    private function paymentStatusResponse(string $status, int $bookingId, ?string $raw, string $email = ''): Response
+    {
         return $this->response->withType('application/json')->withStringBody(json_encode([
-            'status' => $normalized,
-            'booking_id' => $pending['booking_id'],
+            'status' => $status,
+            'booking_id' => $bookingId,
+            'gateway_status' => $raw,
+            'email' => $email,
         ]));
     }
 
@@ -460,21 +553,147 @@ class BookingsController extends AppController
     }
 
     /**
+     * Release the checkout room hold.
+     *
+     * Called when the guest abandons checkout. The hold expires on its own
+     * after 10 minutes, so this is only to release it promptly.
+     */
+    public function releaseRoomLock(): Response
+    {
+        if (!$this->getRequest()->is('post')) {
+            throw new BadRequestException(__('Method not allowed.'));
+        }
+
+        $session = $this->getRequest()->getSession();
+        $lock = $session->read('booking_lock');
+        $session->delete('booking_lock');
+
+        $token = $this->bearerToken();
+        if (!is_array($lock) || empty($lock['room_id']) || $token === '') {
+            return $this->response->withType('application/json')->withStringBody(
+                (string)json_encode(['status' => 'success', 'released' => false])
+            );
+        }
+
+        $this->apiClient->post('/bookings/unlock', [
+            'room_id'   => (int) $lock['room_id'],
+            'check_in'  => $lock['check_in'] ?? null,
+            'check_out' => $lock['check_out'] ?? null,
+        ], ['Authorization' => 'Bearer ' . $token, 'Accept' => 'application/json']);
+
+        return $this->response->withType('application/json')->withStringBody(
+            (string)json_encode(['status' => 'success', 'released' => true])
+        );
+    }
+
+    /** Bearer token from the session or the persistent auth cookie. */
+    private function bearerToken(): string
+    {
+        $token = trim((string)$this->getRequest()->getSession()->read('auth_token'));
+        if (stripos($token, 'Bearer ') === 0) {
+            $token = trim(substr($token, 7));
+        }
+        if ($token === '' && isset($_COOKIE[\App\Service\AuthService::TOKEN_COOKIE])) {
+            $token = trim((string)$_COOKIE[\App\Service\AuthService::TOKEN_COOKIE]);
+            if (stripos($token, 'Bearer ') === 0) {
+                $token = trim(substr($token, 7));
+            }
+        }
+        return $token;
+    }
+
+    /**
+     * POST /receipts/generate — build a downloadable e-receipt.
+     *
+     * Only reachable with a verified booking on the session, so the receipt is
+     * always generated from stored booking data rather than URL parameters.
+     */
+    public function downloadReceipt(): Response
+    {
+        if (!$this->getRequest()->is('post')) {
+            throw new BadRequestException(__('Method not allowed.'));
+        }
+
+        $bookingId = trim((string)$this->getRequest()->getData('booking_id'));
+        if ($bookingId === '') {
+            throw new BadRequestException(__('Booking not specified.'));
+        }
+
+        $sessionEmail = (string) ($this->getRequest()->getSession()->read('User.email') ?? '');
+        $booking = $this->paymentService->booking($bookingId, $sessionEmail);
+
+        if (!is_array($booking)) {
+            throw new NotFoundException(__('Booking not found.'));
+        }
+
+        $guest = is_array($booking['guest'] ?? null) ? $booking['guest'] : [];
+        $property = is_array($booking['room']['property'] ?? null) ? $booking['room']['property'] : [];
+        $room = is_array($booking['room'] ?? null) ? $booking['room'] : [];
+
+        if (($booking['payment_status'] ?? '') !== 'paid') {
+            throw new BadRequestException(__('A receipt is only available for paid bookings.'));
+        }
+
+        $res = $this->apiClient->post('/receipts/generate', [
+            'booking_code'     => $booking['booking_code'] ?? $bookingId,
+            'guest_name'       => $guest['name'] ?? null,
+            'property_name'    => $property['name'] ?? null,
+            'property_address' => $property['address'] ?? null,
+            'room_number'      => $room['room_number'] ?? null,
+            'check_in'         => $booking['check_in'] ?? null,
+            'check_out'        => $booking['check_out'] ?? null,
+            'total_price'      => $booking['total_price'] ?? null,
+        ], ['Authorization' => 'Bearer ' . $this->bearerToken(), 'Accept' => 'application/json']);
+
+        if (empty($res) || ($res['status'] ?? '') !== 'success') {
+            $msg = $res['message'] ?? __('Could not generate your receipt.');
+            $this->Flash->error(__($msg));
+
+            return $this->response->withType('application/json')->withStringBody(json_encode([
+                'status' => 'error', 'message' => $msg,
+            ]));
+        }
+
+        return $this->response->withType('application/json')->withStringBody(json_encode([
+            'status'      => 'success',
+            'receipt_url' => $res['receipt_url'] ?? null,
+            'booking_code'=> $res['booking_code'] ?? null,
+        ]));
+    }
+
+
+    /**
      * Booking Step 3 - Success & Confirmed Invoice
      */
     public function bookingpageSuccess()
     {
         $queryParams = $this->getRequest()->getQueryParams();
+        // Accept either identifier: my-booking links use booking_code, the
+        // payment page uses the numeric booking_id. The backend resolves both.
         $bookingId = trim((string)($queryParams['booking_id'] ?? ''));
+        if ($bookingId === '') {
+            $bookingId = trim((string)($queryParams['booking_code'] ?? ''));
+        }
         if ($bookingId === '') {
             throw new NotFoundException(__('Booking confirmation not found.'));
         }
 
-        $bookingResponse = $this->paymentService->booking($bookingId);
+        // A guest booking has no session, so the receipt lookup is authorised
+        // by the email the booking was made with. The payment page appends it;
+        // without it a guest's paid booking 404s here.
+        $sessionEmail = (string) ($this->getRequest()->getSession()->read('User.email') ?? '');
+        if ($sessionEmail === '') {
+            $sessionEmail = trim((string)($queryParams['email'] ?? ''));
+        }
+
+        $bookingResponse = $sessionEmail !== ''
+            ? $this->paymentService->booking($bookingId, $sessionEmail)
+            : $this->paymentService->booking($bookingId);
         $booking = is_array($bookingResponse) ? ($bookingResponse['data'] ?? $bookingResponse) : null;
         if (!is_array($booking)) {
             throw new NotFoundException(__('This booking could not be verified.'));
         }
+        $verifiedBooking = $booking;
         $paymentStatus = strtolower((string)($booking['payment_status'] ?? ''));
         $bookingStatus = strtolower((string)($booking['booking_status'] ?? ($booking['status'] ?? '')));
         if ($paymentStatus !== 'paid' || !in_array($bookingStatus, ['confirmed', 'paid', 'completed', 'success', 'successful'], true)) {
@@ -511,7 +730,7 @@ class BookingsController extends AppController
             }
         }
 
-        $this->set(compact('queryParams', 'property'));
+        $this->set(compact('queryParams', 'property', 'verifiedBooking', 'guest', 'bookingRoom'));
         return $this->render('/Pages/bookingpage-success');
     }
 }

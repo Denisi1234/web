@@ -5,6 +5,11 @@ $juLoggedIn = !empty($isLoggedIn);
 $juRole = strtolower((string)($userRole ?? ''));
 $isHost = in_array($juRole, ['owner', 'admin'], true);
 $myList = (isset($myProperties) && is_array($myProperties)) ? $myProperties : [];
+
+// A host whose account is still "Pending Verification" has no way forward
+// without submitting documents, so surface the KYC form directly.
+$juNeedsVerification = $juLoggedIn && $juRole === 'owner'
+    && strtolower((string)($sessionUser['status'] ?? '')) === 'pending verification';
 ?>
 <style>
 /* Scroll fix: home split-view CSS locks body scroll on desktop — this page must scroll */
@@ -47,6 +52,15 @@ html, body { height: auto !important; overflow-y: auto !important; }
 .ju-faq details:first-of-type { border-top: 1px solid #e0e0e0; }
 .ju-faq summary { font-size: 16px; font-weight: 600; cursor: pointer; }
 .ju-cta { background: #0f62fe; color: #fff; }
+.ju-note {
+  background: #fff;
+  border-left: 3px solid #0f62fe;
+  padding: 14px 16px;
+  max-width: 720px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #525252;
+}
 .ju-cta p { color: #d0e2ff; }
 .ju-cta-text { flex: 1; min-width: 240px; }
 .ju img { max-width: 100%; }
@@ -61,7 +75,6 @@ html, body { height: auto !important; overflow-y: auto !important; }
   .ju-meta { gap: 12px 20px; }
   .ju-meta strong { font-size: 18px; }
   .ju-tile, .ju-perk { padding: 20px; }
-  .modal-dialog { margin: 12px auto; max-width: calc(100% - 24px); }
 }
 @media (max-width: 575px) {
   .ju-actions { flex-direction: column; align-items: stretch; }
@@ -75,6 +88,29 @@ html, body { height: auto !important; overflow-y: auto !important; }
   .ju-h1 { font-size: 32px; }
   .ju-prop img { height: 170px; }
 }
+
+/* Square field corners to match the Carbon auth surfaces (/login, /signup).
+   This page is not inside .cx-auth, so the rule there does not reach it and
+   Bootstrap's .375rem radius would otherwise apply. */
+#main-content .form-control,
+#main-content .form-select,
+#main-content .form-control:focus,
+#main-content .form-control:hover,
+#main-content .form-control:focus,
+#main-content .form-control[readonly],
+#main-content .form-control.is-invalid {
+  border-radius: 0 !important;
+}
+#main-content .form-control:focus {
+  outline: 2px solid var(--cds-focus, #0f62fe);
+  outline-offset: -2px;
+  border-color: #0f62fe;
+}
+#main-content .form-control.is-invalid {
+  border-color: #da1e28;
+}
+#main-content input[type='file'].form-control { padding: 10px 14px; }
+
 @media (prefers-reduced-motion: reduce) {
   .ju * { animation: none !important; transition: none !important; }
 }
@@ -92,16 +128,28 @@ html, body { height: auto !important; overflow-y: auto !important; }
     <p class="ju-lead mt-3">Put your hotel, lodge or apartment in front of millions of travellers searching Tanzania. Listing is free — you keep 90% of every paid stay, settled to M-Pesa, Tigo Pesa or bank.</p>
     <div class="ju-actions mt-4">
       <?php if (!$juLoggedIn): ?>
-        <a href="<?= $this->Url->build('/signup?role=owner') ?>" class="btn-ju btn-ju-primary">List your property — it's free</a>
-        <a href="<?= $this->Url->build('/login') ?>" class="btn-ju btn-ju-outline">Sign in to add a property</a>
+        <a href="<?= $this->Url->build('/signup?role=owner') ?>" class="btn-ju btn-ju-primary">Register as a host</a>
+        <a href="<?= $this->Url->build('/login') ?>" class="btn-ju btn-ju-outline">Sign in</a>
       <?php elseif ($isHost): ?>
         <a href="<?= $this->Url->build('/host/onboarding') ?>" class="btn-ju btn-ju-primary">Add a new property</a>
         <a href="<?= $this->Url->build('/host/dashboard') ?>" class="btn-ju btn-ju-outline">Open host dashboard</a>
       <?php else: ?>
-        <button type="button" class="btn-ju btn-ju-primary" data-bs-toggle="modal" data-bs-target="#becomeHostModal">Become a host — it's free</button>
-        <a href="#how-it-works" class="btn-ju btn-ju-outline">How listing works</a>
+        <a href="<?= $this->Url->build('/signup?role=owner') ?>" class="btn-ju btn-ju-primary">Register as a host</a>
+        <a href="<?= $this->Url->build('/login?redirect=/join-us') ?>" class="btn-ju btn-ju-outline">Sign in</a>
       <?php endif; ?>
+      <a href="#how-it-works" class="btn-ju btn-ju-outline">How listing works</a>
     </div>
+
+    <?php if ($juLoggedIn && !$isHost): ?>
+      <!-- A guest account books and stays. It is deliberately NOT an owner
+           account, and this page must not offer to convert it into one:
+           hosting needs its own account with its own sign-in. -->
+      <div class="ju-note mt-3" role="note">
+        You are signed in with a <strong>guest account</strong>. That account is for booking
+        and staying — it is <strong>not</strong> a host account, so it cannot list a property.
+        To host, register a separate host account, or sign in to the host account you already use.
+      </div>
+    <?php endif; ?>
     <div class="ju-meta mt-4">
       <div><strong>90%</strong>Your share of each booking</div>
       <div><strong>Free</strong>No setup or listing fees</div>
@@ -110,34 +158,133 @@ html, body { height: auto !important; overflow-y: auto !important; }
   </div>
 </header>
 
-<?php if ($juLoggedIn && !$isHost): ?>
-<div class="modal fade" id="becomeHostModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content" style="border-radius:0">
-  <div class="modal-header"><h5 style="font-weight:600">Become a host</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-  <?= $this->Form->create(null, ['url' => '/join-us', 'id' => 'becomeHostForm']) ?>
-  <div class="modal-body d-grid gap-2">
-    <?= $this->Form->hidden('action', ['value' => 'become_host']) ?>
-    <input name="phone_number" class="form-control" style="height:48px" placeholder="M-Pesa phone number (optional)" autocomplete="tel">
-    <input name="business_name" class="form-control" style="height:48px" placeholder="Business or property name (optional)" autocomplete="organization">
-    <div style="font-size:13px;color:#525252">This upgrades your account to <strong>owner</strong> so you can list properties. Free, takes seconds.</div>
+<?php if ($juLoggedIn && $isHost): ?>
+<!-- Owner verification (KYC). Shown only to a signed-in owner, and only while
+     the account is still "Pending Verification". Without this there is no path
+     for a host to submit the identity documents the admin queue reviews, so the
+     account would stay stuck. -->
+<section class="ju-section" id="verify-identity" style="scroll-margin-top:80px">
+  <div class="container" style="max-width:1140px">
+    <div class="ju-label">Verification</div>
+    <h2 class="ju-h2">Verify your identity</h2>
+    <p class="ju-lead mt-2" style="max-width:640px">
+      Required before your first property goes live. Our team reviews documents
+      manually — usually within one business day.
+    </p>
+
+    <form id="kycForm" enctype="multipart/form-data" novalidate style="max-width:860px">
+    <div class="d-grid gap-3 mt-2">
+     <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label" for="kyc_full_name">Full legal name</label>
+        <input class="form-control" id="kyc_full_name" name="full_name" required maxlength="255" autocomplete="name">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label" for="kyc_phone">Mobile money number</label>
+        <input class="form-control" id="kyc_phone" name="phone_number" required maxlength="255" autocomplete="tel" placeholder="0714 000 000">
+      </div>
+     </div>
+
+     <div>
+      <label class="form-label" for="kyc_id_number">National ID number</label>
+      <input class="form-control" id="kyc_id_number" name="id_number" required maxlength="255">
+     </div>
+
+     <div>
+      <label class="form-label" for="kyc_id_doc">Photo of your National ID</label>
+      <input class="form-control" type="file" id="kyc_id_doc" name="id_document" accept="image/png,image/jpeg,image/webp" required>
+      <div class="form-text">JPG, PNG or WebP. Max 10 MB.</div>
+     </div>
+
+     <fieldset style="border:1px solid #e8eaed;border-radius:8px;padding:14px">
+      <legend style="font-size:13px;font-weight:600;padding:0 6px">Business registration <span class="text-muted" style="font-weight:400">(if registered)</span></legend>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label" for="kyc_brn">Registration number</label>
+          <input class="form-control" id="kyc_brn" name="business_registration_number" maxlength="255">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="kyc_bdoc">Business licence photo</label>
+          <input class="form-control" type="file" id="kyc_bdoc" name="business_document" accept="image/png,image/jpeg,image/webp">
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset style="border:1px solid #e8eaed;border-radius:8px;padding:14px">
+      <legend style="font-size:13px;font-weight:600;padding:0 6px">Payout account <span class="text-muted" style="font-weight:400">(optional now, needed to withdraw)</span></legend>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label" for="kyc_bank">Bank name</label>
+          <input class="form-control" id="kyc_bank" name="payout_bank_name" maxlength="255">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="kyc_acct">Account number</label>
+          <input class="form-control" id="kyc_acct" name="payout_account_number" maxlength="255">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="kyc_acctname">Account holder</label>
+          <input class="form-control" id="kyc_acctname" name="payout_account_name" maxlength="255">
+        </div>
+      </div>
+    </fieldset>
+
+    <div id="kycError" class="d-none" style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:10px 12px;border-radius:8px;font-size:13px"></div>
+   </div>
+   <button type="submit" class="btn-ju btn-ju-primary mt-3" id="kycSubmitBtn" style="width:auto;padding:0 28px">Submit for review</button>
+  </form>
   </div>
-  <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary" id="becomeHostBtn">Become a host</button></div>
-  <?= $this->Form->end() ?>
-</div></div></div>
+</section>
 <script>
-// Become-a-host loading state: instant feedback + no double submit (inline, no deps)
+// Owner KYC submission -> POST /join-us/verify (PagesController::submitOwnerVerification)
 (function () {
-  function arm(btn, label) {
-    if (!btn || btn.disabled) return;
-    if (window.FastAPI && FastAPI.btnDots) { FastAPI.btnDots(btn, true); return; }
-    btn.disabled = true; btn.textContent = label;
-  }
-  var f = document.getElementById('becomeHostForm');
-  if (f) f.addEventListener('submit', function () {
-    arm(document.getElementById('becomeHostBtn'), 'Upgrading…');
+  var form   = document.getElementById('kycForm');
+  var btn    = document.getElementById('kycSubmitBtn');
+  var errBox = document.getElementById('kycError');
+  if (!form || !btn) return;
+
+  var fail = function (msg) {
+    if (errBox) { errBox.textContent = msg; errBox.classList.remove('d-none'); }
+    btn.disabled = false;
+    btn.textContent = 'Submit for review';
+  };
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (errBox) { errBox.classList.add('d-none'); errBox.textContent = ''; }
+
+    btn.disabled = true;
+    btn.textContent = 'Uploading documents...';
+
+    fetch('/join-us/verify', {
+      method: 'POST',
+      body: new FormData(form),
+      headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+      credentials: 'same-origin'
+    })
+      .then(function (r) { return r.json().catch(function () { return {}; }); })
+      .then(function (data) {
+        if (data && data.status === 'success') {
+          btn.textContent = 'Submitted';
+          window.location.reload();
+          return;
+        }
+        fail((data && data.message) || 'Submission failed. Please try again.');
+      })
+      .catch(function () { fail('Could not reach the server. Please try again.'); });
   });
-  var cta = document.getElementById('becomeHostCtaForm');
-  if (cta) cta.addEventListener('submit', function () {
-    arm(document.getElementById('becomeHostCtaBtn'), 'Upgrading…');
+})();
+</script>
+<script>
+// KYC submit button loading state: instant feedback + no double submit.
+(function () {
+  var btn = document.getElementById('kycSubmitBtn');
+  if (!btn) return;
+  var form = document.getElementById('kycForm');
+  if (!form) return;
+  form.addEventListener('submit', function () {
+    if (btn.disabled) return;
+    if (window.FastAPI && FastAPI.btnDots) { FastAPI.btnDots(btn, true); return; }
+    btn.disabled = true; btn.textContent = 'Submitting…';
   });
 })();
 </script>
@@ -171,7 +318,7 @@ html, body { height: auto !important; overflow-y: auto !important; }
   <h2 class="ju-h2">From sign-up to first payout in three steps</h2>
   <div class="row g-3 mt-3">
     <div class="col-md-4"><div class="ju-tile"><div class="num">Step 01</div><h3 class="mt-2">Create your host account</h3><p>Register as an owner, or upgrade your guest account with one click. No paperwork to start.</p>
-      <?php if (!$juLoggedIn): ?><a href="<?= $this->Url->build('/signup?role=owner') ?>">Sign up as owner</a><?php elseif (!$isHost): ?><a href="#" data-bs-toggle="modal" data-bs-target="#becomeHostModal">Upgrade my account</a><?php else: ?><strong>Done — you're a host.</strong><?php endif; ?>
+      <?php if (!$juLoggedIn): ?><a href="<?= $this->Url->build('/signup?role=owner') ?>">Register as a host</a><?php elseif (!$isHost): ?><a href="<?= $this->Url->build('/signup?role=owner') ?>">Register a host account</a><?php elseif ($juNeedsVerification): ?><a href="#verify-identity">Submit verification documents</a><?php else: ?><strong>Done — you're a host.</strong><?php endif; ?>
     </div></div>
     <div class="col-md-4"><div class="ju-tile"><div class="num">Step 02</div><h3 class="mt-2">Describe your property and rooms</h3><p>Add photos, amenities, nightly rates and room inventory. Most hosts finish in under 20 minutes.</p><?php if (!$juLoggedIn): ?><a href="<?= $this->Url->build('/signup?role=owner') ?>">Sign up free to start</a><?php else: ?><a href="<?= $this->Url->build('/host/onboarding') ?>">Start a listing</a><?php endif; ?></div></div>
     <div class="col-md-4"><div class="ju-tile"><div class="num">Step 03</div><h3 class="mt-2">Pass review and receive bookings</h3><p>Our team verifies quality and location, usually within 24 hours. Then you go live and payouts begin.</p><?php if (!$juLoggedIn): ?><a href="<?= $this->Url->build('/login') ?>">Sign in to continue</a><?php else: ?><a href="<?= $this->Url->build('/host/dashboard') ?>">Open host dashboard</a><?php endif; ?></div></div>
@@ -199,22 +346,20 @@ html, body { height: auto !important; overflow-y: auto !important; }
   <details open><summary>What does it cost to list?</summary><p style="font-size:14px;color:#525252" class="mt-2">Nothing upfront. Listing, photos and support are free — FastNet retains 10% only when a guest completes a paid stay.</p></details>
   <details><summary>When and how do I get paid?</summary><p style="font-size:14px;color:#525252" class="mt-2">After check-in, the guest's payment settles to your M-Pesa, Tigo Pesa or bank account. Completed and pending balances are visible any time under Host → Earnings.</p></details>
   <details><summary>How long does verification take?</summary><p style="font-size:14px;color:#525252" class="mt-2">Most properties are reviewed within 24 hours. Your listing shows as Pending until approved, then flips to Active automatically.</p></details>
-  <details><summary>I already have a guest account — must I register again?</summary><p style="font-size:14px;color:#525252" class="mt-2">No. Choose “Become a host” and your existing account is upgraded to owner instantly, keeping your bookings and profile.</p></details>
+  <details><summary>I already have a guest account — must I register again?</summary><p style="font-size:14px;color:#525252" class="mt-2">Yes. A guest account is for booking and staying only, and it is never turned into a host account. Register a separate host account with its own email and password, then sign in to it to list your property. Your guest bookings stay on your guest account.</p></details>
 </div></section>
 
 <!-- Final CTA -->
 <section class="ju-section" style="padding-top:0"><div class="container" style="max-width:1140px">
   <div class="ju-cta p-4 p-md-5 d-flex flex-wrap gap-3 align-items-center">
     <div class="ju-cta-text"><h2 style="font-weight:600" class="mb-1">Ready when you are.</h2><p class="mb-0">Join the hosts earning across Tanzania — start your free listing today.</p></div>
-    <?php if (!$juLoggedIn): ?>
-      <div class="d-flex flex-column gap-2 align-items-stretch">
-        <a href="<?= $this->Url->build('/login') ?>" class="btn-ju btn-ju-light">Add a property</a>
-        <a href="<?= $this->Url->build('/signup?role=owner') ?>" style="color:#fff;font-size:13px;text-align:center">New here? Create a free host account</a>
-      </div>
-    <?php elseif ($isHost): ?>
+    <?php if ($isHost): ?>
       <a href="<?= $this->Url->build('/host/onboarding') ?>" class="btn-ju btn-ju-light">Add a property</a>
     <?php else: ?>
-      <?= $this->Form->create(null, ['url' => '/join-us', 'id' => 'becomeHostCtaForm']) ?><?= $this->Form->hidden('action', ['value' => 'become_host']) ?><button class="btn-ju btn-ju-light" id="becomeHostCtaBtn" style="border:none">Become a host</button><?= $this->Form->end() ?>
+      <div class="d-flex flex-column gap-2 align-items-stretch">
+        <a href="<?= $this->Url->build('/signup?role=owner') ?>" class="btn-ju btn-ju-light">Register as a host</a>
+        <a href="<?= $this->Url->build('/login') ?>" style="color:#fff;font-size:13px;text-align:center">Already a host? Sign in</a>
+      </div>
     <?php endif; ?>
   </div>
 </div></section>

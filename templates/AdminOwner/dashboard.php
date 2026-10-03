@@ -2,14 +2,30 @@
 $this->assign('title', 'Dashboard');
 $this->assign('portal_title', 'Overview');
 $gross = (float)($stats['revenue'] ?? 0);
-$fee = (float)($stats['platform_fee'] ?? $gross * 0.10);
-$net = (float)($stats['owner_earnings'] ?? $gross * 0.90);
+$fee = (float)($stats['platform_fee'] ?? 0);
+$net = (float)($stats['owner_earnings'] ?? 0);
 ?>
 <div class="row g-3 mb-4">
   <div class="col-6 col-xl-3"><div class="p-stat"><div class="v"><?= (int)($stats['properties'] ?? 0) ?></div><div class="l">Lodges</div><div class="s"><?= count($owners ?? []) ?> owners on platform</div></div></div>
   <div class="col-6 col-xl-3"><div class="p-stat"><div class="v"><?= (int)($stats['bookings'] ?? 0) ?></div><div class="l">Bookings</div><div class="s">All properties</div></div></div>
-  <div class="col-6 col-xl-3"><div class="p-stat"><div class="v">TSh <?= number_format($gross) ?></div><div class="l">Gross booking value</div><div class="s">Platform 10% · TSh <?= number_format($fee) ?></div></div></div>
-  <div class="col-6 col-xl-3"><div class="p-stat"><div class="v">TSh <?= number_format($net) ?></div><div class="l">Owner earnings</div><div class="s">Net 90% share</div></div></div>
+  <div class="col-6 col-xl-3"><div class="p-stat"><div class="v">TSh <?= number_format($gross) ?></div><div class="l">Gross booking value</div><div class="s">Platform commission · TSh <?= number_format($fee) ?></div></div></div>
+  <div class="col-6 col-xl-3"><div class="p-stat"><div class="v">TSh <?= number_format($net) ?></div><div class="l">Owner earnings</div><div class="s">Owner share</div></div></div>
+</div>
+
+<?php /* Verification queue counts, from GET /admin/verification/summary.
+         Previously the dashboard inferred these by scanning the full property,
+         booking and user collections. */ ?>
+<div class="row g-3 mb-3">
+  <div class="col-6 col-xl-3"><div class="p-stat">
+    <div class="v"><?= (int)($verificationCounts['pending_owners'] ?? 0) ?></div>
+    <div class="l">Owners awaiting review</div>
+    <div class="s"><?= (int)($verificationCounts['approved_owners'] ?? 0) ?> approved</div>
+  </div></div>
+  <div class="col-6 col-xl-3"><div class="p-stat">
+    <div class="v"><?= (int)($verificationCounts['pending_lodges'] ?? 0) ?></div>
+    <div class="l">Lodges awaiting review</div>
+    <div class="s"><?= (int)($verificationCounts['approved_lodges'] ?? 0) ?> approved</div>
+  </div></div>
 </div>
 
 <div class="row g-3">

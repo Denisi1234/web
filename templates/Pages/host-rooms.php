@@ -18,7 +18,7 @@ $this->assign('page_actions', '<a href="' . $this->Url->build('/host/rooms/add')
   <?= $this->Form->end() ?>
 </div>
 <?php else: ?>
-<div class="p-card mb-3"><div class="p-empty">No property yet — <a href="<?= $this->Url->build('/host/listings/add') ?>">create a property first</a>, then add rooms to it.</div></div>
+<div class="p-card mb-3"><div class="p-empty">No property yet — <a href="<?= $this->Url->build('/host/onboarding') ?>">create a property first</a>, then add rooms to it.</div></div>
 <?php endif; ?>
 <div class="p-card mb-3">
   <?= $this->Form->create(null, ['type' => 'get', 'style' => 'display:flex;gap:8px;flex-wrap:wrap;align-items:end']) ?>

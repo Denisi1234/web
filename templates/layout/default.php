@@ -60,8 +60,12 @@
         <meta name="twitter:image" content="https://www.fastnetstays.com/assets/img/og-preview.png" />
 
         <!-- Favicon & Touch Icons for Google Search Snippet Logo -->
-        <link rel="icon" type="image/png" sizes="32x32" href="<?= $this->Url->build('/assets/img/favicon.png'); ?>">
-        <link rel="apple-touch-icon" sizes="180x180" href="<?= $this->Url->build('/assets/img/favicon.png'); ?>">
+        <link rel="icon" type="image/png" sizes="16x16" href="<?= $this->Url->build('/assets/img/favicon-16x16.png'); ?>">
+        <link rel="icon" type="image/png" sizes="32x32" href="<?= $this->Url->build('/assets/img/favicon-32x32.png'); ?>">
+        <link rel="icon" type="image/png" sizes="48x48" href="<?= $this->Url->build('/assets/img/favicon-48x48.png'); ?>">
+        <link rel="shortcut icon" href="<?= $this->Url->build('/favicon.ico'); ?>" sizes="16x16 32x32 48x48">
+        <link rel="apple-touch-icon" sizes="180x180" href="<?= $this->Url->build('/assets/img/apple-touch-icon.png'); ?>">
+        <link rel="manifest" href="<?= $this->Url->build('/manifest.json'); ?>">
         <meta name="theme-color" content="#0f62fe">
         <meta name="format-detection" content="telephone=no" />
 
@@ -95,7 +99,9 @@
               "url": "https://www.fastnetstays.com",
               "logo": {
                 "@type": "ImageObject",
-                "url": "https://www.fastnetstays.com/assets/img/favicon.png"
+                "url": "https://www.fastnetstays.com/favicon-512.png",
+                "width": "512",
+                "height": "512"
               },
               "contactPoint": {
                 "@type": "ContactPoint",
@@ -176,7 +182,6 @@
         $isHomePage = $this->getRequest()->getParam('controller') === 'Pages' && in_array($this->getRequest()->getParam('action'), ['index', 'display'], true);
         $globalCss = [
             '/assets/css/bootstrap.min.css',
-            '/assets/css/animation.css',
         ];
         if (!$isHomePage) {
             $globalCss = array_merge($globalCss, [
@@ -200,8 +205,12 @@
         ?>
 
         <?= $this->Html->css('/assets/css/ui-tokens.css') ?>
+        <!-- Canonical loading system: one set of tokens/motion for every
+             loading state. Loaded after app-loader.css so it wins. -->
+        <?= $this->Html->css('/assets/css/loading.css') ?>
         <?= $this->Html->css('/assets/css/app-loader.css') ?>
         <?= $this->Html->css('/assets/css/fastnet-dots.css') ?>
+        <?= $this->Html->css('/assets/css/shimmer.css') ?>
         <?= $this->fetch('meta') ?>
         <?= $this->element('api_direct') ?>
         <?= $this->fetch('css') ?>
@@ -214,6 +223,9 @@
         <?= $this->Html->css('/assets/css/carbon-journey.css?v=' . filemtime(WWW_ROOT . 'assets/css/carbon-journey.css')) ?>
         <?php endif; ?>
 
+        <!-- Canonical loading controller. Must precede app-loader.js, which
+             delegates its progress bar to it. -->
+        <?= $this->Html->script('/assets/js/loading.js') ?>
         <!-- Universal App Loader Engine -->
         <?= $this->Html->script('/assets/js/app-loader.js') ?>
         <!-- Direct-to-backend forms (Bearer in JS, CakePHP proxy as fallback) -->

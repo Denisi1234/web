@@ -1,0 +1,91 @@
+/*
+ * FastNet Stays — Universal Shimmer & Skeleton System (shimmer.css)
+ * Single source of truth for ALL placeholder / loading skeleton states.
+ * Works alongside loading.css (fn-skeleton) and app-loader.css.
+ *
+ * Usage:
+ *   <div class="fns-shimmer" style="height:120px;border-radius:12px"></div>
+ *   <div class="fns-shimmer fns-shimmer-line"></div>
+ *   <div class="fns-shimmer fns-shimmer-chip"></div>
+ */
+
+/* ── Core shimmer wave ───────────────────────────────────────────────────── */
+@keyframes fns-shimmer-wave {
+    from { background-position: 200% 0; }
+    to   { background-position: -200% 0; }
+}
+
+.fns-shimmer,
+.fastnet-shimmer,
+.gh-shim-block,
+.fn-skeleton,
+.fn-skeleton > .fn-skeleton-line,
+.fn-skeleton-line {
+    background-color: #e8eaed;
+    background-image: linear-gradient(
+        90deg,
+        #e8eaed 0%,
+        #f6f8fa 50%,
+        #e8eaed 100%
+    );
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    border-radius: 8px;
+    animation: fns-shimmer-wave 1.25s linear infinite;
+    will-change: background-position;
+}
+
+/* ── Shape helpers ───────────────────────────────────────────────────────── */
+.fns-shimmer-rounded-xs { border-radius: 4px    !important; }
+.fns-shimmer-rounded-sm { border-radius: 6px    !important; }
+.fns-shimmer-rounded    { border-radius: 10px   !important; }
+.fns-shimmer-rounded-lg { border-radius: 14px   !important; }
+.fns-shimmer-pill       { border-radius: 9999px !important; }
+.fns-shimmer-circle,
+.shimmer-circle         { border-radius: 50%    !important; }
+
+/* ── Standard height presets ─────────────────────────────────────────────── */
+.fns-shimmer-line        { height: 12px; margin-bottom: 8px; }
+.fns-shimmer-line.lg     { height: 18px; }
+.fns-shimmer-line.sm     { height: 8px;  }
+.fns-shimmer-line:last-child { margin-bottom: 0; }
+
+.fns-shimmer-title       { height: 22px; width: 55%; margin-bottom: 10px; }
+.fns-shimmer-chip        { height: 30px; border-radius: 9999px !important; }
+.fns-shimmer-btn         { height: 40px; border-radius: 8px !important; width: 120px; }
+.fns-shimmer-card        { height: 200px; border-radius: 12px !important; }
+.fns-shimmer-img         { height: 160px; border-radius: 10px !important; }
+.fns-shimmer-avatar      { width: 42px; height: 42px; border-radius: 50% !important; flex-shrink: 0; }
+.fns-shimmer-avatar-lg   { width: 56px; height: 56px; border-radius: 50% !important; flex-shrink: 0; }
+
+/* ── Width helpers ───────────────────────────────────────────────────────── */
+.fn-w-20  { width: 20%; }
+.fn-w-30  { width: 30%; }
+.fn-w-40  { width: 40%; }
+.fn-w-50  { width: 50%; }
+.fn-w-60  { width: 60%; }
+.fn-w-70  { width: 70%; }
+.fn-w-80  { width: 80%; }
+.fn-w-90  { width: 90%; }
+.fn-w-100 { width: 100%; }
+
+/* ── Mutual exclusivity helpers ──────────────────────────────────────────── */
+/* Use on a wrapper: .is-shimmer-loading hides real content, shows shimmer */
+.is-shimmer-loading .fns-real-content  { display: none !important; }
+.is-shimmer-loading .fns-shimmer-block { display: block !important; }
+:not(.is-shimmer-loading) .fns-shimmer-block { display: none !important; }
+:not(.is-shimmer-loading) .fns-real-content  { display: block !important; }
+
+/* ── Reduced motion ──────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .fns-shimmer,
+    .fastnet-shimmer,
+    .gh-shim-block,
+    .fn-skeleton,
+    .fn-skeleton > .fn-skeleton-line,
+    .fn-skeleton-line {
+        animation: none;
+        background-image: none;
+        background-color: #ebebeb;
+    }
+}

@@ -7,7 +7,7 @@ $this->assign('title', 'Menu - FastNet Stays');
 <?= $this->Html->css('/assets/css/google-travel-layout.css') ?>
 <?= $this->Html->css('/assets/css/google-travel-home.css') ?>
 <?= $this->element('navbar') ?>
-<main id="main-content" style="background:#f8f9fa;min-height:85vh;" role="main">
+<main id="main-content" style="background:var(--cds-gray-10);min-height:85vh;" role="main">
     <script>
         // Only visible on mobile/tablet viewports; redirect desktop to /my-profile
         if (window.innerWidth > 991) {

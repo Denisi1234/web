@@ -105,15 +105,26 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/host', ['controller' => 'Host', 'action' => 'dashboard']);
         $builder->connect('/host/dashboard', ['controller' => 'Host', 'action' => 'dashboard']);
         $builder->connect('/host/listings', ['controller' => 'Host', 'action' => 'listings']);
-        $builder->connect('/host/listings/add', ['controller' => 'Host', 'action' => 'create']);
+        $builder->redirect('/host/listings/add', '/host/onboarding', ['status' => 301]);
         $builder->connect('/host/bookings', ['controller' => 'Host', 'action' => 'bookings']);
         $builder->connect('/host/calendar/{id}', ['controller' => 'Host', 'action' => 'calendar'], ['pass'=>['id'],'id'=>'\d+']);
         $builder->connect('/host/earnings', ['controller' => 'Host', 'action' => 'earnings']);
+        $builder->connect('/host/earnings/request-payout', ['controller' => 'Host', 'action' => 'requestPayout']);
+        // Owner KYC submission (POST /verification/owner + document uploads)
+        $builder->connect('/join-us/verify', ['controller' => 'Pages', 'action' => 'submitOwnerVerification']);
+        // Preference persistence (GET/POST travel/preferences)
+        // E-receipt generation (POST /receipts/generate)
+        $builder->connect('/booking-receipt', ['controller' => 'Bookings', 'action' => 'downloadReceipt']);
+        // Release the checkout room hold when the guest abandons
+        $builder->connect('/booking-release-lock', ['controller' => 'Bookings', 'action' => 'releaseRoomLock']);
+        $builder->connect('/travel/preferences', ['controller' => 'Account', 'action' => 'travelPreferences']);
+        $builder->connect('/notifications/preferences', ['controller' => 'Account', 'action' => 'notificationPreferences']);
         $builder->connect('/host/rooms', ['controller' => 'Host', 'action' => 'rooms']);
         $builder->connect('/host/rooms/add', ['controller' => 'Host', 'action' => 'addRoom']);
         $builder->connect('/host/rooms/{id}', ['controller' => 'Host', 'action' => 'editRoom'], ['pass'=>['id'],'id'=>'\d+']);
         $builder->connect('/host/lodge/{id}/edit', ['controller' => 'Host', 'action' => 'editLodge'], ['pass'=>['id'],'id'=>'\d+']);
         $builder->connect('/host/onboarding', ['controller' => 'Host', 'action' => 'onboarding']);
+        $builder->connect('/host/upload', ['controller' => 'Host', 'action' => 'upload'], ['_method' => 'POST']);
         $builder->connect('/host/profile', ['controller' => 'Host', 'action' => 'profile']);
         $builder->connect('/host/cache-bust', ['controller' => 'Host', 'action' => 'cacheBust']);
         $builder->connect('/owner', ['controller' => 'Host', 'action' => 'dashboard']);

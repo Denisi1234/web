@@ -1,6 +1,12 @@
 /**
  * FastNet Stays — Universal App Loading & Background Task Engine (app-loader.js)
- * Clean, lightweight, zero-dependency controller for page transitions and async operations.
+ *
+ * The top progress bar now delegates to loading.js, which is the single
+ * canonical loading controller. What remains here is the navigation overlay,
+ * the confirm dialog and the background-task pills.
+ * — Top bar: delegated to FastnetLoading (guaranteed teardown + watchdog)
+ * — Nav loader: shown only after 300ms delay (instant clicks never flash)
+ * — Confirm modal: sleek replacement for browser window.confirm()
  */
 (function (window, document) {
     'use strict';
@@ -13,38 +19,143 @@
     let isLoaderVisible = false;
     const activeBgTasks = new Map();
 
+    /* Fallback bar, used only if loading.js failed to load. Still clears its
+     * interval in done() and self-limits, so it cannot strand the UI. */
+    function legacyBarStart() {
+        const el = getElements().topBar;
+        if (!el) return;
+        if (currentProgress > 0) {
+            el.style.transition = 'none';
+            el.style.width = '0%';
+            currentProgress = 0;
+        }
+        requestAnimationFrame(() => {
+            el.style.transition = 'width 0.18s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease';
+            currentProgress = 12;
+            el.style.width = currentProgress + '%';
+            el.classList.add('active');
+        });
+        if (progressTimer) clearInterval(progressTimer);
+        progressTimer = setInterval(() => {
+            if (currentProgress < 82) {
+                const increment = Math.max(1.5, (82 - currentProgress) * 0.12 + Math.random() * 3);
+                currentProgress = Math.min(82, currentProgress + increment);
+                if (el) el.style.width = currentProgress + '%';
+            }
+        }, 180);
+        // Safety net: never leave the interval running past its budget.
+        setTimeout(legacyBarDone, 20000);
+    }
+
+    function legacyBarDone() {
+        const el = getElements().topBar;
+        if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+        if (!el) return;
+        el.style.transition = 'width 0.12s ease, opacity 0.25s ease 0.15s';
+        el.style.width = '100%';
+        setTimeout(() => {
+            el.classList.remove('active');
+            setTimeout(() => {
+                el.style.transition = 'none';
+                el.style.width = '0%';
+                currentProgress = 0;
+            }, 280);
+        }, 150);
+    }
+
     // DOM Elements Cache
     function getElements() {
         return {
-            topBar: document.getElementById('fastnet-top-progress'),
-            modal: document.getElementById('fastnet-app-loader'),
-            modalTitle: document.getElementById('fastnet-loader-title'),
-            modalSub: document.getElementById('fastnet-loader-subtext'),
+            topBar:      document.getElementById('fastnet-top-progress'),
+            modal:       document.getElementById('fastnet-app-loader'),
+            modalTitle:  document.getElementById('fastnet-loader-title'),
+            modalSub:    document.getElementById('fastnet-loader-subtext'),
             bgContainer: document.getElementById('fastnet-bg-loader')
         };
     }
 
+    /* ── Professional Confirm Modal ─────────────────────────────────────────
+     * Replaces browser window.confirm() with a sleek, branded modal.
+     * Returns a Promise<boolean> — resolves true (OK) or false (Cancel).
+     */
+    function fnsConfirm(msg) {
+        return new Promise(function (resolve) {
+            // Build or reuse overlay
+            var overlay = document.getElementById('fns-confirm-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'fns-confirm-overlay';
+                overlay.setAttribute('role', 'dialog');
+                overlay.setAttribute('aria-modal', 'true');
+                overlay.setAttribute('aria-labelledby', 'fns-confirm-title');
+                overlay.innerHTML =
+                    '<div class="fns-confirm-card">' +
+                      '<div class="fns-confirm-icon" aria-hidden="true">⚠</div>' +
+                      '<p class="fns-confirm-title" id="fns-confirm-title">Are you sure?</p>' +
+                      '<p class="fns-confirm-msg" id="fns-confirm-msg"></p>' +
+                      '<div class="fns-confirm-actions">' +
+                        '<button class="fns-confirm-cancel" id="fns-confirm-cancel" type="button">Cancel</button>' +
+                        '<button class="fns-confirm-ok" id="fns-confirm-ok" type="button">Confirm</button>' +
+                      '</div>' +
+                    '</div>';
+                document.body.appendChild(overlay);
+            }
+
+            var msgEl     = overlay.querySelector('#fns-confirm-msg');
+            var okBtn     = overlay.querySelector('#fns-confirm-ok');
+            var cancelBtn = overlay.querySelector('#fns-confirm-cancel');
+
+            if (msgEl) msgEl.textContent = msg || 'This action cannot be undone.';
+
+            function close(result) {
+                overlay.classList.remove('visible');
+                document.removeEventListener('keydown', keyHandler, true);
+                // Wait for CSS fade-out, then hide completely
+                setTimeout(function () {
+                    overlay.style.display = 'none';
+                    resolve(result);
+                }, 200);
+            }
+            function keyHandler(e) {
+                if (e.key === 'Escape') { e.preventDefault(); close(false); }
+                if (e.key === 'Enter')  { e.preventDefault(); close(true); }
+            }
+
+            if (okBtn)     okBtn.onclick     = function () { close(true);  };
+            if (cancelBtn) cancelBtn.onclick = function () { close(false); };
+            overlay.onclick = function (e) { if (e.target === overlay) close(false); };
+            document.addEventListener('keydown', keyHandler, true);
+
+            // Show — set display:flex first, then rAF triggers CSS transition
+            overlay.style.display = 'flex';
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    overlay.classList.add('visible');
+                    setTimeout(function () { try { cancelBtn.focus(); } catch (e2) {} }, 80);
+                });
+            });
+        });
+    }
+    window.fnsConfirm = fnsConfirm;
+
     const FastnetLoader = {
         /**
-         * Top-Bar Progress Controller (YouTube / Turbo style)
+         * Top-Bar Progress Controller.
+         *
+         * Delegates to FastnetLoading.bar, which is the single canonical
+         * implementation. The previous local version started a 180ms interval
+         * that was only ever cleared by bar.done(), and bar.done() was in turn
+         * only reached on `window load` — so any form submit that failed left
+         * the bar pinned with the interval still running.
          */
         bar: {
             start: function () {
-                const el = getElements().topBar;
-                if (!el) return;
-                currentProgress = 10;
-                el.style.width = currentProgress + '%';
-                el.classList.add('active');
-
-                if (progressTimer) clearInterval(progressTimer);
-                progressTimer = setInterval(() => {
-                    if (currentProgress < 85) {
-                        currentProgress += Math.random() * 8 + 2;
-                        if (el) el.style.width = Math.min(85, currentProgress) + '%';
-                    }
-                }, 200);
+                return window.FastnetLoading
+                    ? window.FastnetLoading.bar.start()
+                    : legacyBarStart();
             },
             set: function (percent) {
+                if (window.FastnetLoading) return window.FastnetLoading.bar.set(percent);
                 const el = getElements().topBar;
                 if (!el) return;
                 currentProgress = Math.max(0, Math.min(100, percent));
@@ -55,43 +166,35 @@
                 this.set(currentProgress + (amount || 10));
             },
             done: function () {
-                const el = getElements().topBar;
-                if (progressTimer) {
-                    clearInterval(progressTimer);
-                    progressTimer = null;
-                }
-                if (!el) return;
-                el.style.width = '100%';
-                setTimeout(() => {
-                    el.classList.remove('active');
-                    setTimeout(() => {
-                        el.style.width = '0%';
-                        currentProgress = 0;
-                    }, 300);
-                }, 200);
+                return window.FastnetLoading ? window.FastnetLoading.bar.done() : legacyBarDone();
+            },
+            isActive: function () {
+                return window.FastnetLoading
+                    ? window.FastnetLoading.bar.isActive()
+                    : false;
             }
         },
 
         /**
-         * Full-Screen App Loading Modal
-         * @param {Object|string} options - { title, message/subtext, lockScroll } or title string
+         * Full-Screen App Loading Modal (heavy ops only)
+         * @param {Object|string} options - { title, subtext, lockScroll } or title string
          */
         show: function (options) {
             const els = getElements();
             if (!els.modal) return;
 
-            let title = 'Loading FastNet Stays...';
+            let title   = 'Loading...';
             let subtext = 'Please wait a moment';
 
             if (typeof options === 'string') {
                 title = options;
             } else if (typeof options === 'object' && options !== null) {
-                if (options.title || options.message) title = options.title || options.message;
+                if (options.title   || options.message)  title   = options.title   || options.message;
                 if (options.subtext || options.subtitle) subtext = options.subtext || options.subtitle;
             }
 
             if (els.modalTitle) els.modalTitle.textContent = title;
-            if (els.modalSub) els.modalSub.textContent = subtext;
+            if (els.modalSub)   els.modalSub.textContent   = subtext;
 
             els.modal.classList.add('visible');
             els.modal.setAttribute('aria-hidden', 'false');
@@ -108,8 +211,8 @@
          */
         update: function (title, subtext) {
             const els = getElements();
-            if (title && els.modalTitle) els.modalTitle.textContent = title;
-            if (subtext && els.modalSub) els.modalSub.textContent = subtext;
+            if (title   && els.modalTitle) els.modalTitle.textContent = title;
+            if (subtext && els.modalSub)   els.modalSub.textContent   = subtext;
         },
 
         /**
@@ -134,20 +237,19 @@
          * @returns {string} Task ID
          */
         bg: function (task) {
-            let id = 'bg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
-            let text = 'Processing in background...';
+            let id   = 'bg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+            let text = 'Processing...';
 
             if (typeof task === 'string') {
                 text = task;
             } else if (typeof task === 'object' && task !== null) {
-                if (task.id) id = task.id;
+                if (task.id)               id   = task.id;
                 if (task.text || task.message) text = task.text || task.message;
             }
 
             const els = getElements();
             if (!els.bgContainer) return id;
 
-            // Update existing or create new
             let pill = document.getElementById('fastnet-pill-' + id);
             if (!pill) {
                 pill = document.createElement('div');
@@ -160,11 +262,7 @@
             const textEl = pill.querySelector('.fastnet-bg-text');
             if (textEl) textEl.textContent = text;
 
-            // Trigger animation in next frame
-            requestAnimationFrame(() => {
-                pill.classList.add('active');
-            });
-
+            requestAnimationFrame(() => { pill.classList.add('active'); });
             activeBgTasks.set(id, pill);
             return id;
         },
@@ -175,25 +273,23 @@
          */
         bgDone: function (id) {
             if (!id && activeBgTasks.size > 0) {
-                // Done all if no id specified
                 activeBgTasks.forEach((_, taskId) => this.bgDone(taskId));
                 return;
             }
-
             const pill = activeBgTasks.get(id) || document.getElementById('fastnet-pill-' + id);
             if (pill) {
                 pill.classList.remove('active');
                 setTimeout(() => {
                     if (pill.parentNode) pill.parentNode.removeChild(pill);
                     activeBgTasks.delete(id);
-                }, 300);
+                }, 280);
             }
         },
 
         /**
-         * Helper to apply loading state to any button element
-         * @param {HTMLElement|string} btn - Button element or selector
-         * @param {boolean} isLoading - true to show spinner, false to restore
+         * Apply loading state to any button element
+         * @param {HTMLElement|string} btn
+         * @param {boolean} isLoading
          */
         button: function (btn, isLoading) {
             const el = typeof btn === 'string' ? document.querySelector(btn) : btn;
@@ -210,12 +306,12 @@
 
     // Global Window Bindings & Aliases
     window.FastnetLoader = FastnetLoader;
-    window.showAppLoading = function (msg, sub) { FastnetLoader.show({ title: msg, subtext: sub }); };
-    window.hideAppLoading = function () { FastnetLoader.hide(); };
-    window.startBgLoading = function (msg) { return FastnetLoader.bg(msg); };
-    window.stopBgLoading = function (id) { FastnetLoader.bgDone(id); };
-    window.showNavLoading = function () { if (typeof navShow === 'function') navShow(); };
-    window.hideNavLoading = function () { if (typeof navHide === 'function') navHide(); };
+    window.showAppLoading  = function (msg, sub) { FastnetLoader.show({ title: msg, subtext: sub }); };
+    window.hideAppLoading  = function ()          { FastnetLoader.hide(); };
+    window.startBgLoading  = function (msg)       { return FastnetLoader.bg(msg); };
+    window.stopBgLoading   = function (id)        { FastnetLoader.bgDone(id); };
+    window.showNavLoading  = function ()          { if (typeof navShow === 'function') navShow(); };
+    window.hideNavLoading  = function ()          { if (typeof navHide === 'function') navHide(); };
 
     // Initial page load progress lifecycle
     FastnetLoader.bar.start();
@@ -233,11 +329,13 @@
         }
     });
 
-    // Auto-progress on navigation links & form submissions
-    // Single centered loader: shown only when the next paint is slow
-    // (>300ms) so instant swaps never flash. AJAX-managed zones
-    // (home search, filter chips) keep their own shimmer — never covered.
+    /* ── Navigation Loading Indicator ──────────────────────────────────────
+     * Shown only when next paint takes > 300ms.
+     * Instant link clicks (fast server) never show any overlay.
+     * AJAX zones (search, filter chips) excluded via managedZone().
+     */
     var navTimer = null;
+
     function managedZone(el) {
         if (!el || !el.closest) return false;
         return !!el.closest('#gh_search_form, #fnsFiltersModal, #fns_mobile_sheet, [data-no-loader]');
@@ -255,36 +353,64 @@
     }
     function navSchedule() {
         if (navTimer) return;
-        navTimer = setTimeout(navShow, 300);
+        navTimer = setTimeout(navShow, 300); // Only shows if page takes > 300ms
     }
+
+    // Hide on page restore (back/forward cache)
     window.addEventListener('pageshow', navHide);
+
+    // Intercept internal navigation links
     document.addEventListener('click', function (e) {
-        if (e.defaultPrevented || (e.button !== undefined && e.button !== 0) || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        if (e.defaultPrevented ||
+            (e.button !== undefined && e.button !== 0) ||
+            e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+
         var link = e.target.closest ? e.target.closest('a') : null;
         if (!link || managedZone(link)) return;
-        const href = link.getAttribute('href');
+
+        const href   = link.getAttribute('href');
         const target = link.getAttribute('target');
 
-        // Ignore hash anchors, javascript:void, new tabs, downloads, external protocols
-        if (!href || href.startsWith('#') || href.startsWith('javascript:') || target === '_blank' || link.hasAttribute('download')) {
-            return;
-        }
+        // Ignore: hash anchors, javascript:, new tabs, downloads, external protocols
+        if (!href ||
+            href.startsWith('#') ||
+            href.startsWith('javascript:') ||
+            target === '_blank' ||
+            link.hasAttribute('download')) return;
 
-        // Internal navigation detected -> start top progress bar
         if (href.startsWith('/') || href.startsWith(window.location.origin)) {
             FastnetLoader.bar.start();
             navSchedule();
         }
     });
 
-    // Auto-progress on form submit
+    // Auto-progress on form submit (non-AJAX managed zones)
     document.addEventListener('submit', function (e) {
         const form = e.target;
-        if (form && !form.hasAttribute('data-no-loader') && !managedZone(form)) {
-            FastnetLoader.bar.start();
-            navSchedule();
-        } else if (form && !form.hasAttribute('data-no-loader')) {
-            FastnetLoader.bar.start();
+        if (!form) return;
+        if (form.hasAttribute('data-no-loader')) return;
+
+        // A capture-phase handler may already have taken over the submit; in
+        // that case it owns the loading state and we must not double up.
+        var alreadyHandled = e.defaultPrevented;
+
+        FastnetLoader.bar.start();
+        if (!managedZone(form)) navSchedule();
+
+        // Safety net. bar.done() is otherwise only reached on `window load`,
+        // so an AJAX submit that failed (validation, 4xx) left the bar pinned
+        // at 82% with its interval still running.
+        //
+        // The delay is long enough to cover handlers that preventDefault and
+        // then navigate on success (login redirects at ~400ms) - by then the
+        // document is unloading and this release is a harmless no-op.
+        if (!alreadyHandled) {
+            setTimeout(function () {
+                if (e.defaultPrevented) {
+                    FastnetLoader.bar.done();
+                    navHide();
+                }
+            }, 800);
         }
     });
 

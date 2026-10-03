@@ -10,7 +10,7 @@
 .agoda-price-row, .agoda-price-total, .agoda-included,
 .agoda-field, .agoda-input, .agoda-terms, .agoda-checkbox,
 .agoda-email-note, .agoda-flexi, .agoda-cancel-card,
-.agoda-breadcrumb, .agoda-side-title, .agoda-side-sub,
+.agoda-side-title, .agoda-side-sub,
 .agoda-rating, .agoda-green, .agoda-secure,
 .trivago-card-title, .trivago-card-subtitle,
 #payment-status, #payment-status-text {
@@ -63,7 +63,7 @@ input[type="checkbox"][accent-color], input[type="radio"] {
 /* ── 6. Price card: radius lock 8px, honest fee rows inherit ── */
 .agoda-card, .agoda-side-card { border-radius: 8px !important; border-color: #e0e0e0 !important; }
 
-/* ── 7. Hotel detail: Carbon type, focus, grays (Plex inherited; icons excluded) ── */.agoda-breadcrumb, .agoda-tabs-wrap, .agoda-detail-grid,
+/* ── 7. Hotel detail: Carbon type, focus, grays (Plex inherited; icons excluded) ── */.agoda-tabs-wrap, .agoda-detail-grid,
 .agoda-gallery, .agoda-mobile-bar, .agoda-review-scroll {
   font-family: 'IBM Plex Sans','Inter','Google Sans',Roboto,'Helvetica Neue',Arial,sans-serif !important;
 }

@@ -109,4 +109,22 @@ class AppController extends Controller
             $this->set(compact('userProfile', 'isLoggedIn'));
         }
     }
+
+    /**
+     * Professional refusal for portal access control.
+     *
+     * CakePHP renders every 4xx with error400.php, so throwing ForbiddenException
+     * produces the bare "was not found on this server" page with no guidance.
+     * This renders the branded refusal instead, with HTTP 403 and the same
+     * guest/host vocabulary as /join-us. Callers pass the attempted path so the
+     * page can offer the right next step; the message seeds the heading hint.
+     */
+    protected function refusePortalAccess(string $attemptedPath, string $message): \Cake\Http\Response
+    {
+        $this->set('message', $message);
+        $this->set('url', $attemptedPath);
+        $this->viewBuilder()->setTemplatePath('Error');
+
+        return $this->render('portal403')->withStatus(403);
+    }
 }

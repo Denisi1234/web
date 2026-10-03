@@ -9,7 +9,7 @@ $this->assign('page_actions', '<button class="p-btn" data-bs-toggle="modal" data
   <div class="modal-body" style="display:grid;gap:8px">
     <?= $this->Form->hidden('action', ['value' => 'add']) ?>
     <input name="name" placeholder="Name *" class="form-control" style="min-height:40px" required>
-    <select name="role" class="form-select" style="min-height:40px"><option>Manager</option><option>Receptionist</option><option>Cleaner</option><option>Security</option><option>Driver</option></select>
+    <select name="role" class="form-select" style="min-height:40px"><option>Manager</option><option>Receptionist</option><option>Housekeeper</option><option>Maintenance</option></select>
     <input name="phone" placeholder="Phone *" class="form-control" style="min-height:40px" required>
   </div>
   <div class="modal-footer"><button type="button" class="p-btn ghost" data-bs-dismiss="modal">Cancel</button><button class="p-btn">Save</button></div>
@@ -52,7 +52,7 @@ $this->assign('page_actions', '<button class="p-btn" data-bs-toggle="modal" data
                 <?= $this->Form->hidden('action', ['value' => 'update']) ?><?= $this->Form->hidden('staff_id', ['value' => $sid]) ?>
                 <input name="name" value="<?= h($s['name'] ?? '') ?>" class="form-control" style="min-height:40px" required>
                 <select name="role" class="form-select" style="min-height:40px">
-                  <?php foreach (['Manager', 'Receptionist', 'Cleaner', 'Security', 'Driver'] as $opt): ?><option <?= $role === $opt ? 'selected' : '' ?>><?= $opt ?></option><?php endforeach; ?>
+                  <?php foreach (['Manager', 'Receptionist', 'Housekeeper', 'Maintenance'] as $opt): ?><option <?= $role === $opt ? 'selected' : '' ?>><?= $opt ?></option><?php endforeach; ?>
                 </select>
                 <input name="phone" value="<?= h($s['phone'] ?? '') ?>" class="form-control" style="min-height:40px" required>
               </div>

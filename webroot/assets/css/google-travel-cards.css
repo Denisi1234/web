@@ -49,9 +49,8 @@
 .gh-price-sub{font-size:11px;color:#5f6368;font-weight:400;font-family:Roboto,sans-serif;line-height:1}
 /* any-device shimmer — lightweight, rAF-friendly */
 .gh-shimmer{background:#fff;border:1px solid #e8eaed;border-radius:14px;margin-bottom:16px;display:flex;overflow:hidden;box-shadow:0 2px 8px rgba(60,64,67,.12),0 8px 24px rgba(60,64,67,.10);contain:content;content-visibility:auto}
-@keyframes ghShim{0%{background-position:-800px 0}100%{background-position:800px 0}}
-.gh-shim-block{background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:800px 100%;animation:ghShim 1.4s infinite linear;border-radius:4px;will-change:background-position}
-@media (prefers-reduced-motion:reduce){.gh-shim-block{animation:none;background:#f0f0f0}}
+/* Delegate to the canonical sweep in loading.css (single definition site). */
+.gh-shim-block{border-radius:4px}
 @media (max-width:767px){
   .gh-shimmer{flex-direction:column;border-radius:12px}
   .gh-shimmer > div:first-child{flex:0 0 168px !important;width:100% !important;height:168px !important;min-height:168px !important}

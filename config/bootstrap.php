@@ -64,19 +64,30 @@ require CAKE . 'functions.php';
  * If you use .env files, be careful to not commit them to source control to avoid
  * security risks. See https://github.com/josegonzalez/php-dotenv#general-security-information
  * for more information for recommended practices.
+ *
+ * The Loader's putenv/toEnv/toServer default to $overwrite = false, but on an
+ * already-defined key they raise a LogicException unless skipExisting() is set.
+ * skipExisting() makes them silently keep whatever the platform provided, which
+ * is what we want: in Docker the platform env (BACKEND_API_URL, CACHE_URL,
+ * SESSION_HANDLER...) is authoritative and this file is a local dev convenience.
+ * Passing overwrite=true here used to clobber the real env, forcing
+ * BACKEND_API_URL back to the 127.0.0.1:8000 dev default so that every backend
+ * call failed, was retried after a 100ms sleep, and pages rendered empty.
  */
 if (!env('APP_NAME') && file_exists(CONFIG . '.env')) {
     $dotenv = new \josegonzalez\Dotenv\Loader([CONFIG . '.env']);
     $dotenv->parse()
-        ->putenv(true)
-        ->toEnv(true)
-        ->toServer(true);
+        ->skipExisting()
+        ->putenv()
+        ->toEnv()
+        ->toServer();
 } elseif (!env('APP_NAME') && file_exists(ROOT . DS . '.env')) {
     $dotenv = new \josegonzalez\Dotenv\Loader([ROOT . DS . '.env']);
     $dotenv->parse()
-        ->putenv(true)
-        ->toEnv(true)
-        ->toServer(true);
+        ->skipExisting()
+        ->putenv()
+        ->toEnv()
+        ->toServer();
 }
 
 /*

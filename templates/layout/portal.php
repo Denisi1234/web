@@ -13,9 +13,9 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"></noscript>
   <style>
-    /* Instant-nav progress bar (Carbon blue-60) + swap transition */
-    #pBar{position:fixed;top:0;left:0;height:3px;width:0;background:#0f62fe;z-index:2000;transition:width .25s ease,opacity .3s ease;opacity:0}
-    #pBar.on{opacity:1}
+    /* Portal PJAX content swap. The progress bar itself is styled by
+       loading.css (.fn-progress) - #pBar and its green/blue gradient were
+       removed when the portal moved onto the shared indicator. */
     #main-content{transition:opacity .18s ease}
     #main-content.pjax-swap{animation:pFade .15s ease}
     /* Professional shift state: content softly dims while the next page
@@ -29,17 +29,36 @@
     /* Button micro-dots loader lives in fastnet-dots.css (single source). */
     .p-btn[disabled]{opacity:.8;cursor:wait}
     @media (prefers-reduced-motion:reduce){
-      #pBar{transition:none}#main-content,#main-content.pjax-swap{animation:none;transition:none}.p-side a{transition:none}.p-side a:active{transform:none}
+      #main-content,#main-content.pjax-swap{animation:none;transition:none}.p-side a{transition:none}.p-side a:active{transform:none}
     }
   </style>
   <?= $this->Html->css(['/assets/css/bootstrap.min.css', '/assets/css/fontawesome.css', '/assets/css/portal.css']) ?>
+  <?= $this->Html->css('/assets/css/loading.css') ?>
+  <?= $this->Html->css('/assets/css/app-loader.css') ?>
   <?= $this->Html->css('/assets/css/fastnet-dots.css') ?>
+  <?= $this->Html->css('/assets/css/shimmer.css') ?>
   <?= $this->element('api_direct') ?>
   <?= $this->fetch('meta') ?>
   <?= $this->fetch('css') ?>
 </head>
 <body class="portal">
-<div id="pBar" aria-hidden="true"></div>
+<!-- Canonical progress element. loading.js adopts this node and adds the
+     fn-progress class, so the portal and the public site share one indicator.
+     The inline display:none that used to sit here would have hidden the
+     adopted bar entirely - visibility is driven by opacity in loading.css. -->
+<div id="fastnet-top-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Loading"></div>
+<div id="fastnet-bg-loader" role="status" aria-live="polite" aria-atomic="true"></div>
+<div id="fns-confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="fns-confirm-title" style="display:none">
+    <div class="fns-confirm-card">
+        <div class="fns-confirm-icon" aria-hidden="true">⚠</div>
+        <p class="fns-confirm-title" id="fns-confirm-title">Are you sure?</p>
+        <p class="fns-confirm-msg"   id="fns-confirm-msg">This action cannot be undone.</p>
+        <div class="fns-confirm-actions">
+            <button class="fns-confirm-cancel" id="fns-confirm-cancel" type="button">Cancel</button>
+            <button class="fns-confirm-ok"     id="fns-confirm-ok"     type="button">Confirm</button>
+        </div>
+    </div>
+</div>
 <div class="p-shell" id="pShell">
   <?= $this->element('portal_sidebar', $this->viewVars) ?>
   <div class="p-scrim" id="pScrim"></div>
@@ -50,6 +69,8 @@
   </div>
 </div>
 <?= $this->Html->script(['/assets/js/popper.min.js', '/assets/js/bootstrap.min.js'], ['defer' => true]) ?>
+<?= $this->Html->script('/assets/js/app-loader.js') ?>
+<?= $this->Html->script('/assets/js/loading.js') ?>
 <?= $this->Html->script('/assets/js/fastnet-api.js') ?>
 <script>
 (function () {
@@ -69,14 +90,16 @@
      flash and titles swap. Same-origin GET links only; forms do full POST.
      In-memory cache 60s. Falls back to full load on any error.
      No loading screens: the current page stays put until the swap. ── */
-  var bar = document.getElementById('pBar');
   var cache = new Map();
   var TTL = 60000;
   var MAX_STALE = 180000; // never serve memory older than 3 min: refetch instead
   var navSeq = 0;
   var dead = false; // set on first redirected (logged-out) response: no more warming
-  function barStart() { if (!bar) return; bar.classList.add('on'); bar.style.width = '15%'; requestAnimationFrame(function(){ bar.style.width = '65%'; }); }
-  function barDone() { navBusy = false; pendStop(); if (!bar) return; bar.style.width = '100%'; setTimeout(function(){ bar.classList.remove('on'); bar.style.width = '0'; }, 250); }
+  // Delegates to the canonical bar. This was a sixth loading implementation
+  // with its own timings and a green/blue gradient that clashed with the rest
+  // of the product. portal.php now loads loading.js and shares one indicator.
+  function barStart() { FastnetLoading.bar.start(); }
+  function barDone() { navBusy = false; pendStop(); FastnetLoading.bar.done(); }
   // Pending shift indicator: dim the outgoing content only when loading
   // takes perceptible time — instant swaps stay flicker-free.
   var pendT = null;

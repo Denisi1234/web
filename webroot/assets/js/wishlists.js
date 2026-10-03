@@ -101,17 +101,32 @@ function saveStoredLists(lists) {
 
 async function renderFavouritesGrid() {
     const loader = document.getElementById('favLoading');
-    if (loader) loader.style.display = 'flex';
-    
-    let lists = await fetchRealLists();
-    if (!Array.isArray(lists) || lists.length === 0) {
-        lists = getStoredLists();
-    }
-    if (loader) loader.style.display = 'none';
 
+    // try/finally: previously the loader was hidden on the happy path only, so
+    // any throw between showing and hiding left "Loading your favourites…"
+    // on screen permanently.
+    try {
+        if (loader) loader.style.display = 'flex';
+
+        let lists = await fetchRealLists();
+        if (!Array.isArray(lists) || lists.length === 0) {
+            lists = getStoredLists();
+        }
+
+        renderFavouritesContent(lists);
+    } catch (err) {
+        console.warn('[wishlists] render failed', err);
+        if (loader) loader.style.display = 'none';
+    }
+}
+
+function renderFavouritesContent(lists) {
     const container = document.getElementById('favouriteListsContainer');
     const counter = document.getElementById('listsCounter');
-    
+    const loader = document.getElementById('favLoading');
+
+    if (loader) loader.style.display = 'none';
+
     if (counter) {
         counter.innerText = `${lists.length}/20 lists`;
     }

@@ -145,6 +145,9 @@ function unsubscribeAll() {
     showNotifToast('You have unsubscribed from all emails');
 }
 
+/* Persisted server-side via GET/POST /api/notifications/preferences.
+   localStorage is kept only as an optimistic cache so the toggles render
+   instantly; it is no longer the system of record. */
 function saveNotifPreferences() {
     const state = {
         all: document.getElementById('toggleAllPromos').checked,
@@ -154,24 +157,75 @@ function saveNotifPreferences() {
         reminders: document.getElementById('toggleReminders').checked,
         alerts: document.getElementById('toggleAlerts').checked,
     };
-    try {
-        localStorage.setItem('user_notification_prefs', JSON.stringify(state));
-    } catch(e) {}
+    try { localStorage.setItem('user_notification_prefs', JSON.stringify(state)); } catch(e) {}
+
+    var body = new URLSearchParams();
+    body.set('unsubscribe_all', state.all ? 'false' : 'true');
+    body.set('travel_tips_deals', state.tips ? 'true' : 'false');
+    body.set('price_alerts', state.alerts ? 'true' : 'false');
+    body.set('feedback_research', state.deals ? 'true' : 'false');
+    body.set('booking_updates', state.reminders ? 'true' : 'false');
+    body.set('account_legal_notices', state.drops ? 'true' : 'false');
+
+    fetch('/notifications/preferences', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: body.toString(),
+        credentials: 'same-origin'
+    })
+    .then(function (r) { return r.json().catch(function () { return {}; }); })
+    .then(function (data) {
+        if (data && data.status === 'success' && data.preferences) {
+            try { localStorage.setItem('user_notification_prefs_saved', '1'); } catch(e) {}
+            applyNotifPreferences(data.preferences);
+        } else {
+            showNotifToast((data && data.message) || 'Could not save preferences');
+        }
+    })
+    .catch(function () { showNotifToast('Could not reach the server — change kept locally only'); });
 }
 
+function applyNotifPreferences(p) {
+    if (!p) return;
+    var set = function (id, val) { var el = document.getElementById(id); if (el && val !== undefined && val !== null) el.checked = !!val; };
+    set('toggleAllPromos', !p.unsubscribe_all);
+    set('toggleDeals', p.feedback_research);
+    set('toggleTips', p.travel_tips_deals);
+    set('toggleAlerts', p.price_alerts);
+    set('toggleReminders', p.booking_updates);
+    set('toggleDrops', p.account_legal_notices);
+}
+
+/* Server is the system of record; localStorage only paints before it answers. */
 function loadNotifPreferences() {
-    try {
-        const stored = localStorage.getItem('user_notification_prefs');
-        if (stored) {
-            const state = JSON.parse(stored);
-            if (state.all !== undefined) document.getElementById('toggleAllPromos').checked = state.all;
-            if (state.deals !== undefined) document.getElementById('toggleDeals').checked = state.deals;
-            if (state.tips !== undefined) document.getElementById('toggleTips').checked = state.tips;
-            if (state.drops !== undefined) document.getElementById('toggleDrops').checked = state.drops;
-            if (state.reminders !== undefined) document.getElementById('toggleReminders').checked = state.reminders;
-            if (state.alerts !== undefined) document.getElementById('toggleAlerts').checked = state.alerts;
+    fetch('/notifications/preferences', {
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        credentials: 'same-origin'
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+        if (data && data.status === 'success' && data.preferences) {
+            applyNotifPreferences(data.preferences);
+        } else if (data && data._status) {
+            try {
+                const stored = localStorage.getItem('user_notification_prefs');
+                if (stored) {
+                    const state = JSON.parse(stored);
+                    if (state.all !== undefined) document.getElementById('toggleAllPromos').checked = state.all;
+                    if (state.deals !== undefined) document.getElementById('toggleDeals').checked = state.deals;
+                    if (state.tips !== undefined) document.getElementById('toggleTips').checked = state.tips;
+                    if (state.drops !== undefined) document.getElementById('toggleDrops').checked = state.drops;
+                    if (state.reminders !== undefined) document.getElementById('toggleReminders').checked = state.reminders;
+                    if (state.alerts !== undefined) document.getElementById('toggleAlerts').checked = state.alerts;
+                }
+            } catch(e) {}
         }
-    } catch(e) {}
+    })
+    .catch(function () {});
 }
 
 function showNotifToast(msg) {

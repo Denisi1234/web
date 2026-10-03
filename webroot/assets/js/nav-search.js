@@ -329,7 +329,10 @@ function getStoredRecentSearches() {
 }
 
 
-function showDefaultDestinations() {RecentSearches();
+function showDefaultDestinations() {
+    // Previously called an undefined RecentSearches(), which threw before the
+    // spinner was ever cleared — leaving the destination dots spinning forever
+    // as soon as the user deleted back below two characters.
     const titleEl = document.getElementById('nav_recent_header_title');
     const listEl = document.getElementById('nav_dest_suggestions_list');
     if (!listEl) return;
@@ -339,7 +342,7 @@ function showDefaultDestinations() {RecentSearches();
 
     if (titleEl) titleEl.innerText = 'Popular Destinations in Tanzania';
     navCurrentSuggestions = [...NAV_POPULAR_DESTINATIONS];
-    renderSuggestionList(items, '');
+    renderSuggestionList(navCurrentSuggestions, '');
 }
 
 function renderSuggestionList(items, query) {
@@ -350,7 +353,7 @@ function renderSuggestionList(items, query) {
         listEl.innerHTML = `
             <div class="p-3 text-center text-slate-500" style="font-size: 13px;">
                 <i class="fa-solid fa-map-location-dot text-slate-400 d-block fs-5 mb-2"></i>
-                No locations found. Press enter to search stays by keyword.
+                No stays or locations found. Press enter to search stays by keyword.
             </div>
         `;
         return;
@@ -363,14 +366,26 @@ function renderSuggestionList(items, query) {
         const safeSub = (item.subtitle || '').replace(/'/g, "\\'");
         const latVal = item.lat !== null && item.lat !== undefined ? item.lat : 'null';
         const lngVal = item.lng !== null && item.lng !== undefined ? item.lng : 'null';
+        const propIdVal = item.propertyId ? item.propertyId : 'null';
+
+        const iconMarkup = item.image
+            ? `<img src="${escapeHtml(item.image)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">`
+            : `<i class="${item.icon || 'fa-solid fa-location-dot'}"></i>`;
+
+        const scoreMarkup = item.score
+            ? `<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0" style="font-size:11px">★ ${item.score}</span>`
+            : '';
 
         html += `
-            <div class="trivago-recent-item" id="nav_suggest_item_${idx}" data-idx="${idx}" onclick="selectNavDestination('${safeName}', '${safeSub}', ${latVal}, ${lngVal})">
+            <div class="trivago-recent-item" id="nav_suggest_item_${idx}" data-idx="${idx}" onclick="selectNavDestination('${safeName}', '${safeSub}', ${latVal}, ${lngVal}, ${propIdVal})">
                 <div class="trivago-recent-icon ${item.iconClass || 'icon-blue'}">
-                    <i class="${item.icon || 'fa-solid fa-location-dot'}"></i>
+                    ${iconMarkup}
                 </div>
-                <div class="trivago-recent-info">
-                    <div class="trivago-recent-name">${highlightedTitle}</div>
+                <div class="trivago-recent-info" style="flex:1">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="trivago-recent-name">${highlightedTitle}</div>
+                        ${scoreMarkup}
+                    </div>
                     <div class="trivago-recent-meta">${escapeHtml(item.subtitle || '')}</div>
                 </div>
             </div>
@@ -397,7 +412,7 @@ function openNavRecentDropdown(e) {
 
     const curVal = input ? input.value.trim() : '';
     if (curVal.length >= 2) {
-        fetchMapboxSuggestions(curVal);
+        fetchLiveSuggestions(curVal);
     } else {
         showDefaultDestinations();
     }
@@ -414,12 +429,12 @@ function handleNavDestInput(e) {
 
     const titleEl = document.getElementById('nav_recent_header_title');
     if (titleEl) {
-        titleEl.innerHTML = `<span class="p-dots" aria-hidden="true"><span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span></span> Searching Mapbox...`;
+        titleEl.innerHTML = `<span class="p-dots" aria-hidden="true"><span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span></span> Searching stays & destinations...`;
     }
 
     navSuggestTimeout = setTimeout(() => {
-        fetchMapboxSuggestions(val);
-    }, 250);
+        fetchLiveSuggestions(val);
+    }, 200);
 }
 
 function handleNavDestKeydown(e) {
@@ -450,11 +465,11 @@ function handleNavDestKeydown(e) {
         if (navActiveSuggestIdx >= 0 && navCurrentSuggestions[navActiveSuggestIdx]) {
             e.preventDefault();
             const chosen = navCurrentSuggestions[navActiveSuggestIdx];
-            selectNavDestination(chosen.name, chosen.subtitle, chosen.lat, chosen.lng);
+            selectNavDestination(chosen.name, chosen.subtitle, chosen.lat, chosen.lng, chosen.propertyId);
         } else if (navCurrentSuggestions.length > 0) {
             e.preventDefault();
             const first = navCurrentSuggestions[0];
-            selectNavDestination(first.name, first.subtitle, first.lat, first.lng);
+            selectNavDestination(first.name, first.subtitle, first.lat, first.lng, first.propertyId);
         } else {
             closeNavPopups();
             submitNavSearchForm();
@@ -476,23 +491,88 @@ function updateSelectedSuggestionUi() {
     });
 }
 
-async function fetchMapboxSuggestions(query) {
+async function fetchLiveSuggestions(query) {
     const token = getNavMapboxToken();
     const titleEl = document.getElementById('nav_recent_header_title');
 
     try {
-        const endpoint = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${token}&autocomplete=true&types=place,locality,neighborhood,poi,district,region,address,country&language=en,sw&proximity=39.2083,-6.7924&limit=7`;
+        // Concurrently query backend suggestions and Mapbox places
+        const backendPromise = fetch('/api/search/suggestions?q=' + encodeURIComponent(query), {
+            headers: { 'Accept': 'application/json' }
+        }).then(r => r.ok ? r.json() : null).catch(() => null);
 
-        const res = await fetch(endpoint);
-        if (!res.ok) throw new Error('Mapbox API HTTP ' + res.status);
-        const data = await res.json();
+        let mapboxPromise = Promise.resolve(null);
+        if (token && token.length > 5) {
+            const endpoint = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${token}&autocomplete=true&types=place,locality,neighborhood,poi,district,region,address,country&language=en,sw&proximity=39.2083,-6.7924&limit=5`;
+            mapboxPromise = fetch(endpoint).then(r => r.ok ? r.json() : null).catch(() => null);
+        }
 
-        if (data && data.features && data.features.length > 0) {
-            navCurrentSuggestions = data.features.map(f => {
+        const [backendData, mapboxData] = await Promise.all([backendPromise, mapboxPromise]);
+
+        const combined = [];
+
+        // 0. Backend destinations (cities/areas) - previously ignored entirely,
+        // so a city match never appeared even though the endpoint returns it.
+        if (backendData && Array.isArray(backendData.destinations)) {
+            backendData.destinations.forEach(d => {
+                if (!d || !d.city) return;
+                combined.push({
+                    name: d.city,
+                    subtitle: (d.propertiesCount ? d.propertiesCount + ' stays · ' : '')
+                        + (d.starting_price ? 'from TSh ' + Number(d.starting_price).toLocaleString() : '')
+                        || 'Destination',
+                    lat: null,
+                    lng: null,
+                    icon: 'fa-solid fa-city',
+                    iconClass: 'icon-blue'
+                });
+            });
+        }
+
+        // 1. Add Backend Properties
+        if (backendData && Array.isArray(backendData.properties)) {
+            backendData.properties.forEach(p => {
+                combined.push({
+                    name: p.name,
+                    subtitle: [p.district, p.city].filter(Boolean).join(', ') + ' · Lodge',
+                    lat: null,
+                    lng: null,
+                    icon: 'fa-solid fa-hotel',
+                    iconClass: 'icon-orange',
+                    image: p.image || null,
+                    score: (p.score === null || p.score === undefined) ? null : Number(p.score),
+                    propertyId: p.id
+                });
+            });
+        }
+
+        // 2. Add Backend Destinations
+        if (backendData && Array.isArray(backendData.destinations)) {
+            backendData.destinations.forEach(d => {
+                const cityName = d.city || d;
+                const count = d.properties_count ? `${d.properties_count} properties` : 'Popular destination';
+                const price = d.min_price ? ` · from TSh ${Number(d.min_price).toLocaleString()}` : '';
+                combined.push({
+                    name: cityName,
+                    subtitle: `${count}${price} · Tanzania`,
+                    lat: null,
+                    lng: null,
+                    icon: 'fa-solid fa-city',
+                    iconClass: 'icon-blue'
+                });
+            });
+        }
+
+        // 3. Add Mapbox places (deduplicate)
+        if (mapboxData && Array.isArray(mapboxData.features)) {
+            mapboxData.features.forEach(f => {
+                const name = f.text || f.place_name;
+                if (combined.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+                    return;
+                }
                 let icon = 'fa-solid fa-location-dot';
                 let iconClass = 'icon-blue';
                 const placeType = f.place_type ? f.place_type[0] : '';
-
                 if (placeType === 'place' || placeType === 'locality') {
                     icon = 'fa-solid fa-city';
                     iconClass = 'icon-blue';
@@ -502,9 +582,6 @@ async function fetchMapboxSuggestions(query) {
                 } else if (placeType === 'neighborhood' || placeType === 'district') {
                     icon = 'fa-solid fa-map-pin';
                     iconClass = 'icon-green';
-                } else if (placeType === 'region' || placeType === 'country') {
-                    icon = 'fa-solid fa-earth-africa';
-                    iconClass = 'icon-purple';
                 }
 
                 let subtitle = '';
@@ -514,27 +591,26 @@ async function fetchMapboxSuggestions(query) {
                     subtitle = f.place_name || 'Tanzania';
                 }
 
-                return {
-                    name: f.text || f.place_name,
+                combined.push({
+                    name: name,
                     subtitle: subtitle,
                     lat: f.center ? f.center[1] : null,
                     lng: f.center ? f.center[0] : null,
                     icon: icon,
                     iconClass: iconClass
-                };
+                });
             });
-
-            navActiveSuggestIdx = -1;
-            if (titleEl) titleEl.innerText = `Locations matching "${query}"`;
-            renderSuggestionList(navCurrentSuggestions, query);
-        } else {
-            navCurrentSuggestions = [];
-            navActiveSuggestIdx = -1;
-            if (titleEl) titleEl.innerText = `No locations found for "${query}"`;
-            renderSuggestionList([], query);
         }
+
+        navCurrentSuggestions = combined.slice(0, 8);
+        navActiveSuggestIdx = -1;
+
+        if (titleEl) {
+            titleEl.innerText = navCurrentSuggestions.length > 0 ? `Suggestions for "${query}"` : `No stays or locations found for "${query}"`;
+        }
+        renderSuggestionList(navCurrentSuggestions, query);
     } catch (err) {
-        console.warn('Mapbox auto-suggestion fallback:', err);
+        console.warn('Auto-suggestion fallback:', err);
         const filtered = NAV_POPULAR_DESTINATIONS.filter(p =>
             p.name.toLowerCase().includes(query.toLowerCase()) ||
             p.subtitle.toLowerCase().includes(query.toLowerCase())
@@ -546,7 +622,12 @@ async function fetchMapboxSuggestions(query) {
     }
 }
 
-function selectNavDestination(name, subtitle, lat, lng) {
+function selectNavDestination(name, subtitle, lat, lng, propertyId) {
+    if (propertyId) {
+        window.location.href = '/hotel-detail?id=' + encodeURIComponent(propertyId);
+        return;
+    }
+
     const input = document.getElementById('nav_dest_input');
     const hiddenLat = document.getElementById('nav_hidden_lat');
     const hiddenLng = document.getElementById('nav_hidden_lng');
@@ -554,8 +635,6 @@ function selectNavDestination(name, subtitle, lat, lng) {
     if (input) input.value = name;
     if (hiddenLat && lat !== null && lat !== undefined) hiddenLat.value = lat;
     if (hiddenLng && lng !== null && lng !== undefined) hiddenLng.value = lng;
-
-    // recent searches removed — nothing stored
 
     closeNavPopups();
 

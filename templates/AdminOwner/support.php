@@ -16,8 +16,8 @@ $this->assign('page_actions', '<span style="font-size:13px;color:var(--p-text-2)
           $st = strtolower((string)($t['status'] ?? 'open'));
           $badge = $st === 'open' ? 'yellow' : ($st === 'resolved' ? 'green' : 'blue');
         ?>
-        <div class="ticket-card" data-search="<?= h(strtolower(($t['subject'] ?? '') . ' ' . ($t['message'] ?? ''))) ?>" style="border:1px solid var(--p-border);padding:12px;background:#fff">
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><strong style="font-size:13px">#<?= h($tid) ?> <?= h($t['subject'] ?? '—') ?></strong><span class="p-badge <?= $badge ?>"><?= h($st) ?></span></div>
+        <div class="ticket-card" data-search="<?= h(strtolower(($t['issue'] ?? $t['subject'] ?? '') . ' ' . ($t['message'] ?? ''))) ?>" style="border:1px solid var(--p-border);padding:12px;background:#fff">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><strong style="font-size:13px">#<?= h($tid) ?> <?= h($t['issue'] ?? $t['subject'] ?? '—') ?></strong><span class="p-badge <?= $badge ?>"><?= h($st) ?></span></div>
           <div style="font-size:12px;color:var(--p-text-2);margin-top:4px"><?= h(substr((string)($t['message'] ?? $t['description'] ?? ''), 0, 140)) ?></div>
           <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
             <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'support'], 'style' => 'display:flex;gap:6px', 'data-api' => 'PATCH /tickets/' . $tid . '/status', 'data-api-strip' => 'action,ticket_id', 'data-api-ok' => 'Ticket updated.', 'data-opt' => 'patch', 'data-opt-scope' => 'closest:.ticket-card', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'ticket', 'data-opt-badgetext' => 'lower', 'data-opt-bust' => '_tickets', 'data-api-go' => '/admin/cache-bust?scope=_tickets&go=' . urlencode('/admin/support')]) ?>

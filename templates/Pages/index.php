@@ -78,12 +78,6 @@ $lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
 ?>
 <!-- Mobile stack: header → breadcrumb (Home > Dar es Salaam Hotels) → tabs. Single wrapper guarantees visual order. -->
 <div id="gh_mobile_stack">
-  <nav id="gh_mobile_breadcrumb" aria-label="Breadcrumb" itemscope itemtype="https://schema.org/BreadcrumbList">
-    <ol class="breadcrumb mb-0 py-0" itemscope itemtype="https://schema.org/BreadcrumbList">
-      <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="/" itemprop="item"><span itemprop="name">Home</span></a><meta itemprop="position" content="1"></li>
-      <li class="breadcrumb-item active" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><span itemprop="name"><?= h($queryParams['city'] ?? $queryParams['destination'] ?? 'Dar es Salaam') ?> Hotels</span><meta itemprop="position" content="2"></li>
-    </ol>
-  </nav>
   <div class="gh-m-tabs gh-m-tabs-in-stack" role="tablist" aria-label="Travel types">
     <a href="<?= h($apartmentUrl) ?>" role="tab" class="<?= $isApartment ? 'active' : '' ?>" <?= $isApartment ? 'aria-selected="true"' : '' ?>>Apartment</a>
     <a href="<?= h($homeUrl) ?>" role="tab" class="<?= $isHome ? 'active' : '' ?>" <?= $isHome ? 'aria-selected="true"' : '' ?>>Home</a>
@@ -93,7 +87,7 @@ $lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
 </div>
 <style>
 #gh_mobile_stack{display:none}
-#gh_mobile_breadcrumb{background:#f8f9fa;border-bottom:1px solid #e8eaed;padding:8px 16px 6px;padding-left:calc(16px + env(safe-area-inset-left,0px));font-size:11px;line-height:1.2}
+#gh_mobile_breadcrumb{background:var(--cds-gray-10);border-bottom:1px solid #e8eaed;padding:8px 16px 6px;padding-left:calc(16px + env(safe-area-inset-left,0px));font-size:11px;line-height:1.2}
 #gh_mobile_breadcrumb .breadcrumb{background:transparent;font-size:11px;line-height:1;padding:0;--bs-breadcrumb-divider:'›';margin:0;flex-wrap:nowrap;white-space:nowrap;overflow:hidden}
 #gh_mobile_breadcrumb .breadcrumb-item a{color:#5f6368;text-decoration:none}
 #gh_mobile_breadcrumb .breadcrumb-item.active{color:#5f6368;overflow:hidden;text-overflow:ellipsis}
@@ -117,14 +111,8 @@ $lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
 </style>
 <!-- ── Split styles moved to google-travel-home.css ── -->
 <!-- Breadcrumb (ultra-compact) desktop only — mobile uses #gh_mobile_breadcrumb AFTER header, BEFORE tabs -->
-<nav id="gh_desktop_breadcrumb" aria-label="Breadcrumb" aria-hidden="true" class="d-none d-lg-block container-fluid px-3 px-lg-4" style="max-width:100%;margin:0 auto;background:#f8f9fa;padding-top:4px;padding-bottom:4px;">
-  <ol class="breadcrumb mb-0 py-0" style="background:transparent;font-size:11px;line-height:1;padding:0;--bs-breadcrumb-divider:'›';" itemscope itemtype="https://schema.org/BreadcrumbList">
-    <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="/" itemprop="item" style="color:#5f6368;text-decoration:none;"><span itemprop="name">Home</span></a><meta itemprop="position" content="1"></li>
-    <li class="breadcrumb-item active" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><span itemprop="name"><?= h($queryParams['city'] ?? $queryParams['destination'] ?? 'Tanzania') ?> Hotels</span><meta itemprop="position" content="2"></li>
-  </ol>
-</nav>
 <!-- ── Split Screen: HALF — LEFT (search+chips+list scroll) + RIGHT (map full-height from header) ── -->
-<main id="main-content" class="gh-split-container" style="background:#f8f9fa; min-height:85vh; margin-top:0;" role="main" aria-label="Hotel search results">
+<main id="main-content" class="gh-split-container" style="background:var(--cds-gray-10); min-height:85vh; margin-top:0;" role="main" aria-label="Hotel search results">
     <!-- 4px gutters — close to zero as requested -->
     <div class="container-fluid px-0" style="max-width:100%; margin:0 auto; height:100%; padding-top:0; padding-left:4px !important; padding-right:4px !important;">
         <!-- 4px close to zero — g-0 + explicit gutter to avoid Bootstrap 16px -->
@@ -179,7 +167,7 @@ $lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
 
                         <!-- Mapbox GL Container — real Mapbox from backend -->
                         <div id="gh-interactive-map" style="width:100%; height:100%; min-height:560px; background:#e8ecef;" role="application" aria-label="Map of hotels"></div>
-                        <noscript><div style="width:100%;height:100%;min-height:560px;display:flex;align-items:center;justify-content:center;background:#f4f4f4;color:#525252;font-size:14px;">Enable JavaScript to view the interactive map.</div></noscript>
+                        <noscript><div style="width:100%;height:100%;min-height:560px;display:flex;align-items:center;justify-content:center;background:var(--cds-gray-10);color:#525252;font-size:14px;">Enable JavaScript to view the interactive map.</div></noscript>
 
                         <!-- "Update list when map moves" — PC screenshot: checkbox + text pill -->
                         <div class="position-absolute top-0 start-50 translate-middle-x mt-3" style="z-index:20;">
@@ -216,8 +204,6 @@ $lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
     </div>
 </main>
 
-
-
 <!-- Filters Modal -->
 <?= $this->element('Home/gh-filters-modal') ?>
 
@@ -237,7 +223,7 @@ $lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
   var f = document.getElementById('gh_search_form');
   if (f) f.addEventListener('submit', show);
   // every detail entry (card, View prices/details, Show details, name) → spinner while system loads.
-  // anchors: hold navigation ~140ms so the spinner actually paints before unload.
+  // anchors: paint one frame so the loader shows before unload (was a flat 140ms hold).
   document.addEventListener('click', function (e) {
     if (e.defaultPrevented || (e.button !== undefined && e.button !== 0) || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     var a = e.target.closest ? e.target.closest('a[href*="/hotel-detail/"]') : null;
@@ -251,7 +237,9 @@ $lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
       e.preventDefault();
       window.showHomeLoader('Loading stay details…');
       var href = a.href;
-      setTimeout(function () { window.location.href = href; }, 140);
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () { window.location.href = href; });
+      });
     }
   });
   // mobile sheet search is SPA (pushState + hydrate): wrap to show until results land
@@ -431,12 +419,7 @@ echo json_encode($markers, JSON_UNESCAPED_UNICODE);
     window.addEventListener('error', function(e){ console.warn('index error', e.message); });
     window.addEventListener('unhandledrejection', function(e){ console.warn('promise', e.reason); });
 })();
-// ── Mature UI: single toast helper (polite live region #fns_toast) ──
-window.fnsToast = function(msg, ms){
-  var t = document.getElementById('fns_toast');
-  if(!t){ return; }
-  t.textContent = msg; t.style.display = 'block';
-  clearTimeout(t._t); t._t = setTimeout(function(){ t.style.display = 'none'; }, ms || 2800);
-};
 </script>
-<?php // Global #fns_toast lives in layout/default.php (single source, all pages) ?>
+<?php // #fns_toast and window.fnsToast are defined once in layout/default.php.
+      // This page used to carry a byte-identical second copy that silently
+      // overwrote the guarded layout definition. ?>

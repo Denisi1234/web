@@ -163,7 +163,10 @@ a:focus-visible, button:focus-visible, input:focus-visible,
 .gh-split-container, .fns-sheet-step { background: var(--cds-gray-10) !important; }
 
 /* ── Carbon wordmark (single source: element/logo.php) ── */
-.fns-logo { display: inline-flex; align-items: center; gap: 8px; text-decoration: none !important; line-height: 1; flex-shrink: 0; }
-.fns-logo-mark { width: 22px; height: 22px; flex: none; background: var(--cds-blue-60); color: #fff; font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
+.fns-logo { display: inline-flex; align-items: center; gap: 6px; text-decoration: none !important; line-height: 1; flex-shrink: 0; }
+/* Size comes from --fns-logo-mark (set by element/logo.php). Must stay an explicit
+   length: `auto` would discard the width/height attributes and fall back to the
+   source PNG's intrinsic 214x250, which blew the mark out of the fixed header. */
+.fns-logo-mark { flex: none; display: block; width: var(--fns-logo-mark, 20px); height: var(--fns-logo-mark, 20px); object-fit: contain; }
 .fns-logo-word { font-family: 'IBM Plex Sans','Inter','Helvetica Neue',Arial,sans-serif; font-weight: 600; letter-spacing: -0.01em; line-height: 1; white-space: nowrap; }
 .fns-logo:focus-visible { outline: 2px solid var(--cds-focus) !important; outline-offset: 2px !important; }

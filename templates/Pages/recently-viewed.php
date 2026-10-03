@@ -302,12 +302,14 @@ $recentStays = is_array($recentStays ?? null) ? $recentStays : [];
                         $sPrice = (float)($stay['price_per_night'] ?? ($stay['price'] ?? 85000));
                         $sRating = (float)($stay['rating'] ?? 4.8);
                         $score10 = ($sRating <= 5.0) ? round($sRating * 2, 1) : round($sRating, 1);
-                        $sReviews = (int)($stay['reviews_count'] ?? 120);
-                        $sImg = !empty($stay['image_url']) ? $stay['image_url'] : ($stay['image'] ?? 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&h=400&fit=crop');
+                        // Real values only - this defaulted to 120 reviews and a
+                        // stock Unsplash photo for any stay missing them.
+                        $sReviews = (int)($stay['reviews_count'] ?? 0);
+                        $sImg = !empty($stay['image_url']) ? $stay['image_url'] : ($stay['image'] ?? '');
                     ?>
                     <div class="rv-card" id="rv_card_<?= $sId ?>" data-property-id="<?= $sId ?>">
                         <div class="rv-img-wrapper">
-                            <img src="<?= h($sImg) ?>" alt="<?= h($sName) ?>" class="rv-img" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=400&fit=crop';">
+                            <img src="<?= h($sImg) ?>" alt="<?= h($sName) ?>" class="rv-img" loading="lazy" onerror="this.onerror=null;this.removeAttribute('src');this.alt='No photo available';">
                             <button type="button" class="rv-remove-btn" title="Remove from recently viewed" onclick="removeRecentlyViewed(<?= $sId ?>)">
                                 <i class="fa-solid fa-xmark"></i>
                             </button>
@@ -319,7 +321,7 @@ $recentStays = is_array($recentStays ?? null) ? $recentStays : [];
                             <div class="rv-rating-badge">
                                 <span class="rv-score-box"><?= number_format($score10, 1) ?></span>
                                 <span class="fw-semibold text-slate-700"><?= $score10 >= 8.5 ? 'Excellent' : 'Very good' ?></span>
-                                <span class="text-slate-400">&middot; <?= number_format($sReviews) ?> reviews</span>
+                                <?php if ($sReviews > 0): ?><span class="text-slate-400">&middot; <?= number_format($sReviews) ?> <?= $sReviews === 1 ? 'review' : 'reviews' ?></span><?php endif; ?>
                             </div>
                             <h2 class="rv-card-title" title="<?= h($sName) ?>"><?= h($sName) ?></h2>
                             <div class="rv-card-location">

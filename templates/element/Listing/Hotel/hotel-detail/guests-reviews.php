@@ -1,35 +1,45 @@
 <?php
 $reviewList = !empty($reviews) && is_array($reviews) ? $reviews : [];
 $actualCount = count($reviewList);
-$overall = $actualCount > 0 
-    ? array_sum(array_map(fn($r) => (float)($r['rating'] ?? 5), $reviewList)) / $actualCount
-    : (!empty($property['rating']) ? (float)$property['rating'] : 5.0);
-$overallFmt = number_format($overall, 1);
-$catScores = [
-  'Cleanliness' => min(5.0, round($overall + 0.1, 1)),
-  'Service' => min(5.0, round($overall, 1)),
-  'Location' => max(3.5, min(5.0, round($overall - 0.1, 1))),
-  'Value' => max(3.5, min(5.0, round($overall - 0.2, 1))),
-];
+
+// Average only the reviews that actually carry a rating. The previous version
+// substituted 5 for any missing rating, which inflated the score, and fell
+// back to 5.0 for a property with no reviews at all.
+$ratedReviews = array_values(array_filter(
+    $reviewList,
+    fn($r) => isset($r['rating']) && is_numeric($r['rating']) && (float)$r['rating'] > 0
+));
+
+$hasRealRatings = count($ratedReviews) > 0;
+$overall = $hasRealRatings
+    ? array_sum(array_map(fn($r) => (float)$r['rating'], $ratedReviews)) / count($ratedReviews)
+    : (!empty($property['rating']) && is_numeric($property['rating']) ? (float)$property['rating'] : null);
+
+$overallFmt = $overall !== null ? number_format($overall, 1) : null;
+
+/*
+ * The per-category breakdown was removed. It was computed arithmetically from
+ * the single overall rating (Cleanliness = overall + 0.1, Location = overall
+ * - 0.1, and floored at 3.5 so nothing could ever score badly) and presented
+ * under the heading "Google Review Score Breakdown". The reviews table stores
+ * exactly one rating and no category scores, so there is no real data behind
+ * those bars. It should only come back once categories are actually collected.
+ */
 $currentPropId = (int)($property['id'] ?? ($propertyId ?? 0));
 ?>
 <div class="card-body p-0 pt-2">
-    <?php if ($actualCount > 0): ?>
-    <!-- Google Review Score Breakdown -->
+    <?php if ($overallFmt !== null): ?>
     <div class="gh-review-breakdown" style="display:flex;gap:20px;align-items:center;padding:16px;border:1px solid #dadce0;border-radius:12px;background:#fff;margin-bottom:20px;">
         <div style="flex:0 0 auto;text-align:center;">
             <div style="width:64px;height:64px;border-radius:50%;background:#e8f0fe;border:2px solid #1a73e8;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#1a73e8;font-family:'Google Sans',sans-serif;"><?= h($overallFmt) ?></div>
-            <div style="font-size:12px;color:#5f6368;margin-top:4px;"><?= $actualCount ?> verified reviews</div>
-            <div style="color:#fbbc04;font-size:14px;"><?= str_repeat('★', (int)round($overall)) ?></div>
-        </div>
-        <div style="flex:1 1 auto;display:grid;gap:8px;">
-            <?php foreach($catScores as $label=>$score): $pct = ($score/5)*100; ?>
-            <div style="display:flex;align-items:center;gap:10px;">
-                <span style="flex:0 0 90px;font-size:12px;color:#5f6368;"><?= h($label) ?></span>
-                <div style="flex:1;height:6px;background:#f1f3f4;border-radius:3px;overflow:hidden;"><div style="width:<?= $pct ?>%;height:100%;background:#1a73e8;border-radius:3px;"></div></div>
-                <span style="flex:0 0 24px;font-size:12px;font-weight:500;color:#202124;text-align:right;"><?= number_format($score,1) ?></span>
+            <div style="font-size:12px;color:#5f6368;margin-top:4px;">
+                <?php if ($actualCount > 0): ?>
+                    <?= $actualCount ?> <?= $actualCount === 1 ? 'review' : 'reviews' ?>
+                <?php else: ?>
+                    No written reviews yet
+                <?php endif; ?>
             </div>
-            <?php endforeach; ?>
+            <div style="color:#fbbc04;font-size:14px;"><?= str_repeat('★', max(0, min(5, (int)round($overall)))) ?></div>
         </div>
     </div>
     <?php endif; ?>
@@ -153,6 +163,8 @@ document.addEventListener("DOMContentLoaded", function() {
                     revAlert.innerHTML = '<div class="alert alert-success py-2">Thank you! Your review has been submitted successfully.</div>';
                     revForm.reset();
                     setTimeout(() => { window.location.reload(); }, 1200);
+                } else if (res.status === 401) {
+                    revAlert.innerHTML = '<div class="alert alert-warning py-2">Please <a href="/login">sign in</a> to write a review. Only guests who stayed here can review.</div>';
                 } else {
                     const errMsg = data.message || 'Failed to submit review.';
                     revAlert.innerHTML = '<div class="alert alert-danger py-2">' + errMsg + '</div>';

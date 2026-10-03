@@ -51,7 +51,18 @@ foreach ((array)($rooms ?? []) as $rr) {
       <input name="name" class="form-control cds-field" required placeholder="Sunrise Lodge" value="<?= h($property['name'] ?? '') ?>">
     </div>
     <div><label class="cds-label">Price / night TSh *</label><input name="price_per_night" type="number" min="1" class="form-control cds-field" required placeholder="150000" value="<?= h($property['price_per_night'] ?? '') ?>"></div>
-    <div><label class="cds-label">Description</label><textarea name="description" class="form-control cds-ta" placeholder="What makes this place special?"><?= h($property['description'] ?? '') ?></textarea></div>
+    <div>
+      <label class="cds-label">Description</label>
+      <textarea name="description" id="lodgeDescription" class="form-control cds-ta" placeholder="What makes this place special?"><?= h($property['description'] ?? '') ?></textarea>
+      <button type="button" class="p-btn ghost" id="generateDescriptionBtn"
+              data-property-id="<?= h((string)$propId) ?>"
+              style="margin-top:8px;font-size:13px">
+        <i class="fa-solid fa-wand-magic-sparkles me-1"></i>Draft from my rooms &amp; amenities
+      </button>
+      <div class="ob-dim-nm" id="generateDescriptionHint" style="font-size:11px;margin-top:6px">
+        Fills the box from the room types, amenities and ratings already saved for this lodge. Review before saving.
+      </div>
+    </div>
     <div class="ob-nav"><button class="p-btn cds-btn-flex2">Save &amp; continue → Location</button></div>
   <?= $this->Form->end() ?>
 
@@ -163,3 +174,44 @@ foreach ((array)($rooms ?? []) as $rr) {
 <script>window.MAPBOX_TOKEN = <?= json_encode($mapToken) ?>;window.MAPBOX_STYLE = <?= json_encode($mapStyle ?? 'mapbox://styles/mapbox/streets-v12') ?>;</script>
 <?php endif; ?>
 <?= $this->element('host_onboard_js') ?>
+
+<script>
+// Draft a lodge description from real saved data -> POST /properties/{id}/generate-description
+(function () {
+  var btn  = document.getElementById('generateDescriptionBtn');
+  var ta   = document.getElementById('lodgeDescription');
+  if (!btn || !ta) return;
+
+  btn.addEventListener('click', function () {
+    var id = btn.getAttribute('data-property-id');
+    if (!id) return;
+
+    btn.disabled = true;
+    var original = btn.innerHTML;
+    btn.innerHTML = 'Drafting\u2026';
+
+    fetch('/api/properties/' + encodeURIComponent(id) + '/generate-description', {
+      method: 'POST',
+      headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+      credentials: 'same-origin'
+    })
+      .then(function (r) { return r.json().catch(function () { return {}; }); })
+      .then(function (data) {
+        if (data && data.description) {
+          // Never clobber text the host already wrote.
+          if (ta.value.trim()) {
+            if (!window.confirm('Replace the description you already wrote with the drafted version?')) return;
+          }
+          ta.value = data.description;
+        } else {
+          window.alert((data && (data.message || data.error)) || 'Could not draft a description yet. Add some rooms and amenities first.');
+        }
+      })
+      .catch(function () { window.alert('Could not reach the server. Please try again.'); })
+      .finally(function () {
+        btn.disabled = false;
+        btn.innerHTML = original;
+      });
+  });
+})();
+</script>

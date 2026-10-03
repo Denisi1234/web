@@ -7,13 +7,8 @@ $this->assign('title', 'How We Work');
 <?= $this->Html->css('/assets/css/google-travel-cards.css') ?>
 
 <?= $this->element('navbar') ?>
-<nav aria-label="Breadcrumb" class="container-fluid px-2 px-lg-2" style="max-width:100%;margin:0 auto;background:#f8f9fa;">
-  <ol class="breadcrumb mb-0 py-1" style="background:transparent;font-size:12px;line-height:1.2;--bs-breadcrumb-divider:'›';" itemscope itemtype="https://schema.org/BreadcrumbList">
-    <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="/" itemprop="item" style="color:#5f6368;text-decoration:none;"><span itemprop="name">Home</span></a><meta itemprop="position" content="1"></li>
-    <li class="breadcrumb-item active" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><span itemprop="name">How We Work</span><meta itemprop="position" content="2"></li>
-  </ol>
-</nav>
-<main id="main-content" style="background:#f8f9fa;min-height:85vh;" role="main">
+<?= $this->element('breadcrumb-schema', ['label' => 'How we work']) ?>
+<main id="main-content" style="background:var(--cds-gray-10);min-height:85vh;" role="main">
 
 <style>
     .legal-content h1 {
@@ -92,7 +87,7 @@ $this->assign('title', 'How We Work');
 </style>
 
 <!-- Hero Header Banner Start -->
-<section class="position-relative" style="background:#fff;border-bottom:1px solid #e8eaed;padding:28px 0 22px;">
+<section class="position-relative" style="background:#fff;border-bottom:1px solid #e8eaed;padding:var(--cds-spacing-07) 0 var(--cds-spacing-06);">
     <div class="container">
         <div class="row align-items-center justify-content-center">
             <div class="col-xl-8 col-lg-10 col-md-12">
@@ -110,7 +105,7 @@ $this->assign('title', 'How We Work');
 <!-- Hero Header Banner End -->
 
 <!-- Main Legal Document Content -->
-<section class="py-5 " style="background:#f8f9fa;">
+<section class="py-5 " style="background:var(--cds-gray-10);">
     <div class="container px-3 px-md-4">
         <div class="row justify-content-center">
             <div class="col-xl-10 col-lg-11 col-md-12">

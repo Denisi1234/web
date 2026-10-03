@@ -120,7 +120,7 @@ document.addEventListener("DOMContentLoaded", function() {
 					alertBox.innerHTML = '<div class="alert alert-success"><i class="fa-solid fa-circle-check me-2"></i>Your password has been reset successfully! Redirecting to sign in...</div>';
 					resetForm.reset();
 					setTimeout(() => {
-						window.location.href = '<?= $this->Url->build('/login'); ?>';
+						window.location.href = '/login';
 					}, 1500);
 				} else {
 					const errMsg = data.message || 'Failed to reset password. Token may have expired.';

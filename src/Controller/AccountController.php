@@ -385,27 +385,11 @@ class AccountController extends AppController
         $recentStays = $session->read('recently_viewed_stays') ?? [];
         if (!is_array($recentStays)) $recentStays = [];
 
-        // If session empty, fallback to fetching real properties from backend to ensure immediate delight
-        if (empty($recentStays)) {
-            $apiRes = $this->apiClient->get('/properties', ['limit' => 6]);
-            if (!empty($apiRes['data']) && is_array($apiRes['data'])) {
-                $featured = array_slice($apiRes['data'], 0, 3);
-                foreach ($featured as $p) {
-                    $recentStays[] = [
-                        'id' => (int)($p['id'] ?? 0),
-                        'name' => \App\Utility\TextFormatter::formatTitle((string)($p['name'] ?? 'Stay')),
-                        'city' => \App\Utility\TextFormatter::formatTitle((string)($p['city'] ?? 'Tanzania')),
-                        'area' => \App\Utility\TextFormatter::formatTitle((string)($p['area'] ?? '')),
-                        'price_per_night' => (float)($p['price_per_night'] ?? ($p['price'] ?? 120000)),
-                        'rating' => (float)($p['rating'] ?? 4.8),
-                        'reviews_count' => (int)($p['reviews_count'] ?? ($p['review_count'] ?? 150)),
-                        'image_url' => $p['image_url'] ?? ($p['primary_image_url'] ?? 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&h=400&fit=crop'),
-                        'viewed_at' => time(),
-                    ];
-                }
-            }
-        }
-
+        // No substitution here. This used to fill an empty "recently viewed" list with
+        // three featured properties, so the page showed stays the visitor had
+        // never looked at, each with an invented price (120,000), rating (4.8)
+        // and review count (150). An empty history is a real state - render it
+        // honestly and let the template offer an empty state.
         $this->set(compact('userProfile', 'recentStays'));
         return $this->render('/Pages/recently-viewed');
     }
@@ -431,31 +415,85 @@ class AccountController extends AppController
     public function searchPreferences()
     {
         $userProfile = $this->authService->getPersonalDetails();
+        $travelPrefs = $this->preferencePayload('travel/preferences');
 
-        if ($this->getRequest()->is(['post', 'put'])) {
-            $this->Flash->success(__('Search preferences updated.'));
-        }
-
-        $this->set(compact('userProfile'));
+        $this->set(compact('userProfile', 'travelPrefs'));
         return $this->render('/Pages/search-preferences');
     }
 
     public function notifications()
     {
         $userProfile = $this->authService->getPersonalDetails();
+        $prefs = $this->preferencePayload('notifications/preferences');
+
+        $this->set(compact('userProfile', 'prefs'));
+        return $this->render('/Pages/notifications');
+    }
+
+    /**
+     * GET/POST proxy for a preference endpoint.
+     *
+     * The pages used to flash "settings saved" without contacting the backend
+     * at all, so preferences lived only in localStorage and were lost on any
+     * other device. This forwards to the real endpoint with the caller's token.
+     */
+    private function preferencePayload(string $endpoint): array
+    {
+        $token = $this->portalToken();
+        if ($token === '') {
+            return [];
+        }
+        $headers = [
+            'Authorization' => 'Bearer ' . $token,
+            'Accept'        => 'application/json',
+        ];
 
         if ($this->getRequest()->is(['post', 'put'])) {
-            $this->Flash->success(__('Notification settings saved.'));
+            $data = (array)$this->getRequest()->getData();
+            $res = $this->apiClient->post('/' . $endpoint, $data, $headers);
+            if (!empty($res['_status']) && (int)$res['_status'] >= 400) {
+                $this->Flash->error(__($res['message'] ?? 'Could not save your preferences.'));
+            } elseif (!empty($res)) {
+                $this->Flash->success(__('Preferences saved.'));
+            }
+            return is_array($res['preferences'] ?? null) ? $res['preferences'] : [];
         }
 
-        $this->set(compact('userProfile'));
-        return $this->render('/Pages/notifications');
+        $res = $this->apiClient->get('/' . $endpoint, [], $headers);
+
+        return is_array($res['preferences'] ?? null) ? $res['preferences'] : [];
+    }
+
+    /** GET/POST proxy for /notifications/preferences (called by notifications.php) */
+    public function notificationPreferences(): Response
+    {
+        $prefs = $this->preferencePayload('notifications/preferences');
+
+        return $this->response->withType('application/json')->withStringBody(
+            (string)json_encode(['status' => 'success', 'preferences' => $prefs])
+        );
+    }
+
+    /** GET/POST /travel/preferences — search-preferences.php */
+    public function travelPreferences(): Response
+    {
+        $prefs = $this->preferencePayload('travel/preferences');
+
+        if ($this->getRequest()->is('json') || $this->getRequest()->is('ajax') || $this->getRequest()->accepts('application/json')) {
+            return $this->response->withType('application/json')->withStringBody(
+                (string)json_encode(['status' => 'success', 'preferences' => $prefs])
+            );
+        }
+
+        return $this->redirect(['action' => 'searchPreferences']);
     }
 
     public function languageAndCurrency()
     {
         $userProfile = $this->authService->getPersonalDetails();
-        $this->set(compact('userProfile'));
+        $currRes = $this->apiClient->get('/currencies');
+        $currencies = is_array($currRes) && !empty($currRes['currencies']) ? $currRes['currencies'] : [];
+        $this->set(compact('userProfile', 'currencies'));
         return $this->render('/Pages/language-and-currency');
     }
 

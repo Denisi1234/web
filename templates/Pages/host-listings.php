@@ -1,7 +1,7 @@
 <?php
 $this->assign('title', 'My Properties');
 $this->assign('portal_title', 'My properties');
-$this->assign('page_actions', '<a href="' . $this->Url->build('/host/listings/add') . '" class="p-btn">Add property</a>');
+$this->assign('page_actions', '<a href="' . $this->Url->build('/host/onboarding') . '" class="p-btn">Add property</a>');
 ?>
 <style>
 /* Host lodge cards — mirrors home Google-Hotels card language, portal Carbon skin */
@@ -42,7 +42,7 @@ $this->assign('page_actions', '<a href="' . $this->Url->build('/host/listings/ad
     <div class="p-empty">
       <div style="font-size:16px;font-weight:600;color:var(--p-text);margin-bottom:4px">No listings yet</div>
       <div style="margin-bottom:16px">Create your first property to start receiving bookings.</div>
-      <a href="<?= $this->Url->build('/host/listings/add') ?>" class="p-btn">Add property</a>
+      <a href="<?= $this->Url->build('/host/onboarding') ?>" class="p-btn">Add property</a>
     </div>
   </div>
 <?php else: ?>

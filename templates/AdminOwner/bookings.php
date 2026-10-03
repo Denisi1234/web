@@ -41,7 +41,7 @@ $this->assign('page_actions', '<span style="font-size:13px;color:var(--p-text-2)
         ?>
         <tr>
           <td><strong>#<?= h($bid) ?></strong></td>
-          <td><?= h($b['guest_name'] ?? $b['guest']['name'] ?? 'Guest') ?></td>
+          <td><?= h($b['guest_name'] ?? $b['user_name'] ?? $b['guest']['name'] ?? 'Guest') ?></td>
           <td style="max-width:170px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><?= h($b['property_name'] ?? $b['property']['name'] ?? '') ?></td>
           <td style="font-size:12px;white-space:nowrap"><?= h($ci) ?> → <?= h($co) ?> (<?= $nights ?>n)</td>
           <td style="text-align:right;font-weight:600;white-space:nowrap">TSh <?= number_format($price) ?></td>

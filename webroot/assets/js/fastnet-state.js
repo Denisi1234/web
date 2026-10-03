@@ -125,23 +125,19 @@ function applyHydrateData(data){
     if(live && data.totalCount!==undefined) live.textContent=data.totalCount + ' stays';
 }
 function showShimmer(on){
-  const cards=document.getElementById('gh-cards-container');
   const shim=document.getElementById('gh-shimmer-container');
-  const bar=document.getElementById('fastnet-progress');
   const section=document.getElementById('gh_results_section');
   const btn=document.getElementById('fns_search_btn');
   const chip=document.getElementById('fns_shimmer_chips');
-  if(on){
-    if(cards&&shim){ cards.style.display='none'; cards.setAttribute('aria-busy','true'); shim.style.display='block'; shim.setAttribute('aria-hidden','false'); if(chip) chip.classList.add('show'); }
-    if(section) section.setAttribute('aria-busy','true');
-    if(btn){ btn.setAttribute('aria-busy','true'); btn.disabled=true; }
-    if(bar){ bar.style.transition='width 0.25s ease'; bar.style.width='45%'; }
-  } else {
-    if(cards&&shim){ cards.style.display=''; cards.setAttribute('aria-busy','false'); shim.style.display='none'; shim.setAttribute('aria-hidden','true'); if(chip) chip.classList.remove('show'); }
-    if(section) section.setAttribute('aria-busy','false');
-    if(btn){ btn.setAttribute('aria-busy','false'); btn.disabled=false; }
-    if(bar){ bar.style.width='100%'; setTimeout(()=>{bar.style.width='0%'; bar.style.transition='width 0.3s ease';}, 260); }
-  }
+
+  // Container swap and button state go through the canonical loading
+  // controller so this path stays idempotent and always has a matching hide.
+  FastnetLoading.skeleton('gh-cards-container', on, shim);
+  if(shim&&on) shim.setAttribute('aria-hidden','false');
+  if(shim&&!on) shim.setAttribute('aria-hidden','true');
+  if(chip) chip.classList.toggle('show', !!on);
+  if(section) section.setAttribute('aria-busy', on ? 'true' : 'false');
+  if(btn){ btn.setAttribute('aria-busy', on ? 'true' : 'false'); btn.disabled=!!on; }
 }
 async function hydrate(url){
   const fetchUrl = url + (url.includes('?')?'&':'?') + 'format=json';
@@ -163,7 +159,6 @@ async function hydrate(url){
   if(_abort) _abort.abort();
   _abort=new AbortController();
   _lastFetchUrl=fetchUrl;
-  const t0=Date.now();
   if(!hit) showShimmer(true);
   try{
     const res=await fetch(fetchUrl, {signal:_abort.signal, headers:{'X-Requested-With':'XMLHttpRequest'}});
@@ -183,13 +178,10 @@ async function hydrate(url){
       _lastSuccessUrl='';
     }
   }finally{
-    const elapsed=Date.now()-t0;
-    const minShow=380;
-    if(elapsed < minShow){
-      setTimeout(()=>showShimmer(false), minShow - elapsed);
-    } else {
-      showShimmer(false);
-    }
+    // No artificial minimum: the skeleton used to be pinned for 380ms even
+    // when the results were already cached and on screen. A sub-frame flash
+    // is avoided by the reveal transition instead of by holding the placeholder.
+    showShimmer(false);
   }
 }
 function refreshDetailLinks(){
@@ -389,12 +381,9 @@ window.addEventListener('popstate', function(){
 document.addEventListener('DOMContentLoaded', function(){
   // ensure amenities chips start white (only blue when actively filtered)
   try{ syncUI(parseUrl()); }catch(e){}
-  if(!document.getElementById('fastnet-progress')){
-    const bar=document.createElement('div');
-    bar.id='fastnet-progress';
-    bar.style.cssText='position:fixed;top:0;left:0;height:2px;width:0;background:#0f62fe;z-index:9999;transition:width .3s ease;';
-    document.body.appendChild(bar);
-  }
+  // Removed a second, hand-rolled 2px progress bar that was appended to the
+  // body here and stacked on top of the real one. Progress is now owned
+  // solely by FastnetLoading.bar.
   const form=document.getElementById('gh_search_form');
   if(form){
     form.addEventListener('submit', function(e){
@@ -447,7 +436,6 @@ document.addEventListener('DOMContentLoaded', function(){
     }
   }
   patchGuests();
-  setInterval(patchGuests, 800);
   // date stepper patch
   function patchDate(){
     if(typeof window.fnsStep==='function' && !window.fnsStep._patched){
@@ -461,7 +449,30 @@ document.addEventListener('DOMContentLoaded', function(){
       window.ghStep._patched=true;
     }
   }
-  patchDate(); setInterval(patchDate, 800);
+  patchDate();
+
+  /* The guest/date stepper patches above can only apply once the search bar's
+     own deferred script has run. Both pollers used to run every 800ms for the
+     entire life of the page — 1.25Hz of wakeups that no-op once patched.
+     Poll until every target is patched, then stop for good. */
+  (function patchWhenReady(){
+    var PATCH_INTERVAL = 400;
+    var PATCH_CEILING = 60; // ~24s: long enough for deferred scripts under load
+    var tries = 0;
+
+    var timer = setInterval(function(){
+      patchGuests();
+      patchDate();
+      tries++;
+
+      var patched =
+        (typeof window.fnsStep !== 'function' || window.fnsStep._patched) &&
+        (typeof window.ghStep !== 'function' || window.ghStep._patched) &&
+        (window.ghG === undefined || window.ghG._patched);
+
+      if (patched || tries >= PATCH_CEILING) clearInterval(timer);
+    }, PATCH_INTERVAL);
+  })();
   // ── Fastest search: idle-prefetch popular destinations ──
   // Warms client cache + server 90s cache + CDN so Arusha/Zanzibar/Dar open instantly.
   function prefetchPopular(){
@@ -489,7 +500,20 @@ document.addEventListener('DOMContentLoaded', function(){
 // bounds helper
 window.FastNetMapBounds={update(boundsStr,isPassive){ if(isPassive) FastNetState.replaceState({bounds:boundsStr}); else FastNetState.pushState({bounds:boundsStr}); }};
 
-// shimmer trigger alias
-window.fnsTriggerShimmer=function(){ const c=document.getElementById('gh-cards-container'), s=document.getElementById('gh-shimmer-container'); if(c&&s){ c.style.opacity='0.55'; s.style.display='block'; }};
-window.ghTriggerShimmer=window.fnsTriggerShimmer;
+// Shimmer triggers.
+//
+// These were defined a second time here, and because fastnet-state.js is
+// deferred this version won - it set opacity/display directly and had no hide
+// counterpart, no timer and no event dispatch. The filter modal calls this on
+// submit, so the skeleton could stay on screen permanently.
+//
+// Both now delegate to the canonical controller, which is idempotent and
+// paired with FastnetLoading.skeleton(..., false).
+window.fnsTriggerShimmer = function () {
+  FastnetLoading.skeleton('gh-cards-container', true, document.getElementById('gh-shimmer-container'));
+};
+window.ghTriggerShimmer = window.fnsTriggerShimmer;
+window.ghHideShimmer = window.ghHideShimmer || function () {
+  FastnetLoading.skeleton('gh-cards-container', false, document.getElementById('gh-shimmer-container'));
+};
 })();

@@ -126,7 +126,7 @@ $this->assign('title', 'Customer information');
 .agoda-radio input{width:18px;height:18px;accent-color:#0f62fe}
 .agoda-link{color:#0f62fe;font-size:13px;font-weight:600;text-decoration:none}
 .agoda-link:hover{text-decoration:underline}
-.agoda-benefit{display:flex;align-items:center;gap:12px;background:#f8f9fa;border-radius:8px;padding:14px}
+.agoda-benefit{display:flex;align-items:center;gap:12px;background:var(--cds-gray-10);border-radius:8px;padding:14px}
 .agoda-benefit .free-badge{background:#0f7a2b;color:#fff;font-size:11px;font-weight:800;padding:4px 8px;border-radius:4px}
 .agoda-next-btn{background:#0f62fe;color:#fff;border:none;border-radius:30px;padding:14px 24px;font-size:15px;font-weight:800;width:100%;cursor:pointer;letter-spacing:0.02em;box-shadow:0 4px 12px rgba(15,98,254,0.18);transition:background 150ms ease}
 .agoda-next-btn:hover{background:#0353e9}
@@ -340,7 +340,7 @@ $this->assign('title', 'Customer information');
     <div class="agoda-side-card">
       <div class="agoda-side-card-inner">
         <div class="agoda-hotel-row">
-          <?php if ($img !== ''): ?><img class="agoda-hotel-thumb" src="<?= h($img) ?>" alt="<?= h($propTitle) ?>"><?php else: ?><span class="agoda-hotel-thumb" style="display:inline-flex;align-items:center;justify-content:center;background:#f4f4f4;color:#8d8d8d;" aria-hidden="true"><i class="fa-solid fa-image"></i></span><?php endif; ?>
+          <?php if ($img !== ''): ?><img class="agoda-hotel-thumb" src="<?= h($img) ?>" alt="<?= h($propTitle) ?>"><?php else: ?><span class="agoda-hotel-thumb" style="display:inline-flex;align-items:center;justify-content:center;background:var(--cds-gray-10);color:#8d8d8d;" aria-hidden="true"><i class="fa-solid fa-image"></i></span><?php endif; ?>
           <div>
             <div class="agoda-hotel-title"><?= h($propTitle) ?></div>
             <?php if ($propStars > 0): ?><div class="agoda-stars"><?= str_repeat('★', $propStars) ?></div><?php endif; ?>
@@ -357,7 +357,7 @@ $this->assign('title', 'Customer information');
     <div class="agoda-side-card">
       <div class="agoda-side-card-inner">
         <div class="agoda-room-box">
-          <?php if ($roomImg !== ''): ?><img class="agoda-room-thumb" src="<?= h($roomImg) ?>" alt="<?= h($roomTitle) ?>"><?php else: ?><span class="agoda-room-thumb" style="display:inline-flex;align-items:center;justify-content:center;background:#f4f4f4;color:#8d8d8d;" aria-hidden="true"><i class="fa-solid fa-bed"></i></span><?php endif; ?>
+          <?php if ($roomImg !== ''): ?><img class="agoda-room-thumb" src="<?= h($roomImg) ?>" alt="<?= h($roomTitle) ?>"><?php else: ?><span class="agoda-room-thumb" style="display:inline-flex;align-items:center;justify-content:center;background:var(--cds-gray-10);color:#8d8d8d;" aria-hidden="true"><i class="fa-solid fa-bed"></i></span><?php endif; ?>
           <div>
             <div class="agoda-room-title">1 x <?= h($roomTitle) ?></div>
             <div class="agoda-room-meta"><?php

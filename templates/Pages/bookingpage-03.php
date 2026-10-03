@@ -25,7 +25,6 @@ $quoteId = $quote['quote_id'] ?? $queryParams['quote_id'] ?? '';
 $propertyId = $property['id'] ?? $queryParams['property_id'] ?? 0;
 $roomId = $room['id'] ?? $queryParams['room_id'] ?? 0;
 $guestEmail = $queryParams['guest_email'] ?? $queryParams['email'] ?? '';
-$holderName = trim(($queryParams['first_name'] ?? '') . ' ' . ($queryParams['last_name'] ?? ''));
 ?>
 <style>
 /* Agoda Payment — step 2 — matches screenshot */
@@ -99,7 +98,7 @@ $holderName = trim(($queryParams['first_name'] ?? '') . ' ' . ($queryParams['las
 .agoda-off-badge{background:#c0392b;color:#fff;font-size:11px;font-weight:800;padding:4px 8px;border-radius:4px;float:right}
 .agoda-price-row{display:flex;justify-content:space-between;font-size:13px;color:#202124;padding:6px 0}
 .agoda-price-row.strike span:last-child{text-decoration:line-through;color:#5f6368}
-.agoda-price-total{display:flex;justify-content:space-between;align-items:center;padding:12px 0 6px;border-top:1px solid #e8eaed;margin-top:6px}
+.agoda-price-total{display:flex;justify-content:space-between;align-items:center;padding:var(--cds-spacing-04) 0 var(--cds-spacing-03);border-top:1px solid #e8eaed;margin-top:6px}
 .agoda-price-total b{font-size:16px;color:#202124}
 .agoda-included{font-size:11px;color:#5f6368;border-top:1px dashed #e8eaed;padding-top:8px;margin-top:6px}
 .agoda-cancel-card{padding:14px 16px}
@@ -202,20 +201,17 @@ $holderName = trim(($queryParams['first_name'] ?? '') . ' ' . ($queryParams['las
         <input type="hidden" name="email" value="<?= h($queryParams['email'] ?? $guestEmail) ?>">
         <input type="hidden" name="phone" value="<?= h($queryParams['phone'] ?? '') ?>">
         <input type="hidden" name="special_requests" value="<?= h($queryParams['special_notes'] ?? $queryParams['special_requests'] ?? '') ?>">
+        <input type="hidden" name="room_preference" value="<?= h($queryParams['pref_room_type'] ?? '') ?>">
+        <input type="hidden" name="bed_preference" value="<?= h($queryParams['pref_bed'] ?? '') ?>">
 
         <!-- Unified payment methods — all in one section -->
         <div style="padding:12px 16px">
           <div style="font-size:12px;font-weight:800;color:#202124;margin-bottom:10px">Select payment method</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <label class="agoda-pay-option" data-method="card" style="border:2px solid #0f62fe;background:#F0F3FF;border-radius:12px;padding:10px 10px;display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="radio" name="payment_method" value="card" checked style="accent-color:#0f62fe"><span style="font-size:13px;font-weight:700;color:#0f62fe">Credit/debit card</span>
-              <span style="margin-left:auto;display:flex;gap:4px;align-items:center">
-                <img src="<?= $this->Url->build('/assets/img/visa-logo.png') ?>" alt="VISA" style="height:18px;border:1px solid #e8eaed;border-radius:3px;background:#fff;padding:1px 3px">
-                <img src="<?= $this->Url->build('/assets/img/mastercard-logo.png') ?>" alt="Mcard" style="height:18px;border:1px solid #e8eaed;border-radius:3px;background:#fff;padding:1px 3px">
-              </span>
-            </label>
-            <label class="agoda-pay-option" data-method="vodacom" style="border:1px solid #e8eaed;background:#fff;border-radius:12px;padding:10px 10px;display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="radio" name="payment_method" value="vodacom" style="accent-color:#e60000"><img src="<?= $this->Url->build('/assets/img/vodacom-logo.png') ?>" alt="M-Pesa" style="height:18px;max-width:48px;object-fit:contain"><span style="font-size:12px;font-weight:700;color:#202124">M-Pesa</span>
+            <!-- Card payments are not offered: there is no card gateway, so a
+                 card option would collect PAN/CVC details that go nowhere. -->
+            <label class="agoda-pay-option" data-method="vodacom" style="border:2px solid #0f62fe;background:#F0F3FF;border-radius:12px;padding:10px 10px;display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="radio" name="payment_method" value="vodacom" checked style="accent-color:#e60000"><img src="<?= $this->Url->build('/assets/img/vodacom-logo.png') ?>" alt="M-Pesa" style="height:18px;max-width:48px;object-fit:contain"><span style="font-size:12px;font-weight:700;color:#202124">M-Pesa</span>
             </label>
             <label class="agoda-pay-option" data-method="tigo" style="border:1px solid #e8eaed;background:#fff;border-radius:12px;padding:10px 10px;display:flex;align-items:center;gap:8px;cursor:pointer">
               <input type="radio" name="payment_method" value="tigo" style="accent-color:#0033a0"><img src="<?= $this->Url->build('/assets/img/tigo-pesa-logo.jpg') ?>" alt="Tigo" style="height:18px;max-width:48px;object-fit:contain"><span style="font-size:12px;font-weight:700;color:#202124">Tigo Pesa</span>
@@ -231,42 +227,9 @@ $holderName = trim(($queryParams['first_name'] ?? '') . ' ' . ($queryParams['las
 
         <div class="agoda-green-tip">Last step! You're almost done.</div>
 
-        <!-- Card fields — appears only when card selected -->
-        <div id="cardFormSection" class="agoda-form-grid">
-          <div>
-            <div class="agoda-field">
-              <label class="req">Card holder name *</label>
-              <input class="agoda-input agoda-input-holder" name="card_holder" value="<?= h($holderName) ?>" required>
-            </div>
-            <div class="agoda-field">
-              <label>Credit/debit card number *</label>
-              <input class="agoda-input agoda-input-card" name="card_number" placeholder="Card Number" inputmode="numeric" autocomplete="cc-number" required>
-              <span class="agoda-input-icon"><i class="fa-solid fa-lock"></i></span>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-              <div class="agoda-field">
-                <label>Expiry date *</label>
-                <input class="agoda-input agoda-input-card" name="expiry" placeholder="MM/YY" inputmode="numeric" autocomplete="cc-exp" required>
-              </div>
-              <div class="agoda-field">
-                <label>CVC/CVV *</label>
-                <input class="agoda-input agoda-input-card" name="cvc" placeholder="CVC/CVV" inputmode="numeric" autocomplete="cc-csc" required>
-              </div>
-            </div>
-          </div>
-          <div>
-            <div class="agoda-card-preview">
-              <div class="chip"><i class="fa-solid fa-credit-card" style="color:#b0b3b8"></i></div>
-              <div class="numbers">**** &nbsp; **** &nbsp; **** &nbsp; ****</div>
-              <div class="holder"><span><?= h(strtoupper($holderName)) ?></span><span>**/****</span></div>
-            </div>
-            <div class="agoda-secure"><i class="fa-solid fa-shield-halved"></i> All card information is fully encrypted and secured</div>
-          </div>
-        </div>
-
-        <!-- Local mobile money fields — appears when any momo selected -->
-        <div id="momoFormSection" style="display:none;padding:16px">
-          <div style="background:#f8f9fa;border:1px solid #e8eaed;border-radius:8px;padding:14px">
+        <!-- Local mobile money fields -->
+        <div id="momoFormSection" style="padding:16px">
+          <div style="background:var(--cds-gray-10);border:1px solid #e8eaed;border-radius:8px;padding:14px">
             <div style="font-size:13px;font-weight:700;color:#202124;margin-bottom:8px"><span id="momoTitle">Mobile money number</span></div>
             <div style="display:flex;align-items:center">
               <span style="background:#fff;border:1px solid #dadce0;border-right:none;border-radius:6px 0 0 6px;padding:0 10px;height:42px;display:flex;align-items:center;font-size:13px;color:#5f6368;white-space:nowrap"><span id="momoPrefix">+255</span> <img id="momoLogo" src="" alt="" style="height:16px;margin-left:6px;display:none"></span>
@@ -354,15 +317,11 @@ function tickPay(){
 }
 tickPay();
 function updatePayUI(){
-  const sel=document.querySelector('[name=payment_method]:checked')?.value || 'card';
-  const cardSec=document.getElementById('cardFormSection');
+  const sel=document.querySelector('[name=payment_method]:checked')?.value || 'vodacom';
   const momoSec=document.getElementById('momoFormSection');
-  const isCard=sel==='card';
-  if(cardSec) cardSec.style.display=isCard?'grid':'none';
-  if(momoSec) momoSec.style.display=isCard?'none':'block';
-  document.querySelectorAll('[name=card_holder],[name=card_number],[name=expiry],[name=cvc]').forEach(i=>{i.required=isCard});
+  if(momoSec) momoSec.style.display='block';
   const phoneInput=document.querySelector('[name=payment_phone]');
-  if(phoneInput) phoneInput.required=!isCard;
+  if(phoneInput) phoneInput.required=true;
   // highlight selected option
   document.querySelectorAll('.agoda-pay-option').forEach(l=>{
     const isSel=l.querySelector('input')?.value===sel;
@@ -370,8 +329,7 @@ function updatePayUI(){
     l.style.background=isSel?'#F0F3FF':'#fff';
   });
   // update momo hint/logo
-  if(!isCard){
-    const titles={vodacom:'M-Pesa (Vodacom)',tigo:'Tigo Pesa',airtel:'Airtel Money',halotel:'HaloPesa'};
+  const titles={vodacom:'M-Pesa (Vodacom)',tigo:'Tigo Pesa',airtel:'Airtel Money',halotel:'HaloPesa'};
     const logos={
       vodacom:'<?= $this->Url->build('/assets/img/vodacom-logo.png') ?>',
       tigo:'<?= $this->Url->build('/assets/img/tigo-pesa-logo.jpg') ?>',
@@ -384,32 +342,17 @@ function updatePayUI(){
     if(t) t.textContent='Pay with ' + (titles[sel]||'Mobile money');
     if(h) h.textContent='You selected ' + (titles[sel]||sel) + ' — you will receive a USSD push.';
     if(lg && logos[sel]){lg.src=logos[sel]; lg.style.display='inline-block';}
-  }
 }
 document.querySelectorAll('[name=payment_method]').forEach(r=>{r.addEventListener('change',updatePayUI)});
 document.addEventListener('DOMContentLoaded',updatePayUI);
 document.getElementById('agodaPaymentForm')?.addEventListener('submit',function(e){
-  const payMethod=this.querySelector('[name=payment_method]:checked')?.value || 'card';
-  if(payMethod==='card'){
-    const holder=this.querySelector('[name=card_holder]');
-    const num=this.querySelector('[name=card_number]');
-    const exp=this.querySelector('[name=expiry]');
-    const cvc=this.querySelector('[name=cvc]');
-    if(!holder.value.trim()||!num.value.trim()||!exp.value.trim()||!cvc.value.trim()){
-      e.preventDefault();
-      alert('Please fill card details');
-      return;
-    }
-  } else {
-    const phone=this.querySelector('[name=payment_phone]');
-    if(!phone.value.trim()){
-      e.preventDefault();
-      alert('Please enter your mobile money number for ' + payMethod);
-      phone.focus();
-      return;
-    }
-    // For backend mobile money, ensure card fields not sent as empty required
-    // payment_method already is vodacom/tigo/etc via radio value
+  const payMethod=this.querySelector('[name=payment_method]:checked')?.value || 'vodacom';
+  const phone=this.querySelector('[name=payment_phone]');
+  if(!phone.value.trim()){
+    e.preventDefault();
+    alert('Please enter your mobile money number for ' + payMethod);
+    phone.focus();
+    return;
   }
 });
 </script>

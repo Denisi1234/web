@@ -57,7 +57,7 @@ $bedsVal = $room['number_of_beds'] ?? 1;
   </div>
 
   <?php if (empty($properties)): ?>
-    <div class="p-card"><div class="p-empty">No property yet — <a href="<?= $this->Url->build('/host/listings/add') ?>">create a property first</a>.</div></div>
+    <div class="p-card"><div class="p-empty">No property yet — <a href="<?= $this->Url->build('/host/onboarding') ?>">create a property first</a>.</div></div>
   <?php else: ?>
   <?= $this->Form->create(null, [
     'url' => $isEdit ? ['action' => 'editRoom', $room['id'] ?? ''] : ['action' => 'addRoom'],
@@ -149,6 +149,23 @@ $bedsVal = $room['number_of_beds'] ?? 1;
     setTimeout(function () { t.parentNode && t.parentNode.removeChild(t); }, 2600);
   }
 
+  function getAuthToken() {
+    var meta = document.querySelector('meta[name="api-token"]');
+    if (meta) {
+      var val = (meta.getAttribute('content') || '').trim();
+      if (val) return val;
+    }
+    try {
+      var s = window.localStorage.getItem('auth_token') || window.localStorage.getItem('token') || window.sessionStorage.getItem('auth_token');
+      if (s && s.trim()) return s.trim();
+    } catch (e) {}
+    try {
+      var m = document.cookie.match(/fn_token=([^;]+)/);
+      if (m && m[1]) return decodeURIComponent(m[1]).trim();
+    } catch (e) {}
+    return '';
+  }
+
   /* photos: preview grid + file upload (same /upload endpoint as onboarding) */
   var box = document.getElementById('rf-prev');
   var file = document.getElementById('rf-file');
@@ -193,20 +210,57 @@ $bedsVal = $room['number_of_beds'] ?? 1;
         syncUp();
         var fd = new FormData();
         fd.append('file', f);
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', BACKEND + '/upload', true);
-        xhr.setRequestHeader('Accept', 'application/json');
-        xhr.onload = function () {
-          uploading--;
-          syncUp();
-          try {
-            var j = JSON.parse(xhr.responseText);
-            if (xhr.status >= 200 && xhr.status < 300 && j.url) { if (!hasUrl(j.url)) thumb(j.url); }
-            else toast((j && j.message) || 'Photo upload failed.');
-          } catch (e) { toast('Photo upload failed.'); }
-        };
-        xhr.onerror = function () { uploading--; syncUp(); toast('No connection to media server.'); };
-        xhr.send(fd);
+
+        var token = getAuthToken();
+        var targetUrl = token ? (BACKEND + '/upload') : '/host/upload';
+
+        function sendRoomPhoto(url, useAuth) {
+          var xhr = new XMLHttpRequest();
+          xhr.open('POST', url, true);
+          xhr.setRequestHeader('Accept', 'application/json');
+          if (useAuth && token) {
+            xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+          }
+          xhr.onload = function () {
+            try {
+              var j = JSON.parse(xhr.responseText);
+              var photoUrl = j.url || j.photo_url || (j.data && (j.data.url || j.data.photo_url));
+              if (xhr.status >= 200 && xhr.status < 300 && photoUrl) {
+                uploading--;
+                syncUp();
+                if (!hasUrl(photoUrl)) thumb(photoUrl);
+                return;
+              }
+              if (url !== '/host/upload' && (xhr.status === 401 || xhr.status === 403 || xhr.status === 0)) {
+                sendRoomPhoto('/host/upload', false);
+                return;
+              }
+              uploading--;
+              syncUp();
+              toast((j && j.message) || 'Photo upload failed.');
+            } catch (e) {
+              if (url !== '/host/upload') {
+                sendRoomPhoto('/host/upload', false);
+                return;
+              }
+              uploading--;
+              syncUp();
+              toast('Photo upload failed.');
+            }
+          };
+          xhr.onerror = function () {
+            if (url !== '/host/upload') {
+              sendRoomPhoto('/host/upload', false);
+              return;
+            }
+            uploading--;
+            syncUp();
+            toast('No connection to media server.');
+          };
+          xhr.send(fd);
+        }
+
+        sendRoomPhoto(targetUrl, Boolean(token));
       })(fs[k]);
     }
     file.value = '';

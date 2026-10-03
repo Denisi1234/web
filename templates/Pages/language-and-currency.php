@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Trivago Language and Currency Profile Page
  */
@@ -50,16 +50,21 @@ $this->assign('title', 'Language and currency - FastNet Stays');
                             <label class="trivago-field-label" for="prefCurrency">Currency</label>
                             <div class="trivago-select-wrapper">
                                 <select id="prefCurrency" class="trivago-select" name="currency">
-                                    <option value="USD" selected>USD - US Dollar</option>
-                                    <option value="TZS">TZS - Tanzanian Shilling</option>
-                                    <option value="EUR">EUR - Euro</option>
-                                    <option value="GBP">GBP - British Pound</option>
-                                    <option value="CAD">CAD - Canadian Dollar</option>
-                                    <option value="AUD">AUD - Australian Dollar</option>
-                                    <option value="KES">KES - Kenyan Shilling</option>
-                                    <option value="UGX">UGX - Ugandan Shilling</option>
-                                    <option value="ZAR">ZAR - South African Rand</option>
+                                    <?php if (!empty($currencies) && is_array($currencies)): ?>
+                                        <?php foreach ($currencies as $c): $code = $c['code'] ?? ''; ?>
+                                            <option value="<?= h($code) ?>" <?= $code === 'TZS' ? 'selected' : '' ?>>
+                                                <?= h($code) ?> - <?= h($c['name'] ?? $code) ?> <?= !empty($c['flag']) ? h($c['flag']) : '' ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <option value="TZS" selected>TZS - Tanzanian Shilling 🇹🇿</option>
+                                        <option value="USD">USD - US Dollar 🇺🇸</option>
+                                        <option value="EUR">EUR - Euro 🇪🇺</option>
+                                        <option value="GBP">GBP - British Pound 🇬🇧</option>
+                                        <option value="KES">KES - Kenyan Shilling 🇰🇪</option>
+                                    <?php endif; ?>
                                 </select>
+                                <div id="currencyRateNote" style="font-size:12px;color:#6b7280;margin-top:4px"></div>
                                 <i class="fa-solid fa-chevron-down trivago-select-arrow"></i>
                             </div>
                         </div>
@@ -88,7 +93,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const currSelect = document.getElementById('prefCurrency');
 
     if (langSelect) langSelect.value = savedLang;
-    if (currSelect) currSelect.value = savedCurr;
+    if (currSelect && currSelect.value !== savedCurr) currSelect.dataset.restore = savedCurr;
+
+    loadCurrencies();
 });
 
 function handleApply(e) {
@@ -100,15 +107,63 @@ function handleApply(e) {
     if (langSelect) localStorage.setItem('fastnet_lang', langSelect.value);
     if (currSelect) localStorage.setItem('fastnet_curr', currSelect.value);
 
-    // Provide visual feedback
     applyBtn.innerText = 'Applying...';
     applyBtn.disabled = true;
 
-    setTimeout(() => {
-        applyBtn.innerText = 'Apply';
-        applyBtn.disabled = false;
-        showToast('Language and currency updated successfully');
-    }, 400);
+    // Nothing to persist server-side for display preference yet, so restore the
+    // button as soon as the local write is done. This used to hold the button
+    // for a flat 400ms to simulate work.
+    try {
+        localStorage.setItem('fastnet_curr_rate', String(document.getElementById('currencyRateNote').dataset.rate || ''));
+    } catch (err) {}
+
+    applyBtn.innerText = 'Apply';
+    applyBtn.disabled = false;
+    showToast('Language and currency updated');
+}
+
+/* Load the real currency list and live TZS rates from GET /api/currencies. */
+function loadCurrencies() {
+    var select = document.getElementById('prefCurrency');
+    var note   = document.getElementById('currencyRateNote');
+    if (!select) return;
+
+    fetch('/api/currencies', { headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (!data || !Array.isArray(data.currencies) || !data.currencies.length) return;
+
+            var current = localStorage.getItem('fastnet_curr') || 'TZS';
+            var seen = {};
+            var html = '';
+
+            data.currencies.forEach(function (c) {
+                var code = c.code || c.currency_code || c.symbol;
+                if (!code || seen[code]) return;
+                seen[code] = true;
+                var name = c.name || code;
+                html += '<option value="' + code + '">' + code + ' - ' + name + '</option>';
+            });
+
+            select.innerHTML = html;
+            if (seen[current]) select.value = current;
+
+            var updateNote = function () {
+                var chosen = data.currencies.find(function (c) {
+                    return (c.code || c.currency_code) === select.value;
+                });
+                if (!chosen || !note) return;
+                var rate = chosen.tzs_per_unit;
+                note.dataset.rate = rate != null ? rate : '';
+                note.textContent = rate
+                    ? '1 ' + select.value + ' = ' + Number(rate).toLocaleString() + ' TZS'
+                      + (data.rates_stale ? ' (approx. — live rates unavailable)' : '')
+                    : '';
+            };
+            updateNote();
+            select.addEventListener('change', updateNote);
+        })
+        .catch(function () { /* keep the default TZS option */ });
 }
 
 function showToast(msg) {

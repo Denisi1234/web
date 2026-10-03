@@ -1,10 +1,13 @@
 <?php
 $this->assign('title', 'Dashboard');
 $this->assign('portal_title', 'Overview');
-$this->assign('page_actions', '<a href="' . $this->Url->build('/host/listings/add') . '" class="p-btn">Add property</a>');
+$this->assign('page_actions', '<a href="' . $this->Url->build('/host/onboarding') . '" class="p-btn">Add property</a>');
 $gross = (float)($stats['revenue'] ?? 0);
-$fee = $gross * 0.10;
-$net = $gross * 0.90;
+// Use the backend's stored commission_rate / platform_fee / owner_payout.
+// This re-derived a flat 10/90 from gross, so the numbers could not reconcile
+// with the payout ledger when a booking had a different commission rate.
+$fee = (float)($stats['platform_fee'] ?? 0);
+$net = (float)($stats['owner_earnings'] ?? 0);
 $roomsCount = 0;
 foreach (($properties ?? []) as $p) { $roomsCount += (int)($p['room_count'] ?? (isset($p['rooms']) ? count($p['rooms']) : 0)); }
 $recentBookings = array_slice($bookings ?? [], 0, 5);
@@ -19,8 +22,8 @@ $recentBookings = array_slice($bookings ?? [], 0, 5);
 <div class="row g-3 mb-4">
   <div class="col-6 col-xl-3"><div class="p-stat"><div class="v"><?= (int)($stats['properties'] ?? 0) ?></div><div class="l">Properties</div><div class="s"><?= $roomsCount ?> rooms total</div></div></div>
   <div class="col-6 col-xl-3"><div class="p-stat"><div class="v"><?= (int)($stats['bookings'] ?? 0) ?></div><div class="l">Bookings</div><div class="s">All your listings</div></div></div>
-  <div class="col-6 col-xl-3"><div class="p-stat"><div class="v">TSh <?= number_format($gross) ?></div><div class="l">Gross revenue</div><div class="s">Net 90% · TSh <?= number_format($net) ?></div></div></div>
-  <div class="col-6 col-xl-3"><div class="p-stat"><div class="v">TSh <?= number_format($fee) ?></div><div class="l">Platform fee</div><div class="s">10% of gross</div></div></div>
+  <div class="col-6 col-xl-3"><div class="p-stat"><div class="v">TSh <?= number_format($gross) ?></div><div class="l">Gross revenue</div><div class="s">Your share · TSh <?= number_format($net) ?></div></div></div>
+  <div class="col-6 col-xl-3"><div class="p-stat"><div class="v">TSh <?= number_format($fee) ?></div><div class="l">Platform fee</div><div class="s"><?= $gross > 0 ? round($fee / $gross * 100, 1) . '% of gross' : 'Share of bookings' ?></div></div></div>
 </div>
 
 <div class="row g-3">

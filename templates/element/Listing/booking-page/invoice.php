@@ -1,30 +1,58 @@
 <?php
-$invBookingId = $queryParams['booking_id'] ?? rand(100, 999);
-$invReference = $queryParams['reference'] ?? ('FN-' . rand(1000, 9999));
-$invGuestName = $queryParams['guest_name'] ?? 'Guest Traveler';
-$invGuestEmail = $queryParams['guest_email'] ?? 'guest@fastnetstays.com';
-$invGuestPhone = $queryParams['guest_phone'] ?? '+255 700 000 000';
-$invCheckIn = $queryParams['check_in'] ?? date('Y-m-d', strtotime('+1 day'));
-$invCheckOut = $queryParams['check_out'] ?? date('Y-m-d', strtotime('+4 days'));
-$invTotalAmount = (float)($queryParams['total_amount'] ?? 70000);
-$invNights = max(1, (strtotime($invCheckOut) - strtotime($invCheckIn)) / 86400);
+/**
+ * Official Booking Receipt.
+ *
+ * This block previously defaulted every field to invented values: a rand()
+ * booking id, a rand() receipt number, "Guest Traveler", a 70,000 TSh total
+ * and an 8% VAT split invented on the spot (contradicting the backend's own
+ * 0% VAT / 1% processing-fee model).
+ *
+ * BookingController::bookingpageSuccess() now loads and verifies the real
+ * booking from GET /api/bookings/{id} before rendering, and rejects anything
+ * that is not paid. These fallbacks therefore exist only as a guard: if the
+ * verified payload is somehow incomplete we show "unavailable" rather than
+ * print a fabricated receipt.
+ */
+$hasVerifiedBooking = !empty($verifiedBooking) && is_array($verifiedBooking);
 
-$invPropName = !empty($property['name']) ? $property['name'] : 'FastNet Verified Lodge';
-$invPropCity = !empty($property['city']) ? $property['city'] : 'Tanzania';
-$invPropAddress = !empty($property['address']) ? $property['address'] : ($invPropCity . ', Tanzania');
+$invBookingId   = $hasVerifiedBooking ? ($verifiedBooking['booking_code'] ?: ('BK-' . $verifiedBooking['id'])) : ($queryParams['booking_id'] ?? null);
+$invReference   = $hasVerifiedBooking ? ($verifiedBooking['payment_reference'] ?? $verifiedBooking['booking_code'] ?? null) : ($queryParams['reference'] ?? null);
+$invGuestName   = $hasVerifiedBooking ? ($verifiedBooking['guest']['name'] ?? null) : ($queryParams['guest_name'] ?? null);
+$invGuestEmail  = $hasVerifiedBooking ? ($verifiedBooking['guest']['email'] ?? null) : ($queryParams['guest_email'] ?? null);
+$invGuestPhone  = $hasVerifiedBooking ? ($verifiedBooking['guest']['phone_number'] ?? null) : ($queryParams['guest_phone'] ?? null);
+$invCheckIn     = $hasVerifiedBooking ? ($verifiedBooking['check_in'] ?? null) : ($queryParams['check_in'] ?? null);
+$invCheckOut    = $hasVerifiedBooking ? ($verifiedBooking['check_out'] ?? null) : ($queryParams['check_out'] ?? null);
+$invTotalAmount = $hasVerifiedBooking ? (float) ($verifiedBooking['total_price'] ?? 0) : (float) ($queryParams['total_amount'] ?? 0);
 
-$invSubtotal = $invTotalAmount / 1.08;
-$invTax = $invTotalAmount - $invSubtotal;
+$invNights = ($invCheckIn && $invCheckOut)
+    ? max(1, (int) ((strtotime($invCheckOut) - strtotime($invCheckIn)) / 86400))
+    : 0;
 
-$rawPm = strtolower($queryParams['payment_method'] ?? 'vodacom');
+// Real money breakdown. The backend is authoritative on every figure; the
+// previous /1.08 split invented tax that was never charged.
+$invSubtotal     = $hasVerifiedBooking ? (float) ($verifiedBooking['subtotal'] ?? $invTotalAmount) : $invTotalAmount;
+$invTax          = $hasVerifiedBooking ? (float) ($verifiedBooking['taxes'] ?? 0) : 0.0;
+$invProcessingFee = $hasVerifiedBooking ? (float) ($verifiedBooking['azampay_fee'] ?? $verifiedBooking['processing_fee'] ?? 0) : 0.0;
+
+$invPropName    = $property['name'] ?? null;
+$invPropCity    = $property['city'] ?? null;
+$invPropAddress = $property['address'] ?? $invPropCity;
+
+$rawPm = strtolower($queryParams['payment_method'] ?? '');
 $pmLabels = [
     'vodacom' => 'Vodacom M-Pesa',
-    'tigo' => 'Tigo Pesa',
-    'airtel' => 'Airtel Money',
+    'm-pesa'  => 'Vodacom M-Pesa',
+    'm pesa'  => 'Vodacom M-Pesa',
+    'tigo'    => 'Tigo Pesa',
+    'airtel'  => 'Airtel Money',
+    'halopesa' => 'HaloPesa (Halotel)',
     'halotel' => 'HaloPesa (Halotel)',
+    'crdb'    => 'CRDB Bank',
 ];
-$invPaymentMethod = $pmLabels[$rawPm] ?? 'Mobile Money';
-$invPaymentPhone = $queryParams['payment_phone'] ?? $invGuestPhone;
+$invPaymentMethod = $pmLabels[$rawPm] ?? ($hasVerifiedBooking ? ($verifiedBooking['payment']['gateway'] ?? 'Mobile Money') : 'Mobile Money');
+$invPaymentPhone  = $queryParams['payment_phone'] ?? $invGuestPhone;
+
+$receiptUnavailable = !$invBookingId || !$invTotalAmount;
 ?>
 <!-- Print Invoice Modal -->
 <div class="modal modal-lg fade" id="invoice" tabindex="-1" role="dialog" aria-labelledby="invoicemodal" aria-hidden="true">
@@ -112,16 +140,29 @@ $invPaymentPhone = $queryParams['payment_phone'] ?? $invGuestPhone;
                                     <tbody>
                                         <tr>
                                             <td class="text-sm">
-                                                <strong><?= h($invPropName) ?> Accommodation</strong><br>
-                                                <small class="text-muted">Standard / Executive Room reservation</small>
+                                                <strong><?= h($invPropName ?: 'Accommodation') ?></strong><br>
+                                                <small class="text-muted"><?= h($bookingRoom['title'] ?? ($invBookingId ? 'Reservation ' . $invBookingId : 'Reservation')) ?></small>
                                             </td>
                                             <td class="text-sm text-center"><?= h($invNights) ?></td>
                                             <td class="text-sm text-end"><?= number_format($invSubtotal) ?></td>
                                         </tr>
+                                        <?php /* Only render rows that represent money actually
+                                                 charged. The backend charges 0% VAT plus a 1%
+                                                 processing fee; the previous markup always printed
+                                                 an "8% Service Charge & VAT" row, inventing a
+                                                 charge that was never billed. */ ?>
+                                        <?php if ($invProcessingFee > 0): ?>
                                         <tr>
-                                            <td class="text-sm" colspan="2">8% Service Charge & VAT</td>
+                                            <td class="text-sm" colspan="2">Payment processing fee</td>
+                                            <td class="text-sm text-end"><?= number_format($invProcessingFee) ?></td>
+                                        </tr>
+                                        <?php endif; ?>
+                                        <?php if ($invTax > 0): ?>
+                                        <tr>
+                                            <td class="text-sm" colspan="2">Tax</td>
                                             <td class="text-sm text-end"><?= number_format($invTax) ?></td>
                                         </tr>
+                                        <?php endif; ?>
                                         <tr class="table-light">
                                             <td class="fw-bold fs-6" colspan="2">Total Paid / Due</td>
                                             <td class="fw-bold fs-6 text-end text-orange-600">TZS <?= number_format($invTotalAmount) ?></td>

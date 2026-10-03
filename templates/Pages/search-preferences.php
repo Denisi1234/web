@@ -120,8 +120,68 @@ function savePreferences() {
     try {
         localStorage.setItem('user_hotel_preferences', JSON.stringify(selected));
     } catch(e) {}
-    closePrefModal();
-    showSpToast('Search preferences saved');
+
+    // Persist server-side so the choice survives a new device. This used to be
+    // localStorage only, so the preference was lost on any other browser.
+    const roomTypes = ['Hotel', 'Lodge', 'Apartment', 'Villa', 'Resort', 'Guest house'];
+    const bedTypes  = ['King bed', 'Twin beds', 'Queen bed', 'Sofa bed', 'Bunk beds'];
+    const pick = (list) => list.filter(v => selected.indexOf(v) !== -1).join(', ') || 'No preference';
+
+    const body = new URLSearchParams();
+    body.set('bed_preference', pick(bedTypes));
+    body.set('room_type', pick(roomTypes));
+    body.set('smoking_preference', selected.indexOf('Non-smoking') !== -1 ? 'Non-smoking' : 'No preference');
+    body.set('step_free_access', selected.indexOf('Step-free access') !== -1 ? 'Step-free access' : 'No preference');
+    body.set('accessible_bathroom', selected.indexOf('Accessible bathroom') !== -1 ? 'Accessible bathroom' : 'No preference');
+    body.set('dietary_requirements', selected.indexOf('Breakfast included') !== -1 ? 'Breakfast' : 'None');
+
+    fetch('/travel/preferences', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: body.toString(),
+        credentials: 'same-origin'
+    })
+    .then(function (r) { return r.json().catch(function () { return {}; }); })
+    .then(function (data) {
+        closePrefModal();
+        showSpToast((data && data.status === 'success')
+            ? 'Search preferences saved'
+            : 'Could not save — kept on this device only');
+    })
+    .catch(function () {
+        closePrefModal();
+        showSpToast('Could not reach the server — kept on this device only');
+    });
+}
+
+/* Load saved preferences from the backend and re-select the matching tags. */
+function loadSavedPreferences() {
+    fetch('/travel/preferences', {
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        credentials: 'same-origin'
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+        if (!data || !data.preferences) return;
+        const p = data.preferences;
+        const chosen = []
+            .concat(String(p.bed_preference || '').split(','))
+            .concat(String(p.room_type || '').split(','))
+            .concat([p.smoking_preference, p.step_free_access, p.accessible_bathroom])
+            .map(s => s.trim())
+            .filter(s => s && s !== 'No preference' && s !== 'None');
+
+        if (!chosen.length) return;
+        document.querySelectorAll('.sp-pref-tag').forEach(function (tag) {
+            const label = tag.innerText.trim();
+            if (chosen.indexOf(label) !== -1) tag.classList.add('selected');
+        });
+    })
+    .catch(function () {});
 }
 
 function showSpToast(msg) {
@@ -135,6 +195,9 @@ function showSpToast(msg) {
         setTimeout(() => { toast.style.display = 'none'; }, 250);
     }, 2500);
 }
+
+// Load the saved preferences from the backend on page load.
+document.addEventListener('DOMContentLoaded', loadSavedPreferences);
 </script>
 </main>
 <?= $this->element('footer', ['skin' => 'skin-light-footer']) ?>

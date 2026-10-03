@@ -39,10 +39,14 @@ if (empty($list)) $list = $users;
           $oid = $o['id'] ?? $o['owner_id'] ?? $o['user_id'] ?? null;
           $name = $o['name'] ?? $o['owner_name'] ?? '—';
           $email = $o['email'] ?? $o['owner_email'] ?? '';
-          $st = strtolower((string)($o['status'] ?? $o['verification_status'] ?? 'pending'));
+          $st = strtolower((string)($o['status'] ?? $o['account_status'] ?? $o['verification_status'] ?? 'pending'));
           $badge = $st === 'approved' ? 'green' : ($st === 'rejected' ? 'red' : ($st === 'suspended' ? 'red' : 'yellow'));
-          $gross = $o['gross_revenue'] ?? $o['total_earnings'] ?? $o['gross'] ?? 0;
-          $net = $o['net_earnings'] ?? $o['owner_earnings'] ?? ($gross * 0.9);
+          // Backend financial-summary keys are gross_booking_value /
+          // platform_commission / owner_earnings. The 0.9 fallback invented a
+          // split when the backend omitted the row — it never omits it.
+          $gross = $o['gross_revenue'] ?? $o['gross_booking_value'] ?? $o['total_earnings'] ?? $o['gross'] ?? 0;
+          $fee = $o['platform_commission'] ?? 0;
+          $net = $o['net_earnings'] ?? $o['owner_earnings'] ?? ($gross - $fee);
         ?>
         <tr>
           <td><div style="font-weight:600"><?= h($name) ?> <span style="font-size:11px;font-weight:400;color:var(--p-text-2)">#<?= h($oid) ?></span></div><div style="font-size:12px;color:var(--p-text-2)"><?= h($email) ?></div></td>

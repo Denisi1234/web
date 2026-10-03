@@ -363,19 +363,23 @@
     background-color: #ffffff;
     box-shadow: 0 1px 3px rgba(60,64,67,0.08);
 }
+/* Header height lives in one token. The fixed header, the body offset and every
+   sticky strip below it (breadcrumbs, tabs) all read this, so they can no longer
+   drift apart and leave dead gaps or overlap content. */
+:root {
+    --fn-header-h: 56px;
+}
 body {
-    padding-top: 64px;
+    padding-top: var(--fn-header-h);
 }
 html {
-    scroll-padding-top: 72px;
+    scroll-padding-top: calc(var(--fn-header-h) + 8px);
 }
 @media (max-width: 991px) {
-    body { padding-top: 64px; }
-    html { scroll-padding-top: 72px; }
+    :root { --fn-header-h: 64px; }
 }
 @media (max-width: 575px) {
-    body { padding-top: 58px; }
-    html { scroll-padding-top: 66px; }
+    :root { --fn-header-h: 58px; }
     .agoda-sticky-wrapper { box-shadow: 0 1px 2px rgba(60,64,67,0.12); }
     .agoda-top-header {
         min-height: 58px;

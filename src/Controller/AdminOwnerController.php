@@ -124,13 +124,35 @@ class AdminOwnerController extends AppController
     }
 
     /**
-     * No login wall: admin pages always render. Without an admin session the
-     * backend calls return nothing and pages show empty states + sign-in
-     * banner (portal.php). Nothing here may redirect.
+     * Admin gate.
+     *
+     * This used to return null unconditionally ("no login wall"), so every
+     * /admin/* page shell rendered for any visitor. The backend 403s the data
+     * calls, so nothing leaked, but the portal rendered empty admin pages to
+     * the public. Now a non-admin is refused with a real 403.
      */
     private function requireAdmin(): ?\Cake\Http\Response
     {
-        return null;
+        $session = $this->getRequest()->getSession();
+        $user = $session->read('User');
+        $role = strtolower((string)(is_array($user) ? ($user['role'] ?? '') : ''));
+
+        if ($role === 'admin') {
+            return null;
+        }
+
+        // Not signed in at all -> send to login with a safe return path.
+        if ($session->read('is_logged_out') || empty($user)) {
+            $this->Flash->error(__('Sign in to access the admin portal.'));
+            return $this->redirect('/login?redirect=' . urlencode('/admin/dashboard'));
+        }
+
+        // Signed in but not an admin -> refuse with the branded page (HTTP 403),
+// not a bare exception the renderer would map to error400.
+        return $this->refusePortalAccess(
+            '/admin/dashboard',
+            __('You do not have access to the admin portal.')
+        );
     }
 
     /**
@@ -176,18 +198,46 @@ class AdminOwnerController extends AppController
         $owners = $userRes['data'] ?? (isset($userRes[0]) ? $userRes : []);
         if (!is_array($owners)) $owners = [];
 
+        // Verification queue counts come from one purpose-built aggregate rather
+        // than being derived client-side from the full property/booking/user
+        // collections above.
+        $verRes = $this->portal->get('/admin/verification/summary', [], $headers, 60);
+        $verification = $verRes['data'] ?? $verRes;
+        if (!is_array($verification)) $verification = [];
+        $verificationCounts = is_array($verification['counts'] ?? null) ? $verification['counts'] : [];
+
+        // Commission comes from each booking's stored commission_rate /
+        // platform_fee / owner_payout. These were previously re-derived as a flat
+        // revenue * 0.10 / * 0.90 here, which discarded the real per-booking
+        // split and produced figures that could never reconcile with the
+        // backend's ledger.
+        $revenue = array_sum(array_map(fn($b) => (float)($b['total_price'] ?? 0), $bookings));
+
+        $sumFee = static function (array $rows, string $column): float {
+            $total = 0.0;
+            foreach ($rows as $row) {
+                if (isset($row[$column]) && $row[$column] !== null) {
+                    $total += (float) $row[$column];
+                }
+            }
+            return $total;
+        };
+
         $stats = [
             'properties' => count($properties),
             'bookings' => count($bookings),
             'owners' => count($owners),
-            'revenue' => array_sum(array_map(fn($b) => (float)($b['total_price'] ?? 0), $bookings)),
+            'revenue' => $revenue,
+            'platform_fee' => $sumFee($bookings, 'platform_fee'),
+            'owner_earnings' => $sumFee($bookings, 'owner_payout'),
         ];
-        $stats['platform_fee'] = $stats['revenue'] * 0.10;
-        $stats['owner_earnings'] = $stats['revenue'] * 0.90;
 
         // Recent properties for table
         $recentProperties = array_slice($properties, 0, 8);
-        $this->set(compact('userProfile', 'properties', 'recentProperties', 'bookings', 'owners', 'stats'));
+        $this->set(compact(
+            'userProfile', 'properties', 'recentProperties', 'bookings', 'owners',
+            'stats', 'verification', 'verificationCounts'
+        ));
     }
 
     public function owners()

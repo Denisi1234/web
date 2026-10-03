@@ -1,9 +1,9 @@
 /* ==========================================================================
    FastNet Stays — Universal App Loading & Background Task System (app-loader.css)
-   Clean, lightweight, modern Google/Agoda-grade loading indicators
+   Professional Google/Agoda-grade loading indicators. GPU-accelerated, zero jank.
    ========================================================================== */
 
-/* 1. Sleek Top-Bar Progress Indicator (Turbo / Navigation style) */
+/* 1. Sleek Top-Bar Progress Indicator (YouTube / GitHub / Turbo style) */
 #fastnet-top-progress {
     position: fixed;
     top: 0;
@@ -13,9 +13,12 @@
     background: linear-gradient(90deg, #1a73e8 0%, #34a853 50%, #4285f4 100%);
     z-index: 999999;
     pointer-events: none;
-    transition: width 0.25s cubic-bezier(0.1, 0.9, 0.2, 1), opacity 0.3s ease;
+    /* GPU-composited: only transform/opacity animated — no layout thrash */
+    will-change: transform, opacity;
+    transition: width 0.18s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease;
     opacity: 0;
-    box-shadow: 0 0 10px rgba(26, 115, 232, 0.6), 0 0 4px rgba(26, 115, 232, 0.4);
+    transform: translateZ(0); /* Force GPU layer */
+    box-shadow: 0 0 8px rgba(26, 115, 232, 0.55), 0 0 3px rgba(26, 115, 232, 0.35);
 }
 #fastnet-top-progress.active {
     opacity: 1;
@@ -25,11 +28,11 @@
     position: absolute;
     top: 0;
     right: 0;
-    width: 100px;
+    width: 80px;
     height: 100%;
     box-shadow: 0 0 10px #1a73e8, 0 0 5px #1a73e8;
-    opacity: 1;
-    transform: rotate(3deg) translate(0px, -4px);
+    opacity: 0.85;
+    transform: rotate(3deg) translateY(-3px);
 }
 
 /* 2. Full-Screen App Loading Modal / Splash Overlay */
@@ -38,9 +41,9 @@
     inset: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(255, 255, 255, 0.88);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     z-index: 999998;
     display: flex;
     align-items: center;
@@ -48,8 +51,9 @@
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    transition: opacity 0.25s ease, visibility 0.25s ease;
-    font-family: 'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    will-change: opacity, visibility;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    font-family: 'IBM Plex Sans', 'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 #fastnet-app-loader.visible {
     opacity: 1;
@@ -59,36 +63,38 @@
 .fastnet-loader-card {
     background: #ffffff;
     border: 1px solid #e8eaed;
-    border-radius: 16px;
+    border-radius: 18px;
     padding: 28px 36px;
-    box-shadow: 0 8px 32px rgba(60, 64, 67, 0.16), 0 2px 8px rgba(60, 64, 67, 0.08);
+    box-shadow: 0 8px 32px rgba(60, 64, 67, 0.14), 0 2px 8px rgba(60, 64, 67, 0.07);
     text-align: center;
-    max-width: 380px;
+    max-width: 360px;
     width: 90%;
-    transform: scale(0.94);
-    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    will-change: transform;
+    transform: scale(0.95) translateZ(0);
+    transition: transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 #fastnet-app-loader.visible .fastnet-loader-card {
-    transform: scale(1);
+    transform: scale(1) translateZ(0);
 }
 .fastnet-spinner-wrap {
     position: relative;
-    width: 58px;
-    height: 58px;
-    margin-bottom: 16px;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 14px;
 }
 .fastnet-spinner-svg {
-    animation: fastnet-rotate 1.6s linear infinite;
-    width: 58px;
-    height: 58px;
+    animation: fastnet-rotate 1.4s linear infinite;
+    width: 52px;
+    height: 52px;
+    will-change: transform;
 }
 .fastnet-spinner-circle {
     stroke: #1a73e8;
     stroke-linecap: round;
-    animation: fastnet-dash 1.4s ease-in-out infinite;
+    animation: fastnet-dash 1.2s ease-in-out infinite;
 }
 .fastnet-spinner-logo {
     position: absolute;
@@ -96,15 +102,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 16px;
     color: #1a73e8;
-    animation: fastnet-pulse 1.8s ease-in-out infinite;
+    animation: fastnet-pulse 2s ease-in-out infinite;
+    will-change: transform, opacity;
 }
 .fastnet-loader-title {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
     color: #202124;
-    margin: 0 0 6px 0;
+    margin: 0 0 5px 0;
     line-height: 1.3;
 }
 .fastnet-loader-subtext {
@@ -114,7 +121,7 @@
     line-height: 1.4;
 }
 
-/* 3. Floating Background Task Pill (Non-blocking Corner Toast) */
+/* 3. Floating Background Task Pill (Non-blocking Corner Indicator) */
 #fastnet-bg-loader {
     position: fixed;
     bottom: 24px;
@@ -135,24 +142,26 @@
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
     opacity: 0;
-    transform: translateY(14px) scale(0.92);
-    transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+    will-change: transform, opacity;
+    transform: translateY(12px) scale(0.93) translateZ(0);
+    transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.15);
     pointer-events: auto;
-    font-family: 'Google Sans', Roboto, sans-serif;
+    font-family: 'IBM Plex Sans', 'Google Sans', Roboto, sans-serif;
 }
 .fastnet-bg-pill.active {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0) scale(1) translateZ(0);
 }
 .fastnet-bg-spinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    width: 15px;
+    height: 15px;
+    border: 2px solid rgba(255, 255, 255, 0.28);
     border-top-color: #ffffff;
     border-radius: 50%;
-    animation: fastnet-rotate 0.8s linear infinite;
+    animation: fastnet-rotate 0.75s linear infinite;
+    will-change: transform;
     flex-shrink: 0;
 }
 
@@ -167,52 +176,36 @@
 .btn.is-loading::after {
     content: '';
     position: absolute;
-    width: 18px;
-    height: 18px;
+    width: 17px;
+    height: 17px;
     top: 50%;
     left: 50%;
-    margin-left: -9px;
-    margin-top: -9px;
+    margin-left: -8.5px;
+    margin-top: -8.5px;
     border: 2px solid currentColor;
     border-top-color: transparent;
     border-radius: 50%;
-    animation: fastnet-rotate 0.8s linear infinite;
+    animation: fastnet-rotate 0.7s linear infinite;
+    will-change: transform;
     color: inherit;
 }
 
-/* Keyframe Animations */
+/* Keyframe Animations — GPU-only (transform/opacity) */
 @keyframes fastnet-rotate {
-    100% {
-        transform: rotate(360deg);
-    }
+    100% { transform: rotate(360deg); }
 }
 @keyframes fastnet-dash {
-    0% {
-        stroke-dasharray: 1, 150;
-        stroke-dashoffset: 0;
-    }
-    50% {
-        stroke-dasharray: 90, 150;
-        stroke-dashoffset: -35;
-    }
-    100% {
-        stroke-dasharray: 90, 150;
-        stroke-dashoffset: -124;
-    }
+    0%   { stroke-dasharray: 1, 150; stroke-dashoffset: 0; }
+    50%  { stroke-dasharray: 90, 150; stroke-dashoffset: -35; }
+    100% { stroke-dasharray: 90, 150; stroke-dashoffset: -124; }
 }
 @keyframes fastnet-pulse {
-    0%, 100% {
-        transform: scale(1);
-        opacity: 0.9;
-    }
-    50% {
-        transform: scale(1.12);
-        opacity: 1;
-    }
+    0%, 100% { transform: scale(1);    opacity: 0.88; }
+    50%       { transform: scale(1.1); opacity: 1;    }
 }
 
-/* 4. Single centered action loader — one professional indicator for ANY
-   slow action site-wide. Compact pill, centered, no scroll lock. */
+/* 5. Single centered action loader — fast, compact, no scroll lock.
+   Shown only when navigation takes > 300ms so instant clicks never flash. */
 #fastnet-nav-loader {
     position: fixed;
     inset: 0;
@@ -220,31 +213,145 @@
     display: none;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.45);
+    /* Ultra-light overlay — page still readable */
+    background: rgba(255, 255, 255, 0.35);
     pointer-events: auto;
-    font-family: 'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: 'IBM Plex Sans', 'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    /* Smooth fade in so it never "pops" */
+    animation: fastnet-navOverlayIn 0.15s ease forwards;
+}
+@keyframes fastnet-navOverlayIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }
 #fastnet-nav-loader.visible { display: flex; }
 .fastnet-nav-card {
     background: #fff;
     border: 1px solid #e8eaed;
     border-radius: 9999px;
-    padding: 12px 22px 12px 14px;
-    box-shadow: 0 8px 32px rgba(60, 64, 67, 0.20), 0 2px 8px rgba(60, 64, 67, 0.10);
+    padding: 11px 22px 11px 14px;
+    box-shadow: 0 8px 28px rgba(60, 64, 67, 0.18), 0 2px 8px rgba(60, 64, 67, 0.09);
     display: flex;
     align-items: center;
     gap: 12px;
+    will-change: transform;
+    transform: translateY(-6px) scale(0.96) translateZ(0);
+    animation: fastnet-navCardIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+@keyframes fastnet-navCardIn {
+    to { transform: translateY(0) scale(1) translateZ(0); }
 }
 .fastnet-nav-ring {
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
     flex: none;
     border-radius: 50%;
     border: 3px solid #e8eaed;
     border-top-color: #1a73e8;
-    animation: fastnet-rotate 0.8s linear infinite;
+    animation: fastnet-rotate 0.7s linear infinite;
+    will-change: transform;
 }
-.fastnet-nav-txt { font-size: 14px; font-weight: 500; color: #3c4043; }
+.fastnet-nav-txt {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #3c4043;
+    letter-spacing: 0.01em;
+}
+
+/* 6. Professional Confirm Modal (replaces browser window.confirm) */
+#fns-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000001;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    will-change: opacity, visibility;
+    transition: opacity 0.18s ease, visibility 0.18s ease;
+    font-family: 'IBM Plex Sans', 'Google Sans', Roboto, sans-serif;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+#fns-confirm-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+.fns-confirm-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px 28px 20px;
+    max-width: 380px;
+    width: 92vw;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.22), 0 4px 16px rgba(0, 0, 0, 0.1);
+    will-change: transform;
+    transform: scale(0.93) translateY(8px) translateZ(0);
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+#fns-confirm-overlay.visible .fns-confirm-card {
+    transform: scale(1) translateY(0) translateZ(0);
+}
+.fns-confirm-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 14px;
+    background: #fff3f3;
+    color: #da1e28;
+}
+.fns-confirm-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #161616;
+    margin: 0 0 8px;
+    line-height: 1.3;
+}
+.fns-confirm-msg {
+    font-size: 14px;
+    color: #5f6368;
+    margin: 0 0 22px;
+    line-height: 1.55;
+}
+.fns-confirm-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+.fns-confirm-cancel {
+    padding: 9px 18px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    background: #fff;
+    color: #3c4043;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease;
+    font-family: inherit;
+}
+.fns-confirm-cancel:hover { background: #f4f4f4; border-color: #c6c6c6; }
+.fns-confirm-ok {
+    padding: 9px 22px;
+    border-radius: 8px;
+    border: none;
+    background: #da1e28;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.12s ease;
+    font-family: inherit;
+}
+.fns-confirm-ok:hover { background: #ba1b23; }
+.fns-confirm-ok:active { background: #a01922; transform: translateY(1px); }
 
 /* Accessibility: Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
@@ -252,7 +359,12 @@
     .fastnet-spinner-svg,
     .fastnet-spinner-circle,
     .fastnet-bg-spinner,
-    .fastnet-nav-ring {
+    .fastnet-nav-ring,
+    .fastnet-loader-card,
+    #fastnet-app-loader,
+    #fastnet-nav-loader,
+    .fastnet-bg-pill,
+    .fns-confirm-card {
         animation: none !important;
         transition: none !important;
     }

@@ -1,7 +1,10 @@
-<!-- Sleek fastnetstays.com Top Loading Progress Bar with Safe Area & Glow -->
-<div id="home-top-loader-bar" class="home-top-loader-bar"></div>
+<!-- Floating Capsule Pill Indicator (all screens — desktop included)
 
-<!-- Floating Capsule Pill Indicator (all screens — desktop included) -->
+     The top progress bar that used to live here was a fifth, independent
+     loading implementation (its own #home-top-loader-bar with a red/amber/blue
+     gradient that clashed with the product's single blue). Progress is now
+     owned solely by FastnetLoading.bar, which renders
+     #fastnet-top-progress from the app-loader element. -->
 <div id="home-mobile-loader-pill" class="pill-hidden">
 	<div class="mobile-loader-pill-inner">
 		<div class="mobile-loader-spinner"></div>
@@ -10,24 +13,6 @@
 </div>
 
 <style>
-/* ── Top Progress Loader Bar ── */
-.home-top-loader-bar {
-	position: fixed;
-	top: 0;
-	top: env(safe-area-inset-top, 0px);
-	left: 0;
-	width: 35%;
-	height: 3px;
-	background: linear-gradient(90deg, #d93025 0%, #f29900 35%, #1a73e8 70%, #007fad 100%);
-	display: none;
-	opacity: 0;
-	z-index: 999999;
-	transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
-	box-shadow: 0 0 12px rgba(26, 115, 232, 0.8), 0 0 4px rgba(242, 153, 0, 0.6);
-	pointer-events: none;
-}
-
-/* ── Mobile Floating Pill Indicator ── */
 #home-mobile-loader-pill {
 	position: fixed;
 	top: calc(env(safe-area-inset-top, 0px) + 64px);
@@ -110,18 +95,8 @@
 .shimmer-rounded { border-radius: 10px !important; }
 .shimmer-circle { border-radius: 50% !important; }
 
-/* ── Strict Mutual Exclusivity: NEVER display shimmer and products at the same time ── */
-#home-app-root.is-shimmer-loading .home-real-container {
-	display: none !important;
-}
-#home-app-root.is-shimmer-loading .home-shimmer-container {
-	display: flex !important;
-}
-
-#home-app-root:not(.is-shimmer-loading) .home-shimmer-container {
-	display: none !important;
-}
-#home-app-root:not(.is-shimmer-loading) .home-real-container {
-	display: flex !important;
-}
+<!-- The mutual-exclusivity rules that used to live here all targeted
+     #home-app-root, an element no template renders. Content/shimmer swapping
+     is handled by FastnetLoading.skeleton() against #gh-cards-container and
+     #gh-shimmer-container, which do exist. -->
 </style>

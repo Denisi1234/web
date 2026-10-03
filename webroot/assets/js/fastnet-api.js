@@ -62,27 +62,13 @@ window.FastAPI = (function () {
     document.body.appendChild(t);
     setTimeout(function () { t.parentNode && t.parentNode.removeChild(t); }, 3200);
   }
-  // Professional dot loader on any button (non-destructive: dots removed on off).
+  // Dot loader on any button. Delegates to the canonical implementation so the
+  // markup, motion and aria handling match every other loading indicator.
+  // (The previous version hand-rolled <span class="p-dots"> and set opacity,
+  // which is why ~20 call sites had drifted into copy-pasted variants.)
   function btnDots(btn, on) {
     if (!btn) return;
-    if (on) {
-      if (!btn.querySelector('.p-dots')) {
-        var d = document.createElement('span');
-        d.className = 'p-dots';
-        d.setAttribute('aria-hidden', 'true');
-        d.innerHTML = '<span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span>';
-        btn.insertBefore(d, btn.firstChild);
-      }
-      btn.disabled = true;
-      btn.setAttribute('aria-busy', 'true');
-      btn.style.opacity = '.75';
-    } else {
-      var old = btn.querySelector('.p-dots');
-      if (old) old.remove();
-      btn.disabled = false;
-      btn.removeAttribute('aria-busy');
-      btn.style.opacity = '';
-    }
+    FastnetLoading.button(btn, !!on, { small: true });
   }
   function errText(status, json) {
     if (json) {
@@ -385,11 +371,10 @@ window.FastAPI = (function () {
         pendingNotice(okMsg);
         window.location.href = go || window.location.href;
       } else {
-        toast(okMsg, 'ok');
-        setTimeout(function () {
-          if (go) window.location.href = go;
-          else window.location.reload();
-        }, 450);
+        // Instant redirect — show toast on next page via pendingNotice (no artificial delay)
+        pendingNotice(okMsg);
+        if (go) window.location.href = go;
+        else window.location.reload();
       }
     } catch (e) {
       if ((opt === 'patch' || opt === 'remove') && scope && snap) restore(scope, snap);
@@ -411,7 +396,14 @@ window.FastAPI = (function () {
     e.preventDefault();
     e.stopPropagation(); // take precedence over portal Fast Save bubble handler
     var c = form.getAttribute('data-api-confirm');
-    if (c && !window.confirm(c)) return;
+    if (c) {
+      // Use professional confirm modal; fnsConfirm resolves async
+      var confirmFn = (typeof window.fnsConfirm === 'function') ? window.fnsConfirm : function (msg) {
+        return Promise.resolve(window.confirm(msg));
+      };
+      confirmFn(c).then(function (ok) { if (ok) submitDirect(form); });
+      return;
+    }
     submitDirect(form);
   }, true);
 

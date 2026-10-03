@@ -2,15 +2,16 @@
 $this->assign('title', 'Payouts');
 $this->assign('portal_title', 'Payouts');
 $m = $finance['metrics'] ?? $finance;
-$gross = (float)($m['gross_revenue'] ?? $m['gross_booking_value'] ?? 0);
-$net = (float)($m['net_earnings'] ?? $m['total_owner_earnings'] ?? ($gross * 0.90));
-$pending = (float)($m['pending_payouts'] ?? 0);
-$paid = (float)($m['completed_payouts'] ?? 0);
+$cards = $m['summary_cards'] ?? $m['financials'] ?? $m;
+$gross = (float)($cards['gross_revenue'] ?? $cards['gross_booking_value'] ?? 0);
+$net = (float)($cards['net_earnings'] ?? $cards['total_owner_earnings'] ?? $cards['owner_earnings'] ?? 0);
+$pending = (float)($cards['pending_payouts'] ?? 0);
+$paid = (float)($cards['completed_payouts'] ?? 0);
 $this->assign('page_actions', '<span style="font-size:13px;color:var(--p-text-2)">' . count($payouts ?? []) . ' records</span>');
 ?>
 <div class="row g-3 mb-3">
   <div class="col-6 col-lg-3"><div class="p-stat"><div class="v">TSh <?= number_format($gross) ?></div><div class="l">Gross</div><div class="s">Booking value</div></div></div>
-  <div class="col-6 col-lg-3"><div class="p-stat"><div class="v">TSh <?= number_format($net) ?></div><div class="l">Net 90%</div><div class="s">Owner share</div></div></div>
+  <div class="col-6 col-lg-3"><div class="p-stat"><div class="v">TSh <?= number_format($net) ?></div><div class="l">Owner net</div><div class="s">Owner share</div></div></div>
   <div class="col-6 col-lg-3"><div class="p-stat"><div class="v">TSh <?= number_format($pending) ?></div><div class="l">Pending</div><div class="s">Awaiting payout</div></div></div>
   <div class="col-6 col-lg-3"><div class="p-stat"><div class="v">TSh <?= number_format($paid) ?></div><div class="l">Paid</div><div class="s"><?= count($payouts ?? []) ?> records</div></div></div>
 </div>
@@ -48,13 +49,13 @@ $this->assign('page_actions', '<span style="font-size:13px;color:var(--p-text-2)
           <td>
             <div style="display:flex;gap:6px;flex-wrap:wrap">
               <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'payouts'], 'style' => 'display:inline', 'data-api' => 'PATCH /payouts/' . $pid . '/status', 'data-api-strip' => 'payout_id', 'data-api-ok' => 'Payout updated.', 'data-opt' => 'patch', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'payout', 'data-opt-badgetext' => 'raw', 'data-opt-bust' => '_payouts', 'data-api-go' => '/admin/cache-bust?scope=_payouts&go=' . urlencode('/admin/finance/payouts')]) ?>
-                <?= $this->Form->hidden('payout_id', ['value' => $pid]) ?><input type="hidden" name="status" value="PROCESSING"><button class="p-btn ghost" style="min-height:32px;font-size:12px" <?= $st === 'PAID' ? 'disabled' : '' ?>>Processing</button>
+                <?= $this->Form->hidden('payout_id', ['value' => $pid]) ?><input type="hidden" name="status" value="PROCESSING"><button class="p-btn ghost" style="min-height:32px;font-size:12px" <?= $st !== 'REQUESTED' ? 'disabled title="Only requested payouts can start processing"' : '' ?>>Processing</button>
               <?= $this->Form->end() ?>
               <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'payouts'], 'style' => 'display:inline', 'data-api' => 'PATCH /payouts/' . $pid . '/status', 'data-api-strip' => 'payout_id', 'data-api-ok' => 'Payout updated.', 'data-opt' => 'patch', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'payout', 'data-opt-badgetext' => 'raw', 'data-opt-bust' => '_payouts', 'data-api-go' => '/admin/cache-bust?scope=_payouts&go=' . urlencode('/admin/finance/payouts')]) ?>
-                <?= $this->Form->hidden('payout_id', ['value' => $pid]) ?><input type="hidden" name="status" value="PAID"><button class="p-btn" style="min-height:32px;font-size:12px">Mark paid</button>
+                <?= $this->Form->hidden('payout_id', ['value' => $pid]) ?><input type="hidden" name="status" value="PAID"><button class="p-btn" style="min-height:32px;font-size:12px" <?= in_array($st, ['PAID', 'FAILED'], true) ? 'disabled title="Already settled"' : '' ?>>Mark paid</button>
               <?= $this->Form->end() ?>
               <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'payouts'], 'style' => 'display:inline', 'data-api' => 'PATCH /payouts/' . $pid . '/status', 'data-api-strip' => 'payout_id', 'data-api-ok' => 'Payout updated.', 'data-opt' => 'patch', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'payout', 'data-opt-badgetext' => 'raw', 'data-opt-bust' => '_payouts', 'data-api-go' => '/admin/cache-bust?scope=_payouts&go=' . urlencode('/admin/finance/payouts')]) ?>
-                <?= $this->Form->hidden('payout_id', ['value' => $pid]) ?><input type="hidden" name="status" value="FAILED"><button class="p-btn ghost" style="min-height:32px;font-size:12px">Fail</button>
+                <?= $this->Form->hidden('payout_id', ['value' => $pid]) ?><input type="hidden" name="status" value="FAILED"><button class="p-btn ghost" style="min-height:32px;font-size:12px" <?= in_array($st, ['PAID', 'FAILED'], true) ? 'disabled title="Already settled"' : '' ?> data-api-confirm="Mark this payout as failed? The host will need a new payout request.">Fail</button>
               <?= $this->Form->end() ?>
             </div>
           </td>

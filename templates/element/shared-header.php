@@ -20,9 +20,6 @@ $isLoggedOut = (bool)$session->read('is_logged_out');
 $sessionUser = $session->read('User');
 $effectiveUser = !empty($userProfile) ? $userProfile : $sessionUser;
 $isUserLoggedIn = !$isLoggedOut && !empty($effectiveUser) && (!empty($effectiveUser['id']) || !empty($effectiveUser['email']) || !empty($effectiveUser['name']));
-$userRole = strtolower((string)($effectiveUser['role'] ?? $sessionUser['role'] ?? ''));
-$isAdmin = $userRole === 'admin';
-$isOwner = $userRole === 'owner';
 
 $navUserInitial = !empty($effectiveUser['first_name']) 
     ? strtoupper(substr(trim($effectiveUser['first_name']), 0, 1)) 
@@ -149,41 +146,20 @@ if (!str_starts_with($navAvatarBg, '#') && !str_starts_with($navAvatarBg, 'rgb')
                                     <span>Language and currency</span>
                                 </a>
 
-                                <div class="trivago-user-sec-title">Hosting</div>
-                                <?php if ($isOwner || $isAdmin): ?>
-                                <a href="<?= $this->Url->build('/host/dashboard'); ?>" class="trivago-user-item" style="color:#2563EB;font-weight:700">
-                                    <i class="fa-solid fa-hotel trivago-user-item-icon" style="color:#2563EB"></i>
-                                    <span>Host Dashboard</span>
-                                </a>
-                                <a href="<?= $this->Url->build('/host/rooms'); ?>" class="trivago-user-item">
-                                    <i class="fa-solid fa-bed trivago-user-item-icon"></i>
-                                    <span>My Rooms</span>
-                                </a>
-                                <a href="<?= $this->Url->build('/host/profile'); ?>" class="trivago-user-item">
-                                    <i class="fa-regular fa-circle-user trivago-user-item-icon"></i>
-                                    <span>Host Profile</span>
-                                </a>
-                                <?php endif; ?>
-                                <?php if ($isAdmin): ?>
-                                <a href="<?= $this->Url->build('/admin/dashboard'); ?>" class="trivago-user-item">
-                                    <i class="fa-solid fa-gauge trivago-user-item-icon"></i>
-                                    <span>Admin Dashboard</span>
-                                </a>
-                                <a href="<?= $this->Url->build('/admin/bookings'); ?>" class="trivago-user-item">
-                                    <i class="fa-solid fa-calendar-check trivago-user-item-icon"></i>
-                                    <span>Admin Bookings</span>
-                                </a>
-                                <a href="<?= $this->Url->build('/admin/staff'); ?>" class="trivago-user-item">
-                                    <i class="fa-solid fa-users-gear trivago-user-item-icon"></i>
-                                    <span>Staff</span>
-                                </a>
-                                <a href="<?= $this->Url->build('/admin/requests'); ?>" class="trivago-user-item">
-                                    <i class="fa-solid fa-clipboard-question trivago-user-item-icon"></i>
-                                    <span>Requests</span>
-                                </a>
-                                <?php endif; ?>
-                                <a href="<?= $this->Url->build('/join-us'); ?>" class="trivago-user-item">
-                                    <i class="fa-solid fa-plus trivago-user-item-icon"></i>
+                                <?php
+                                // Host and admin management links were removed from the
+                                // shared header. They are role-specific tooling that does
+                                // not belong in the guest-facing account menu, and the
+                                // "Hosting" section heading previously rendered for every
+                                // signed-in user regardless of role - owners and admins saw
+                                // a dangling heading with nothing beneath it.
+                                // Owners and admins reach this via the portal/dashboard.
+                                //
+                                // The public B2B call to action stays, and this whole menu
+                                // is only rendered for an authenticated session.
+                                ?>
+                                <a href="<?= $this->Url->build('/join-us'); ?>" class="trivago-user-item" style="color:#2563EB;font-weight:700">
+                                    <i class="fa-solid fa-plus trivago-user-item-icon" style="color:#2563EB"></i>
                                     <span>List your property</span>
                                 </a>
                                 <div class="trivago-user-sec-title">Support</div>
@@ -232,8 +208,10 @@ if (!str_starts_with($navAvatarBg, '#') && !str_starts_with($navAvatarBg, 'rgb')
                         </div>
                     </div>
 
-                    <!-- Sign In Link -->
-                    <a href="<?= $this->Url->build('/login'); ?>" class="d-flex align-items-center text-decoration-none fw-bold text-slate-800 hover:text-primary p-0" style="font-size: 15px; gap: 8px; color: #0f172a !important;">
+                    <!-- Sign In: the full page carries both password and
+                         one-time-code sign-in. -->
+                    <a href="<?= $this->Url->build('/login') ?>" id="nav_signin_btn" class="btn btn-link d-flex align-items-center text-decoration-none fw-bold text-slate-800 hover:text-primary p-0"
+                            style="font-size: 15px; gap: 8px; color: #0f172a !important;">
                         <i class="fa-regular fa-circle-user" style="font-size: 18px;"></i>
                         <span>Sign in</span>
                     </a>
@@ -284,6 +262,15 @@ if (!str_starts_with($navAvatarBg, '#') && !str_starts_with($navAvatarBg, 'rgb')
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        var signinBtn = document.getElementById('nav_signin_btn');
+        if (signinBtn) {
+            // The sign-in popup modal was removed: /login is the single
+            // sign-in surface, so this is a plain link. Strip the focus ring
+            // only; leave the href intact so it stays a real, middle-clickable
+            // and keyboard-navigable link.
+            signinBtn.style.outline = 'none';
+        }
+
         var menuBtn = document.getElementById('nav_logged_out_menu_btn');
         var userBtn = document.getElementById('nav_user_btn');
         var langBtnIn = document.getElementById('nav_lang_btn');

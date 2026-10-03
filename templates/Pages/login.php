@@ -15,53 +15,10 @@ if ($isHostLogin) {
 ?>
 <?= $this->Html->css('/assets/css/google-travel-layout.css') ?>
 <?= $this->Html->css('/assets/css/google-travel-home.css') ?>
-<style>
-/* Scroll fix: home split-view CSS locks body scroll on desktop — auth pages must scroll */
-html, body { height: auto !important; overflow-y: auto !important; }
-#main-wrapper { height: auto !important; overflow: visible !important; display: block !important; }
-/* ── IBM Carbon polish for login (White theme): scoped, mirrors signup ── */
-.cx-li{--cx-blue:#0f62fe;--cx-blue-h:#0353e9;--cx-ink:#161616;--cx-sec:#525252;
-  --cx-line:#e0e0e0;--cx-bg:#f4f4f4;--cx-white:#fff;
-  font-family:'IBM Plex Sans','Inter',Roboto,Arial,sans-serif;color:var(--cx-ink)}
-.cx-li .card{background:var(--cx-white);border:1px solid var(--cx-line);border-top:4px solid var(--cx-blue);border-radius:0;box-shadow:none}
-.cx-panel{padding:32px}
-@media (min-width:992px){.cx-panel{padding:40px}}
-.cx-media{background:#f4f4f4;display:flex;align-items:center}
-.cx-media img{display:block;width:100%;height:100%;object-fit:cover}
-.cx-li .vr{background-color:var(--cx-line);opacity:1;width:1px}
-.cx-li h1{font-weight:600;letter-spacing:-.01em;color:var(--cx-ink)}
-.cx-lede{font-size:15px;line-height:1.6;color:var(--cx-sec)}
-.cx-li .form-label{display:block;font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--cx-sec);margin-bottom:6px}
-.cx-li .form-control{display:block;width:100%;min-height:48px;background:var(--cx-bg);border:1px solid transparent;border-bottom:1px solid #8d8d8d;border-radius:0;padding:0 14px;font-size:15px;color:var(--cx-ink)}
-.cx-li .form-control::placeholder{color:rgba(22,22,22,.4)}
-.cx-li .form-control:focus{background:var(--cx-white);border:1px solid var(--cx-blue);box-shadow:inset 0 -2px 0 var(--cx-blue);outline:none}
-.cx-btn{display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:48px;padding:0 24px;font-size:15px;font-weight:600;text-decoration:none;border:1px solid transparent;border-radius:0;cursor:pointer;background:var(--cx-blue);color:#fff}
-.cx-btn:hover{background:var(--cx-blue-h);color:#fff}
-.cx-btn:disabled{background:#c6c6c6;border-color:#c6c6c6;color:#525252;cursor:not-allowed}
-.cx-btn:focus-visible,.cx-li a:focus-visible,.cx-li input:focus-visible{outline:2px solid var(--cx-blue);outline-offset:2px}
-.cx-li .alert-danger{background:#fff1f1;border:1px solid var(--cx-line);border-left:3px solid #da1e28;border-radius:0;color:var(--cx-ink);font-size:13px}
-.cx-li .alert-success{background:#defbe6;border:1px solid var(--cx-line);border-left:3px solid #24a148;border-radius:0;color:var(--cx-ink);font-size:13px}
-.cx-copy{font-size:12px;color:var(--cx-sec)}
-.cx-copy a{color:var(--cx-blue);text-decoration:none}
-.cx-copy a:hover{text-decoration:underline}
-.cx-pw-toggle{cursor:pointer;color:var(--cx-sec)}
-.cx-pw-toggle:hover{color:var(--cx-ink)}
-@media (max-width:991px){
-  .cx-li section.py-5{padding-top:24px!important;padding-bottom:24px!important}
-  .cx-panel{padding:20px}
-  .cx-li h1{font-size:26px;line-height:1.2}
-  .cx-lede{font-size:14px}
-}
-@media (prefers-reduced-motion:reduce){.cx-li *{animation:none!important;transition:none!important}}
-</style>
+<?= $this->Html->css('/assets/css/carbon-auth.css?v=' . filemtime(WWW_ROOT . 'assets/css/carbon-auth.css')) ?>
 <?= $this->element('navbar') ?>
-<nav aria-label="Breadcrumb" class="container-fluid px-2 px-lg-2" style="max-width:100%;margin:0 auto;background:#f4f4f4;">
-  <ol class="breadcrumb mb-0 py-1" style="background:transparent;font-size:12px;line-height:1.2;--bs-breadcrumb-divider:'›';" itemscope itemtype="https://schema.org/BreadcrumbList">
-    <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="/" itemprop="item" style="color:#5f6368;text-decoration:none;"><span itemprop="name">Home</span></a><meta itemprop="position" content="1"></li>
-    <li class="breadcrumb-item active" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><span itemprop="name">Sign in</span><meta itemprop="position" content="2"></li>
-  </ol>
-</nav>
-<main id="main-content" class="cx-li" style="background:#f4f4f4;min-height:85vh;" role="main">
+<?= $this->element('breadcrumb-schema', ['label' => $isAdminLogin ? 'Admin sign in' : ($isHostLogin ? 'Host sign in' : 'Sign in')]) ?>
+<main id="main-content" class="cx-auth cx-li" style="background:var(--cds-gray-10);min-height:85vh;" role="main">
 <!-- Login Section -->
 <section class="py-5">
 	<div class="container">
@@ -86,15 +43,21 @@ html, body { height: auto !important; overflow-y: auto !important; }
 								<!-- Title -->
 								<h1 class="mb-2 fs-2"><?= $isHostLogin ? 'Welcome Back, Host!' : 'Welcome Back!' ?></h1>
 								<?php if ($isHostLogin): ?>
-								<p class="cx-lede mb-0">Access your properties, bookings and earnings. New to hosting?<a href="<?= $this->Url->build('/signup?role=owner'); ?>" class="fw-medium text-primary"> Create a host account</a></p>
+								<p class="cx-lede mb-0">Access your properties, bookings and earnings. New to hosting?<a href="<?= \App\Service\HostIntent::signupUrl($this->Url, $this->getRequest(), $this->getRequest()->getSession()->read('signup_intent_role')) ?>" class="fw-medium text-primary"> Create a host account</a></p>
 								<?php elseif ($isAdminLogin): ?>
 								<p class="cx-lede mb-0">Restricted area — administrators only.</p>
 								<?php else: ?>
-								<p class="cx-lede mb-0">Are you new here?<a href="<?= $this->Url->build('/signup'); ?>" class="fw-medium text-primary"> Create an account</a></p>
+								<p class="cx-lede mb-0">Are you new here?<a href="<?= \App\Service\HostIntent::signupUrl($this->Url, $this->getRequest(), $this->getRequest()->getSession()->read('signup_intent_role')) ?>" class="fw-medium text-primary"> Create an account</a></p>
 								<?php endif; ?>
 
+								<!-- Sign-in method: password or one-time code -->
+								<div class="cx-switch mb-4" role="tablist" aria-label="Sign-in method">
+									<button type="button" class="cx-switch-btn" role="tab" id="tab-password" aria-selected="true" aria-controls="pane-password" data-login-mode="password">Password</button>
+									<button type="button" class="cx-switch-btn" role="tab" id="tab-code" aria-selected="false" aria-controls="pane-code" data-login-mode="code">Use a code</button>
+								</div>
+
 								<!-- Form START -->
-								<form id="web1-login-form" class="mt-4 text-start">
+								<form id="web1-login-form" class="mt-4 text-start" role="tabpanel" aria-labelledby="tab-password">
 									<div id="login-alert-box"></div>
 									<div class="form py-2">
 										<div class="form-group mb-3">
@@ -113,7 +76,7 @@ html, body { height: auto !important; overflow-y: auto !important; }
 
 										<div class="d-flex align-items-center justify-content-between mb-3">
 											<div class="ms-auto">
-												<a href="<?= $this->Url->build('/forgot-password'); ?>" class="fw-medium" style="font-size:13px">Forgot Password?</a>
+												<a href="<?= $this->Url->build('/forgot-password'); ?>" class="cx-link">Forgot Password?</a>
 											</div>
 										</div>
 
@@ -123,7 +86,48 @@ html, body { height: auto !important; overflow-y: auto !important; }
 									</div>
 								</form>
 
+								<!-- Passwordless sign-in: contact, then the 6-digit code -->
+								<form id="web1-otp-form" class="mt-4 text-start" role="tabpanel" aria-labelledby="tab-code" hidden>
+									<div id="otp-alert-box"></div>
+
+									<div id="otp-step-contact">
+										<p class="cx-otp-sent">Sign in without a password. We'll text or email you a 6-digit code.</p>
+										<div class="form-group mb-3">
+											<label class="form-label" for="otp-contact">Mobile number or email</label>
+											<input type="text" id="otp-contact" class="form-control" placeholder="0755 123 456 or you@example.com" required autocomplete="tel" inputmode="text">
+										</div>
+										<div class="form-group">
+											<button type="submit" id="otp-send-btn" class="cx-btn">Send code</button>
+										</div>
+										<p class="cx-lede mb-0 mt-3" style="font-size:13px">By continuing you agree to our <a href="<?= $this->Url->build('/terms-of-service'); ?>">Terms</a> and <a href="<?= $this->Url->build('/privacy-policy'); ?>">Privacy Policy</a>.</p>
+									</div>
+
+									<div id="otp-step-code" hidden>
+										<p class="cx-otp-sent">Enter the 6-digit code sent to <strong id="otp-target">your phone</strong>.</p>
+										<div class="form-group mb-3">
+											<label class="form-label" for="otp-code-input">Verification code</label>
+											<input type="text" id="otp-code-input" class="form-control cx-code" placeholder="000000" maxlength="6" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" required>
+										</div>
+										<div class="form-group">
+											<button type="submit" id="otp-verify-btn" class="cx-btn">Verify &amp; sign in</button>
+										</div>
+										<div class="d-flex align-items-center justify-content-between mt-3">
+											<button type="button" class="cx-linkbtn" id="otp-back-btn">Use a different number</button>
+											<button type="button" class="cx-linkbtn" id="otp-resend-btn" disabled>Resend code</button>
+										</div>
+									</div>
+								</form>
+
+								<?= $this->Html->script('/assets/js/auth.js') ?>
 								<script>
+								window.FastAuthConfig = {
+									syncUrl: '<?= $this->Url->build('/login'); ?>',
+									home: '<?= $this->Url->build('/'); ?>',
+									hostDashboard: '<?= $this->Url->build('/host/dashboard'); ?>',
+									adminDashboard: '<?= $this->Url->build('/admin/dashboard'); ?>',
+									joinUs: '<?= $this->Url->build('/join-us'); ?>'
+								};
+
 								function togglePasswordVisibility(inputId, containerEl) {
 									const input = document.getElementById(inputId);
 									if (!input) return;
@@ -138,104 +142,208 @@ html, body { height: auto !important; overflow-y: auto !important; }
 								}
 
 								document.addEventListener("DOMContentLoaded", function() {
-									const form = document.getElementById("web1-login-form");
-									const alertBox = document.getElementById("login-alert-box");
-									const submitBtn = document.getElementById("login-submit-btn");
+									const passwordForm = document.getElementById("web1-login-form");
+									const otpForm = document.getElementById("web1-otp-form");
+									const loginAlert = document.getElementById("login-alert-box");
+									const otpAlert = document.getElementById("otp-alert-box");
 
-									if (!form) return;
+									function swapMode(mode) {
+										document.querySelectorAll("[data-login-mode]").forEach(function(btn) {
+											btn.setAttribute("aria-selected", btn.getAttribute("data-login-mode") === mode ? "true" : "false");
+										});
+										const onCode = mode === "code";
+										passwordForm.hidden = onCode;
+										otpForm.hidden = !onCode;
+										if (!onCode) { otpAlert.innerHTML = ''; }
+									}
 
-									form.addEventListener("submit", async function(e) {
-										e.preventDefault();
-										alertBox.innerHTML = '';
-										submitBtn.disabled = true;
-										submitBtn.innerHTML = '<span class="p-dots" aria-hidden="true"><span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span></span>Logging in...';
+									document.querySelectorAll("[data-login-mode]").forEach(function(btn) {
+										btn.addEventListener("click", function() { swapMode(btn.getAttribute("data-login-mode")); });
+									});
 
-										const payload = {
-											email: document.getElementById("login-email").value.trim(),
-											password: document.getElementById("login-password").value
-										};
+									// The PHP session is what the portal guards read. If it cannot be
+									// seeded, say so instead of redirecting into a signed-out page.
+									function syncFailed(alertBox) {
+										alertBox.innerHTML = '<div class="alert alert-danger">We could not finish signing you in on this device. Please check your connection and try again.</div>';
+									}
 
-										try {
-											const endpoint = (typeof window.API_URL === 'function') 
-												? window.API_URL('/api/login') 
-												: 'http://127.0.0.1:8000/api/login';
+									// ── Password sign-in ──
+									if (passwordForm) {
+										const submitBtn = document.getElementById("login-submit-btn");
+										passwordForm.addEventListener("submit", async function(e) {
+											e.preventDefault();
+											loginAlert.innerHTML = '';
+											submitBtn.disabled = true;
+											submitBtn.innerHTML = '<span class="p-dots" aria-hidden="true"><span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span></span>Logging in...';
 
-											const res = await fetch(endpoint, {
-												method: 'POST',
-												headers: {
-													'Content-Type': 'application/json',
-													'Accept': 'application/json'
-												},
-												body: JSON.stringify(payload)
-											});
+											try {
+												const res = await window.FastAuth.postJson('/api/login', {
+													email: document.getElementById("login-email").value.trim(),
+													password: document.getElementById("login-password").value
+												});
+												const data = res.data || {};
 
-											const data = await res.json();
-
-											if (res.ok || res.status === 200) {
-												const authToken = data.access_token || data.token;
-												localStorage.removeItem('is_logged_out');
-												if (authToken) {
-													localStorage.setItem('auth_token', authToken);
-													localStorage.setItem('token', authToken);
-												}
-												if (data.user) {
-													localStorage.setItem('user', JSON.stringify(data.user));
-												}
-
-												// Synchronize CakePHP session
-												try {
-													await fetch('<?= $this->Url->build('/login'); ?>', {
-														method: 'POST',
-														credentials: 'same-origin',
-														headers: {
-															'Content-Type': 'application/json',
-															'X-Requested-With': 'XMLHttpRequest'
-														},
-														body: JSON.stringify({
-															action: 'login_sync',
-															user: data.user,
-															token: authToken
-														})
+												if (res.ok && (data.access_token || data.token)) {
+													loginAlert.innerHTML = '<div class="alert alert-success">Login successful! Taking you there...</div>';
+													submitBtn.disabled = true;
+													await window.FastAuth.finish(data, function() {
+														syncFailed(loginAlert);
+														submitBtn.disabled = false;
+														submitBtn.innerHTML = 'Log In';
 													});
-												} catch(errSync) {}
+												} else {
+													loginAlert.innerHTML = '<div class="alert alert-danger">' + (data.message || 'Invalid email or password.') + '</div>';
+												}
+											} catch(err) {
+												console.error("Login error:", err);
+												loginAlert.innerHTML = '<div class="alert alert-danger">Unable to connect to authentication server.</div>';
+											} finally {
+												if (!submitBtn.disabled) { submitBtn.innerHTML = 'Log In'; }
+											}
+										});
+									}
 
-												alertBox.innerHTML = '<div class="alert alert-success">Login successful! Updating header...</div>';
-												setTimeout(() => {
-													function safeRedirect(u) {
-														if (typeof u !== 'string' || u === '' || u.length > 500) return '';
-														if (u.charAt(0) !== '/' || u.charAt(1) === '/') return '';
-														if (u.indexOf('\\') !== -1 || /[\r\n\t<>"]/.test(u)) return '';
-														if (!/^\/[A-Za-z0-9\/_\-.?=&%#+]*$/.test(u)) return '';
-														return u;
-													}
-													const params = new URLSearchParams(window.location.search);
-													const redirect = safeRedirect(params.get('redirect') || '');
-													const pageRole = (params.get('role') === 'owner' || params.get('role') === 'admin') ? params.get('role') : 'customer';
-													const role = (data.user && data.user.role || '').toLowerCase();
-													let dest = '<?= $this->Url->build('/'); ?>';
-													if (redirect) {
-														dest = redirect;
-													} else if (role === 'owner') {
-														dest = '<?= $this->Url->build('/host/dashboard'); ?>';
-													} else if (role === 'admin') {
-														dest = '<?= $this->Url->build('/admin/dashboard'); ?>';
-													} else if (pageRole === 'owner') {
-														// Host-intent sign-in, plain customer account → convert
-														dest = '<?= $this->Url->build('/join-us'); ?>';
-													}
-													window.location.href = dest;
-												}, 400);
+									// ── Passwordless sign-in ──
+									if (!otpForm) return;
+
+									const stepContact = document.getElementById("otp-step-contact");
+									const stepCode = document.getElementById("otp-step-code");
+									const contactInput = document.getElementById("otp-contact");
+									const codeInput = document.getElementById("otp-code-input");
+									const targetLabel = document.getElementById("otp-target");
+									const sendBtn = document.getElementById("otp-send-btn");
+									const verifyBtn = document.getElementById("otp-verify-btn");
+									const resendBtn = document.getElementById("otp-resend-btn");
+									const backBtn = document.getElementById("otp-back-btn");
+
+									let contact = '';
+									let resendTimer = null;
+
+									function startResendCountdown(seconds) {
+										let left = seconds;
+										resendBtn.disabled = true;
+										resendBtn.textContent = 'Resend code in ' + left + 's';
+										if (resendTimer) { clearInterval(resendTimer); }
+										resendTimer = setInterval(function() {
+											left -= 1;
+											if (left <= 0) {
+												clearInterval(resendTimer);
+												resendTimer = null;
+												resendBtn.disabled = false;
+												resendBtn.textContent = 'Resend code';
 											} else {
-												const errMsg = data.message || (data.errors ? Object.values(data.errors).flat().join('<br>') : 'Invalid email or password.');
-												alertBox.innerHTML = '<div class="alert alert-danger">' + errMsg + '</div>';
+												resendBtn.textContent = 'Resend code in ' + left + 's';
+											}
+										}, 1000);
+									}
+
+									function showCodeStep(channel, maskedContact) {
+										stepContact.hidden = true;
+										stepCode.hidden = false;
+										targetLabel.textContent = maskedContact;
+										otpAlert.innerHTML = '<div class="alert alert-success">We sent a 6-digit code to ' + maskedContact + '.</div>';
+										codeInput.value = '';
+										codeInput.focus();
+										startResendCountdown(45);
+									}
+
+									function backToContact() {
+										stepCode.hidden = true;
+										stepContact.hidden = false;
+										otpAlert.innerHTML = '';
+										if (resendTimer) { clearInterval(resendTimer); resendTimer = null; }
+										resendBtn.disabled = true;
+										resendBtn.textContent = 'Resend code';
+										contactInput.focus();
+									}
+
+									function mask(contact, channel) {
+										if (channel === 'sms') {
+											const tail = contact.replace(/\D/g, '').slice(-4);
+											return tail ? '••••••' + tail : 'your phone';
+										}
+										const at = contact.indexOf('@');
+										if (at < 1) return 'your email';
+										return contact.charAt(0) + '•••' + contact.slice(at);
+									}
+
+									async function sendCode() {
+										otpAlert.innerHTML = '';
+										sendBtn.disabled = true;
+										sendBtn.innerHTML = '<span class="p-dots" aria-hidden="true"><span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span></span>Sending...';
+										try {
+											const res = await window.FastAuth.postJson('/api/login/otp/request', { contact: contact });
+											const data = res.data || {};
+											if (res.ok && data.success) {
+												contact = contactInput.value.trim();
+												showCodeStep(data.channel || 'email', mask(contact, data.channel || 'email'));
+											} else {
+												otpAlert.innerHTML = '<div class="alert alert-danger">' + (data.message || 'We could not send a code. Please try again.') + '</div>';
 											}
 										} catch(err) {
-											console.error("Login error:", err);
-											alertBox.innerHTML = '<div class="alert alert-danger">Unable to connect to authentication server.</div>';
+											otpAlert.innerHTML = '<div class="alert alert-danger">Unable to reach the authentication server.</div>';
 										} finally {
-											submitBtn.disabled = false;
-											submitBtn.innerHTML = 'Log In';
+											sendBtn.disabled = false;
+											sendBtn.innerHTML = 'Send code';
 										}
+									}
+
+									otpForm.addEventListener("submit", async function(e) {
+										e.preventDefault();
+										const code = codeInput.value.replace(/\D/g, '');
+
+										if (!stepContact.hidden) {
+											contact = contactInput.value.trim();
+											if (!contact) return;
+											await sendCode();
+											return;
+										}
+
+										if (code.length !== 6) {
+											otpAlert.innerHTML = '<div class="alert alert-danger">Enter all 6 digits of the code.</div>';
+											return;
+										}
+
+										otpAlert.innerHTML = '';
+										verifyBtn.disabled = true;
+										verifyBtn.innerHTML = '<span class="p-dots" aria-hidden="true"><span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span></span>Verifying...';
+
+										try {
+											const res = await window.FastAuth.postJson('/api/login/otp/verify', { contact: contact, code: code });
+											const data = res.data || {};
+
+											if (res.ok && data.success && (data.access_token || data.token)) {
+												otpAlert.innerHTML = '<div class="alert alert-success">Signed in! Taking you there...</div>';
+												await window.FastAuth.finish(data, function() {
+													otpAlert.innerHTML = '<div class="alert alert-danger">We could not finish signing you in on this device. Please check your connection and try again.</div>';
+													verifyBtn.disabled = false;
+													verifyBtn.innerHTML = 'Verify &amp; sign in';
+												});
+											} else {
+												otpAlert.innerHTML = '<div class="alert alert-danger">' + (data.message || 'That code is not correct. Please try again.') + '</div>';
+												verifyBtn.disabled = false;
+												verifyBtn.innerHTML = 'Verify &amp; sign in';
+												codeInput.value = '';
+												codeInput.focus();
+											}
+										} catch(err) {
+											otpAlert.innerHTML = '<div class="alert alert-danger">Unable to reach the authentication server.</div>';
+											verifyBtn.disabled = false;
+											verifyBtn.innerHTML = 'Verify &amp; sign in';
+										}
+									});
+
+									resendBtn.addEventListener("click", async function() {
+										if (resendBtn.disabled) return;
+										resendBtn.disabled = true;
+										await sendCode();
+										if (stepContact.hidden) { startResendCountdown(45); }
+									});
+
+									backBtn.addEventListener("click", backToContact);
+
+									codeInput.addEventListener("input", function() {
+										codeInput.value = codeInput.value.replace(/\D/g, '').slice(0, 6);
 									});
 								});
 								</script>

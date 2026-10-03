@@ -58,12 +58,24 @@ class PaymentService
         return $this->apiClient->get('/payments/status/' . rawurlencode($paymentId));
     }
 
-    public function booking(string $bookingId): ?array
+    public function booking(string $bookingId, string $email = ''): ?array
     {
         $bookingId = trim($bookingId);
         if ($bookingId === '') return null;
+
+        // Guest bookings are authorised by the email they were made with;
+        // signed-in guests are authorised by their token.
+        $query = [];
+        $email = trim($email);
+        if ($email !== '') {
+            $query['email'] = $email;
+        }
+
         // Booking verification is booking-centric — separate endpoint, webhook is source of truth
-        return $this->apiClient->get('/bookings/' . rawurlencode($bookingId));
+        return $this->apiClient->get(
+            '/bookings/' . rawurlencode($bookingId),
+            $query
+        );
     }
 
     private function normalizeProvider(string $provider): string

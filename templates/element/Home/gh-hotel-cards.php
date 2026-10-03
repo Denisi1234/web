@@ -107,7 +107,9 @@ if (!function_exists('ghPropImages')) {
         // (Property::getCustomerPricePerNightAttribute + fee_note "Includes payment processing fee", VAT 0%).
         // Stay total = customer nightly × nights × rooms. Never claim anything beyond the fee_note.
         $price      = (int)($prop['customer_price_per_night'] ?? ($prop['price_per_night'] ?? ($prop['price'] ?? 0)));
-        $currency   = ($price > 500) ? 'TSh ' : '$';
+        // Prices are stored in TZS. This previously picked the currency from the
+        // price magnitude, so any property priced under 500 rendered in dollars.
+        $currency   = 'TSh ';
         $priceLabel = $price > 0 ? $currency . number_format($price) : '';
         // nights × rooms for stay total
         $ciTmp = $queryParams['checkin'] ?? $queryParams['checkIn'] ?? null;
@@ -417,30 +419,42 @@ window.ghSlide = function(propId, dir){ var cur = window._ghSlideIdx[propId] || 
     if(mBtn) mBtn.setAttribute('aria-busy', on?'true':'false');
     var inputs=document.querySelectorAll('#gh_dest,#fns_m_input'); inputs.forEach(function(i){ i.setAttribute('aria-busy', on?'true':'false'); });
   };
+
+  // The container swap delegates to FastnetLoading.skeleton, which is the same
+  // code path the filter modal and fastnet-state.js use. These three copies of
+  // show/hide were the reason the skeleton could get stuck: whichever definition
+  // loaded last won, and one of them had no matching hide.
   var show=function(){
-    var cards=document.getElementById('gh-cards-container');
     var shim=document.getElementById('gh-shimmer-container');
     var sec=document.getElementById('gh_results_section');
-    if(cards&&shim){ cards.style.display='none'; shim.style.display='block'; shim.setAttribute('aria-hidden','false'); if(sec) sec.setAttribute('aria-busy','true'); }
+    FastnetLoading.skeleton('gh-cards-container', true, shim);
+    if(shim) shim.setAttribute('aria-hidden','false');
+    if(sec) sec.setAttribute('aria-busy','true');
     var chips=document.getElementById('fns_shimmer_chips'); if(chips) chips.classList.add('show');
     ctaBusy(true);
   };
   var hide=function(){
-    var cards=document.getElementById('gh-cards-container');
     var shim=document.getElementById('gh-shimmer-container');
     var sec=document.getElementById('gh_results_section');
-    if(cards&&shim){ cards.style.display=''; shim.style.display='none'; shim.setAttribute('aria-hidden','true'); if(sec) sec.setAttribute('aria-busy','false'); }
+    FastnetLoading.skeleton('gh-cards-container', false, shim);
+    if(shim) shim.setAttribute('aria-hidden','true');
+    if(sec) sec.setAttribute('aria-busy','false');
+    var chips=document.getElementById('fns_shimmer_chips'); if(chips) chips.classList.remove('show');
     ctaBusy(false);
   };
-  window.ghTriggerShimmer=show;
-  window.fnsTriggerShimmer=show;
-  window.ghHideShimmer=hide;
+
+  // Only define these if nothing has claimed them yet - fastnet-state.js also
+  // registers a pair, and whichever script evaluates last used to win.
+  window.ghHideShimmer = window.ghHideShimmer || hide;
+  window.ghTriggerShimmer = window.ghTriggerShimmer || show;
+  window.fnsTriggerShimmer = window.fnsTriggerShimmer || show;
+
   // No skeleton on initial load: server already rendered real cards. Shimmer only
   // during AJAX transitions (fastnet:shimmer-show from FastNetState.hydrate).
   // fail-safe: hide after 8s if network hangs
   var t=null;
   window.addEventListener('fastnet:shimmer-show', function(){ clearTimeout(t); show(); t=setTimeout(hide,8000); });
-  window.addEventListener('fastnet:shimmer-hide', hide);
+  window.addEventListener('fastnet:shimmer-hide', function(){ clearTimeout(t); hide(); });
   // hook FastNetState hydrate
   var w=0;
   document.addEventListener('DOMContentLoaded', function(){

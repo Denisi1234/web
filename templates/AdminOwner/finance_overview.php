@@ -2,10 +2,13 @@
 $this->assign('title', 'Finance');
 $this->assign('portal_title', 'Finance overview');
 $m = $finance['metrics'] ?? $finance;
-$gross = (float)($m['gross_revenue'] ?? $m['gross_booking_value'] ?? $m['total_earnings'] ?? 0);
-$fee = (float)($m['platform_fee'] ?? $m['platform_commission'] ?? ($gross * 0.10));
-$net = (float)($m['net_earnings'] ?? $m['total_owner_earnings'] ?? ($gross * 0.90));
-$pending = (float)($m['pending_payouts'] ?? $m['outstanding_balance'] ?? 0);
+// Both backends nest the cards one level down: finance/overview uses
+// summary_cards.*, admin/dashboard-stats uses financials.*
+$cards = $m['summary_cards'] ?? $m['financials'] ?? $m;
+$gross = (float)($cards['gross_revenue'] ?? $cards['gross_booking_value'] ?? $cards['total_earnings'] ?? 0);
+$fee = (float)($cards['platform_fee'] ?? $cards['platform_commission'] ?? 0);
+$net = (float)($cards['net_earnings'] ?? $cards['total_owner_earnings'] ?? $cards['owner_earnings'] ?? 0);
+$pending = (float)($cards['pending_payouts'] ?? $cards['outstanding_balance'] ?? 0);
 ?>
 <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
   <form method="get">
@@ -17,7 +20,7 @@ $pending = (float)($m['pending_payouts'] ?? $m['outstanding_balance'] ?? 0);
 
 <div class="row g-3 mb-3">
   <div class="col-6 col-lg-3"><div class="p-stat"><div class="v">TSh <?= number_format($gross) ?></div><div class="l">Gross revenue</div><div class="s">All bookings</div></div></div>
-  <div class="col-6 col-lg-3"><div class="p-stat"><div class="v">TSh <?= number_format($fee) ?></div><div class="l">Platform 10%</div><div class="s">Commission</div></div></div>
+  <div class="col-6 col-lg-3"><div class="p-stat"><div class="v">TSh <?= number_format($fee) ?></div><div class="l">Platform commission</div><div class="s">Commission</div></div></div>
   <div class="col-6 col-lg-3"><div class="p-stat"><div class="v">TSh <?= number_format($net) ?></div><div class="l">Owner 90%</div><div class="s">Net earnings</div></div></div>
   <div class="col-6 col-lg-3"><div class="p-stat"><div class="v">TSh <?= number_format($pending) ?></div><div class="l">Pending</div><div class="s">Outstanding</div></div></div>
 </div>

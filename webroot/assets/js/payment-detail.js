@@ -63,62 +63,72 @@ async function loadPaymentMethods() {
     const list = document.getElementById('payment-methods-list');
     if (!list) return;
 
+    let methods = [];
+
     try {
         const res = await fetch(apiUrl('/api/payment-methods'), { headers: authHdr() });
-        let methods = [];
-
         if (res.ok) {
             const data = await res.json();
             methods = data.data || data;
         }
+    } catch (e) {
+        methods = [];
+    }
 
-        // Fallback: If no payment methods are returned from API, render local Tanzanian mobile money defaults
-        if (!Array.isArray(methods) || methods.length === 0) {
-            methods = [
-                { id: 'def-1', type: 'vodacom', title: 'Vodacom M-Pesa', label: 'Vodacom M-Pesa (0754•••892)', name: 'Daniel Duekoza', expiry: 'Active' },
-                { id: 'def-2', type: 'tigo', title: 'Tigo Pesa', label: 'Tigo Pesa (0712•••563)', name: 'Daniel Duekoza', expiry: 'Active' }
-            ];
-        }
+    if (!Array.isArray(methods)) methods = [];
 
-        let html = '<div class="col-12"><div class="list-group shadow-sm rounded-3 overflow-hidden">';
-        methods.forEach(pm => {
-            const logo = getPmLogoUrl(pm.type);
-            const labelText = pm.label || pm.title || 'Payment Method';
+    // No saved payment methods is a real state, not an error. This used to
+    // render two invented cards ("Daniel Duekoza", Vodacom 0754***892) for
+    // every visitor, which read as genuine saved cards.
+    if (methods.length === 0) {
+        list.innerHTML = `
+            <div class="col-12">
+                <div class="list-group shadow-sm rounded-3 overflow-hidden">
+                    <div class="list-group-item text-center p-4">
+                        <i class="fa-regular fa-credit-card text-muted fs-3 d-block mb-2"></i>
+                        <div class="fw-semibold mb-1">No saved payment methods</div>
+                        <div class="text-muted small">You pay with mobile money at checkout — nothing needs saving.</div>
+                    </div>
+                </div>
+            </div>`;
+        return;
+    }
 
-            html += `
-                <div class="list-group-item list-group-item-action d-flex align-items-center justify-content-between p-3" id="pm-card-${pm.id}">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="d-flex align-items-center justify-content-center bg-light rounded px-2 py-1" style="width: 70px; height: 40px;">
-                            <img class="img-fluid" src="${logo}" style="max-height: 28px; max-width: 55px; object-fit: contain;" alt="${pm.type}">
-                        </div>
-                        <div>
-                            <h6 class="mb-0 fw-semibold text-slate-800">${_escapeHtml(labelText)}</h6>
-                            <span class="text-xs text-muted">Holder: ${_escapeHtml(pm.name)} | Status: ${_escapeHtml(pm.expiry || 'Active')}</span>
-                        </div>
+    let html = '<div class="col-12"><div class="list-group shadow-sm rounded-3 overflow-hidden">';
+    methods.forEach(pm => {
+        const logo = getPmLogoUrl(pm.type);
+        const labelText = pm.label || pm.title || 'Payment Method';
+
+        html += `
+            <div class="list-group-item list-group-item-action d-flex align-items-center justify-content-between p-3" id="pm-card-${pm.id}">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center justify-content-center bg-light rounded px-2 py-1" style="width: 70px; height: 40px;">
+                        <img class="img-fluid" src="${logo}" style="max-height: 28px; max-width: 55px; object-fit: contain;" alt="${pm.type}">
                     </div>
                     <div>
-                        <a href="javascript:void(0);" onclick="deletePaymentMethod('${pm.id}')" class="btn btn-sm btn-light-danger rounded-circle p-2" title="Delete Payment Method">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </a>
+                        <h6 class="mb-0 fw-semibold text-slate-800">${_escapeHtml(labelText)}</h6>
+                        <span class="text-xs text-muted">Holder: ${_escapeHtml(pm.name)} | Status: ${_escapeHtml(pm.expiry || 'Active')}</span>
                     </div>
                 </div>
-            `;
-        });
-
-        // Add Payment Method row at bottom of list
-        html += `
-                <div class="list-group-item text-center p-3 bg-light">
-                    <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-semibold" data-bs-toggle="modal" data-bs-target="#addcard">
-                        <i class="fa-solid fa-circle-plus me-1"></i>Add Mobile Payment Method
-                    </button>
+                <div>
+                    <a href="javascript:void(0);" onclick="deletePaymentMethod('${pm.id}')" class="btn btn-sm btn-light-danger rounded-circle p-2" title="Delete Payment Method">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </a>
                 </div>
-            </div></div>`;
+            </div>
+        `;
+    });
 
-        list.innerHTML = html;
+    // Add Payment Method row at bottom of list
+    html += `
+            <div class="list-group-item text-center p-3 bg-light">
+                <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-semibold" data-bs-toggle="modal" data-bs-target="#addcard">
+                    <i class="fa-solid fa-circle-plus me-1"></i>Add Mobile Payment Method
+                </button>
+            </div>
+        </div></div>`;
 
-    } catch(e) {
-        list.innerHTML = `<div class="col-12 text-center py-3"><p class="text-danger">Failed to load payment methods.</p></div>`;
-    }
+    list.innerHTML = html;
 }
 
 // ── Add Payment Method Form Submit ───────────────────────────────────────────
@@ -208,28 +218,41 @@ async function loadBillingHistory() {
     const tbody = document.getElementById('billing-history-rows');
     if (!tbody) return;
 
+    let bookings = [];
+
     try {
         const res = await fetch(apiUrl('/api/bookings'), { headers: authHdr() });
-        let bookings = [];
-
         if (res.ok) {
             const data = await res.json();
             bookings = data.data || data.bookings || data;
         }
+    } catch (e) {
+        bookings = [];
+    }
 
-        // Fallback static history if no bookings exist
-        if (!Array.isArray(bookings) || bookings.length === 0) {
-            bookings = [
-                { id: '1', reference: 'FN-32154', check_in: '2026-09-10', status: 'completed', total_amount: 240000, currency: 'TZS' },
-                { id: '2', reference: 'FN-32155', check_in: '2026-08-08', status: 'pending', total_amount: 180000, currency: 'TZS' },
-                { id: '3', reference: 'FN-32156', check_in: '2026-08-10', status: 'cancelled', total_amount: 320000, currency: 'TZS' }
-            ];
-        }
+    if (!Array.isArray(bookings)) bookings = [];
+
+    // Previously fell back to three fabricated bookings (FN-32154 240,000 TZS
+    // "completed", etc.) so every account appeared to have billing history.
+    if (bookings.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center py-4">
+                    <i class="fa-regular fa-file-lines text-muted fs-3 d-block mb-2"></i>
+                    <div class="fw-semibold mb-1">No transactions yet</div>
+                    <div class="text-muted small">Your bookings and payments will appear here.</div>
+                </td>
+            </tr>`;
+        return;
+    }
 
         let html = '';
         bookings.forEach((b, index) => {
-            const ref = b.reference || b.booking_code || `FN-${b.id}`;
-            const dateStr = new Date(b.created_at || b.check_in || Date.now()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            // Never invent a reference: an unresolved booking shows its real id
+            // or a dash, rather than a fake "FN-123" that resolves to nothing.
+            const ref = b.reference || b.booking_code || (b.id ? String(b.id) : "—");
+            const rawDate = b.created_at || b.check_in;
+            const dateStr = rawDate ? new Date(rawDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—";
             
             const status = (b.status || 'pending').toLowerCase();
             let badgeClass = 'bg-light-warning text-warning';
@@ -251,8 +274,4 @@ async function loadBillingHistory() {
         });
 
         tbody.innerHTML = html;
-
-    } catch(e) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Failed to load billing history.</td></tr>`;
-    }
 }

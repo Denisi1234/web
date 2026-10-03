@@ -74,48 +74,33 @@ function initHorizontalCarousel(containerId, prevBtnId, nextBtnId, cardSelector)
 	updateArrows();
 }
 
-// ── Global Loading Indicator & Shimmer Transition Manager ──
-window.showHomeLoader = function(customText) {
-	const bar = document.getElementById('home-top-loader-bar');
+// ── Home loader ──────────────────────────────────────────────────────────
+// The progress bar delegates to FastnetLoading so the homepage shows the same
+// indicator as every other page. This used to be a second, independent bar
+// with its own 35%→75%→100% timings, so home felt slower and behaved
+// differently from the rest of the product.
+//
+// The mobile pill is a genuinely separate surface (a bottom sheet affordance,
+// not a progress indicator) and keeps its own show/hide.
+window.showHomeLoader = function (customText) {
 	const pill = document.getElementById('home-mobile-loader-pill');
 	const textEl = pill ? pill.querySelector('.mobile-loader-text') : null;
-	if (textEl && customText) {
-		textEl.innerText = customText;
-	}
 
-	if (bar) {
-		bar.style.display = 'block';
-		bar.style.opacity = '1';
-		bar.style.width = '35%';
-		setTimeout(() => { if (bar) bar.style.width = '75%'; }, 150);
-	}
-	if (pill) {
-		pill.classList.remove('pill-hidden');
-	}
+	if (textEl && customText) textEl.innerText = customText;
+
+	FastnetLoading.bar.start();
+	if (pill) pill.classList.remove('pill-hidden');
 };
 
-window.hideHomeLoader = function() {
-	const bar = document.getElementById('home-top-loader-bar');
-	const pill = document.getElementById('home-mobile-loader-pill');
+window.hideHomeLoader = function () {
+	FastnetLoading.bar.done();
 
-	if (bar) {
-		bar.style.width = '100%';
-		setTimeout(() => {
-			bar.style.opacity = '0';
-			setTimeout(() => { bar.style.display = 'none'; }, 300);
-		}, 180);
-	}
-	if (pill) {
-		pill.classList.add('pill-hidden');
-	}
+	const pill = document.getElementById('home-mobile-loader-pill');
+	if (pill) pill.classList.add('pill-hidden');
 };
 
 // Reveal server-rendered homepage content immediately; loaders are reserved for navigation.
 function revealHomeContent() {
-	const root = document.getElementById('home-app-root');
-	if (root) {
-		root.classList.remove('is-shimmer-loading');
-	}
 	window.hideHomeLoader();
 
 	// Re-initialize carousels now that real content is displayed

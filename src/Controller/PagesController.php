@@ -5,10 +5,13 @@ namespace App\Controller;
 
 use App\Service\AuthService;
 use App\Service\FastnetApiClient;
+use App\Service\HostIntent;
 use App\Service\StaysService;
 use Cake\Core\Configure;
+use Cake\Http\Exception\BadRequestException;
 use Cake\Http\Exception\ForbiddenException;
 use Cake\Http\Exception\NotFoundException;
+use Cake\Http\Exception\UnauthorizedException;
 use Cake\Http\Response;
 use Cake\View\Exception\MissingTemplateException;
 
@@ -411,45 +414,19 @@ class PagesController extends AppController
         $userRole = strtolower((string)($sessionUser['role'] ?? ''));
         $headers = $rawToken !== '' ? ['Authorization' => 'Bearer ' . $rawToken] : [];
 
-        // Handle Become-a-Host upgrade for logged-in customers
+        // A guest account is NOT convertible to a host account. This page used
+        // to POST action=become_host and upgrade the signed-in customer's role
+        // to owner. That is gone: hosting is a separate account with its own
+        // sign-in, reached through /signup?role=owner. The branch is rejected
+        // rather than ignored so a stale bookmarked form cannot still upgrade.
         if ($this->getRequest()->is('post')) {
             $data = (array)$this->getRequest()->getData();
             if (($data['action'] ?? '') === 'become_host') {
-                if (!$isLoggedIn) {
-                    $this->Flash->error(__('Please sign in first, then become a host.'));
-                    return $this->redirect('/login?redirect=/join-us');
-                }
-                if (in_array($userRole, ['owner', 'admin'], true)) {
-                    return $this->redirect('/host/onboarding');
-                }
-                $payload = [];
-                if (!empty($data['phone_number'])) $payload['phone_number'] = trim((string)$data['phone_number']);
-                if (!empty($data['business_name'])) $payload['business_name'] = trim((string)$data['business_name']);
-                $res = $this->apiClient->post('/become-host', $payload, $headers);
-                if ($res === null) {
-                    $this->Flash->error(__('Service unavailable. Please try again.'));
-                } elseif (!empty($res['_status']) && (int)$res['_status'] >= 400) {
-                    $this->Flash->error(__($res['message'] ?? 'Could not upgrade to host.'));
-                } else {
-                    // Prefer the authoritative user in the become-host response;
-                    // fall back to /me only when absent (saves a slow round-trip)
-                    $respUser = (is_array($res) && !empty($res['user']) && is_array($res['user'])) ? $res['user'] : null;
-                    if ($respUser === null || empty($respUser['email'])) {
-                        $me = $this->apiClient->get('/me', [], $headers);
-                        $respUser = (is_array($me) && !empty($me['email'])) ? $me : null;
-                    }
-                    if (is_array($respUser) && !empty($respUser['email'])) {
-                        $updated = is_array($sessionUser) ? array_merge($sessionUser, $respUser) : $respUser;
-                        $updated['role'] = strtolower((string)($respUser['role'] ?? 'owner'));
-                        $updated['token'] = $rawToken;
-                        $session->write('User', $updated);
-                    } elseif (is_array($sessionUser)) {
-                        $sessionUser['role'] = 'owner';
-                        $session->write('User', $sessionUser);
-                    }
-                    $this->Flash->success(__('You are now a host! Add your first property.'));
-                    return $this->redirect('/host/onboarding');
-                }
+                $this->Flash->error(__(
+                    'A guest account cannot be turned into a host account. '
+                    . 'Please register a separate host account.'
+                ));
+                return $this->redirect('/signup?role=owner');
             }
         }
 
@@ -518,6 +495,129 @@ class PagesController extends AppController
      * Internal safe redirect: only relative portal paths, no protocol tricks
      * (backslashes, //host, control chars). Returns '' when unsafe.
      */
+    /**
+     * Owner KYC submission — POST /verification/owner.
+     *
+     * Uploads any identity/business documents to POST /upload first (the
+     * endpoint stores the file and returns a public URL), then submits those
+     * URLs with the rest of the payload. Without this an upgraded host is
+     * stuck at "Pending Verification" with no way to submit documents.
+     */
+    public function submitOwnerVerification(): Response
+    {
+        if (!$this->getRequest()->is('post')) {
+            throw new BadRequestException(__('Method not allowed.'));
+        }
+
+        $token = $this->currentBearerToken();
+        if ($token === '') {
+            throw new UnauthorizedException(__('Sign in to submit verification.'));
+        }
+        $headers = ['Authorization' => 'Bearer ' . $token];
+
+        $uploadOne = function (?string $field) use ($headers): ?string {
+            $file = $this->getRequest()->getUploadedFile($field);
+            if ($file === null) {
+                return null;
+            }
+            if ($file->getError() !== UPLOAD_ERR_OK || !$file->isValid()) {
+                throw new BadRequestException(__('Could not read the uploaded file. Please try again.'));
+            }
+            if ($file->getSize() > 10 * 1024 * 1024) {
+                throw new BadRequestException(__('Documents must be 10 MB or smaller.'));
+            }
+
+            $tmp = $file->getStream()->getMetadata('uri');
+            if (!is_string($tmp) || !is_readable($tmp)) {
+                throw new BadRequestException(__('Could not read the uploaded file. Please try again.'));
+            }
+
+            $res = $this->apiClient->uploadFile(
+                '/upload',
+                'file',
+                $tmp,
+                $file->getClientOriginalName(),
+                $file->getClientMediaType() ?? 'application/octet-stream',
+                $headers
+            );
+
+            if (empty($res) || !empty($res['_status']) || empty($res['url'])) {
+                throw new BadRequestException(__('Document upload failed. Please try again.'));
+            }
+
+            return (string)$res['url'];
+        };
+
+        $idDocUrl = $uploadOne('id_document');
+        if ($idDocUrl === null) {
+            throw new BadRequestException(__('A photo of your National ID is required.'));
+        }
+
+        $payload = [
+            'full_name'       => trim((string)$this->getRequest()->getData('full_name')),
+            'phone_number'    => trim((string)$this->getRequest()->getData('phone_number')),
+            'id_number'       => trim((string)$this->getRequest()->getData('id_number')),
+            'id_document_url' => $idDocUrl,
+        ];
+
+        foreach (['business_registration_number', 'payout_bank_name', 'payout_account_number', 'payout_account_name'] as $opt) {
+            $v = trim((string)$this->getRequest()->getData($opt));
+            if ($v !== '') {
+                $payload[$opt] = $v;
+            }
+        }
+
+        $businessDocUrl = $uploadOne('business_document');
+        if ($businessDocUrl !== null) {
+            $payload['business_document_url'] = $businessDocUrl;
+        }
+
+        $res = $this->apiClient->post('/verification/owner', $payload, $headers);
+
+        if (empty($res) || !empty($res['_status'])) {
+            $msg = $res['message'] ?? __('Could not submit verification. Please try again.');
+            $this->Flash->error(__($msg));
+
+            if ($this->getRequest()->is('json')) {
+                return $this->response
+                    ->withStatus(!empty($res['_status']) ? (int)$res['_status'] : 502)
+                    ->withType('application/json')
+                    ->withStringBody(json_encode(['status' => 'error', 'message' => $msg]));
+            }
+
+            return $this->redirect('/join-us');
+        }
+
+        $this->Flash->success(__('Documents submitted. We will review them shortly.'));
+
+        if ($this->getRequest()->is('json')) {
+            return $this->response->withType('application/json')->withStringBody(json_encode([
+                'status'  => 'success',
+                'message' => __('Documents submitted. We will review them shortly.'),
+            ]));
+        }
+
+        return $this->redirect('/host/onboarding');
+    }
+
+    /** Current bearer token from session or persistent cookie. */
+    private function currentBearerToken(): string
+    {
+        $session = $this->getRequest()->getSession();
+        $token = trim((string)$session->read('auth_token'));
+        if (stripos($token, 'Bearer ') === 0) {
+            $token = trim(substr($token, 7));
+        }
+        if ($token === '') {
+            $token = trim((string)$this->authService->readToken($this->getRequest()));
+            if (stripos($token, 'Bearer ') === 0) {
+                $token = trim(substr($token, 7));
+            }
+        }
+
+        return $token;
+    }
+
     private function safeRedirect(string $url): string
     {
         $url = trim($url);
@@ -677,15 +777,29 @@ class PagesController extends AppController
 
     public function signup()
     {
-        if ($this->getRequest()->is('post')) {
-            $data = $this->getRequest()->getData();
-            $this->Flash->success(__('Account created successfully! Welcome to fastnetstays.com.'));
-            return $this->redirect('/login');
+        $request = $this->getRequest();
+        $session = $request->getSession();
+
+        // Resolve whether this is a host or guest signup, carrying intent in
+        // from an explicit ?role=, a remembered choice, or the referring page.
+        $requestedRole = HostIntent::resolve($request, $session->read('signup_intent_role'));
+        $session->write('signup_intent_role', $requestedRole);
+
+        if ($request->is('post')) {
+            // The browser posts the real form to the backend via
+            // /api/register. This fallback only runs when that client-side
+            // path is bypassed. It used to flash "Account created
+            // successfully!" and redirect to /login without creating anything,
+            // so a failed registration looked like a success.
+            $this->Flash->error(__(
+                'Please complete registration in the form above. '
+                . 'If it keeps failing, try again in a moment.'
+            ));
+            return $this->redirect($requestedRole === HostIntent::ROLE_OWNER
+                ? '/signup?role=owner'
+                : '/signup');
         }
-        $requestedRole = strtolower(trim((string)$this->getRequest()->getQuery('role', 'customer')));
-        if (!in_array($requestedRole, ['customer', 'owner'], true)) {
-            $requestedRole = 'customer';
-        }
+
         $this->set(compact('requestedRole'));
         return $this->render('/Pages/signup');
     }
@@ -709,44 +823,79 @@ class PagesController extends AppController
     {
         $apiPath = '/' . implode('/', $path);
         $method = strtolower($this->getRequest()->getMethod());
-        // Whitelist — only safe read endpoints are proxied. Payment/booking writes must go via BookingsController.
-        // /alerts is guest-safe: web sends a per-device user_id so backend buckets never mix strangers (no shared guest_user).
-        $allowedGetPrefixes = ['/map-config', '/properties', '/rooms', '/destinations', '/auth/verify', '/user/personal-details', '/bookings/calculate', '/alerts'];
-        $blockedPrefixes = ['/payments/', '/bookings/create', '/bookings/calculate'];
+
+        $allowedGetPrefixes = [
+            '/map-config', '/properties', '/rooms', '/destinations',
+            '/auth/verify', '/user/personal-details', '/bookings/calculate',
+            '/alerts', '/search/suggestions', '/currencies',
+            '/notifications/preferences', '/travel/preferences', '/support/help-centre'
+        ];
+        $allowedPostPrefixes = [
+            '/notifications/preferences', '/travel/preferences',
+            '/receipts/generate', '/feedback/accessibility',
+            '/user/personal-details', '/alerts'
+        ];
+
+        // Exactly one property POST: the AI description draft. Scoped to a
+        // suffix rather than opening all of POST /properties, and the backend
+        // enforces that the caller owns the property.
+        $isGenerateDescription = (bool) preg_match(
+            '#^/properties/\d+/generate-description$#',
+            $apiPath
+        );
+        $allowedDeletePrefixes = ['/alerts', '/wishlist'];
+
         $isAllowed = false;
-        foreach ($allowedGetPrefixes as $p) {
-            if ($apiPath === $p || str_starts_with($apiPath, $p . '/') || str_starts_with($apiPath, $p)) {
-                $isAllowed = true; break;
+        if ($method === 'get') {
+            foreach ($allowedGetPrefixes as $p) {
+                if ($apiPath === $p || str_starts_with($apiPath, $p . '/') || str_starts_with($apiPath, $p)) {
+                    $isAllowed = true; break;
+                }
+            }
+        } elseif ($method === 'post') {
+            if ($isGenerateDescription) {
+                $isAllowed = true;
+            }
+            foreach ($allowedPostPrefixes as $p) {
+                if ($apiPath === $p || str_starts_with($apiPath, $p . '/') || str_starts_with($apiPath, $p)) {
+                    $isAllowed = true; break;
+                }
+            }
+        } elseif ($method === 'delete') {
+            foreach ($allowedDeletePrefixes as $p) {
+                if ($apiPath === $p || str_starts_with($apiPath, $p . '/') || str_starts_with($apiPath, $p)) {
+                    $isAllowed = true; break;
+                }
             }
         }
-        // Allow exact /bookings/calculate for GET only (quote), block POST via proxy
-        if ($method === 'post' && (str_starts_with($apiPath, '/payments/') || $apiPath === '/bookings/create' || $apiPath === '/bookings/calculate')) {
-            return $this->response->withStatus(403)->withType('application/json')->withStringBody(json_encode(['error'=>'Forbidden via proxy — use BookingsController']));
-        }
+
         if (!$isAllowed) {
-            return $this->response->withStatus(403)->withType('application/json')->withStringBody(json_encode(['error'=>'Proxy path not allowed']));
+            return $this->response->withStatus(403)->withType('application/json')->withStringBody(json_encode(['error' => 'Proxy path not allowed']));
         }
-        // Simple per-IP rate limit: 60/min (expiry stored inline — Cache::write takes a config name, not a duration)
+
+        // Simple per-IP rate limit: 120/min
         $ip = $this->getRequest()->clientIp() ?? 'unknown';
         $cacheKey = 'api_proxy_rate_' . md5($ip . $apiPath);
         $rate = \Cake\Cache\Cache::read($cacheKey, 'default');
         $rateCount = (is_array($rate) && isset($rate['exp']) && $rate['exp'] > time()) ? (int)$rate['count'] : 0;
-        if ($rateCount >= 60) {
-            return $this->response->withStatus(429)->withType('application/json')->withStringBody(json_encode(['error'=>'Rate limit exceeded']));
+        if ($rateCount >= 120) {
+            return $this->response->withStatus(429)->withType('application/json')->withStringBody(json_encode(['error' => 'Rate limit exceeded']));
         }
         \Cake\Cache\Cache::write($cacheKey, ['count' => $rateCount + 1, 'exp' => time() + 60]);
+
+        $token = $this->authService->readToken($this->getRequest());
+        $headers = $token !== '' ? ['Authorization' => 'Bearer ' . $token] : [];
 
         $queryParams = $this->getRequest()->getQueryParams();
         $body = $this->getRequest()->getData();
 
         if ($method === 'post') {
-            $data = $this->apiClient->post($apiPath, (array)$body);
+            $data = $this->apiClient->post($apiPath, (array)$body, $headers);
         } elseif ($method === 'delete') {
-            // Forward query string (e.g. /alerts/{id}?user_id=…) — backend scopes buckets by it
             $delPath = $apiPath . ($queryParams ? '?' . http_build_query($queryParams) : '');
-            $data = $this->apiClient->delete($delPath);
+            $data = $this->apiClient->delete($delPath, $headers);
         } else {
-            $data = $this->apiClient->get($apiPath, $queryParams);
+            $data = $this->apiClient->get($apiPath, $queryParams, $headers);
         }
 
         return $this->response->withType('application/json')->withStringBody((string)json_encode($data ?? []));

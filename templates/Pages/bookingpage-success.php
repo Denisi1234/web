@@ -36,13 +36,8 @@ $propCity = $queryParams['property_city'] ?: ($property['city'] ?? '');
 @media(max-width:768px){.booking-success-card{border-radius:22px !important} .booking-success-watermark{font-size:8px}}
 </style>
 <?= $this->element('navbar') ?>
-<nav aria-label="Breadcrumb" class="container-fluid px-2 px-lg-2" style="max-width:100%;margin:0 auto;background:#f8f9fa;">
-  <ol class="breadcrumb mb-0 py-1" style="background:transparent;font-size:12px;line-height:1.2;--bs-breadcrumb-divider:'›';" itemscope itemtype="https://schema.org/BreadcrumbList">
-    <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a href="/" itemprop="item" style="color:#5f6368;text-decoration:none;"><span itemprop="name">Home</span></a><meta itemprop="position" content="1"></li>
-    <li class="breadcrumb-item active" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><span itemprop="name">Booking Confirmation</span><meta itemprop="position" content="2"></li>
-  </ol>
-</nav>
-<main id="main-content" style="background:#f8f9fa;min-height:85vh;" role="main">
+<?= $this->element('breadcrumb-schema', ['label' => 'Booking confirmed']) ?>
+<main id="main-content" style="background:var(--cds-gray-10);min-height:85vh;" role="main">
 
 <!-- Booking Success Page -->
 <section class="py-5 gray-simple position-relative">
@@ -132,9 +127,19 @@ $propCity = $queryParams['property_city'] ?: ($property['city'] ?? '');
 						<div class="text-center d-flex align-items-center justify-content-center flex-wrap gap-2">
 							<a href="<?= $this->Url->build('/'); ?>" class="btn fw-bold rounded-full px-4" style="background:#fff;border:1px solid #e8eaed;border-radius:30px;padding:10px 20px;color:#1a1d25">Browse More Stays</a>
 							<a href="<?= $this->Url->build('/my-booking'); ?>" class="btn fw-bold rounded-full px-4" style="background:#0f62fe;color:#fff;border-radius:30px;padding:10px 20px;box-shadow:0 4px 12px rgba(15,98,254,0.18)">View My Bookings</a>
+							<?php if (!empty($verifiedBooking) && (float)($verifiedBooking['total_price'] ?? 0) > 0): ?>
 							<button type="button" data-bs-toggle="modal" data-bs-target="#invoice" class="btn fw-bold rounded-full px-4" style="background:#F8FAFC;border:1px solid #e8eaed;border-radius:30px;padding:10px 20px;color:#0f62fe">
 								<i class="fa-solid fa-receipt me-1"></i>View Invoice Receipt
 							</button>
+							<?php endif; ?>
+							<?php if (!empty($verifiedBooking) && ($verifiedBooking['payment_status'] ?? '') === 'paid'): ?>
+							<button type="button" id="downloadReceiptBtn"
+							        class="btn fw-bold rounded-full px-4"
+							        style="background:#0f62fe;color:#fff;border-radius:30px;padding:10px 20px;box-shadow:0 4px 12px rgba(15,98,254,.18)"
+							        data-booking-id="<?= h((string)($verifiedBooking['id'] ?? '')) ?>">
+								<i class="fa-solid fa-file-arrow-down me-1"></i>Download receipt
+							</button>
+							<?php endif; ?>
 						</div>
 
 					</div>
@@ -153,3 +158,47 @@ $propCity = $queryParams['property_city'] ?: ($property['city'] ?? '');
 <!-- Include Footer -->
 </main>
 <?= $this->element('footer', ['skin' => 'skin-light-footer']) ?>
+
+<script>
+// E-receipt download -> POST /booking-receipt -> POST /receipts/generate
+(function () {
+  var btn = document.getElementById('downloadReceiptBtn');
+  if (!btn) return;
+  var label = btn.innerHTML;
+
+  btn.addEventListener('click', function () {
+    var bookingId = btn.getAttribute('data-booking-id');
+    if (!bookingId) return;
+
+    btn.disabled = true;
+    btn.innerHTML = 'Preparing receipt\u2026';
+
+    var body = new URLSearchParams();
+    body.set('booking_id', bookingId);
+
+    fetch('/booking-receipt', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: body.toString(),
+      credentials: 'same-origin'
+    })
+      .then(function (r) { return r.json().catch(function () { return {}; }); })
+      .then(function (data) {
+        if (data && data.status === 'success' && data.receipt_url) {
+          window.open(data.receipt_url, '_blank', 'noopener');
+        } else {
+          window.alert((data && data.message) || 'Could not generate your receipt.');
+        }
+      })
+      .catch(function () { window.alert('Could not reach the server. Please try again.'); })
+      .finally(function () {
+        btn.disabled = false;
+        btn.innerHTML = label;
+      });
+  });
+})();
+</script>

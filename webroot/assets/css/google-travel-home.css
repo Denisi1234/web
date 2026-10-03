@@ -170,13 +170,7 @@
 }
 /* Breadcrumb mobile — sticky below header+tabs, not clipped (excludes index stacks which manage their own order/visibility) */
 @media(max-width:991px){
-  nav[aria-label="Breadcrumb"]:not(#gh_mobile_breadcrumb):not(#gh_desktop_breadcrumb){position:sticky !important;top:96px !important;z-index:790 !important;background:#f8f9fa !important;display:block !important;visibility:visible !important;opacity:1 !important;overflow:visible !important;overflow-x:auto !important;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:10px 16px 10px !important; padding-left:calc(20px + env(safe-area-inset-left, 0px)) !important;padding-right:16px !important;margin:0 !important;min-height:36px !important;box-sizing:border-box !important}
-  nav[aria-label="Breadcrumb"]:not(#gh_mobile_breadcrumb):not(#gh_desktop_breadcrumb) .breadcrumb{display:flex !important;flex-wrap:nowrap !important;gap:8px !important;min-width:max-content !important;align-items:center !important}
-  nav[aria-label="Breadcrumb"]:not(#gh_mobile_breadcrumb):not(#gh_desktop_breadcrumb) .breadcrumb-item{flex:0 0 auto !important;white-space:nowrap !important;display:inline-flex !important;align-items:center !important}
 }
-nav[aria-label="Breadcrumb"]::-webkit-scrollbar{display:none}
-nav[aria-label="Breadcrumb"] .breadcrumb{flex-wrap:nowrap !important;white-space:nowrap !important;gap:6px}
-nav[aria-label="Breadcrumb"] .breadcrumb-item{flex:0 0 auto;white-space:nowrap}
 /* Mobile peek drawer */
 .gh-mobile-sheet{display:none}
 @media(max-width:991px){

@@ -20,6 +20,23 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
     setTimeout(function(){ t.parentNode && t.parentNode.removeChild(t); }, 2600);
   }
 
+  function getAuthToken() {
+    var meta = document.querySelector('meta[name="api-token"]');
+    if (meta) {
+      var val = (meta.getAttribute('content') || '').trim();
+      if (val) return val;
+    }
+    try {
+      var s = window.localStorage.getItem('auth_token') || window.localStorage.getItem('token') || window.sessionStorage.getItem('auth_token');
+      if (s && s.trim()) return s.trim();
+    } catch (e) {}
+    try {
+      var m = document.cookie.match(/fn_token=([^;]+)/);
+      if (m && m[1]) return decodeURIComponent(m[1]).trim();
+    } catch (e) {}
+    return '';
+  }
+
   /* ---------- step 3 · cover photo drag & drop (only when present) ---------- */
   var drop = document.getElementById('obDrop');
   if (drop) {
@@ -53,23 +70,62 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
       if (bar) { bar.style.display = 'block'; if (barFill) barFill.style.width = '30%'; }
       var fd = new FormData();
       fd.append('file', f);
-      var xhr = new XMLHttpRequest();
-      xhr.open('POST', BACKEND + '/upload', true);
-      xhr.setRequestHeader('Accept', 'application/json');
-      xhr.upload.onprogress = function (e) {
-        if (e.lengthComputable && barFill) barFill.style.width = Math.round(e.loaded / e.total * 100) + '%';
-      };
-      xhr.onload = function () {
-        uploading--;
-        if (bar) { if (barFill) barFill.style.width = '100%'; setTimeout(function(){ bar.style.display = 'none'; if (barFill) barFill.style.width = '0'; }, 400); }
-        try {
-          var j = JSON.parse(xhr.responseText);
-          if (xhr.status >= 200 && xhr.status < 300 && j.url) { coverInput.value = j.url; if (photoErr) photoErr.style.display = 'none'; window.__obRenderPrev(); }
-          else toast((j && j.message) || 'Upload failed. Try again.');
-        } catch (e) { toast('Upload failed. Try again.'); }
-      };
-      xhr.onerror = function () { uploading--; if (bar) bar.style.display = 'none'; toast('No connection to media server.'); };
-      xhr.send(fd);
+
+      var token = getAuthToken();
+      var targetUrl = token ? (BACKEND + '/upload') : '/host/upload';
+
+      function sendCoverXhr(url, useAuth) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', url, true);
+        xhr.setRequestHeader('Accept', 'application/json');
+        if (useAuth && token) {
+          xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+        }
+        xhr.upload.onprogress = function (e) {
+          if (e.lengthComputable && barFill) barFill.style.width = Math.round(e.loaded / e.total * 100) + '%';
+        };
+        xhr.onload = function () {
+          try {
+            var j = JSON.parse(xhr.responseText);
+            var photoUrl = j.url || j.photo_url || (j.data && (j.data.url || j.data.photo_url));
+            if (xhr.status >= 200 && xhr.status < 300 && photoUrl) {
+              uploading--;
+              if (bar) { if (barFill) barFill.style.width = '100%'; setTimeout(function(){ bar.style.display = 'none'; if (barFill) barFill.style.width = '0'; }, 400); }
+              coverInput.value = photoUrl;
+              if (photoErr) photoErr.style.display = 'none';
+              window.__obRenderPrev();
+              return;
+            }
+            if (url !== '/host/upload' && (xhr.status === 401 || xhr.status === 403 || xhr.status === 0)) {
+              sendCoverXhr('/host/upload', false);
+              return;
+            }
+            uploading--;
+            if (bar) bar.style.display = 'none';
+            toast((j && j.message) || 'Upload failed. Try again.');
+          } catch (e) {
+            if (url !== '/host/upload') {
+              sendCoverXhr('/host/upload', false);
+              return;
+            }
+            uploading--;
+            if (bar) bar.style.display = 'none';
+            toast('Upload failed. Try again.');
+          }
+        };
+        xhr.onerror = function () {
+          if (url !== '/host/upload') {
+            sendCoverXhr('/host/upload', false);
+            return;
+          }
+          uploading--;
+          if (bar) bar.style.display = 'none';
+          toast('No connection to media server.');
+        };
+        xhr.send(fd);
+      }
+
+      sendCoverXhr(targetUrl, Boolean(token));
     }
     drop.addEventListener('click', function () { fileInput.click(); });
     drop.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
@@ -329,19 +385,53 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
             roomUp++;
             var fd = new FormData();
             fd.append('file', f);
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', BACKEND + '/upload', true);
-            xhr.setRequestHeader('Accept', 'application/json');
-            xhr.onload = function () {
-              roomUp--;
-              try {
-                var j = JSON.parse(xhr.responseText);
-                if (xhr.status >= 200 && xhr.status < 300 && j.url) thumb(box, idx, j.url);
-                else toast((j && j.message) || 'Photo upload failed.');
-              } catch (e) { toast('Photo upload failed.'); }
-            };
-            xhr.onerror = function () { roomUp--; toast('No connection to media server.'); };
-            xhr.send(fd);
+
+            var token = getAuthToken();
+            var targetUrl = token ? (BACKEND + '/upload') : '/host/upload';
+
+            function sendRoomReq(url, useAuth) {
+              var xhr = new XMLHttpRequest();
+              xhr.open('POST', url, true);
+              xhr.setRequestHeader('Accept', 'application/json');
+              if (useAuth && token) {
+                xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+              }
+              xhr.onload = function () {
+                try {
+                  var j = JSON.parse(xhr.responseText);
+                  var photoUrl = j.url || j.photo_url || (j.data && (j.data.url || j.data.photo_url));
+                  if (xhr.status >= 200 && xhr.status < 300 && photoUrl) {
+                    roomUp--;
+                    thumb(box, idx, photoUrl);
+                    return;
+                  }
+                  if (url !== '/host/upload' && (xhr.status === 401 || xhr.status === 403 || xhr.status === 0)) {
+                    sendRoomReq('/host/upload', false);
+                    return;
+                  }
+                  roomUp--;
+                  toast((j && j.message) || 'Photo upload failed.');
+                } catch (e) {
+                  if (url !== '/host/upload') {
+                    sendRoomReq('/host/upload', false);
+                    return;
+                  }
+                  roomUp--;
+                  toast('Photo upload failed.');
+                }
+              };
+              xhr.onerror = function () {
+                if (url !== '/host/upload') {
+                  sendRoomReq('/host/upload', false);
+                  return;
+                }
+                roomUp--;
+                toast('No connection to media server.');
+              };
+              xhr.send(fd);
+            }
+
+            sendRoomReq(targetUrl, Boolean(token));
           })(fs[k]);
         }
         file.value = '';

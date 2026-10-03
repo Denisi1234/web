@@ -51,3 +51,18 @@ nbproject/*
 # yarn
 yarn-debug.log
 yarn-error.log
+
+# Secrets: never commit real environment files. Only *.example is tracked.
+.env.production
+.env.prod
+.env.local
+.env.ship.local
+.env.backup-*
+
+# Editor/backup leftovers
+*.bak
+*.orig
+*.rej
+
+# Runtime caches
+/.phpunit.cache/

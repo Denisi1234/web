@@ -44,17 +44,17 @@ $this->assign('page_actions', '<a href="' . $this->Url->build('/admin/finance/le
 <?php else: ?>
   <div class="p-table-wrap">
     <div class="table-responsive"><table class="p-table" style="font-size:13px">
-      <thead><tr><th>Tx</th><th>Date</th><th>Owner / Lodge</th><th>Booking</th><th style="text-align:right">Gross</th><th style="text-align:right">10%</th><th style="text-align:right">Net 90%</th><th>Type</th><th>Pay</th><th>Payout</th></tr></thead>
+      <thead><tr><th>Tx</th><th>Date</th><th>Owner / Lodge</th><th>Booking</th><th style="text-align:right">Gross</th><th style="text-align:right">Commission</th><th style="text-align:right">Owner net</th><th>Type</th><th>Pay</th><th>Payout</th></tr></thead>
       <tbody>
         <?php foreach ($transactions as $t): ?>
         <tr>
           <td style="font-weight:600;font-size:12px"><?= h($t['transaction_id'] ?? $t['id'] ?? '—') ?></td>
           <td style="font-size:12px"><?= h(substr((string)($t['created_at'] ?? $t['date'] ?? ''), 0, 10)) ?></td>
-          <td><div style="font-weight:600"><?= h($t['owner_name'] ?? $t['owner']['name'] ?? '') ?></div><div style="font-size:11px;color:var(--p-text-2)"><?= h($t['property_name'] ?? $t['lodge_name'] ?? $t['property']['name'] ?? '') ?></div></td>
+          <td><div style="font-weight:600"><?= h($t['owner_name'] ?? $t['owner']['name'] ?? '') ?></div><div style="font-size:11px;color:var(--p-text-2)"><?= h($t['property_name'] ?? $t['lodge_name'] ?? $t['property']['name'] ?? $t['lodge']['name'] ?? '') ?></div></td>
           <td style="font-size:12px"><?= h($t['booking_reference'] ?? $t['booking_code'] ?? '') ?></td>
           <td style="text-align:right;font-weight:600">TSh <?= number_format((float)($t['gross_amount'] ?? $t['amount'] ?? $t['gross'] ?? 0)) ?></td>
-          <td style="text-align:right;font-weight:600">TSh <?= number_format((float)($t['platform_fee'] ?? $t['platform_commission'] ?? (($t['gross_amount'] ?? $t['amount'] ?? 0) * 0.10))) ?></td>
-          <td style="text-align:right;font-weight:600">TSh <?= number_format((float)($t['owner_amount'] ?? $t['owner_earnings'] ?? (($t['gross_amount'] ?? $t['amount'] ?? 0) * 0.90))) ?></td>
+          <td style="text-align:right;font-weight:600">TSh <?= number_format((float)($t['platform_fee'] ?? $t['platform_fee_10'] ?? $t['platform_commission'] ?? 0)) ?></td>
+          <td style="text-align:right;font-weight:600">TSh <?= number_format((float)($t['owner_amount'] ?? $t['owner_net_90'] ?? $t['owner_earnings'] ?? 0)) ?></td>
           <td><span class="p-badge blue"><?= h($t['transaction_type'] ?? $t['type'] ?? '') ?></span></td>
           <td><span class="p-badge green"><?= h($t['payment_status'] ?? '') ?></span></td>
           <td><span class="p-badge yellow"><?= h($t['payout_status'] ?? '') ?></span></td>

@@ -76,6 +76,73 @@ class FastnetApiClient
     }
 
     /**
+     * Upload a single file as multipart/form-data.
+     *
+     * The JSON-only request path cannot carry binary uploads, so this builds
+     * the multipart body and calls the backend's POST /upload directly.
+     *
+     * @param string $field      form field name (the backend expects 'file')
+     * @param string $path       readable local path to the file
+     * @param string $filename   original client filename
+     * @param string $mimeType   content type for the part
+     */
+    public function uploadFile(string $endpoint, string $field, string $path, string $filename, string $mimeType, array $headers = [], ?int $timeout = null): ?array
+    {
+        if (!is_readable($path)) {
+            return ['_status' => 400, 'message' => 'Upload file could not be read.'];
+        }
+
+        $boundary = '----fastnet' . bin2hex(random_bytes(12));
+        $safeName = preg_replace('/[^A-Za-z0-9._-]/', '_', $filename) ?: 'upload';
+        $safeMime = preg_match('#^[A-Za-z0-9.+-]+/[A-Za-z0-9.+-]+$#', $mimeType) ? $mimeType : 'application/octet-stream';
+
+        $body = "--{$boundary}\r\n"
+            . "Content-Disposition: form-data; name=\"{$field}\"; filename=\"{$safeName}\"\r\n"
+            . "Content-Type: {$safeMime}\r\n\r\n"
+            . file_get_contents($path) . "\r\n"
+            . "--{$boundary}--\r\n";
+
+        $url = $this->baseUrl . '/' . ltrim($endpoint, '/');
+
+        $http = $this->http;
+        if ($timeout !== null && $timeout !== $this->timeout) {
+            $http = new Client([
+                'timeout' => $timeout,
+                'headers' => [
+                    'Accept'     => 'application/json',
+                    'User-Agent' => 'FastNetStays/1.0 (CakePHP 5; fastnetstays.com)'
+                ]
+            ]);
+        }
+
+        try {
+            $response = $http->post($url, $body, [
+                'headers' => array_merge([
+                    'Accept'       => 'application/json',
+                    'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
+                ], $headers),
+            ]);
+
+            $status = $response->getStatusCode();
+            $json = null;
+            try { $json = $response->getJson(); } catch (\Throwable $e) { $json = null; }
+
+            if (($response->isOk() || $status === 201) && is_array($json)) {
+                return $json;
+            }
+
+            if (is_array($json)) {
+                $json['_status'] = $status;
+                return $json;
+            }
+
+            return ['_status' => $status, 'message' => 'Upload failed.'];
+        } catch (\Throwable $e) {
+            return ['_status' => 502, 'message' => 'Upload service unavailable.'];
+        }
+    }
+
+    /**
      * Perform concurrent POST requests to prevent PHP worker blocking on loops.
      */
     public function postMulti(array $requests, array $headers = []): array

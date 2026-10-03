@@ -220,12 +220,18 @@ $userBookings = is_array($userBookings ?? null) ? $userBookings : (is_array($boo
                                                 Ref: <strong class="text-slate-800">#<?= htmlspecialchars($bCode); ?></strong>
                                             </p>
                                         </div>
-                                        <div class="text-end">
+                                        <div class="text-end d-flex flex-column align-items-end gap-1">
                                             <div class="bk-price-val mb-1"><?= htmlspecialchars($priceFormatted); ?></div>
-                                            <a href="<?= $this->Url->build('/bookingpage-success?booking_code=' . urlencode($bCode)); ?>" class="bk-btn-receipt">
-                                                <i class="fa-regular fa-file-lines"></i>
-                                                <span>View Receipt</span>
-                                            </a>
+                                            <div class="d-flex gap-1 flex-wrap justify-content-end">
+                                                <a href="<?= $this->Url->build('/bookingpage-success?booking_code=' . urlencode($bCode)); ?>" class="bk-btn-receipt">
+                                                    <i class="fa-regular fa-file-lines"></i>
+                                                    <span>View Details</span>
+                                                </a>
+                                                <button type="button" class="bk-btn-receipt" style="background:#0f62fe" onclick="downloadBookingReceipt('<?= h($bCode) ?>')">
+                                                    <i class="fa-solid fa-file-arrow-down"></i>
+                                                    <span>Download PDF</span>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="row g-3 text-sm text-slate-700 align-items-center">
@@ -415,6 +421,36 @@ function showBookingToast(msg) {
         toast.style.opacity = '0';
         setTimeout(() => { toast.style.display = 'none'; }, 250);
     }, 2500);
+}
+
+function downloadBookingReceipt(bookingCode) {
+    if (!bookingCode) return;
+    showBookingToast('Generating receipt...');
+    const body = new URLSearchParams();
+    body.set('booking_id', bookingCode);
+
+    fetch('/booking-receipt', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: body.toString(),
+        credentials: 'same-origin'
+    })
+    .then(r => r.json().catch(() => ({})))
+    .then(data => {
+        if (data && data.status === 'success' && data.receipt_url) {
+            window.open(data.receipt_url, '_blank', 'noopener');
+            showBookingToast('Receipt ready!');
+        } else {
+            showBookingToast((data && data.message) || 'Could not generate receipt.');
+        }
+    })
+    .catch(() => {
+        showBookingToast('Error generating receipt.');
+    });
 }
 </script>
 </main>
