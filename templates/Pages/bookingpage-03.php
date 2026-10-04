@@ -81,6 +81,29 @@ $guestEmail = $queryParams['guest_email'] ?? $queryParams['email'] ?? '';
 .agoda-terms{padding:0 16px 16px;font-size:12px;color:#5f6368}
 .agoda-terms a{color:#0f62fe;font-weight:600;text-decoration:underline}
 .agoda-hurry-red{font-size:12px;color:#c0392b;text-align:right;margin:10px 0 6px}
+/* Carbon selectable-tile payment methods (White theme tokens) */
+.cds-pay-field{border:none;padding:0;margin:0}
+.cds-pay-legend{font-size:12px;font-weight:600;color:var(--cds-gray-100);margin:0 0 8px;padding:0}
+.cds-pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cds-pay-tile{position:relative;display:flex;align-items:center;gap:12px;background:var(--cds-white);border:1px solid var(--cds-border-subtle);border-radius:8px;padding:12px;cursor:pointer;transition:border-color 150ms ease,background 150ms ease,box-shadow 150ms ease;margin:0}
+.cds-pay-tile:hover{border-color:var(--cds-gray-60)}
+.cds-pay-tile input{position:absolute;opacity:0;pointer-events:none;margin:0}
+.cds-pay-tile:focus-within{outline:2px solid var(--cds-focus);outline-offset:2px}
+.cds-pay-tile:has(input:checked),.cds-pay-tile.is-selected{border-color:var(--cds-blue-60);background:var(--cds-blue-10-highlight);box-shadow:inset 0 0 0 1px var(--cds-blue-60)}
+.cds-pay-check{width:20px;height:20px;border-radius:50%;border:1px solid var(--cds-gray-60);flex:0 0 20px;display:inline-flex;align-items:center;justify-content:center;color:transparent;font-size:10px;transition:background 150ms ease,border-color 150ms ease,color 150ms ease}
+.cds-pay-tile:has(input:checked) .cds-pay-check,.cds-pay-tile.is-selected .cds-pay-check{background:var(--cds-blue-60);border-color:var(--cds-blue-60);color:#fff}
+.cds-pay-logo{width:44px;height:28px;object-fit:contain;flex:0 0 44px}
+.cds-pay-name{font-size:13px;font-weight:600;color:var(--cds-gray-100);line-height:1.25;display:block}
+.cds-pay-sub{font-size:11px;color:var(--cds-gray-70);display:block;margin-top:1px}
+.cds-momo-box{background:var(--cds-gray-10);border:1px solid var(--cds-border-subtle);border-radius:8px;padding:14px}
+.cds-momo-title{font-size:13px;font-weight:600;color:var(--cds-gray-100);margin-bottom:8px}
+.cds-momo-row{display:flex;align-items:stretch}
+.cds-momo-prefix{background:var(--cds-white);border:1px solid var(--cds-gray-30);border-right:none;border-radius:8px 0 0 8px;padding:0 10px;min-height:44px;display:inline-flex;align-items:center;font-size:13px;color:var(--cds-gray-70);white-space:nowrap}
+.cds-momo-prefix img{height:16px;margin-left:6px}
+.cds-momo-input{border-radius:0 8px 8px 0!important;flex:1}
+.cds-momo-hint{font-size:11px;color:var(--cds-gray-70);margin-top:6px}
+.cds-momo-hint span{color:var(--cds-blue-60);font-weight:600}
+@media(max-width:480px){.cds-pay-grid{grid-template-columns:1fr 1fr;gap:6px}.cds-pay-tile{padding:10px;gap:8px}.cds-pay-logo{width:36px;height:24px;flex-basis:36px}.cds-pay-name{font-size:12px}}
 .agoda-email-note{font-size:13px;color:#202124;display:flex;align-items:center;gap:6px}
 .agoda-email-note b{color:#202124}
 .agoda-book-btn{background:#0f62fe;color:#fff;border:none;border-radius:30px;padding:14px 24px;font-size:15px;font-weight:800;width:100%;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 12px rgba(15,98,254,0.18)}
@@ -178,7 +201,19 @@ $guestEmail = $queryParams['guest_email'] ?? $queryParams['email'] ?? '';
     </div>
   </div>
 </div>
-<div class="agoda-timer-bar">This price is guaranteed for... <b><i class="fa-regular fa-clock"></i> <span id="agodaPayCountdown">00:15:32</span></b></div>
+<?php
+// Same server-owned guarantee as step 1 — the payment step shares the quote expiry.
+$payRemainingSrv = isset($quoteRemaining) ? max(0, (int)$quoteRemaining)
+    : (isset($quote['expires_at']) ? max(0, (int)$quote['expires_at'] - time()) : 0);
+$payHasGuarantee = !empty($quote['expires_at']) || isset($quoteRemaining);
+$payFmt = sprintf('%02d:%02d:%02d', (int)($payRemainingSrv / 3600), (int)(($payRemainingSrv % 3600) / 60), $payRemainingSrv % 60);
+?>
+<?php if ($payHasGuarantee): ?>
+<div class="agoda-timer-bar" id="agodaPayTimerBar" data-remaining="<?= (int)$payRemainingSrv ?>">
+  <span id="agodaPayTimerLabel">This price is guaranteed for... <b><i class="fa-regular fa-clock"></i> <span id="agodaPayCountdown"><?= h($payFmt) ?></span></b></span>
+  <span id="agodaPayTimerExpired" style="display:none">Price guarantee expired — <a href="<?= $this->Url->build('/booking-page', ['?' => array_filter(['property_id' => $propertyId, 'room_id' => $roomId, 'checkIn' => $checkIn, 'checkOut' => $checkOut, 'repriced' => '1'])]) ?>" class="agoda-link" style="font-weight:800">go back to refresh the live price</a></span>
+</div>
+<?php endif; ?>
 
 <div class="agoda-pay-wrap">
   <!-- LEFT -->
@@ -204,38 +239,50 @@ $guestEmail = $queryParams['guest_email'] ?? $queryParams['email'] ?? '';
         <input type="hidden" name="room_preference" value="<?= h($queryParams['pref_room_type'] ?? '') ?>">
         <input type="hidden" name="bed_preference" value="<?= h($queryParams['pref_bed'] ?? '') ?>">
 
-        <!-- Unified payment methods — all in one section -->
-        <div style="padding:12px 16px">
-          <div style="font-size:12px;font-weight:800;color:#202124;margin-bottom:10px">Select payment method</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <!-- Card payments are not offered: there is no card gateway, so a
-                 card option would collect PAN/CVC details that go nowhere. -->
-            <label class="agoda-pay-option" data-method="vodacom" style="border:2px solid #0f62fe;background:#F0F3FF;border-radius:12px;padding:10px 10px;display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="radio" name="payment_method" value="vodacom" checked style="accent-color:#e60000"><img src="<?= $this->Url->build('/assets/img/vodacom-logo.png') ?>" alt="M-Pesa" style="height:18px;max-width:48px;object-fit:contain"><span style="font-size:12px;font-weight:700;color:#202124">M-Pesa</span>
+        <!-- Unified payment methods — Carbon selectable tiles, one clean label each.
+             Card payments are not offered: there is no card gateway, so a card
+             option would collect PAN/CVC details that go nowhere. -->
+        <fieldset class="cds-pay-field" style="padding:12px 16px">
+          <legend class="cds-pay-legend">Select payment method</legend>
+          <div class="cds-pay-grid">
+            <label class="cds-pay-tile agoda-pay-option" data-method="vodacom">
+              <input type="radio" name="payment_method" value="vodacom" checked>
+              <span class="cds-pay-check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+              <img class="cds-pay-logo" src="<?= $this->Url->build('/assets/img/vodacom-logo.png') ?>" alt="" onerror="this.style.display='none'">
+              <span><span class="cds-pay-name">M-Pesa</span><span class="cds-pay-sub">Vodacom</span></span>
             </label>
-            <label class="agoda-pay-option" data-method="tigo" style="border:1px solid #e8eaed;background:#fff;border-radius:12px;padding:10px 10px;display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="radio" name="payment_method" value="tigo" style="accent-color:#0033a0"><img src="<?= $this->Url->build('/assets/img/tigo-pesa-logo.jpg') ?>" alt="Tigo" style="height:18px;max-width:48px;object-fit:contain"><span style="font-size:12px;font-weight:700;color:#202124">Tigo Pesa</span>
+            <label class="cds-pay-tile agoda-pay-option" data-method="tigo">
+              <input type="radio" name="payment_method" value="tigo">
+              <span class="cds-pay-check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+              <img class="cds-pay-logo" src="<?= $this->Url->build('/assets/img/tigo-pesa-logo.jpg') ?>" alt="" onerror="this.style.display='none'">
+              <span><span class="cds-pay-name">Tigo Pesa</span><span class="cds-pay-sub">Tigo</span></span>
             </label>
-            <label class="agoda-pay-option" data-method="airtel" style="border:1px solid #e8eaed;background:#fff;border-radius:12px;padding:10px 10px;display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="radio" name="payment_method" value="airtel" style="accent-color:#ff0000"><img src="<?= $this->Url->build('/assets/img/airtel-logo.png') ?>" alt="Airtel" style="height:18px;max-width:48px;object-fit:contain"><span style="font-size:12px;font-weight:700;color:#202124">Airtel Money</span>
+            <label class="cds-pay-tile agoda-pay-option" data-method="airtel">
+              <input type="radio" name="payment_method" value="airtel">
+              <span class="cds-pay-check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+              <img class="cds-pay-logo" src="<?= $this->Url->build('/assets/img/airtel-logo.png') ?>" alt="" onerror="this.style.display='none'">
+              <span><span class="cds-pay-name">Airtel Money</span><span class="cds-pay-sub">Airtel</span></span>
             </label>
-            <label class="agoda-pay-option" data-method="halotel" style="border:1px solid #e8eaed;background:#fff;border-radius:12px;padding:10px 10px;display:flex;align-items:center;gap:8px;cursor:pointer;grid-column:span 2;justify-content:center">
-              <input type="radio" name="payment_method" value="halotel" style="accent-color:#ff6600"><img src="<?= $this->Url->build('/assets/img/halotel-logo.jpg') ?>" alt="Halo" style="height:18px;max-width:48px;object-fit:contain"><span style="font-size:12px;font-weight:700;color:#202124">HaloPesa</span>
+            <label class="cds-pay-tile agoda-pay-option" data-method="halotel">
+              <input type="radio" name="payment_method" value="halotel">
+              <span class="cds-pay-check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+              <img class="cds-pay-logo" src="<?= $this->Url->build('/assets/img/halotel-logo.jpg') ?>" alt="" onerror="this.style.display='none'">
+              <span><span class="cds-pay-name">HaloPesa</span><span class="cds-pay-sub">Halotel</span></span>
             </label>
           </div>
-        </div>
+        </fieldset>
 
         <div class="agoda-green-tip">Last step! You're almost done.</div>
 
         <!-- Local mobile money fields -->
         <div id="momoFormSection" style="padding:16px">
-          <div style="background:var(--cds-gray-10);border:1px solid #e8eaed;border-radius:8px;padding:14px">
-            <div style="font-size:13px;font-weight:700;color:#202124;margin-bottom:8px"><span id="momoTitle">Mobile money number</span></div>
-            <div style="display:flex;align-items:center">
-              <span style="background:#fff;border:1px solid #dadce0;border-right:none;border-radius:6px 0 0 6px;padding:0 10px;height:42px;display:flex;align-items:center;font-size:13px;color:#5f6368;white-space:nowrap"><span id="momoPrefix">+255</span> <img id="momoLogo" src="" alt="" style="height:16px;margin-left:6px;display:none"></span>
-              <input class="agoda-input" name="payment_phone" placeholder="712 345 678" style="border-radius:0 6px 6px 0;flex:1" inputmode="tel">
+          <div class="cds-momo-box">
+            <div class="cds-momo-title"><span id="momoTitle">Mobile money number</span></div>
+            <div class="cds-momo-row">
+              <span class="cds-momo-prefix"><span id="momoPrefix">+255</span> <img id="momoLogo" src="" alt="" style="display:none" onerror="this.style.display='none'"></span>
+              <input class="agoda-input cds-momo-input" name="payment_phone" placeholder="712 345 678" inputmode="tel" autocomplete="tel">
             </div>
-            <div style="font-size:11px;color:#5f6368;margin-top:6px">You'll receive a USSD push on your phone to approve the payment. <span id="momoHint" style="color:#0f62fe;font-weight:600"></span></div>
+            <div class="cds-momo-hint">You'll receive a USSD push on your phone to approve the payment. <span id="momoHint"></span></div>
           </div>
         </div>
         <div style="display:none"><button type="submit" id="hiddenSubmit">submit</button></div>
@@ -303,30 +350,53 @@ $guestEmail = $queryParams['guest_email'] ?? $queryParams['email'] ?? '';
 </div>
 
 <script>
-let paySeconds = <?= isset($quote['expires_at']) ? max(0, (int)$quote['expires_at'] - time()) : 15*60+32 ?>;
-function tickPay(){
-  const el=document.getElementById('agodaPayCountdown');
-  if(!el) return;
-  let s=paySeconds--;
-  if(s<0){el.textContent='00:00:00';return}
-  const h=String(Math.floor(s/3600)).padStart(2,'0');
-  const m=String(Math.floor((s%3600)/60)).padStart(2,'0');
-  const sec=String(s%60).padStart(2,'0');
-  el.textContent=h+':'+m+':'+sec;
-  setTimeout(tickPay,1000);
-}
-tickPay();
+// Real countdown, same guarantee as step 1. On expiry BOOK NOW is blocked and the
+// guest is sent back to step 1 for an honest re-price (backend enforces this too).
+(function(){
+  const bar = document.getElementById('agodaPayTimerBar');
+  if (!bar) return;
+  const initial = Math.max(0, parseInt(bar.dataset.remaining || '0', 10));
+  const loadedAt = Date.now();
+  const el = document.getElementById('agodaPayCountdown');
+  const label = document.getElementById('agodaPayTimerLabel');
+  const expired = document.getElementById('agodaPayTimerExpired');
+  let payExpired = initial <= 0;
+  window.agodaPayExpired = () => payExpired;
+  function fmt(s){
+    s = Math.max(0, s);
+    return String(Math.floor(s/3600)).padStart(2,'0')+':'+String(Math.floor((s%3600)/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  }
+  function onExpire(){
+    payExpired = true;
+    if (el) el.textContent = '00:00:00';
+    if (label) label.style.display = 'none';
+    if (expired) expired.style.display = 'inline';
+    bar.style.background = '#fdecea';
+    bar.style.borderBottomColor = '#f5c6cb';
+    document.querySelectorAll('.agoda-book-btn').forEach(b => {
+      b.disabled = true; b.style.opacity = '0.6'; b.style.cursor = 'not-allowed';
+      b.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> PRICE EXPIRED';
+    });
+  }
+  function tick(){
+    const left = initial - Math.floor((Date.now() - loadedAt) / 1000);
+    if (left <= 0) { onExpire(); return; }
+    if (el) el.textContent = fmt(left);
+    setTimeout(tick, 1000);
+  }
+  if (initial <= 0) { onExpire(); return; }
+  tick();
+})();
 function updatePayUI(){
   const sel=document.querySelector('[name=payment_method]:checked')?.value || 'vodacom';
   const momoSec=document.getElementById('momoFormSection');
   if(momoSec) momoSec.style.display='block';
   const phoneInput=document.querySelector('[name=payment_phone]');
   if(phoneInput) phoneInput.required=true;
-  // highlight selected option
-  document.querySelectorAll('.agoda-pay-option').forEach(l=>{
-    const isSel=l.querySelector('input')?.value===sel;
-    l.style.border=isSel?'2px solid #0f62fe':'1px solid #e8eaed';
-    l.style.background=isSel?'#F0F3FF':'#fff';
+  // highlight selected option (class toggle; :has() in CSS covers no-JS,
+  // the class covers older browsers without :has support)
+  document.querySelectorAll('.cds-pay-tile').forEach(l=>{
+    l.classList.toggle('is-selected', l.querySelector('input')?.value===sel);
   });
   // update momo hint/logo
   const titles={vodacom:'M-Pesa (Vodacom)',tigo:'Tigo Pesa',airtel:'Airtel Money',halotel:'HaloPesa'};
@@ -346,6 +416,11 @@ function updatePayUI(){
 document.querySelectorAll('[name=payment_method]').forEach(r=>{r.addEventListener('change',updatePayUI)});
 document.addEventListener('DOMContentLoaded',updatePayUI);
 document.getElementById('agodaPaymentForm')?.addEventListener('submit',function(e){
+  if(window.agodaPayExpired && window.agodaPayExpired()){
+    e.preventDefault();
+    alert('This price guarantee has expired. Please go back to refresh the live price.');
+    return;
+  }
   const payMethod=this.querySelector('[name=payment_method]:checked')?.value || 'vodacom';
   const phone=this.querySelector('[name=payment_phone]');
   if(!phone.value.trim()){

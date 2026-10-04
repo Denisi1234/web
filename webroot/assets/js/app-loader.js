@@ -216,9 +216,14 @@
         },
 
         /**
-         * Hide Full-Screen App Loading Modal
+         * Hide Full-Screen App Loading Modal + cancel any pill that was
+         * scheduled but hasn't shown yet. Without clearing the pending
+         * 300ms timer, a hide() that runs before it fires (fast localhost
+         * backend answers in ms) is followed by the pill popping up anyway
+         * and sticking forever.
          */
         hide: function () {
+            if (typeof navHide === 'function') navHide();
             var nav = document.getElementById('fastnet-nav-loader');
             if (nav) { nav.classList.remove('visible'); nav.setAttribute('aria-hidden', 'true'); }
             const els = getElements();
@@ -390,28 +395,24 @@
         if (!form) return;
         if (form.hasAttribute('data-no-loader')) return;
 
-        // A capture-phase handler may already have taken over the submit; in
-        // that case it owns the loading state and we must not double up.
-        var alreadyHandled = e.defaultPrevented;
+        // If a form-level handler already preventDefault()ed, no native
+        // navigation will follow this event — it is an AJAX submit (login,
+        // OTP, signup...). Those handlers own their buttons and never clear
+        // the global pill on failure, so starting the speculative loader here
+        // strands "Loading…" on screen forever. Don't start it at all.
+        if (e.defaultPrevented) return;
 
         FastnetLoader.bar.start();
         if (!managedZone(form)) navSchedule();
 
-        // Safety net. bar.done() is otherwise only reached on `window load`,
-        // so an AJAX submit that failed (validation, 4xx) left the bar pinned
-        // at 82% with its interval still running.
-        //
-        // The delay is long enough to cover handlers that preventDefault and
-        // then navigate on success (login redirects at ~400ms) - by then the
-        // document is unloading and this release is a harmless no-op.
-        if (!alreadyHandled) {
-            setTimeout(function () {
-                if (e.defaultPrevented) {
-                    FastnetLoader.bar.done();
-                    navHide();
-                }
-            }, 800);
-        }
+        // Safety net for native submits cancelled late (e.g. validation that
+        // preventDefaults after an async check): release the bar + pill.
+        setTimeout(function () {
+            if (e.defaultPrevented) {
+                FastnetLoader.bar.done();
+                navHide();
+            }
+        }, 800);
     });
 
 })(window, document);

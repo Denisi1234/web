@@ -16,7 +16,7 @@
         <!-- Universal Loading System (must be first so no flash) -->
         <?= $this->Html->css('/assets/css/app-loader.css') ?>
         <?= $this->Html->css('/assets/css/fastnet-dots.css') ?>
-        <?= $this->Html->script('/assets/js/app-loader.js') ?>
+        <?= $this->Html->script('/assets/js/app-loader.js?v=' . filemtime(WWW_ROOT . 'assets/js/app-loader.js')) ?>
 
         <!-- CSS Files -->
         <?= $this->Html->css([

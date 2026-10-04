@@ -69,9 +69,9 @@
   </div>
 </div>
 <?= $this->Html->script(['/assets/js/popper.min.js', '/assets/js/bootstrap.min.js'], ['defer' => true]) ?>
-<?= $this->Html->script('/assets/js/app-loader.js') ?>
-<?= $this->Html->script('/assets/js/loading.js') ?>
-<?= $this->Html->script('/assets/js/fastnet-api.js') ?>
+<?= $this->Html->script('/assets/js/app-loader.js?v=' . filemtime(WWW_ROOT . 'assets/js/app-loader.js')) ?>
+<?= $this->Html->script('/assets/js/loading.js?v=' . filemtime(WWW_ROOT . 'assets/js/loading.js')) ?>
+<?= $this->Html->script('/assets/js/fastnet-api.js?v=' . filemtime(WWW_ROOT . 'assets/js/fastnet-api.js')) ?>
 <script>
 (function () {
   var shell = document.getElementById('pShell');

@@ -107,6 +107,8 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/host/listings', ['controller' => 'Host', 'action' => 'listings']);
         $builder->redirect('/host/listings/add', '/host/onboarding', ['status' => 301]);
         $builder->connect('/host/bookings', ['controller' => 'Host', 'action' => 'bookings']);
+        $builder->connect('/host/bookings/check-in/{id}', ['controller' => 'Host', 'action' => 'checkIn'], ['pass' => ['id']], ['_method' => 'POST']);
+        $builder->connect('/host/bookings/check-out/{id}', ['controller' => 'Host', 'action' => 'checkOut'], ['pass' => ['id']], ['_method' => 'POST']);
         $builder->connect('/host/calendar/{id}', ['controller' => 'Host', 'action' => 'calendar'], ['pass'=>['id'],'id'=>'\d+']);
         $builder->connect('/host/earnings', ['controller' => 'Host', 'action' => 'earnings']);
         $builder->connect('/host/earnings/request-payout', ['controller' => 'Host', 'action' => 'requestPayout']);

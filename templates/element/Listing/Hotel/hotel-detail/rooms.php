@@ -172,45 +172,54 @@ foreach ($roomList as $rItem) {
   </div>
   <?php endif; ?>
 
-  <!-- Detailed Room Cards — one card per CATEGORY (room_type_id); physical room numbers live inside -->
+  <!-- Detailed Room Cards — one card per PHYSICAL ROOM, each with its own
+       Reserve button. A category with 2 rooms renders 2 cards, not 1. -->
   <?php
-  // Fallback: element rendered without controller groups → wrap each room as its own single-room group
-  if (empty($roomGroups) && !empty($roomList)) {
-      $roomGroups = [];
+  // Flatten groups (already cheapest-first within each group) into rooms.
+  // Per-room availability uses the same rule as the controller: backend
+  // is_available wins, otherwise anything not in maintenance counts.
+  $maintenanceStatuses = ['maintenance', 'out_of_service', 'inactive', 'disabled'];
+  $roomIsAvail = function(array $r) use ($maintenanceStatuses): bool {
+      if (array_key_exists('is_available', $r)) return (bool)$r['is_available'];
+      return !in_array(strtolower(trim((string)($r['status'] ?? 'available'))), $maintenanceStatuses, true);
+  };
+  $flatRooms = [];
+  if (!empty($roomGroups)) {
+      foreach ($roomGroups as $g) {
+          foreach (($g['rooms'] ?? []) as $m) {
+              if (is_array($m)) $flatRooms[] = $m;
+          }
+      }
+  } else {
+      // Fallback: element rendered without controller groups.
       foreach ($roomList as $solo) {
-          $t = trim((string)($solo['room_type_id'] ?? ($solo['type'] ?? 'Standard')));
-          $roomGroups[] = ['type' => $t, 'label' => \App\Utility\TextFormatter::formatTitle($t),
-              'rooms' => [$solo], 'representative' => $solo,
-              'fromPrice' => (float)($solo['customer_price'] ?? ($solo['price'] ?? 0)),
-              'numbers' => array_values(array_filter([trim((string)($solo['room_number'] ?? ''))])),
-              'count' => 1];
+          if (is_array($solo)) $flatRooms[] = $solo;
       }
   }
   ?>
-  <?php foreach ($roomGroups as $gIdx => $group):
-      // Category model: card sells the ROOM TYPE; bookRoom (cheapest available unit) is assigned silently.
-      // Physical numbers never display customer-facing — room_id below is internal.
-      $item = $group['bookRoom'] ?? ($group['representative'] ?? []);
-      $rIdx = $gIdx;
-      $roomId = (int)($item['id'] ?? ($gIdx + 1));
-      $groupLabel = $group['label'] ?? 'Standard';
-      $groupCount = (int)($group['count'] ?? count($group['rooms'] ?? []));
-      $groupAvail = (int)($group['availableCount'] ?? $groupCount);
-      $groupInventory = 0;
-      foreach (($group['rooms'] ?? []) as $gr) { $groupInventory += max(1, (int)($gr['total_inventory'] ?? 1)); }
-      // Category occupancy limits (max across units) — describes the type, not one bed
-      $catAdults = max(1, (int)($group['maxAdults'] ?? ($item['max_adults'] ?? ($item['capacity'] ?? 2))));
-      $catChildren = (int)($group['maxChildren'] ?? ($item['max_children'] ?? 0));
-      $catCapacity = max(1, (int)($group['maxCapacity'] ?? ($catAdults + $catChildren)));
+  <?php foreach ($flatRooms as $rIdx => $item):
+      if (!is_array($item)) continue;
+      $roomId = (int)($item['id'] ?? ($rIdx + 1));
+      $typeRaw = trim((string)($item['room_type_id'] ?? ($item['type'] ?? 'Standard')));
+      $groupLabel = \App\Utility\TextFormatter::formatTitle($typeRaw !== '' ? $typeRaw : 'Standard');
+      $isAvail = $roomIsAvail($item);
+      $catAdults = max(1, (int)($item['max_adults'] ?? ($item['capacity'] ?? 2)));
+      $catChildren = (int)($item['max_children'] ?? 0);
+      $catCapacity = max(1, (int)($item['capacity'] ?? ($catAdults + $catChildren)));
 
-      // Title: "Standard Room". Sub: real availability for the selected dates.
+      // Title: "Deluxe Room". Sub: this room's own availability.
       $title = $groupLabel . ' Room';
-      if ($groupAvail <= 0) {
-          $availText = 'Unavailable for selected dates';
-      } elseif ($groupAvail === 1 && $groupCount === 1) {
-          $availText = '1 room available for selected dates';
+      $unitRaw = trim((string)($item['room_number'] ?? ''));
+      // Show the physical room number on the card so two Deluxe rooms are
+      // distinguishable and each books exactly the room shown.
+      if ($unitRaw !== '') {
+          $title .= ' · ' . (preg_match('/^room\b/i', $unitRaw) ? \App\Utility\TextFormatter::formatTitle($unitRaw) : 'Room ' . \App\Utility\TextFormatter::formatTitle($unitRaw));
+      }
+      $unitRaw = trim((string)($item['room_number'] ?? ''));
+      if ($isAvail) {
+          $availText = 'Available for selected dates';
       } else {
-          $availText = $groupAvail . ' of ' . $groupCount . ' room' . ($groupCount !== 1 ? 's' : '') . ' available for selected dates';
+          $availText = 'Unavailable for selected dates';
       }
       $rawSize = $item['room_size'] ?? ($item['size'] ?? ($item['area'] ?? ''));
       $size = !empty($rawSize) ? (is_numeric($rawSize) ? $rawSize . ' m²' : (string)$rawSize) : '';
@@ -224,23 +233,20 @@ foreach ($roomList as $rItem) {
       $capacity = $catCapacity;
       $floor = !empty($item['floor']) ? \App\Utility\TextFormatter::formatTitle((string)$item['floor']) : '';
 
-      // Collect category photos: merge unique photos across all rooms in the group
+      // This room's own photos — no merging across the category.
       $roomPhotos = [];
-      foreach (($group['rooms'] ?? [$item]) as $gRoom) {
-          if (!is_array($gRoom)) continue;
-          $photosRaw = $gRoom['photos'] ?? ($gRoom['images'] ?? []);
-          if (is_string($photosRaw)) $photosRaw = json_decode($photosRaw, true) ?: [];
-          if (is_array($photosRaw)) {
-              foreach ($photosRaw as $p) {
-                  $u = is_array($p) ? ($p['url'] ?? $p['image_url'] ?? '') : (string)$p;
-                  $u = $normImgUrl($u);
-                  if ($u !== '' && !in_array($u, $roomPhotos, true)) $roomPhotos[] = $u;
-              }
-          }
-          if (!empty($gRoom['primary_image_url'])) {
-              $u = $normImgUrl((string)$gRoom['primary_image_url']);
+      $photosRaw = $item['photos'] ?? ($item['images'] ?? []);
+      if (is_string($photosRaw)) $photosRaw = json_decode($photosRaw, true) ?: [];
+      if (is_array($photosRaw)) {
+          foreach ($photosRaw as $p) {
+              $u = is_array($p) ? ($p['url'] ?? $p['image_url'] ?? '') : (string)$p;
+              $u = $normImgUrl($u);
               if ($u !== '' && !in_array($u, $roomPhotos, true)) $roomPhotos[] = $u;
           }
+      }
+      if (!empty($item['primary_image_url'])) {
+          $u = $normImgUrl((string)$item['primary_image_url']);
+          if ($u !== '' && !in_array($u, $roomPhotos, true)) $roomPhotos[] = $u;
       }
       if (empty($roomPhotos) && !empty($property['image_url'])) {
           $u = $normImgUrl((string)$property['image_url']);
@@ -251,9 +257,8 @@ foreach ($roomList as $rItem) {
       // card simply has no image.
       $mainImg = $roomPhotos[0] ?? '';
 
-      // Category facilities: union across all units in the type
-      $amenitiesRaw = $group['amenities'] ?? [];
-      if (empty($amenitiesRaw)) $amenitiesRaw = $item['amenities'] ?? [];
+      // This room's own facilities — no union across the category.
+      $amenitiesRaw = $item['amenities'] ?? [];
       // Parse room amenities
       if (is_string($amenitiesRaw)) {
           $dec = json_decode($amenitiesRaw, true);
@@ -280,7 +285,6 @@ foreach ($roomList as $rItem) {
           || !empty($property['free_cancellation'])
           || str_contains(strtolower((string)($property['cancellation_policy'] ?? '')), 'free');
 
-      $unitRaw = trim((string)($item['room_number'] ?? ''));
       $unitDisplay = $unitRaw !== ''
           ? (preg_match('/^room\b/i', $unitRaw) ? \App\Utility\TextFormatter::formatTitle($unitRaw) : 'Room ' . \App\Utility\TextFormatter::formatTitle($unitRaw))
           : '';
@@ -314,7 +318,7 @@ foreach ($roomList as $rItem) {
         <div class="room-hero-wrap" style="position:relative;border-radius:16px;overflow:hidden;height:165px;background:#e5e7eb" data-room-photos="<?= htmlspecialchars(json_encode($roomPhotos), ENT_QUOTES, 'UTF-8') ?>" data-room-id="<?= $roomId ?>">
           <img id="room_img_<?= $roomId ?>" src="<?= h($mainImg) ?>" alt="<?= h($title) ?>" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;background:#e5e7eb" loading="lazy" onerror="this.onerror=null;this.removeAttribute('src');this.style.background='#e5e7eb';this.alt='No photo available'">
           <div style="position:absolute;top:10px;left:10px;display:flex;flex-wrap:wrap;gap:6px">
-            <?php if ($groupAvail <= 0): ?><span style="background:#f4f4f4;color:#525252;font-size:11px;font-weight:700;border-radius:6px;padding:5px 8px;">Unavailable for these dates</span><?php elseif ($groupAvail <= 2): ?><span style="background:rgba(232,212,201,0.95);color:#9A4B2F;font-size:11px;font-weight:700;border-radius:6px;padding:5px 8px;">Only <?= $groupAvail ?> left!</span><?php endif; ?>
+            <?php if (!$isAvail): ?><span style="background:#f4f4f4;color:#525252;font-size:11px;font-weight:700;border-radius:6px;padding:5px 8px;">Unavailable for these dates</span><?php endif; ?>
             <?php if ($hasFreeCancel): ?><span style="background:rgba(231,219,248,0.95);color:#7B3FE4;font-size:11px;font-weight:700;border-radius:6px;padding:5px 8px;">Free cancellation</span><?php endif; ?>
           </div>
           <span style="position:absolute;top:10px;right:10px;background:#15803d;color:#fff;font-size:10px;font-weight:700;border-radius:6px;padding:4px 8px;<?= count($roomPhotos) > 1 ? '' : 'display:none' ?>">Available</span>
@@ -327,8 +331,8 @@ foreach ($roomList as $rItem) {
           <?php endif; ?>
         </div>
 
-        <div class="room-card-title" style="font-size:18px;font-weight:800;color:#1a1d25;margin-top:12px;line-height:1.3;display:flex;gap:12px;align-items:flex-start;justify-content:space-between"><?= h($title) ?><?php if ($size): ?><span style="font-size:13px;font-weight:500;color:#5f6368;white-space:nowrap;flex-shrink:0"><?= h($size) ?></span><?php endif; ?></div>
-        <div style="font-size:12.5px;font-weight:600;color:<?= $groupAvail <= 0 ? '#6f6f6f' : '#137333' ?>;margin-top:2px"><?= h($availText) ?></div>
+        <div class="room-card-title" style="font-size:18px;font-weight:800;color:#1a1d25;margin-top:12px;line-height:1.3;"><?= h($title) ?><?php if ($size): ?> <span style="font-size:13px;font-weight:500;color:#5f6368;white-space:nowrap;"><?= h($size) ?></span><?php endif; ?></div>
+        <div style="font-size:12.5px;font-weight:600;color:<?= $isAvail ? '#137333' : '#6f6f6f' ?>;margin-top:2px"><?= h($availText) ?></div>
         
         <!-- Stat Pills — mobile parity (F8FAFC r14) — desktop also shows pills -->
         <div class="room-stat-pills" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
@@ -374,7 +378,6 @@ foreach ($roomList as $rItem) {
             <?php if (!empty($o['wifi'])): ?>
             <span style="display:flex;align-items:center;gap:8px"><i class="fa-solid fa-wifi" style="font-size:13px;color:#0f62fe"></i> <?= h($o['wifi']) ?></span>
             <?php endif; ?>
-            <?php if ($groupInventory > 0 && $groupInventory <= 5): ?><span style="display:flex;align-items:center;gap:8px;color:#B45309"><i class="fa-solid fa-bolt" style="font-size:13px"></i> Only <?= $groupInventory ?> left</span><?php endif; ?>
           </div>
         </div>
       </div>
@@ -395,16 +398,18 @@ foreach ($roomList as $rItem) {
           ]), fn($v) => $v !== null && $v !== '');
           // Remove duplicate snake_case keys if camelCase checkIn/checkOut are set
           unset($bookParams['check_in'], $bookParams['check_out'], $bookParams['checkin'], $bookParams['checkout']);
-          $bookUrl = $this->Url->build('/booking-page?' . http_build_query($bookParams));
+          // Array query syntax: Url->build encodes separators once, so h()
+          // below yields valid &amp; — concatenating a prebuilt query string
+          // double-encodes to &amp;amp; and every param lands in amp;room_id.
+          $bookUrl = $this->Url->build(['controller' => 'Bookings', 'action' => 'bookingPage', '?' => $bookParams]);
       ?>
       <div style="display:grid;grid-template-columns:1fr 200px;gap:0;border-bottom:1px solid #e8eaed;flex:1;<?= $isFirstOffer ? 'border-top:3px solid #0f62fe;' : '' ?>">
         
         <!-- Offer Inclusions -->
-        <div style="padding:14px;border-right:1px solid #e8eaed;display:flex;flex-direction:column;justify-content:center">
-          <div style="font-size:12px;font-weight:700;color:#202124;margin-bottom:2px"><?= h(!empty($o['unit']) ? $o['unit'] : $o['title']) ?></div>
-          <div style="font-size:11px;font-weight:600;color:#5f6368;margin-bottom:4px"><?= h($o['title']) ?></div>
-          <div style="font-size:11.5px;color:#3c4043;display:flex;flex-direction:column;gap:3px">
-            <div><i class="fa-solid fa-user-check" style="font-size:10px;color:#5f6368;width:14px"></i> <?= h($o['adults']) ?> adults included</div>
+<div style="padding:14px;border-right:1px solid #e8eaed;display:flex;flex-direction:column;justify-content:center">
+           <div style="font-size:12px;font-weight:700;color:#202124;margin-bottom:2px"><?= h(!empty($o['unit']) ? $o['unit'] : $o['title']) ?></div>
+           <div style="font-size:11.5px;color:#3c4043;display:flex;flex-direction:column;gap:3px">
+             <div><i class="fa-solid fa-user-check" style="font-size:10px;color:#5f6368;width:14px"></i> <?= h($o['adults']) ?> adult<?= (int)$o['adults'] !== 1 ? 's' : '' ?> included</div>
             <?php if (!empty($o['breakfast'])): ?>
             <div style="color:#15803d;font-weight:600">
               <i class="fa-solid fa-mug-saucer" style="font-size:10px;width:14px"></i> <?= h($o['breakfast']) ?>
@@ -434,10 +439,17 @@ foreach ($roomList as $rItem) {
           <div style="font-size:10.5px;color:#5f6368">Per night, incl. fees</div>
           <div style="font-size:11px;color:#202124;margin-top:2px;font-weight:500;">1 room · <?= $nights ?> night<?= $nights > 1 ? 's' : '' ?></div>
           
-          <div style="display:flex;gap:6px;margin-top:10px;align-items:center;width:100%;justify-content:flex-end">
-            <a href="<?= h($bookUrl) ?>" onclick="selectRoomCard(<?= $roomId ?>)" style="background:#0f62fe;color:#fff;border:none;border-radius:24px;padding:9px 24px;font-size:13.5px;font-weight:700;text-decoration:none;display:inline-block;box-shadow:0 1px 3px rgba(37,99,235,0.3);transition:background 0.15s ease;">
+<div style="display:flex;gap:6px;margin-top:10px;align-items:center;width:100%;justify-content:flex-end">
+            <?php if ($isAvail): ?>
+            <?php // Url->build above returns separators as &amp; already, so no h() on the href — it would double-encode and params would land in amp;room_id. ?>
+            <a href="<?= $bookUrl ?>" onclick="selectRoomCard(<?= $roomId ?>)" style="background:#0f62fe;color:#fff;border:none;border-radius:24px;padding:9px 24px;font-size:13.5px;font-weight:700;text-decoration:none;display:inline-block;box-shadow:0 1px 3px rgba(37,99,235,0.3);transition:background 0.15s ease;">
               Reserve
             </a>
+            <?php else: ?>
+            <span style="background:#f4f4f4;color:#6f6f6f;border-radius:24px;padding:9px 24px;font-size:13.5px;font-weight:700;display:inline-block;">
+              Unavailable
+            </span>
+            <?php endif; ?>
           </div>
           
           <?php if ($o['freeCancel']): ?>

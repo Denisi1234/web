@@ -1,277 +1,237 @@
-/** fastnetstays.com - Payment Methods & Billing History Controller */
-// ── Auth Guard ────────────────────────────────────────────────────────────────
-(function() {
+/** fastnetstays.com - Payments & Refunds (live records only, never fabricated) */
+(function () {
+    'use strict';
+
     if (!localStorage.getItem('auth_token') && !localStorage.getItem('token')) {
         window.location.href = '/login?redirect=' + encodeURIComponent('/payment-detail');
+        return;
     }
-})();
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-const apiUrl  = p => (typeof window.API_URL === 'function') ? window.API_URL(p) : 'http://127.0.0.1:8000' + p;
-const getToken = () => localStorage.getItem('auth_token') || localStorage.getItem('token') || '';
-const authHdr  = () => ({ 'Authorization': 'Bearer ' + getToken(), 'Accept': 'application/json', 'Content-Type': 'application/json' });
+    const apiUrl = p => (typeof window.API_URL === 'function') ? window.API_URL(p) : 'http://127.0.0.1:8000' + p;
+    const getToken = () => { try { return localStorage.getItem('auth_token') || localStorage.getItem('token') || ''; } catch (e) { return ''; } };
+    const authHdr = () => ({ 'Authorization': 'Bearer ' + getToken(), 'Accept': 'application/json', 'Content-Type': 'application/json' });
 
-function _escapeHtml(str) {
-    return String(str || '').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[s]);
-}
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
 
-function showPmAlert(msg, isSuccess = false) {
-    const el = document.getElementById('payment-alert');
-    if (!el) return;
-    el.style.display = 'block';
-    el.innerHTML = `<div class="alert alert-${isSuccess ? 'success' : 'danger'} py-2">${msg}</div>`;
-    setTimeout(() => { el.style.display = 'none'; }, 5000);
-}
+    function showPmAlert(msg, isSuccess) {
+        const el = document.getElementById('payment-alert');
+        if (!el) return;
+        el.style.display = 'block';
+        el.innerHTML = '<div class="cds-alert ' + (isSuccess ? 'cds-alert-ok' : 'cds-alert-err') + '">' + esc(msg) + '</div>';
+        setTimeout(() => { el.style.display = 'none'; }, 5000);
+    }
 
-// ── Load User Sidebar ─────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-    const stored = localStorage.getItem('user');
-    if (stored) {
+    function logoFor(type) {
+        const t = (type || '').toLowerCase();
+        if (t === 'airtel') return '/assets/img/airtel-logo.png';
+        if (t === 'tigo') return '/assets/img/tigo-pesa-logo.jpg';
+        if (t === 'halotel' || t === 'halopesa') return '/assets/img/halotel-logo.jpg';
+        return '/assets/img/vodacom-logo.png';
+    }
+
+    function networkName(type) {
+        const t = (type || '').toLowerCase();
+        if (t === 'airtel') return 'Airtel Money';
+        if (t === 'tigo') return 'Tigo Pesa';
+        if (t === 'halotel' || t === 'halopesa') return 'HaloPesa';
+        return 'M-Pesa';
+    }
+
+    // Privacy: show network + masked number only (e.g. 255 712 ••• 678).
+    function maskNumber(raw) {
+        const d = String(raw || '').replace(/\D/g, '');
+        if (d.length < 7) return '•••';
+        return d.slice(0, 3) + ' ' + d.slice(3, 6) + ' ••• ' + d.slice(-3);
+    }
+
+    function payBadge(paymentStatus, bookingStatus) {
+        const s = String(paymentStatus || bookingStatus || 'pending').toLowerCase();
+        const cls = {
+            paid: 'cds-b-paid', successful: 'cds-b-paid', completed: 'cds-b-paid', confirmed: 'cds-b-paid',
+            pending: 'cds-b-pending',
+            failed: 'cds-b-failed', cancelled: 'cds-b-cancelled', canceled: 'cds-b-cancelled',
+            refunded: 'cds-b-refunded',
+            amount_mismatch: 'cds-b-review', review: 'cds-b-review'
+        }[s] || 'cds-b-pending';
+        const label = s === 'amount_mismatch' ? 'Under review' : s.replace(/_/g, ' ');
+        return '<span class="cds-badge ' + cls + '">' + esc(label) + '</span>';
+    }
+
+    function fmtDate(raw) {
+        if (!raw) return '—';
+        const d = new Date(raw);
+        return isNaN(d) ? '—' : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function emptyRow(msg, sub) {
+        return '<tr><td colspan="5"><div class="cds-empty"><i class="fa-regular fa-file-lines" aria-hidden="true"></i><b>' + esc(msg) + '</b><span>' + esc(sub) + '</span></div></td></tr>';
+    }
+
+    async function loadPaymentMethods() {
+        const list = document.getElementById('payment-methods-list');
+        if (!list) return;
+        let methods = [];
         try {
-            const user = JSON.parse(stored);
-            const name = user.name || ((user.first_name||'') + ' ' + (user.last_name||'')).trim() || 'Traveler';
-            document.getElementById('sidebar-name').textContent = name;
-            document.getElementById('sidebar-email').textContent = user.email || '';
-            document.getElementById('sidebar-avatar').textContent = (name[0] || '?').toUpperCase();
-        } catch(e) {}
-    }
-    loadPaymentMethods();
-    loadBillingHistory();
-});
-
-// ── Render Local Payment Logos ───────────────────────────────────────────────
-function getPmLogoUrl(type) {
-    const t = (type || '').toLowerCase();
-    if (t === 'airtel') return '/assets/img/airtel-logo.png';
-    if (t === 'tigo') return '/assets/img/tigo-pesa-logo.jpg';
-    if (t === 'vodacom') return '/assets/img/vodacom-logo.png';
-    if (t === 'halotel') return '/assets/img/halotel-logo.jpg';
-    return '/assets/img/vodacom-logo.png';
-}
-
-function getPmClass(type) {
-    const t = (type || '').toLowerCase();
-    if (t === 'airtel') return 'bg-danger';
-    if (t === 'tigo') return 'bg-primary';
-    if (t === 'vodacom') return 'bg-danger';
-    if (t === 'halotel') return 'bg-warning text-dark';
-    return 'bg-secondary';
-}
-
-// ── Fetch Payment Methods ─────────────────────────────────────────────────────
-async function loadPaymentMethods() {
-    const list = document.getElementById('payment-methods-list');
-    if (!list) return;
-
-    let methods = [];
-
-    try {
-        const res = await fetch(apiUrl('/api/payment-methods'), { headers: authHdr() });
-        if (res.ok) {
-            const data = await res.json();
-            methods = data.data || data;
-        }
-    } catch (e) {
-        methods = [];
-    }
-
-    if (!Array.isArray(methods)) methods = [];
-
-    // No saved payment methods is a real state, not an error. This used to
-    // render two invented cards ("Daniel Duekoza", Vodacom 0754***892) for
-    // every visitor, which read as genuine saved cards.
-    if (methods.length === 0) {
-        list.innerHTML = `
-            <div class="col-12">
-                <div class="list-group shadow-sm rounded-3 overflow-hidden">
-                    <div class="list-group-item text-center p-4">
-                        <i class="fa-regular fa-credit-card text-muted fs-3 d-block mb-2"></i>
-                        <div class="fw-semibold mb-1">No saved payment methods</div>
-                        <div class="text-muted small">You pay with mobile money at checkout — nothing needs saving.</div>
-                    </div>
-                </div>
-            </div>`;
-        return;
-    }
-
-    let html = '<div class="col-12"><div class="list-group shadow-sm rounded-3 overflow-hidden">';
-    methods.forEach(pm => {
-        const logo = getPmLogoUrl(pm.type);
-        const labelText = pm.label || pm.title || 'Payment Method';
-
-        html += `
-            <div class="list-group-item list-group-item-action d-flex align-items-center justify-content-between p-3" id="pm-card-${pm.id}">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="d-flex align-items-center justify-content-center bg-light rounded px-2 py-1" style="width: 70px; height: 40px;">
-                        <img class="img-fluid" src="${logo}" style="max-height: 28px; max-width: 55px; object-fit: contain;" alt="${pm.type}">
-                    </div>
-                    <div>
-                        <h6 class="mb-0 fw-semibold text-slate-800">${_escapeHtml(labelText)}</h6>
-                        <span class="text-xs text-muted">Holder: ${_escapeHtml(pm.name)} | Status: ${_escapeHtml(pm.expiry || 'Active')}</span>
-                    </div>
-                </div>
-                <div>
-                    <a href="javascript:void(0);" onclick="deletePaymentMethod('${pm.id}')" class="btn btn-sm btn-light-danger rounded-circle p-2" title="Delete Payment Method">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </a>
-                </div>
-            </div>
-        `;
-    });
-
-    // Add Payment Method row at bottom of list
-    html += `
-            <div class="list-group-item text-center p-3 bg-light">
-                <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-semibold" data-bs-toggle="modal" data-bs-target="#addcard">
-                    <i class="fa-solid fa-circle-plus me-1"></i>Add Mobile Payment Method
-                </button>
-            </div>
-        </div></div>`;
-
-    list.innerHTML = html;
-}
-
-// ── Add Payment Method Form Submit ───────────────────────────────────────────
-document.getElementById('add-payment-form')?.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const type = document.getElementById('pm-type').value;
-    const btn = document.getElementById('pm-add-btn');
-    btn.disabled = true;
-    btn.textContent = 'Saving...';
-
-    const phone = document.getElementById('mobile-phone').value.trim();
-    const name = document.getElementById('mobile-name').value.trim();
-    const pmLabels = {
-        'vodacom': 'Vodacom M-Pesa',
-        'tigo': 'Tigo Pesa',
-        'airtel': 'Airtel Money',
-        'halotel': 'HaloPesa'
-    };
-    const providerLabel = pmLabels[type] || type.toUpperCase();
-
-    let payload = {
-        type: type,
-        phone: phone,
-        name: name,
-        label: `${providerLabel} (${phone})`,
-        provider: type
-    };
-
-    try {
-        const res = await fetch(apiUrl('/api/payment-methods'), {
-            method: 'POST',
-            headers: authHdr(),
-            body: JSON.stringify(payload)
-        });
-
-        if (res.ok) {
-            // Close Modal
-            const modalEl = document.getElementById('addcard');
-            const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-            modalInstance.hide();
-            
-            showPmAlert('Mobile payment method saved successfully!', true);
-            loadPaymentMethods();
-            
-            // reset form
-            this.reset();
-        } else {
-            const data = await res.json();
-            showPmAlert(data.message || 'Failed to add mobile payment method.');
-        }
-    } catch(err) {
-        showPmAlert('Server unreachable. Please check your connection.');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Save Mobile Payment Method';
-    }
-});
-
-// ── Delete Payment Method ─────────────────────────────────────────────────────
-async function deletePaymentMethod(id) {
-    if (!confirm('Are you sure you want to delete this payment method?')) return;
-
-    try {
-        const res = await fetch(apiUrl(`/api/payment-methods/${id}`), {
-            method: 'DELETE',
-            headers: authHdr()
-        });
-
-        if (res.ok) {
-            showPmAlert('Payment method removed.', true);
-            loadPaymentMethods();
-        } else {
-            // Local fallback UI removal if API is simulated
-            const cardEl = document.getElementById(`pm-card-${id}`);
-            if (cardEl) {
-                cardEl.remove();
-                showPmAlert('Payment method removed successfully.', true);
+            const res = await fetch(apiUrl('/api/payment-methods'), { headers: authHdr() });
+            if (res.ok) {
+                const data = await res.json().catch(() => ({}));
+                const m = data.data || data;
+                if (Array.isArray(m)) methods = m;
             }
+        } catch (e) { methods = []; }
+
+        if (methods.length === 0) {
+            list.innerHTML = '<div class="cds-empty"><i class="fa-solid fa-wallet" aria-hidden="true"></i><b>No saved numbers</b><span>You pay with mobile money at checkout — nothing needs saving.</span><div><button type="button" class="cds-pm-add" data-bs-toggle="modal" data-bs-target="#addcard"><i class="fa-solid fa-plus"></i>Add number</button></div></div>';
+            return;
         }
-    } catch(e) {
-        showPmAlert('Failed to delete payment method.');
-    }
-}
-
-// ── Fetch Billing History (Dynamic load based on real bookings transactions) ────
-async function loadBillingHistory() {
-    const tbody = document.getElementById('billing-history-rows');
-    if (!tbody) return;
-
-    let bookings = [];
-
-    try {
-        const res = await fetch(apiUrl('/api/bookings'), { headers: authHdr() });
-        if (res.ok) {
-            const data = await res.json();
-            bookings = data.data || data.bookings || data;
-        }
-    } catch (e) {
-        bookings = [];
-    }
-
-    if (!Array.isArray(bookings)) bookings = [];
-
-    // Previously fell back to three fabricated bookings (FN-32154 240,000 TZS
-    // "completed", etc.) so every account appeared to have billing history.
-    if (bookings.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="5" class="text-center py-4">
-                    <i class="fa-regular fa-file-lines text-muted fs-3 d-block mb-2"></i>
-                    <div class="fw-semibold mb-1">No transactions yet</div>
-                    <div class="text-muted small">Your bookings and payments will appear here.</div>
-                </td>
-            </tr>`;
-        return;
-    }
 
         let html = '';
-        bookings.forEach((b, index) => {
-            // Never invent a reference: an unresolved booking shows its real id
-            // or a dash, rather than a fake "FN-123" that resolves to nothing.
-            const ref = b.reference || b.booking_code || (b.id ? String(b.id) : "—");
-            const rawDate = b.created_at || b.check_in;
-            const dateStr = rawDate ? new Date(rawDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—";
-            
-            const status = (b.status || 'pending').toLowerCase();
-            let badgeClass = 'bg-light-warning text-warning';
-            if (status === 'completed' || status === 'confirmed') badgeClass = 'bg-light-success text-success';
-            if (status === 'cancelled') badgeClass = 'bg-light-danger text-danger';
-
-            const amount = parseFloat(b.total_amount || b.total_price || 0).toLocaleString();
-            const currency = b.currency || 'TZS';
-
-            html += `
-                <tr>
-                    <th>${String(index + 1).padStart(2, '0')}</th>
-                    <td><strong class="font-monospace text-slate-800">${ref}</strong></td>
-                    <td>${dateStr}</td>
-                    <td><span class="badge ${badgeClass} fw-medium text-uppercase">${status}</span></td>
-                    <td><span class="text-md fw-bold text-slate-800">${currency} ${amount}</span></td>
-                </tr>
-            `;
+        methods.forEach(pm => {
+            const type = pm.provider || pm.type || '';
+            const phone = pm.phone_number || pm.phone || '';
+            html += '<div class="cds-pm-row" id="pm-card-' + esc(pm.id) + '">'
+                + '<span class="cds-pm-logo"><img src="' + logoFor(type) + '" alt="" onerror="this.style.display=\'none\'"></span>'
+                + '<span><span class="cds-pm-name">' + esc(pm.label || networkName(type)) + '</span><br>'
+                + '<span class="cds-pm-num">' + esc(maskNumber(phone)) + (pm.name ? ' · ' + esc(pm.name) : '') + '</span></span>'
+                + '<button type="button" class="cds-pm-del" data-pm-del="' + esc(pm.id) + '" title="Delete number" aria-label="Delete number"><i class="fa-solid fa-trash-can"></i></button>'
+                + '</div>';
         });
+        html += '<div><button type="button" class="cds-pm-add" data-bs-toggle="modal" data-bs-target="#addcard"><i class="fa-solid fa-plus"></i>Add number</button></div>';
+        list.innerHTML = html;
+        list.querySelectorAll('[data-pm-del]').forEach(btn => btn.addEventListener('click', () => deletePaymentMethod(btn.getAttribute('data-pm-del'))));
+    }
 
+    async function loadBillingHistory() {
+        const tbody = document.getElementById('billing-history-rows');
+        const rbody = document.getElementById('refund-history-rows');
+        let bookings = [];
+        try {
+            const res = await fetch(apiUrl('/api/bookings'), { headers: authHdr() });
+            if (res.ok) {
+                const data = await res.json().catch(() => ({}));
+                const b = data.data || data.bookings || data;
+                if (Array.isArray(b)) bookings = b;
+            }
+        } catch (e) { bookings = []; }
+
+        // Newest first by creation/check-in date.
+        bookings.sort((a, b) => new Date(b.created_at || b.check_in || 0) - new Date(a.created_at || a.check_in || 0));
+
+        if (!tbody) return;
+        if (bookings.length === 0) {
+            tbody.innerHTML = emptyRow('No transactions yet', 'Your bookings and payments will appear here.');
+            if (rbody) rbody.innerHTML = emptyRow('No refunds', 'Approved refunds to your mobile-money number will appear here.');
+            return;
+        }
+
+        let html = '';
+        const refunds = [];
+        bookings.forEach((b, i) => {
+            const ref = b.booking_code || b.reference || (b.id ? String(b.id) : '—');
+            const ps = String(b.payment_status || '').toLowerCase();
+            if (ps === 'refunded') refunds.push(b);
+            const amount = Number(b.total_price ?? b.total_amount ?? 0).toLocaleString('en-US');
+            html += '<tr><td>' + String(i + 1).padStart(2, '0') + '</td>'
+                + '<td><strong>' + esc(ref) + '</strong></td>'
+                + '<td class="hide-sm">' + esc(fmtDate(b.created_at || b.check_in)) + '</td>'
+                + '<td>' + payBadge(b.payment_status, b.status || b.booking_status) + '</td>'
+                + '<td style="text-align:right;font-weight:600;white-space:nowrap">TSh ' + esc(amount) + '</td></tr>';
+        });
         tbody.innerHTML = html;
-}
+
+        if (rbody) {
+            if (refunds.length === 0) {
+                rbody.innerHTML = emptyRow('No refunds', 'Approved refunds to your mobile-money number will appear here.');
+            } else {
+                let rh = '';
+                refunds.forEach((b, i) => {
+                    const ref = b.booking_code || b.reference || (b.id ? String(b.id) : '—');
+                    const amount = Number(b.total_price ?? b.total_amount ?? 0).toLocaleString('en-US');
+                    rh += '<tr><td>' + String(i + 1).padStart(2, '0') + '</td>'
+                        + '<td><strong>' + esc(ref) + '</strong></td>'
+                        + '<td class="hide-sm">' + esc(fmtDate(b.updated_at || b.created_at || b.check_in)) + '</td>'
+                        + '<td>' + payBadge('refunded') + '</td>'
+                        + '<td style="text-align:right;font-weight:600;white-space:nowrap">TSh ' + esc(amount) + '</td></tr>';
+                });
+                rbody.innerHTML = rh;
+            }
+        }
+    }
+
+    async function deletePaymentMethod(id) {
+        if (!id) return;
+        if (typeof window.fnsConfirm === 'function') {
+            if (!await window.fnsConfirm('Remove this saved number?')) return;
+        } else if (!window.confirm('Remove this saved number?')) return;
+        try {
+            const res = await fetch(apiUrl('/api/payment-methods/' + encodeURIComponent(id)), {
+                method: 'DELETE', headers: authHdr()
+            });
+            if (res.ok) {
+                showPmAlert('Number removed.', true);
+                loadPaymentMethods();
+            } else {
+                // Never fake success: if the backend did not delete it, say so
+                // and keep the row on screen.
+                const data = await res.json().catch(() => ({}));
+                showPmAlert(data.message || 'Could not remove the number. Please try again.', false);
+            }
+        } catch (e) {
+            showPmAlert('Could not reach the server. The number was not removed.', false);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const stored = (() => { try { return localStorage.getItem('user'); } catch (e) { return null; } });
+        if (stored) {
+            try {
+                const user = JSON.parse(stored);
+                const name = user.name || (((user.first_name || '') + ' ' + (user.last_name || '')).trim()) || 'Traveler';
+                const nEl = document.getElementById('sidebar-name');
+                const eEl = document.getElementById('sidebar-email');
+                const aEl = document.getElementById('sidebar-avatar');
+                if (nEl) nEl.textContent = name;
+                if (eEl) eEl.textContent = user.email || '';
+                if (aEl) aEl.textContent = (name[0] || '?').toUpperCase();
+            } catch (e) { /* corrupted local profile — live data below still loads */ }
+        }
+        loadPaymentMethods();
+        loadBillingHistory();
+
+        document.getElementById('add-payment-form')?.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const type = document.getElementById('pm-type').value;
+            const phone = document.getElementById('mobile-phone').value.trim();
+            const name = document.getElementById('mobile-name').value.trim();
+            const btn = document.getElementById('pm-add-btn');
+            const digits = phone.replace(/\D/g, '');
+            const full = digits.startsWith('255') ? digits : ('255' + digits.replace(/^0+/, ''));
+            if (!/^255\d{9}$/.test(full)) { showPmAlert('Enter a valid Tanzanian number, e.g. 712 345 678.', false); return; }
+            const labels = { vodacom: 'M-Pesa', tigo: 'Tigo Pesa', airtel: 'Airtel Money', halotel: 'HaloPesa' };
+            btn.disabled = true;
+            btn.textContent = 'Saving…';
+            try {
+                const res = await fetch(apiUrl('/api/payment-methods'), {
+                    method: 'POST', headers: authHdr(),
+                    body: JSON.stringify({ type: type, provider: type, phone: full, name: name, label: (labels[type] || type) + ' (' + full + ')' })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (res.ok || res.status === 201) {
+                    const modalEl = document.getElementById('addcard');
+                    const inst = (window.bootstrap && window.bootstrap.Modal && modalEl) ? (window.bootstrap.Modal.getInstance(modalEl) || new window.bootstrap.Modal(modalEl)) : null;
+                    if (inst) inst.hide();
+                    showPmAlert('Number saved.', true);
+                    loadPaymentMethods();
+                    this.reset();
+                } else {
+                    showPmAlert(data.message || 'Could not save the number.', false);
+                }
+            } catch (err) {
+                showPmAlert('Could not reach the server. The number was not saved.', false);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save number';
+            }
+        });
+    });
+})();

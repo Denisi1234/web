@@ -211,19 +211,58 @@ class AccountController extends AppController
             $bookings = $res;
         }
 
-        // Also check any session-persisted bookings
+        // Also check any session-persisted bookings (paid on this device —
+        // written at the moment payment confirms, so the dashboard is real
+        // even when the backend list lags or the guest has no token).
         $sessionBookings = $session->read('user_bookings') ?? [];
         if (is_array($sessionBookings) && !empty($sessionBookings)) {
-            $existingCodes = array_column($bookings, 'booking_code');
+            $existingKeys = [];
+            foreach ($bookings as $eb) {
+                if (!is_array($eb)) continue;
+                foreach (['booking_code', 'reference', 'id', 'booking_id'] as $k) {
+                    if (!empty($eb[$k])) $existingKeys[(string)$eb[$k]] = true;
+                }
+            }
             foreach ($sessionBookings as $sb) {
-                if (!in_array($sb['booking_code'] ?? '', $existingCodes, true)) {
+                if (!is_array($sb)) continue;
+                $dup = false;
+                foreach (['booking_code', 'reference', 'id', 'booking_id'] as $k) {
+                    if (!empty($sb[$k]) && isset($existingKeys[(string)$sb[$k]])) { $dup = true; break; }
+                }
+                if (!$dup) {
                     $bookings[] = $sb;
+                    foreach (['booking_code', 'reference', 'id', 'booking_id'] as $k) {
+                        if (!empty($sb[$k])) $existingKeys[(string)$sb[$k]] = true;
+                    }
                 }
             }
         }
 
+        // In-flight mobile-money payments on this device (younger than 2h):
+        // offer "Complete payment" so a closed payment page is resumable.
+        $pendingPayments = [];
+        $pendingIndex = $session->read('user_pending_payments') ?? [];
+        if (is_array($pendingIndex) && !empty($pendingIndex)) {
+            $kept = [];
+            foreach ($pendingIndex as $entry) {
+                if (!is_array($entry) || empty($entry['payment_id'])) continue;
+                $age = time() - (int)($entry['created_at'] ?? 0);
+                $live = $session->read('pending_payments.' . $entry['payment_id']);
+                if ($age > 7200 || !is_array($live) || empty($live['booking_id'])) continue;
+                $kept[] = $entry;
+                $pendingPayments[] = [
+                    'payment_id' => (string)$entry['payment_id'],
+                    'booking_code' => (string)($live['booking_code'] ?? $entry['booking_code'] ?? ''),
+                    'amount' => (float)($live['amount'] ?? 0),
+                    'payment_method' => (string)($live['payment_method'] ?? ''),
+                    'created_at' => (int)($live['created_at'] ?? $entry['created_at'] ?? time()),
+                ];
+            }
+            $session->write('user_pending_payments', $kept);
+        }
+
         $userBookings = $bookings;
-        $this->set(compact('userProfile', 'bookings', 'userBookings'));
+        $this->set(compact('userProfile', 'bookings', 'userBookings', 'pendingPayments'));
         return $this->render('/Pages/my-booking');
     }
 

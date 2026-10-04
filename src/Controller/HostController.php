@@ -270,6 +270,48 @@ class HostController extends AppController
 
         $role = strtolower((string)(is_array($user) ? ($user['role'] ?? '') : ''));
 
+        // Backend is the source of truth for role: a session role alone is not
+        // enough to enter owner tooling (it goes stale when the backend demotes
+        // an account). Verified verdicts are cached 120s; when the backend is
+        // unreachable we keep the session behaviour since every data call
+        // below is still authorised server-side.
+        $bearer = trim((string)$session->read('auth_token'));
+        if (stripos($bearer, 'Bearer ') === 0) {
+            $bearer = trim(substr($bearer, 7));
+        }
+        if ($bearer === '') {
+            try {
+                $bearer = (new AuthService())->readToken($request);
+            } catch (\Throwable $e) {
+                $bearer = '';
+            }
+        }
+        if ($bearer !== '') {
+            try {
+                $verified = (new \App\Service\RoleService())->verifyRole($bearer);
+            } catch (\Throwable $e) {
+                $verified = null;
+            }
+            if (is_string($verified)) {
+                if ($verified === 'guest') {
+                    // Token is dead server-side: stop honouring the session role.
+                    $session->delete('User');
+                    $session->delete('auth_token');
+                    $this->Flash->error(__('Your session has expired. Please sign in again.'));
+                    $target = (string)($this->getRequest()->getRequestTarget() ?: '/host/dashboard');
+                    $safe = str_starts_with($target, '/host') ? $target : '/host/dashboard';
+                    $event->setResult($this->redirect('/login?redirect=' . urlencode($safe)));
+                    return;
+                }
+                if ($verified !== $role && is_array($user)) {
+                    // Self-healing: backend disagrees with the session — trust backend.
+                    $user['role'] = $verified;
+                    $session->write('User', $user);
+                }
+                $role = $verified;
+            }
+        }
+
         if (in_array($role, ['owner', 'admin'], true)) {
             return;
         }
@@ -555,6 +597,47 @@ class HostController extends AppController
         $bookings = $this->myBookings($headers);
         $this->set(compact('userProfile', 'bookings'));
         return $this->render('/Pages/host-bookings');
+    }
+
+    /**
+     * Professional arrival / departure from the host portal.
+     * POST-only with CSRF + the host gate in beforeFilter; the backend
+     * enforces ownership, paid-before-check-in and state order.
+     */
+    public function checkIn(string $id)
+    {
+        return $this->moveStay($id, 'check-in');
+    }
+
+    public function checkOut(string $id)
+    {
+        return $this->moveStay($id, 'check-out');
+    }
+
+    private function moveStay(string $id, string $move): ?\Cake\Http\Response
+    {
+        if (!$this->getRequest()->is('post')) {
+            return $this->redirect(['action' => 'bookings']);
+        }
+        $id = trim($id);
+        if ($id === '') {
+            $this->Flash->error(__('Booking not specified.'));
+            return $this->redirect(['action' => 'bookings']);
+        }
+        $res = $this->apiClient->post('/bookings/' . rawurlencode($id) . '/' . $move, [], $this->hostHeaders());
+        if (is_array($res) && empty($res['_status']) && ($res['status'] ?? '') === 'success') {
+            $this->Flash->success(__((string)($res['message'] ?? 'Done.')));
+        } else {
+            $this->Flash->error(__((string)($res['message'] ?? 'Could not update this booking.')));
+        }
+        // Refresh cached lists so the new state shows immediately.
+        try {
+            $session = $this->getRequest()->getSession();
+            $session->delete('HostBookings');
+            $session->delete('HostBookingsTs');
+        } catch (\Throwable $e) {
+        }
+        return $this->redirect(['action' => 'bookings']);
     }
 
     public function calendar(?int $id = null)

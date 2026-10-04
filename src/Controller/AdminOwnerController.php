@@ -137,6 +137,31 @@ class AdminOwnerController extends AppController
         $user = $session->read('User');
         $role = strtolower((string)(is_array($user) ? ($user['role'] ?? '') : ''));
 
+        // Same backend-verification as the host gate: the session role alone
+        // must never open the admin portal. Cached 120s; session fallback only
+        // when the backend is unreachable (data calls below enforce anyway).
+        $token = $this->rawToken();
+        if ($token !== '') {
+            try {
+                $verified = $this->roleService->verifyRole($token);
+            } catch (\Throwable $e) {
+                $verified = null;
+            }
+            if (is_string($verified)) {
+                if ($verified === 'guest') {
+                    $session->delete('User');
+                    $session->delete('auth_token');
+                    $this->Flash->error(__('Your session has expired. Please sign in again.'));
+                    return $this->redirect('/login?redirect=' . urlencode('/admin/dashboard'));
+                }
+                if ($verified !== $role && is_array($user)) {
+                    $user['role'] = $verified;
+                    $session->write('User', $user);
+                }
+                $role = $verified;
+            }
+        }
+
         if ($role === 'admin') {
             return null;
         }

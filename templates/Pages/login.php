@@ -161,11 +161,22 @@ if ($isHostLogin) {
 										btn.addEventListener("click", function() { swapMode(btn.getAttribute("data-login-mode")); });
 									});
 
-									// The PHP session is what the portal guards read. If it cannot be
-									// seeded, say so instead of redirecting into a signed-out page.
-									function syncFailed(alertBox) {
-										alertBox.innerHTML = '<div class="alert alert-danger">We could not finish signing you in on this device. Please check your connection and try again.</div>';
-									}
+								// The PHP session is what the portal guards read. If it cannot be
+								// seeded, say so instead of redirecting into a signed-out page.
+								function syncFailed(alertBox) {
+									alertBox.innerHTML = '<div class="alert alert-danger">We could not finish signing you in on this device. Please check your connection and try again.</div>';
+								}
+
+								// Belt-and-braces: make sure no global "Loading…" pill or bar is
+								// left stranded by a failed AJAX sign-in (e.g. an older cached
+								// app-loader.js that still starts it on submit).
+								function hideGlobalLoader() {
+									try {
+										if (window.FastnetLoader && typeof window.FastnetLoader.hide === 'function') {
+											window.FastnetLoader.hide();
+										}
+									} catch (e) {}
+								}
 
 									// ── Password sign-in ──
 									if (passwordForm) {
@@ -191,15 +202,24 @@ if ($isHostLogin) {
 														submitBtn.disabled = false;
 														submitBtn.innerHTML = 'Log In';
 													});
-												} else {
-													loginAlert.innerHTML = '<div class="alert alert-danger">' + (data.message || 'Invalid email or password.') + '</div>';
-												}
-											} catch(err) {
-												console.error("Login error:", err);
-												loginAlert.innerHTML = '<div class="alert alert-danger">Unable to connect to authentication server.</div>';
-											} finally {
-												if (!submitBtn.disabled) { submitBtn.innerHTML = 'Log In'; }
+											} else {
+												loginAlert.innerHTML = '<div class="alert alert-danger">' + (data.message || 'Invalid email or password.') + '</div>';
+												hideGlobalLoader();
+												submitBtn.disabled = false;
+												submitBtn.innerHTML = 'Log In';
 											}
+										} catch(err) {
+											console.error("Login error:", err);
+											loginAlert.innerHTML = '<div class="alert alert-danger">Unable to connect to authentication server.</div>';
+											hideGlobalLoader();
+											submitBtn.disabled = false;
+											submitBtn.innerHTML = 'Log In';
+										} finally {
+											// Safety net: never leave the button stuck on the spinner
+											// while it is still clickable (success path keeps it
+											// disabled on purpose until the redirect happens).
+											if (!submitBtn.disabled && submitBtn.innerHTML !== 'Log In') { submitBtn.innerHTML = 'Log In'; }
+										}
 										});
 									}
 
@@ -277,12 +297,14 @@ if ($isHostLogin) {
 											if (res.ok && data.success) {
 												contact = contactInput.value.trim();
 												showCodeStep(data.channel || 'email', mask(contact, data.channel || 'email'));
-											} else {
-												otpAlert.innerHTML = '<div class="alert alert-danger">' + (data.message || 'We could not send a code. Please try again.') + '</div>';
-											}
-										} catch(err) {
-											otpAlert.innerHTML = '<div class="alert alert-danger">Unable to reach the authentication server.</div>';
-										} finally {
+										} else {
+											otpAlert.innerHTML = '<div class="alert alert-danger">' + (data.message || 'We could not send a code. Please try again.') + '</div>';
+											hideGlobalLoader();
+										}
+									} catch(err) {
+										otpAlert.innerHTML = '<div class="alert alert-danger">Unable to reach the authentication server.</div>';
+										hideGlobalLoader();
+									} finally {
 											sendBtn.disabled = false;
 											sendBtn.innerHTML = 'Send code';
 										}
@@ -319,18 +341,20 @@ if ($isHostLogin) {
 													verifyBtn.disabled = false;
 													verifyBtn.innerHTML = 'Verify &amp; sign in';
 												});
-											} else {
-												otpAlert.innerHTML = '<div class="alert alert-danger">' + (data.message || 'That code is not correct. Please try again.') + '</div>';
-												verifyBtn.disabled = false;
-												verifyBtn.innerHTML = 'Verify &amp; sign in';
-												codeInput.value = '';
-												codeInput.focus();
-											}
-										} catch(err) {
-											otpAlert.innerHTML = '<div class="alert alert-danger">Unable to reach the authentication server.</div>';
+										} else {
+											otpAlert.innerHTML = '<div class="alert alert-danger">' + (data.message || 'That code is not correct. Please try again.') + '</div>';
+											hideGlobalLoader();
 											verifyBtn.disabled = false;
 											verifyBtn.innerHTML = 'Verify &amp; sign in';
+											codeInput.value = '';
+											codeInput.focus();
 										}
+									} catch(err) {
+										otpAlert.innerHTML = '<div class="alert alert-danger">Unable to reach the authentication server.</div>';
+										hideGlobalLoader();
+										verifyBtn.disabled = false;
+										verifyBtn.innerHTML = 'Verify &amp; sign in';
+									}
 									});
 
 									resendBtn.addEventListener("click", async function() {

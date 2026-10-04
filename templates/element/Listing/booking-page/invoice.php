@@ -8,10 +8,11 @@
  * 0% VAT / 1% processing-fee model).
  *
  * BookingController::bookingpageSuccess() now loads and verifies the real
- * booking from GET /api/bookings/{id} before rendering, and rejects anything
- * that is not paid. These fallbacks therefore exist only as a guard: if the
- * verified payload is somehow incomplete we show "unavailable" rather than
- * print a fabricated receipt.
+ * booking from GET /api/bookings/{id} before rendering. The receipt modal is
+ * only included for paid bookings; anything else shows details with an
+ * honest status banner. These fallbacks therefore exist only as a guard: if
+ * the verified payload is somehow incomplete we show "unavailable" rather
+ * than print a fabricated receipt.
  */
 $hasVerifiedBooking = !empty($verifiedBooking) && is_array($verifiedBooking);
 

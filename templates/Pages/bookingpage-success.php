@@ -1,5 +1,7 @@
 <?php
-$this->assign('title', 'Booking Confirmed - FastNet Stays');
+$isPaid = !empty($isPaid);
+$paymentStatus = strtolower((string)($paymentStatus ?? ($verifiedBooking['payment_status'] ?? '')));
+$this->assign('title', $isPaid ? 'Booking Confirmed - FastNet Stays' : 'Booking Details - FastNet Stays');
 
 $bookingId = $queryParams['booking_id'] ?? '';
 $reference = $queryParams['reference'] ?? '';
@@ -36,7 +38,7 @@ $propCity = $queryParams['property_city'] ?: ($property['city'] ?? '');
 @media(max-width:768px){.booking-success-card{border-radius:22px !important} .booking-success-watermark{font-size:8px}}
 </style>
 <?= $this->element('navbar') ?>
-<?= $this->element('breadcrumb-schema', ['label' => 'Booking confirmed']) ?>
+<?= $this->element('breadcrumb-schema', ['label' => $isPaid ? 'Booking confirmed' : 'Booking details']) ?>
 <main id="main-content" style="background:var(--cds-gray-10);min-height:85vh;" role="main">
 
 <!-- Booking Success Page -->
@@ -49,14 +51,19 @@ $propCity = $queryParams['property_city'] ?: ($property['city'] ?? '');
 					<div class="card-body px-xl-5 px-lg-4 py-lg-5 py-4 px-3">
 
 						<div class="d-flex align-items-center justify-content-center mb-3">
-							<div style="width:72px;height:72px;border-radius:50%;background:#EBF5FF;border:1px solid #dbeafe;display:flex;align-items:center;justify-content:center">
-								<i class="fa-solid fa-check fs-2" style="color:#0f62fe"></i>
+							<div style="width:72px;height:72px;border-radius:50%;background:<?= $isPaid ? '#EBF5FF' : '#FEF3C7' ?>;border:1px solid <?= $isPaid ? '#dbeafe' : '#fde68a' ?>;display:flex;align-items:center;justify-content:center">
+								<i class="fa-solid <?= $isPaid ? 'fa-check' : 'fa-hourglass-half' ?> fs-2" style="color:<?= $isPaid ? '#0f62fe' : '#b45309' ?>"></i>
 							</div>
 						</div>
 						<div class="d-flex align-items-center justify-content-center flex-column text-center mb-4">
-							<h2 class="mb-1 fw-bold" style="color:#1a1d25;font-size:22px">Your Booking Was Confirmed Successfully!</h2>
+							<h2 class="mb-1 fw-bold" style="color:#1a1d25;font-size:22px"><?= $isPaid ? 'Your Booking Was Confirmed Successfully!' : 'Booking Details' ?></h2>
 							<p class="mb-0" style="color:#5f6368;font-size:14px">Booking Reference: <span style="color:#C2410C;font-weight:800;font-size:18px"><?= h($reference) ?></span></p>
+							<?php if ($isPaid): ?>
 							<p style="color:#9aa0a6;font-size:12px" class="mb-0">A confirmation receipt has been generated for your stay.</p>
+							<?php else: ?>
+							<p style="color:#b45309;font-size:13px;font-weight:600" class="mb-0">Payment <?= h($paymentStatus !== '' ? $paymentStatus : 'pending') ?> — this stay is not confirmed yet.</p>
+							<p style="color:#9aa0a6;font-size:12px" class="mb-0">Complete the payment from <a href="<?= $this->Url->build('/my-booking') ?>" style="color:#0f62fe;font-weight:700">My bookings</a> to confirm it.</p>
+							<?php endif; ?>
 						</div>
 						<div class="booking-success-watermark mb-3">fastnetstays.com &nbsp; fastnetstays.com &nbsp; fastnetstays.com &nbsp; fastnetstays.com &nbsp; fastnetstays.com</div>
 
@@ -78,7 +85,11 @@ $propCity = $queryParams['property_city'] ?: ($property['city'] ?? '');
 									<li class="col-xl-3 col-lg-3 col-md-6 col-sm-6 col-6">
 										<div class="d-block">
 											<p class="text-slate-500 text-xs text-uppercase fw-bold mb-0">Booking Status</p>
+											<?php if ($isPaid): ?>
 											<p class="text-success fw-bold mb-0"><i class="fa-solid fa-circle-check me-1"></i>Confirmed</p>
+											<?php else: ?>
+											<p class="fw-bold mb-0" style="color:#b45309"><i class="fa-solid fa-circle-exclamation me-1"></i><?= h(ucfirst($paymentStatus !== '' ? $paymentStatus : 'pending')) ?></p>
+											<?php endif; ?>
 										</div>
 									</li>
 									<li class="col-xl-3 col-lg-3 col-md-6 col-sm-6 col-6">
@@ -127,7 +138,7 @@ $propCity = $queryParams['property_city'] ?: ($property['city'] ?? '');
 						<div class="text-center d-flex align-items-center justify-content-center flex-wrap gap-2">
 							<a href="<?= $this->Url->build('/'); ?>" class="btn fw-bold rounded-full px-4" style="background:#fff;border:1px solid #e8eaed;border-radius:30px;padding:10px 20px;color:#1a1d25">Browse More Stays</a>
 							<a href="<?= $this->Url->build('/my-booking'); ?>" class="btn fw-bold rounded-full px-4" style="background:#0f62fe;color:#fff;border-radius:30px;padding:10px 20px;box-shadow:0 4px 12px rgba(15,98,254,0.18)">View My Bookings</a>
-							<?php if (!empty($verifiedBooking) && (float)($verifiedBooking['total_price'] ?? 0) > 0): ?>
+							<?php if ($isPaid && !empty($verifiedBooking) && (float)($verifiedBooking['total_price'] ?? 0) > 0): ?>
 							<button type="button" data-bs-toggle="modal" data-bs-target="#invoice" class="btn fw-bold rounded-full px-4" style="background:#F8FAFC;border:1px solid #e8eaed;border-radius:30px;padding:10px 20px;color:#0f62fe">
 								<i class="fa-solid fa-receipt me-1"></i>View Invoice Receipt
 							</button>
@@ -152,8 +163,10 @@ $propCity = $queryParams['property_city'] ?: ($property['city'] ?? '');
 </section>
 <!-- Booking End -->
 
+<?php if ($isPaid): ?>
 <!-- templates/element/Listing/booking-page/invoice.php -->
 <?= $this->element('Listing/booking-page/invoice'); ?>
+<?php endif; ?>
 
 <!-- Include Footer -->
 </main>

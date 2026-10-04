@@ -55,7 +55,10 @@ class BookingsController extends AppController
 
         // 0. Resume a valid session quote (error redirects land here with only quote_id) —
         // avoids re-quoting and can never fall through to home for lack of ids.
+        // The countdown is driven by this server-owned expires_at — never a hardcoded number.
         $resumeQuoteId = trim((string)($queryParams['quote_id'] ?? ''));
+        $hadQuoteId = $resumeQuoteId !== '';
+        $quoteWasExpired = false;
         if ($resumeQuoteId !== '') {
             $resumed = $this->getRequest()->getSession()->read('booking_quotes.' . $resumeQuoteId);
             if (is_array($resumed) && !empty($resumed['expires_at']) && (int)$resumed['expires_at'] >= time()
@@ -67,15 +70,21 @@ class BookingsController extends AppController
                     'children' => $resumed['children'] ?? ($queryParams['children'] ?? null),
                     'rooms' => $resumed['rooms'] ?? ($queryParams['rooms'] ?? null),
                 ]);
-                $this->set(compact('queryParams') + [
+                $quoteRemaining = max(0, (int)$resumed['expires_at'] - time());
+                $this->set(compact('queryParams', 'quoteRemaining') + [
                     'property' => $resumed['property'],
                     'room' => $resumed['room'],
                     'calculation' => $resumed['calculation'],
                     'quote' => $resumed,
                     'quoteError' => null,
+                    'quoteRepriced' => !empty($queryParams['repriced']),
                 ]);
                 return $this->render('/Pages/booking-page');
             }
+            // A quote_id was supplied but is missing/expired in session — fall through to
+            // re-price honestly and flag it so the view can tell the guest the price was refreshed.
+            $quoteWasExpired = true;
+            $this->getRequest()->getSession()->delete('booking_quotes.' . $resumeQuoteId);
         }
 
         // 1. Fetch Property info
@@ -128,6 +137,25 @@ class BookingsController extends AppController
             $property = $quote['property'];
             $room = $quote['room'];
             $calculation = $quote['calculation'];
+            // Stabilise the guarantee: redirect so the browser URL carries the quote_id.
+            // Without this every refresh mints a brand-new quote (new expiry), making the
+            // countdown meaningless. With it, refreshes resume the SAME quote and the
+            // timer keeps counting down for real.
+            $redirectQuery = array_merge($queryParams, [
+                'quote_id' => $quote['quote_id'],
+                'checkIn' => $quote['check_in'],
+                'checkOut' => $quote['check_out'],
+                'adults' => $quote['adults'],
+                'children' => $quote['children'],
+                'rooms' => $quote['rooms'],
+            ]);
+            if ($quoteWasExpired || $hadQuoteId === false) {
+                if ($quoteWasExpired) {
+                    $redirectQuery['repriced'] = '1';
+                    $this->Flash->error(__('Your previous price guarantee expired, so we refreshed the live price.'));
+                }
+                return $this->redirect(['action' => 'bookingPage', '?' => $redirectQuery]);
+            }
 
             /*
              * Hold the room while the guest completes checkout.
@@ -201,7 +229,12 @@ class BookingsController extends AppController
             return $this->redirect(['controller' => 'Pages', 'action' => 'index', '?' => $detailQuery]);
         }
 
-        $this->set(compact('property', 'room', 'calculation', 'queryParams', 'quote', 'quoteError'));
+        // Safety net: reached only if the stabilising redirect above was skipped.
+        // Never render a fake countdown — remaining always comes from the server quote.
+        $quoteRemaining = is_array($quote) && !empty($quote['expires_at'])
+            ? max(0, (int)$quote['expires_at'] - time()) : 0;
+        $quoteRepriced = !empty($queryParams['repriced']) || $quoteWasExpired;
+        $this->set(compact('property', 'room', 'calculation', 'queryParams', 'quote', 'quoteError', 'quoteRemaining', 'quoteRepriced'));
         return $this->render('/Pages/booking-page');
     }
 
@@ -309,7 +342,7 @@ class BookingsController extends AppController
                 $this->Flash->error(__($msg));
                 return $this->redirect(['action' => 'bookingPage', '?' => ['quote_id' => $quoteId]]);
             }
-            if (!empty($apiResult['message']) && empty($apiResult['id']) && empty($apiResult['booking_id']) && empty($apiResult['data'])) {
+            if (!empty($apiResult['message']) && empty($apiResult['id']) && empty($apiResult['booking_id']) && empty($apiResult['data']) && empty($apiResult['booking'])) {
                 // 422 validation or generic error without booking data
                 $msg = $apiResult['message'];
                 if (stripos($msg, 'not available') !== false) $msg = 'This room was just booked for these dates. Please choose another room.';
@@ -317,8 +350,9 @@ class BookingsController extends AppController
                 return $this->redirect(['action' => 'bookingPage', '?' => ['quote_id' => $quoteId]]);
             }
 
-            if (!empty($apiResult) && (!empty($apiResult['id']) || !empty($apiResult['booking_id']) || !empty($apiResult['data']))) {
-                $bData = $apiResult['data'] ?? $apiResult;
+            if (!empty($apiResult) && (!empty($apiResult['id']) || !empty($apiResult['booking_id']) || !empty($apiResult['data']) || !empty($apiResult['booking']))) {
+                // Backend nests the record under booking:{...}; accept all shapes.
+                $bData = $apiResult['data'] ?? $apiResult['booking'] ?? $apiResult;
                 $bookingId = (string)($bData['id'] ?? ($bData['booking_id'] ?? ''));
                 $bookingCode = (string)($bData['booking_code'] ?? $bData['reference'] ?? $bookingId);
                 $totalAmount = (float)($bData['total_price'] ?? ($bData['total_amount'] ?? $quote['calculation']['total_amount']));
@@ -346,6 +380,9 @@ class BookingsController extends AppController
                     'created_at'       => time(),
                     'push_dispatched'  => false,  // payment-pending page will dispatch via AJAX
                 ]);
+                // Dashboard resume index: if the guest closes the payment page
+                // mid-flow, /my-booking can still offer "Complete payment".
+                $this->indexPendingPayment($paymentId, $bookingCode);
                 $request->getSession()->delete('booking_quotes.' . $quoteId);
                 return $this->redirect(['action' => 'paymentPending', '?' => ['payment_id' => $paymentId]]);
             } else {
@@ -366,10 +403,94 @@ class BookingsController extends AppController
         $paymentId = trim((string)$this->getRequest()->getQuery('payment_id', ''));
         $pending = $paymentId !== '' ? $this->getRequest()->getSession()->read('pending_payments.' . $paymentId) : null;
         if (!is_array($pending) || empty($pending['booking_id'])) {
-            throw new NotFoundException(__('Payment session not found.'));
+            // Lost/expired payment session (timeout, another device, session
+            // store restart) used to dead-end on an error page. Recover via
+            // the dashboard instead: the email + reference lookup there can
+            // still find and resume the booking.
+            $this->Flash->error(__('That payment session has expired. Find your booking below to continue.'));
+            return $this->redirect(['controller' => 'Account', 'action' => 'myBooking']);
         }
         $this->set(compact('paymentId', 'pending'));
         return $this->render('/Pages/booking-payment');
+    }
+
+    /**
+     * Dashboard resume index for in-flight mobile-money payments.
+     * Lets /my-booking offer "Complete payment" when the guest closed the
+     * payment page. Entries are pruned on settle and by age on read.
+     */
+    private function indexPendingPayment(string $paymentId, string $bookingCode): void
+    {
+        if ($paymentId === '') return;
+        try {
+            $session = $this->getRequest()->getSession();
+            $index = $session->read('user_pending_payments');
+            if (!is_array($index)) $index = [];
+            $index = array_values(array_filter($index, fn($e) => is_array($e) && ($e['payment_id'] ?? '') !== $paymentId));
+            $index[] = ['payment_id' => $paymentId, 'booking_code' => $bookingCode, 'created_at' => time()];
+            $session->write('user_pending_payments', array_slice($index, -10));
+        } catch (\Throwable $e) {
+        }
+    }
+
+    private function forgetPendingPayment(string $paymentId): void
+    {
+        if ($paymentId === '') return;
+        try {
+            $session = $this->getRequest()->getSession();
+            $index = $session->read('user_pending_payments');
+            if (!is_array($index)) return;
+            $session->write('user_pending_payments', array_values(array_filter(
+                $index,
+                fn($e) => is_array($e) && ($e['payment_id'] ?? '') !== $paymentId
+            )));
+        } catch (\Throwable $e) {
+        }
+    }
+
+    /**
+     * Persist a paid booking into the dashboard session so /my-booking shows
+     * it immediately — never dependent on backend list timing, token state,
+     * or which email the guest paid with. Backend record wins; the local
+     * pending entry only fills blanks. Never throws.
+     */
+    private function rememberPaidBookingForDashboard(string $bookingId, string $email, array $fallback = [], ?array $prefetched = null): void
+    {
+        if ($bookingId === '') return;
+        $b = $prefetched;
+        if (!is_array($b)) {
+            try {
+                $rec = $this->paymentService->booking($bookingId, $email);
+            } catch (\Throwable $e) {
+                $rec = null;
+            }
+            $b = is_array($rec) ? ($rec['data'] ?? $rec) : null;
+        }
+        if (!is_array($b)) $b = [];
+        $code = (string)($b['booking_code'] ?? $b['reference'] ?? ($fallback['booking_code'] ?? $bookingId));
+        $record = array_merge([
+            'id' => $bookingId,
+            'booking_code' => $code,
+            'guest_email' => $email !== '' ? $email : ($fallback['guest_email'] ?? ''),
+            'total_price' => $fallback['amount'] ?? 0,
+            'status' => 'Confirmed',
+            'payment_status' => 'paid',
+            '_dashboard_at' => time(),
+        ], array_filter($b, fn($v) => $v !== null && $v !== ''));
+        if (empty($record['booking_code'])) $record['booking_code'] = $bookingId;
+        // Keep explicit paid markers even if the backend shape lacks them.
+        if (empty($record['payment_status'])) $record['payment_status'] = 'paid';
+        if (empty($record['status'])) $record['status'] = 'Confirmed';
+        try {
+            $session = $this->getRequest()->getSession();
+            $stored = $session->read('user_bookings');
+            if (!is_array($stored)) $stored = [];
+            $keyOf = fn($r) => (string)($r['booking_code'] ?? $r['id'] ?? '');
+            $stored = array_values(array_filter($stored, fn($r) => is_array($r) && $keyOf($r) !== '' && $keyOf($r) !== $code && $keyOf($r) !== $bookingId));
+            $stored[] = $record;
+            $session->write('user_bookings', array_slice($stored, -25));
+        } catch (\Throwable $e) {
+        }
     }
 
     /**
@@ -468,7 +589,19 @@ class BookingsController extends AppController
             $session->write('pending_payments.' . $paymentId . '.status', $normalized);
         }
         if ($normalized === 'paid') {
+            // Paid is the point of no return for the dashboard: persist the
+            // verified booking into the dashboard session BEFORE dropping the
+            // pending entry, so /my-booking shows it even when the backend
+            // list lags or the guest paid with a different email / no token.
+            $this->rememberPaidBookingForDashboard(
+                (string)($pending['booking_id'] ?? ''),
+                (string)($pending['guest_email'] ?? ''),
+                $pending
+            );
             $session->delete('pending_payments.' . $paymentId);
+            $this->forgetPendingPayment($paymentId);
+        } elseif (in_array($normalized, ['failed', 'expired'], true)) {
+            $this->forgetPendingPayment($paymentId);
         }
 
         return $this->paymentStatusResponse(
@@ -496,46 +629,46 @@ class BookingsController extends AppController
         $queryParams = $this->getRequest()->getQueryParams();
         $propertyId = !empty($queryParams['property_id']) ? (int)$queryParams['property_id'] : 0;
         $roomId = !empty($queryParams['room_id']) ? (int)$queryParams['room_id'] : null;
-        // Try to load quote from session if quote_id present
+        // The payment step shares the SAME server quote (and its expiry) as step 1.
+        // Never silently mint a new price here — an expired/missing quote must go back
+        // to step 1 for an honest re-price, otherwise the guest pays a price whose
+        // guarantee already lapsed.
         $quote = null;
         $quoteId = trim((string)($queryParams['quote_id'] ?? ''));
         if ($quoteId !== '') {
-            $quote = $this->getRequest()->getSession()->read('booking_quotes.' . $quoteId);
-            if (is_array($quote)) {
+            $stored = $this->getRequest()->getSession()->read('booking_quotes.' . $quoteId);
+            if (is_array($stored) && !empty($stored['expires_at'])) {
+                if ((int)$stored['expires_at'] < time()) {
+                    $this->getRequest()->getSession()->delete('booking_quotes.' . $quoteId);
+                    $this->Flash->error(__('Your price guarantee expired. We sent you back to refresh the live price.'));
+                    $back = array_filter([
+                        'property_id' => $stored['property_id'] ?? ($propertyId ?: null),
+                        'room_id' => $stored['room_id'] ?? ($roomId ?: null),
+                        'checkIn' => $stored['check_in'] ?? ($queryParams['checkIn'] ?? null),
+                        'checkOut' => $stored['check_out'] ?? ($queryParams['checkOut'] ?? null),
+                        'adults' => $stored['adults'] ?? ($queryParams['adults'] ?? null),
+                        'children' => $stored['children'] ?? ($queryParams['children'] ?? null),
+                        'rooms' => $stored['rooms'] ?? ($queryParams['rooms'] ?? null),
+                        'city' => $queryParams['city'] ?? ($queryParams['destination'] ?? null),
+                        'repriced' => '1',
+                    ], fn($v) => $v !== null && $v !== '');
+                    return $this->redirect(['action' => 'bookingPage', '?' => $back]);
+                }
+                $quote = $stored;
                 $queryParams = array_merge($queryParams, [
                     'checkIn' => $quote['check_in'] ?? $queryParams['checkIn'] ?? null,
                     'checkOut' => $quote['check_out'] ?? $queryParams['checkOut'] ?? null,
                 ]);
             }
         }
-        $calculation = $quote['calculation'] ?? null;
-        // If quote missing (e.g. session expired, direct GET, or offline fallback), try to rebuild from query params
+        $calculation = is_array($quote) ? ($quote['calculation'] ?? null) : null;
+        // Missing/unknown quote (session lost, direct link, stale bookmark): restart at
+        // step 1 so a fresh authoritative quote + guarantee is created. Never fabricate.
         if (empty($quote) || empty($calculation)) {
-            if ($propertyId && $roomId) {
-                try {
-                    // Ensure dates exist
-                    $defaultCheckIn = date('Y-m-d', strtotime('+7 days'));
-                    $defaultCheckOut = date('Y-m-d', strtotime('+13 days'));
-                    $tmpParams = $queryParams;
-                    if (empty($tmpParams['checkIn']) && empty($tmpParams['check_in'])) $tmpParams['checkIn'] = $defaultCheckIn;
-                    if (empty($tmpParams['checkOut']) && empty($tmpParams['check_out'])) $tmpParams['checkOut'] = $defaultCheckOut;
-                    $quote = $this->quoteService->create($propertyId, $roomId, $tmpParams);
-                    $this->getRequest()->getSession()->write('booking_quotes.' . $quote['quote_id'], $quote);
-                    $queryParams['quote_id'] = $quote['quote_id'];
-                    $calculation = $quote['calculation'];
-                } catch (\Throwable $e) {
-                    // No fake fallback quote here either — restart the pricing step honestly.
-                    if ($e instanceof \InvalidArgumentException) {
-                        $this->Flash->error(__($e->getMessage()));
-                    } else {
-                        $this->Flash->error(__('We could not reach the booking service. Please try again.'));
-                    }
-                    return $this->redirect(['action' => 'bookingPage', '?' => $queryParams]);
-                }
-            } else {
-                $this->Flash->error(__('Your booking session has expired. Please select your room again.'));
-                return $this->redirect(['action' => 'bookingPage', '?' => $queryParams]);
-            }
+            $this->Flash->error(__('Your booking session has expired. Please confirm your details again for a fresh price.'));
+            $back = $queryParams;
+            unset($back['quote_id'], $back['first_name'], $back['last_name'], $back['email'], $back['phone']);
+            return $this->redirect(['action' => 'bookingPage', '?' => $back]);
         }
         $property = $quote['property'] ?? null;
         $room = $quote['room'] ?? null;
@@ -548,7 +681,8 @@ class BookingsController extends AppController
             $this->Flash->error(__('Your booking session has expired. Please select your room again.'));
             return $this->redirect(['action' => 'bookingPage', '?' => $queryParams]);
         }
-        $this->set(compact('property','room','calculation','queryParams','quote'));
+        $quoteRemaining = max(0, (int)($quote['expires_at'] ?? 0) - time());
+        $this->set(compact('property','room','calculation','queryParams','quote','quoteRemaining'));
         return $this->render('/Pages/bookingpage-03');
     }
 
@@ -675,7 +809,18 @@ class BookingsController extends AppController
             $bookingId = trim((string)($queryParams['booking_code'] ?? ''));
         }
         if ($bookingId === '') {
-            throw new NotFoundException(__('Booking confirmation not found.'));
+            // No reference at all (bookmark, back button, typed URL) — guide
+            // to the dashboard instead of dead-ending on an error page.
+            try {
+                \Cake\Log\Log::debug(sprintf(
+                    '[bookingpageSuccess] empty reference; query=%s referer=%s',
+                    json_encode($queryParams),
+                    (string)$this->getRequest()->getHeaderLine('Referer')
+                ));
+            } catch (\Throwable $e) {
+            }
+            $this->Flash->error(__('Choose a booking from the list below to view its details.'));
+            return $this->redirect(['controller' => 'Account', 'action' => 'myBooking']);
         }
 
         // A guest booking has no session, so the receipt lookup is authorised
@@ -690,14 +835,33 @@ class BookingsController extends AppController
             ? $this->paymentService->booking($bookingId, $sessionEmail)
             : $this->paymentService->booking($bookingId);
         $booking = is_array($bookingResponse) ? ($bookingResponse['data'] ?? $bookingResponse) : null;
-        if (!is_array($booking)) {
+        // A message envelope (e.g. "sign in or supply the email") is an array
+        // too — only a record carrying booking identity counts as verified.
+        $bookingRef = is_array($booking)
+            ? (string)($booking['booking_code'] ?? $booking['reference'] ?? $booking['id'] ?? $booking['booking_id'] ?? '')
+            : '';
+        if (!is_array($booking) || $bookingRef === '') {
             throw new NotFoundException(__('This booking could not be verified.'));
         }
         $verifiedBooking = $booking;
         $paymentStatus = strtolower((string)($booking['payment_status'] ?? ''));
         $bookingStatus = strtolower((string)($booking['booking_status'] ?? ($booking['status'] ?? '')));
-        if ($paymentStatus !== 'paid' || !in_array($bookingStatus, ['confirmed', 'paid', 'completed', 'success', 'successful'], true)) {
-            throw new NotFoundException(__('This booking is not confirmed yet.'));
+        // "View details" must work for every real booking state — paid shows
+        // the confirmation + invoice, anything else shows the same details
+        // with an honest status banner (never a 404 for a booking that exists).
+        // Only unresolvable bookings 404 (thrown above).
+        $isPaid = $paymentStatus === 'paid'
+            && in_array($bookingStatus, ['confirmed', 'paid', 'completed', 'success', 'successful', 'checked in', 'checked-in'], true);
+        if ($isPaid) {
+            // Belt-and-braces for the dashboard: the success page saw a verified
+            // paid booking, so make sure /my-booking lists it even if the status
+            // poll path never ran (e.g. webhook confirmed it server-side).
+            $this->rememberPaidBookingForDashboard(
+                (string)($booking['id'] ?? $booking['booking_id'] ?? $bookingId),
+                (string)($booking['guest_email'] ?? ($booking['guest']['email'] ?? $sessionEmail)),
+                [],
+                $booking
+            );
         }
 
         $guest = is_array($booking['guest'] ?? null) ? $booking['guest'] : [];
@@ -730,7 +894,7 @@ class BookingsController extends AppController
             }
         }
 
-        $this->set(compact('queryParams', 'property', 'verifiedBooking', 'guest', 'bookingRoom'));
+        $this->set(compact('queryParams', 'property', 'verifiedBooking', 'guest', 'bookingRoom', 'isPaid', 'paymentStatus', 'bookingStatus'));
         return $this->render('/Pages/bookingpage-success');
     }
 }

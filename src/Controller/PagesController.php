@@ -104,13 +104,10 @@ class PagesController extends AppController
         $rawPriceMin = $rawMin;
         $rawPriceMax = $rawMax;
 
-        // Destination: spec graceful empty -> "All Tanzanian Destinations" (or geolocated city client-side)
-        // Only default to Dar es Salaam on first load with no query at all; respect explicit empty string for "All"
+        // Destination: empty means "All Tanzanian Destinations" — list every
+        // available property. Never default to a city: a guest who hasn't
+        // searched yet must see the full inventory, not one city's slice.
         $destination = $rawCity !== null ? trim((string)$rawCity) : '';
-        $isFirstLoad = empty($input);
-        if ($destination === '' && $isFirstLoad) {
-            $destination = 'Dar es Salaam';
-        }
         if (mb_strlen($destination) > 120) {
             $destination = mb_substr($destination, 0, 120);
         }
@@ -211,7 +208,7 @@ class PagesController extends AppController
             'meals'            => $mealsOpt,
             'neighborhood'     => $neighborhood,
             // legacy aliases (templates still read these)
-            'destination'      => $displayCity !== '' ? $displayCity : ($isFirstLoad ? 'Dar es Salaam' : ''),
+            'destination'      => $displayCity,
             'checkIn'          => $checkIn->format('Y-m-d'),
             'checkOut'         => $checkOut->format('Y-m-d'),
             'min_price'        => $minPrice,
@@ -811,18 +808,95 @@ class PagesController extends AppController
     // ── Static & Support Pages ────────────────────────────────────────────
     public function aboutUs() { return $this->render('/Pages/about-us'); }
     public function howWeWork() { return $this->render('/Pages/how-we-work'); }
-    public function helpCenter() { return $this->render('/Pages/help-center'); }
-    public function faq() { return $this->render('/Pages/faq'); }
+    public function helpCenter()
+    {
+        // Real help-centre feed: popular topics (with real action URLs),
+        // support contact from backend config, and the signed-in guest's
+        // upcoming stay. Public endpoint — works logged out too. Never
+        // fabricated: on backend failure the page renders contact + FAQs.
+        $helpCentre = null;
+        try {
+            $token = $this->currentBearerToken();
+            $headers = $token !== '' ? ['Authorization' => 'Bearer ' . $token] : [];
+            $res = $this->apiClient->get('/support/help-centre', [], $headers, 6);
+            if (is_array($res) && ($res['status'] ?? '') === 'success' && empty($res['_status'])) {
+                $helpCentre = $res;
+            }
+        } catch (\Throwable $e) {
+            $helpCentre = null;
+        }
+        $session = $this->getRequest()->getSession();
+        $isLoggedIn = $this->authService->isAuthenticated($session);
+        $this->set(compact('helpCentre', 'isLoggedIn'));
+        return $this->render('/Pages/help-center');
+    }
+    public function faq()
+    {
+        // Support email only — office addresses and phone numbers on the old
+        // page were unverified, so they are not rendered anymore.
+        $supportEmail = '';
+        try {
+            $res = $this->apiClient->get('/support/help-centre', [], [], 6);
+            if (is_array($res) && ($res['status'] ?? '') === 'success') {
+                $supportEmail = trim((string)($res['support_contact']['email'] ?? ''));
+            }
+        } catch (\Throwable $e) {
+            $supportEmail = '';
+        }
+        $this->set(compact('supportEmail'));
+        return $this->render('/Pages/faq');
+    }
     public function notFound() { return $this->render('/Pages/404'); }
     public function privacyPolicy() { return $this->render('/Pages/privacy-policy'); }
     public function termsOfService() { return $this->render('/Pages/terms-of-service'); }
-    public function contactV1() { return $this->render('/Pages/contact-v1'); }
+    public function contactV1()
+    {
+        // Real support contact from backend config (email only — no invented
+        // phone numbers). Ticket submission needs auth server-side, so guests
+        // get the direct email path instead of a form that can never send.
+        $supportEmail = '';
+        try {
+            $res = $this->apiClient->get('/support/help-centre', [], [], 6);
+            if (is_array($res) && ($res['status'] ?? '') === 'success') {
+                $supportEmail = trim((string)($res['support_contact']['email'] ?? ''));
+            }
+        } catch (\Throwable $e) {
+            $supportEmail = '';
+        }
+        $session = $this->getRequest()->getSession();
+        $isLoggedIn = $this->authService->isAuthenticated($session);
+        $this->set(compact('supportEmail', 'isLoggedIn'));
+        return $this->render('/Pages/contact-v1');
+    }
+
+    /**
+     * Strict allowlist match for the API proxy: the exact path or a real
+     * sub-path only. "/properties" matches "/properties/5" but never
+     * "/properties-evil" (the old loose prefix check allowed those).
+     */
+    private function proxyPathMatches(string $apiPath, string $prefix): bool
+    {
+        if ($apiPath === $prefix) return true;
+        return str_starts_with($apiPath, $prefix . '/');
+    }
 
     // ── Universal API Proxy (localhost & production) ─────────────────────
     public function apiProxy(string ...$path): Response
     {
         $apiPath = '/' . implode('/', $path);
         $method = strtolower($this->getRequest()->getMethod());
+
+        // Reject traversal / encoding tricks outright — the proxy must only
+        // ever forward clean sub-paths of the allowlisted resources.
+        $lowerPath = strtolower($apiPath);
+        if (
+            $apiPath === '' || $apiPath === '/' ||
+            str_contains($apiPath, '..') || str_contains($apiPath, '\\') ||
+            str_contains($apiPath, "\0") || str_contains($lowerPath, '%2e') ||
+            str_contains($lowerPath, '%00') || str_contains($lowerPath, '%5c')
+        ) {
+            return $this->response->withStatus(403)->withType('application/json')->withStringBody(json_encode(['error' => 'Proxy path not allowed']));
+        }
 
         $allowedGetPrefixes = [
             '/map-config', '/properties', '/rooms', '/destinations',
@@ -833,7 +907,12 @@ class PagesController extends AppController
         $allowedPostPrefixes = [
             '/notifications/preferences', '/travel/preferences',
             '/receipts/generate', '/feedback/accessibility',
-            '/user/personal-details', '/alerts'
+            '/user/personal-details', '/alerts',
+            // AzamPay transaction callback lands here in production
+            // (callback URL is https://fastnetstays.com/api/payments/webhook).
+            // The backend owns validation (no success default, amount match
+            // enforced), so forwarding the payload is safe.
+            '/payments/webhook',
         ];
 
         // Exactly one property POST: the AI description draft. Scoped to a
@@ -848,7 +927,7 @@ class PagesController extends AppController
         $isAllowed = false;
         if ($method === 'get') {
             foreach ($allowedGetPrefixes as $p) {
-                if ($apiPath === $p || str_starts_with($apiPath, $p . '/') || str_starts_with($apiPath, $p)) {
+                if ($this->proxyPathMatches($apiPath, $p)) {
                     $isAllowed = true; break;
                 }
             }
@@ -857,13 +936,13 @@ class PagesController extends AppController
                 $isAllowed = true;
             }
             foreach ($allowedPostPrefixes as $p) {
-                if ($apiPath === $p || str_starts_with($apiPath, $p . '/') || str_starts_with($apiPath, $p)) {
+                if ($this->proxyPathMatches($apiPath, $p)) {
                     $isAllowed = true; break;
                 }
             }
         } elseif ($method === 'delete') {
             foreach ($allowedDeletePrefixes as $p) {
-                if ($apiPath === $p || str_starts_with($apiPath, $p . '/') || str_starts_with($apiPath, $p)) {
+                if ($this->proxyPathMatches($apiPath, $p)) {
                     $isAllowed = true; break;
                 }
             }

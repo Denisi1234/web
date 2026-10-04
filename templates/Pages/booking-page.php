@@ -224,7 +224,28 @@ $this->assign('title', 'Customer information');
     </div>
   </div>
 </div>
-<div class="agoda-timer-bar">This price is guaranteed for... <b><i class="fa-regular fa-clock"></i> <span id="agodaCountdown">00:18:35</span></b></div>
+<?php
+// Real guarantee countdown: driven by the server-owned quote expiry.
+// No hardcoded fallback — without a quote there is no guaranteed price to count down.
+$quoteRemainingSrv = isset($quoteRemaining) ? max(0, (int)$quoteRemaining)
+    : (isset($quote['expires_at']) ? max(0, (int)$quote['expires_at'] - time()) : 0);
+$quoteHasGuarantee = !empty($quote['expires_at']) || isset($quoteRemaining);
+$fmtRem = sprintf('%02d:%02d:%02d', (int)($quoteRemainingSrv / 3600), (int)(($quoteRemainingSrv % 3600) / 60), $quoteRemainingSrv % 60);
+?>
+<?php if ($quoteHasGuarantee): ?>
+<div class="agoda-timer-bar" id="agodaTimerBar" data-remaining="<?= (int)$quoteRemainingSrv ?>" data-expires-at="<?= (int)($quote['expires_at'] ?? 0) ?>">
+  <span id="agodaTimerLabel">This price is guaranteed for... <b><i class="fa-regular fa-clock"></i> <span id="agodaCountdown"><?= h($fmtRem) ?></span></b></span>
+  <span id="agodaTimerExpired" style="display:none">Price guarantee expired — <a href="javascript:void(0)" id="agodaRefreshPrice" class="agoda-link" style="font-weight:800">refresh the live price</a></span>
+</div>
+<?php endif; ?>
+<?php if (!empty($quoteRepriced)): ?>
+<div style="max-width:1180px;margin:14px auto 0;padding:0 16px">
+  <div style="background:#e6f4ea;border:1px solid #c8e6c9;color:#137333;padding:10px 14px;border-radius:8px;font-size:13px;display:flex;gap:8px;align-items:center">
+    <i class="fa-solid fa-rotate"></i>
+    <span>Your previous guarantee expired, so this is a fresh live price with a new countdown.</span>
+  </div>
+</div>
+<?php endif; ?>
 
 <?php if (!empty($quoteError) && empty($quote['is_fallback'] ?? false) || !empty($quote['_fallback'] ?? false) && !empty($quoteError)): ?>
   <div style="max-width:1180px;margin:14px auto 0;padding:0 16px">
@@ -387,18 +408,53 @@ $this->assign('title', 'Customer information');
 </div>
 
 <script>
-let agodaSeconds = <?= isset($quote['expires_at']) ? max(0, (int)$quote['expires_at'] - time()) : 18*60+35 ?>;
-function tickAgoda(){
-  const el=document.getElementById('agodaCountdown');
-  if(!el) return;
-  let s=agodaSeconds--;
-  if(s<0){el.textContent='00:00:00';return}
-  const h=String(Math.floor(s/3600)).padStart(2,'0');
-  const m=String(Math.floor((s%3600)/60)).padStart(2,'0');
-  const sec=String(s%60).padStart(2,'0');
-  el.textContent=h+':'+m+':'+sec;
-  setTimeout(tickAgoda,1000);
-}
+// Real countdown: server-rendered remaining seconds, ticked locally from page-load time
+// (immune to client clock skew). On expiry the form is blocked — the backend also rejects
+// expired quotes, so this can never be bypassed by editing the DOM.
+(function(){
+  const bar = document.getElementById('agodaTimerBar');
+  if (!bar) return; // no server guarantee -> no timer, never a fake number
+  const initial = Math.max(0, parseInt(bar.dataset.remaining || '0', 10));
+  const loadedAt = Date.now();
+  const el = document.getElementById('agodaCountdown');
+  const label = document.getElementById('agodaTimerLabel');
+  const expired = document.getElementById('agodaTimerExpired');
+  let quoteExpired = initial <= 0;
+  function fmt(s){
+    s = Math.max(0, s);
+    const h = String(Math.floor(s/3600)).padStart(2,'0');
+    const m = String(Math.floor((s%3600)/60)).padStart(2,'0');
+    const sec = String(s%60).padStart(2,'0');
+    return h+':'+m+':'+sec;
+  }
+  function onExpire(){
+    quoteExpired = true;
+    if (el) el.textContent = '00:00:00';
+    if (label) label.style.display = 'none';
+    if (expired) expired.style.display = 'inline';
+    bar.style.background = '#fdecea';
+    bar.style.borderBottomColor = '#f5c6cb';
+    const btn = document.querySelector('#agodaCheckoutForm .agoda-next-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'PRICE EXPIRED — REFRESH BELOW'; btn.style.opacity = '0.6'; btn.style.cursor = 'not-allowed'; }
+  }
+  window.agodaQuoteExpired = () => quoteExpired;
+  function tick(){
+    const elapsed = Math.floor((Date.now() - loadedAt) / 1000);
+    const left = initial - elapsed;
+    if (left <= 0) { onExpire(); return; }
+    if (el) el.textContent = fmt(left);
+    setTimeout(tick, 1000);
+  }
+  if (initial <= 0) { onExpire(); return; }
+  tick();
+  document.getElementById('agodaRefreshPrice')?.addEventListener('click', () => {
+    // Drop the stale quote_id so the server mints a fresh quote with a new guarantee.
+    const u = new URL(window.location.href);
+    u.searchParams.delete('quote_id');
+    u.searchParams.set('repriced', '1');
+    window.location.href = u.toString();
+  });
+})();
 function toggleLeadEdit(){const e=document.getElementById('leadEditFields');e.style.display=(e.style.display==='none'||e.style.display==='')?'block':'none'}
 function toggleExtraPrefs(ev){ev.preventDefault();const e=document.getElementById('extraPrefs');e.style.display=e.style.display==='none'?'block':'none'}
 function validateCustomerInfo(){
@@ -451,6 +507,14 @@ document.addEventListener('DOMContentLoaded',()=>{
     });
     updateLeadPreview();
     form.addEventListener('submit', (ev)=>{
+      if(window.agodaQuoteExpired && window.agodaQuoteExpired()){
+        ev.preventDefault();
+        ev.stopPropagation();
+        const errBox=document.getElementById('customerFormError');
+        if(errBox){ errBox.style.display='block'; errBox.textContent='This price guarantee has expired. Please refresh the live price to continue.'; }
+        document.getElementById('agodaTimerBar')?.scrollIntoView({behavior:'smooth', block:'center'});
+        return false;
+      }
       if(!validateCustomerInfo()){
         ev.preventDefault();
         ev.stopPropagation();

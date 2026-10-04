@@ -98,11 +98,12 @@ if ($isOwnerSignup) {
 										const requestedRole = <?= json_encode($requestedRole === 'owner' ? 'owner' : 'customer') ?>;
 										const isHostFlow = requestedRole === 'owner';
 										const btnLabel = submitBtn.innerHTML;
-										function fail(msg) {
-											alertBox.innerHTML = '<div class="alert alert-danger">' + msg + '</div>';
-											submitBtn.disabled = false;
-											submitBtn.innerHTML = btnLabel;
-										}
+									function fail(msg) {
+										alertBox.innerHTML = '<div class="alert alert-danger">' + msg + '</div>';
+										try { if (window.FastnetLoader && typeof window.FastnetLoader.hide === 'function') window.FastnetLoader.hide(); } catch (e) {}
+										submitBtn.disabled = false;
+										submitBtn.innerHTML = btnLabel;
+									}
 
 										const name = document.getElementById("signup-name").value.trim();
 										const email = document.getElementById("signup-email").value.trim();
@@ -151,28 +152,42 @@ if ($isOwnerSignup) {
 													localStorage.setItem('user', JSON.stringify(data.user));
 												}
 
-												// Synchronize CakePHP session
-												try {
-													await fetch('<?= $this->Url->build('/login'); ?>', {
-														method: 'POST',
-														headers: {
-															'Content-Type': 'application/json',
-															'X-Requested-With': 'XMLHttpRequest'
-														},
-														body: JSON.stringify({
-															action: 'login_sync',
-															user: data.user,
-															token: authToken
-														})
-													});
-												} catch(errSync) {}
+											// Synchronize CakePHP session. The sync endpoint verifies
+											// the token against /me and echoes the VERIFIED user —
+											// that verified role (never the requested intent) decides
+											// where the account lands.
+											let verifiedRole = (data.user && data.user.role ? String(data.user.role) : '').toLowerCase();
+											try {
+												const syncRes = await fetch('<?= $this->Url->build('/login'); ?>', {
+													method: 'POST',
+													headers: {
+														'Content-Type': 'application/json',
+														'X-Requested-With': 'XMLHttpRequest'
+													},
+													body: JSON.stringify({
+														action: 'login_sync',
+														user: data.user,
+														token: authToken
+													})
+												});
+												const syncData = await syncRes.json();
+												if (syncData && syncData.user && syncData.user.role) {
+													verifiedRole = String(syncData.user.role).toLowerCase();
+												}
+											} catch(errSync) {}
 
-											alertBox.innerHTML = '<div class="alert alert-success">' + (isHostFlow ? 'Host account ready! Opening your dashboard...' : 'Registration successful! Updating header...') + '</div>';
-											setTimeout(() => {
-												const isHost = (data.user && data.user.role === 'owner') || requestedRole === 'owner';
-													// Land on their own portal home (role dashboards handle the rest)
-													window.location.href = isHost ? '<?= $this->Url->build('/host/dashboard'); ?>' : '<?= $this->Url->build('/'); ?>';
-												}, 400);
+										alertBox.innerHTML = '<div class="alert alert-success">' + (verifiedRole === 'owner' ? 'Host account ready! Opening your dashboard...' : 'Registration successful! Updating header...') + '</div>';
+										setTimeout(() => {
+											// Land by backend-verified role only. A customer account —
+											// even from the host form — never lands inside host tooling.
+											if (verifiedRole === 'owner') {
+												window.location.href = '<?= $this->Url->build('/host/dashboard'); ?>';
+											} else if (verifiedRole === 'admin') {
+												window.location.href = '<?= $this->Url->build('/admin/dashboard'); ?>';
+											} else {
+												window.location.href = '<?= $this->Url->build('/'); ?>';
+											}
+											}, 400);
 											} else {
 												const errMsg = data.message || (data.errors ? Object.values(data.errors).flat().join('<br>') : 'Registration failed.');
 												alertBox.innerHTML = '<div class="alert alert-danger">' + errMsg + '</div>';

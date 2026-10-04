@@ -225,11 +225,11 @@
 
         <!-- Canonical loading controller. Must precede app-loader.js, which
              delegates its progress bar to it. -->
-        <?= $this->Html->script('/assets/js/loading.js') ?>
+        <?= $this->Html->script('/assets/js/loading.js?v=' . filemtime(WWW_ROOT . 'assets/js/loading.js')) ?>
         <!-- Universal App Loader Engine -->
-        <?= $this->Html->script('/assets/js/app-loader.js') ?>
+        <?= $this->Html->script('/assets/js/app-loader.js?v=' . filemtime(WWW_ROOT . 'assets/js/app-loader.js')) ?>
         <!-- Direct-to-backend forms (Bearer in JS, CakePHP proxy as fallback) -->
-        <?= $this->Html->script('/assets/js/fastnet-api.js') ?>
+        <?= $this->Html->script('/assets/js/fastnet-api.js?v=' . filemtime(WWW_ROOT . 'assets/js/fastnet-api.js')) ?>
 
         <!-- Mapbox GL JS — production CSS & JS -->
         <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css" rel="stylesheet">

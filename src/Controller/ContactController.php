@@ -21,19 +21,27 @@ class ContactController extends AppController
         $this->request->allowMethod(['post']); // Allow only POST request
         
         $data = $this->request->getData();
-        
-        if (!$data['name'] || !$data['email'] || !$data['number'] || !$data['subject'] || !$data['comments']) {
+
+        $name = trim((string)($data['name'] ?? ''));
+        $email = trim((string)($data['email'] ?? ''));
+        $subject = trim((string)($data['subject'] ?? ''));
+        $comments = trim((string)($data['comments'] ?? ''));
+        $number = trim((string)($data['number'] ?? ''));
+
+        if ($name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || $subject === '' || $comments === '') {
             return $this->response->withType('application/json')
-                ->withStringBody(json_encode(['status' => 'error', 'message' => 'All fields are required']));
+                ->withStringBody(json_encode(['status' => 'error', 'message' => 'Please provide your name, a valid email, a subject and a message.']));
         }
 
-        // Send Email (if configured)
+        // Send Email (requires a working mail transport — failures are
+        // reported honestly, never swallowed as success).
         try {
             $mailer = new Mailer('default');
-            $mailer->setFrom(['your-email@gmail.com' => 'Geotrip']) # Replace with your email
-                ->setTo('receiver-email@gmail.com') # Replace with receiver email
-                ->setSubject($data['subject'])
-                ->deliver("Name: {$data['name']}\nEmail: {$data['email']}\nSubject: {$data['subject']}\nNumber: {$data['number']}\ncomments: {$data['comments']}");
+            $mailer->setFrom(['noreply@fastnetstays.com' => 'FastNet Stays'])
+                ->setTo('support@fastnetstays.com')
+                ->setReplyTo($email)
+                ->setSubject('[Contact] ' . mb_substr($subject, 0, 120))
+                ->deliver("Name: {$name}\nEmail: {$email}\nNumber: {$number}\n\n{$comments}");
 
             return $this->response->withType('application/json')
                 ->withStringBody(json_encode(['status' => 'success', 'message' => 'Your message has been sent successfully!']));
