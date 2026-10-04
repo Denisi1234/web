@@ -1,0 +1,11 @@
+.git
+.github
+vendor
+node_modules
+.env
+.env.*
+config/app_local.php
+tmp/*
+logs/*
+.phpunit.cache
+home.json
