@@ -5,12 +5,10 @@
 @media (max-width: 991px) {
     .agoda-top-header { height: 64px !important; min-height: 64px; padding-top: 0 !important; padding-bottom: 0 !important; }
     .agoda-top-header:has(#nav_search_wrapper) { height: auto !important; padding-bottom: 8px !important; }
-    #gh_mobile_stack { margin-top: 0 !important; }
 }
 @media (max-width: 575px) {
     .agoda-top-header { height: 58px !important; min-height: 58px; }
     .agoda-top-header:has(#nav_search_wrapper) { height: auto !important; padding-bottom: 8px !important; }
-    #gh_mobile_stack { margin-top: 0 !important; }
 }
 #nav_logged_out_wrapper, #nav_logged_in_wrapper { white-space: nowrap; }
 #nav_logged_out_lang_btn, #nav_logged_out_wrapper > a, #nav_logged_out_menu_btn { white-space: nowrap; flex-shrink: 0; }

@@ -29,8 +29,14 @@
 .gh-hotel-name:hover{color:#1a73e8}
 .gh-hotel-price{font-size:16px;font-weight:700;color:#202124;white-space:nowrap;flex-shrink:0;line-height:20px;font-family:'Google Sans',Roboto,'Segoe UI',Arial,sans-serif}
 .gh-hotel-price .gh-price-night{font-size:12px;font-weight:400;color:#5f6368;margin-left:3px}
+.gh-card-loc{font-size:12.5px;font-weight:400;color:#5f6368;margin-bottom:4px;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:Roboto,'Segoe UI',Arial,sans-serif}
+.gh-card-loc i{font-size:10px;color:#0f62fe;flex-shrink:0}
+.gh-card-loc span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gh-rating-inline{font-size:13px;font-weight:400;color:#5f6368;margin-bottom:8px;display:flex;align-items:center;gap:3px;font-family:'Google Sans',Roboto,'Segoe UI',Arial,sans-serif}
 .gh-rating-num{font-weight:500;color:#202124}
+.gh-rating-word{font-weight:500;color:#202124}
+.gh-rating-new{background:#e6f4ea;color:#137333;border-radius:8px;padding:0 6px;font-size:11px;font-weight:600}
+.gh-card-desc{font-size:12.5px;line-height:17px;color:#5f6368;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-family:Roboto,'Segoe UI',Arial,sans-serif}
 .gh-rating-star{color:#fbbc04;font-size:13px}
 .gh-rating-count{color:#5f6368}
 .gh-amenity-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px 12px;flex:1;margin-bottom:12px}
@@ -48,11 +54,11 @@
 .gh-price-great{color:#137333 !important}
 .gh-price-sub{font-size:11px;color:#5f6368;font-weight:400;font-family:Roboto,sans-serif;line-height:1}
 /* any-device shimmer — lightweight, rAF-friendly */
-.gh-shimmer{background:#fff;border:1px solid #e8eaed;border-radius:14px;margin-bottom:16px;display:flex;overflow:hidden;box-shadow:0 2px 8px rgba(60,64,67,.12),0 8px 24px rgba(60,64,67,.10);contain:content;content-visibility:auto}
+.gh-shimmer{background:#fff;border:1px solid #e8eaed;border-radius:8px;margin-bottom:16px;display:flex;overflow:hidden;box-shadow:none;contain:content;content-visibility:auto}
 /* Delegate to the canonical sweep in loading.css (single definition site). */
 .gh-shim-block{border-radius:4px}
 @media (max-width:767px){
-  .gh-shimmer{flex-direction:column;border-radius:12px}
+  .gh-shimmer{flex-direction:column;border-radius:8px}
   .gh-shimmer > div:first-child{flex:0 0 168px !important;width:100% !important;height:168px !important;min-height:168px !important}
   .gh-shimmer > div:last-child{padding:10px 12px !important;gap:8px !important}
   .gh-shimmer div[style*="grid-template-columns:1fr 1fr 1fr"]{display:none !important}
@@ -60,7 +66,7 @@
   .gh-shimmer div[style*="justify-content:flex-end"] .gh-shim-block{width:100% !important}
 }
 @media (min-width:768px) and (max-width:991px){
-  .gh-shimmer{border-radius:12px}
+  .gh-shimmer{border-radius:8px}
   .gh-shimmer > div:first-child{flex:0 0 160px !important;height:160px !important}
 }
 @media (min-width:1400px){.gh-shimmer{margin-bottom:18px}}
@@ -72,28 +78,18 @@
 .gh-hotel-price{font-size:18px;font-weight:700;color:#202124}
 @media(max-width:991px){.gh-hotel-price{font-size:16px}}
 .gh-card-media-row{display:contents}
-.gh-card-map-mobile{display:none}
 .gh-card-viewmap{display:none}
 @media(max-width:767px){
   .gh-card{flex-direction:column;border-radius:12px;margin-bottom:12px}
-  .gh-card-media-row{display:flex !important;height:168px;overflow:hidden;width:100%}
-  .gh-card-photo{flex:1 1 58%;min-height:0;height:168px;border-right:none;border-bottom:none;aspect-ratio:auto}
-  .gh-card-map-mobile{display:block;flex:0 0 42%;position:relative;background:#e8ecef;overflow:hidden;border-left:1px solid #f1f3f4}
-  .gh-card-map-mobile img{width:100%;height:100%;object-fit:cover}
-  .gh-card-map-price{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:#1a73e8;color:#fff;font-size:13px;font-weight:700;padding:6px 12px;border-radius:8px;white-space:nowrap;max-width:calc(100% - 12px);overflow:hidden;text-overflow:ellipsis;box-shadow:0 2px 8px rgba(0,0,0,.25);font-family:'Google Sans',Roboto,sans-serif}
+  .gh-card-media-row{display:block !important;width:100%}
+  .gh-card-photo{width:100%;min-height:0;height:168px;border-right:none;border-bottom:1px solid #f1f3f4}
   .gh-card-body{padding:10px 12px 0}
-  .gh-card.gh-no-map .gh-card-photo{flex:1 1 100%}
   .gh-name-price-row{margin-bottom:2px}
   .gh-hotel-price{display:none}
   .gh-hotel-name{font-size:15px;font-weight:500;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .gh-amenity-grid{display:none}
   .gh-card-bottom{display:none}
   .gh-card-viewmap{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #e8eaed;margin-top:10px;padding:10px 0 8px}
-  .gh-card-viewmap-price{font-size:15px;font-weight:700;color:#202124;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Google Sans',Roboto,sans-serif}
-  .gh-card-viewmap-price .gh-price-night{font-size:11px;font-weight:400;color:#5f6368;margin-left:3px}
-  .gh-viewmap-btn{display:inline-flex;align-items:center;gap:8px;color:#1a73e8;font-size:13.5px;font-weight:500;text-decoration:none;font-family:'Google Sans',Roboto,sans-serif}
-  .gh-viewmap-divider{width:1px;height:18px;background:#e8eaed}
-  .gh-viewmap-bm{color:#5f6368;font-size:16px;background:none;border:none}
 }
 @media(max-width:360px){.gh-hotel-name{font-size:15px}}
 .gh-empty{background:#fff;border:1px solid #e8eaed;border-radius:16px;padding:32px 24px;text-align:center;box-shadow:0 2px 8px rgba(60,64,67,.08)}

@@ -1,13 +1,7 @@
 <?php
 /**
- * fastnetstays.com — Google Hotels Exact Card Layout
- * EXACT match of screenshot:
- * - Photo left (180px) with dots + bookmark
- * - Right: [Name .............. TSh XX,XXX]
- *           [4.0 ★ (N)]
- *           [icon amenity] [icon amenity] [icon amenity]  ← 3 column grid
- *           [icon amenity] [icon amenity] [icon amenity]
- *                                         [View prices ▶]
+ * fastnetstays.com — Hotel result cards.
+ * Photo + name/location/rating/price + View prices CTA.
  */
 if (!function_exists('ghNormalizeImgUrl')) {
     function ghNormalizeImgUrl(string $url): string {
@@ -93,10 +87,18 @@ if (!function_exists('ghPropImages')) {
         $propId = $prop['id'] ?? 0;
         $title  = \App\Utility\TextFormatter::formatTitle((string)($prop['name'] ?? 'Hotel'));
 
-        // Rating — "4.0 ★ (158)" format
+        // Rating — "4.0 ★ Excellent (158)" format (5-point scale + word label, Booking-style)
         $ratingRaw    = !empty($prop['reviews_avg_rating']) ? (float)$prop['reviews_avg_rating'] : (!empty($prop['rating']) ? (float)$prop['rating'] : null);
         $ratingFmt    = $ratingRaw !== null ? number_format($ratingRaw, 1) : null;
         $reviewsCount = (int)($prop['reviews_count'] ?? 0);
+        $ratingWord   = '';
+        if ($ratingRaw !== null && $ratingRaw > 0) {
+            if ($ratingRaw >= 4.5) $ratingWord = 'Exceptional';
+            elseif ($ratingRaw >= 4.0) $ratingWord = 'Excellent';
+            elseif ($ratingRaw >= 3.5) $ratingWord = 'Very good';
+            elseif ($ratingRaw >= 3.0) $ratingWord = 'Good';
+            else $ratingWord = 'Pleasant';
+        }
 
         // Stars (1-5)
         $stars   = !empty($prop['star_rating']) ? max(1, min(5, (int)$prop['star_rating'])) : 0;
@@ -121,18 +123,24 @@ if (!function_exists('ghPropImages')) {
         }
         $roomsForPrice = max(1, (int)($queryParams['rooms'] ?? 1));
         $totalPrice = $price * $nightsForPrice * $roomsForPrice;
-        $totalLabel = $price > 0 ? $currency . number_format($totalPrice) : '';
-        $totalNightsLabel = $price > 0 ? $currency . number_format($totalPrice) . ' total for ' . $nightsForPrice . ' night' . ($nightsForPrice !== 1 ? 's' : '') . ($roomsForPrice > 1 ? ' · ' . $roomsForPrice . ' rooms' : '') : '';
-
-        // Real coords? Coord-less cards must not render the Dar fallback tile (identical maps look broken).
-        $rawLat = $prop['latitude'] ?? ($prop['lat'] ?? null);
-        $rawLng = $prop['longitude'] ?? ($prop['lng'] ?? null);
-        $hasRealCoords = is_numeric($rawLat) && is_numeric($rawLng) && ((float)$rawLat != 0.0 || (float)$rawLng != 0.0);
 
         // Location formatting
         $locText = \App\Utility\TextFormatter::formatLocation((string)($prop['area'] ?? ''), (string)($prop['city'] ?? ''));
 
-        // Amenity detection (from raw amenities string/array + specific fields)
+        // Amenity detection — structured flags first, then CAREFUL keyword
+        // matching (word boundaries + exclusions). Bare str_contains() lies:
+        // "pool table" is not a pool, "smoking area" is not smoke-free.
+        if (!function_exists('ghHasAmen')) {
+            function ghHasAmen(string $haystack, array $needles, array $exclude = []): bool {
+                foreach ($exclude as $no) {
+                    if (preg_match('/\b' . preg_quote($no, '/') . '\b/i', $haystack)) return false;
+                }
+                foreach ($needles as $yes) {
+                    if (preg_match('/\b' . preg_quote($yes, '/') . '\b/i', $haystack)) return true;
+                }
+                return false;
+            }
+        }
         $amenRaw = $prop['amenities'] ?? [];
         if (is_string($amenRaw)) {
             $dec = json_decode($amenRaw, true);
@@ -140,19 +148,24 @@ if (!function_exists('ghPropImages')) {
         }
         $amenStr = strtolower(implode(' ', (array)$amenRaw) . ' ' . ($prop['description'] ?? ''));
 
-        $hasBreakfast    = !empty($prop['breakfast_included']) || str_contains($amenStr, 'breakfast');
-        $hasAC           = str_contains($amenStr, 'air conditioning') || str_contains($amenStr, 'air-condition');
-        $hasParking      = !empty($prop['free_parking']) || str_contains($amenStr, 'parking');
-        $hasPool         = str_contains($amenStr, 'pool');
-        $hasPet          = str_contains($amenStr, 'pet');
-        $hasKid          = str_contains($amenStr, 'kid') || str_contains($amenStr, 'child');
-        $hasShuttle      = str_contains($amenStr, 'shuttle') || str_contains($amenStr, 'airport transfer');
-        $hasRoomService  = str_contains($amenStr, 'room service');
-        $hasSmokeFree    = str_contains($amenStr, 'smoke');
-        $hasWifi         = str_contains($amenStr, 'wi-fi') || str_contains($amenStr, 'wifi');
-        $hasFitness      = str_contains($amenStr, 'fitness') || str_contains($amenStr, 'gym');
-        $hasHotTub       = str_contains($amenStr, 'hot tub') || str_contains($amenStr, 'jacuzzi');
-        $hasFreeCancel   = !empty($prop['free_cancellation']) || str_contains(strtolower((string)($prop['cancellation_policy']??'')), 'free');
+        $hasBreakfast    = !empty($prop['breakfast_included']) || ghHasAmen($amenStr, ['breakfast']);
+        $hasAC           = ghHasAmen($amenStr, ['air conditioning', 'air-conditioning', 'aircon', 'a/c', 'climate control']);
+        $hasParking      = !empty($prop['free_parking']) || ghHasAmen($amenStr, ['parking', 'garage']);
+        $hasPool         = ghHasAmen($amenStr, ['swimming pool', 'pool'], ['pool table', 'snooker', 'billiard', 'table tennis']);
+        $hasPet          = ghHasAmen($amenStr, ['pet-friendly', 'pet friendly', 'pets allowed', 'dog-friendly', 'dog friendly']);
+        $hasKid          = ghHasAmen($amenStr, ['kid-friendly', 'kid friendly', 'kids club', 'family-friendly', 'family friendly', 'playground']);
+        $hasShuttle      = ghHasAmen($amenStr, ['airport shuttle', 'shuttle', 'airport transfer']);
+        $hasRoomService  = ghHasAmen($amenStr, ['room service']);
+        $hasSmokeFree    = ghHasAmen($amenStr, ['smoke-free', 'smoke free', 'smokefree', 'non-smoking', 'non smoking']);
+        $hasWifi         = ghHasAmen($amenStr, ['wi-fi', 'wifi', 'wireless internet']);
+        $hasFitness      = ghHasAmen($amenStr, ['fitness', 'gym']);
+        $hasHotTub       = ghHasAmen($amenStr, ['hot tub', 'jacuzzi']);
+        $hasFreeCancel   = !empty($prop['free_cancellation']) || ghHasAmen(strtolower((string)($prop['cancellation_policy']??'')), ['free cancellation', 'cancel free', 'free cancel']);
+
+        // Description snippet: fills the card honestly when the property
+        // carries no structured amenities (never invented — backend text only).
+        $descRaw = trim(strip_tags((string)($prop['description'] ?? '')));
+        $descSnippet = $descRaw !== '' ? mb_strimwidth($descRaw, 0, 140, '…') : '';
 
         // Build amenity list (max 9 items for the 3×3 grid)
         $amenities = [];
@@ -182,11 +195,16 @@ if (!function_exists('ghPropImages')) {
         if(isset($cleanQP['sort']) && ($cleanQP['sort']==='recommended' || $cleanQP['sort']==='')) unset($cleanQP['sort']);
         $detailUrl  = $this->Url->build('/hotel-detail/' . $propId . (!empty($cleanQP) ? '?' . http_build_query($cleanQP) : ''));
     ?>
-    <div
-        class="gh-card<?= $hasRealCoords ? '' : ' gh-no-map' ?>"
+    <article
+        class="gh-card"
         id="gh-card-<?= $propId ?>"
         data-property-id="<?= $propId ?>"
+        tabindex="0"
+        role="link"
+        aria-label="<?= h($title) ?><?= $locText !== '' ? ', ' . h($locText) : '' ?><?= $priceLabel !== '' ? ', ' . h($priceLabel) . ' per night' : '' ?>"
+        data-href="<?= $detailUrl ?>"
         onclick="window.location='<?= $detailUrl ?>'"
+        onkeydown="if((event.key==='Enter'||event.key===' ')&&event.target===this){event.preventDefault();window.location='<?= $detailUrl ?>';}"
         onmouseenter="if(window.ghHighlightMarker)window.ghHighlightMarker(<?= $propId ?>,true)"
         onmouseleave="if(window.ghHighlightMarker)window.ghHighlightMarker(<?= $propId ?>,false)"
     >
@@ -230,25 +248,6 @@ if (!function_exists('ghPropImages')) {
                 <div class="gh-card-dots"><div class="gh-card-dot a"></div><div class="gh-card-dot"></div><div class="gh-card-dot"></div><div class="gh-card-dot"></div><div class="gh-card-dot"></div></div>
             <?php endif; ?>
         </div>
-        <!-- Mobile mini-map with blue price pill (visible only ≤767px) — only when real coordinates exist -->
-        <?php
-            $mlat = (float)($prop['latitude'] ?? ($prop['lat'] ?? 0));
-            $mlng = (float)($prop['longitude'] ?? ($prop['lng'] ?? 0));
-            // Only render map tile if property has real coordinates (not 0,0 or the generic fallback)
-            $hasRealCoords = ($mlat !== 0.0 || $mlng !== 0.0)
-                && !($mlat === -6.7725 && $mlng === 39.245); // skip generic Dar fallback
-        ?>
-        <?php if ($hasRealCoords): ?>
-        <div class="gh-card-map-mobile" aria-hidden="true">
-            <?php
-                $mapService = new \App\Service\MapService();
-                $mapImg = $mapService->getStaticMapUrl($mlat, $mlng, 13, 300, 300);
-                $svgFallback = $mapService->getSvgFallbackUrl(300, 300);
-            ?>
-            <img src="<?= h($mapImg) ?>" alt="Map location" loading="lazy" onerror="this.onerror=null;this.src='<?= $svgFallback ?>';">
-            <span class="gh-card-map-price" data-nightly="<?= h($priceLabel) ?>" data-total="<?= h($totalLabel) ?>"><?= h($priceLabel) ?></span>
-        </div>
-        <?php endif; ?>
         </div>
 
         <!-- ── Info body ── -->
@@ -260,31 +259,40 @@ if (!function_exists('ghPropImages')) {
                 </a>
                 <?php if ($priceLabel !== ''): ?>
                     <span style="text-align:right;line-height:1.2;flex-shrink:0;">
-                        <span class="gh-hotel-price" data-nightly="<?= h($priceLabel) ?>" data-total="<?= h($totalLabel) ?>" data-nights="<?= (int)$nightsForPrice ?>" data-rooms="<?= (int)$roomsForPrice ?>"><?= h($priceLabel) ?><span class="gh-price-night">/night</span></span>
-                        <?php if ($nightsForPrice > 1 || $roomsForPrice > 1): ?>
-                            <span style="display:block;font-size:11.5px;font-weight:500;color:#525252;"><?= h($totalNightsLabel) ?></span>
+                        <span class="gh-hotel-price" data-tzs="<?= $price ?>"><?= h($priceLabel) ?><span class="gh-price-night">/night</span></span>
+                        <?php if ($totalPrice > 0 && ($nightsForPrice > 1 || $roomsForPrice > 1)): ?>
+                            <span style="display:block;font-size:11.5px;font-weight:500;color:#525252;"><span data-tzs="<?= $totalPrice ?>"><?= h($currency . number_format($totalPrice)) ?></span> total for <?= (int)$nightsForPrice ?> night<?= $nightsForPrice !== 1 ? 's' : '' ?><?= $roomsForPrice > 1 ? ' · ' . (int)$roomsForPrice . ' rooms' : '' ?></span>
                         <?php endif; ?>
                         <span style="display:block;font-size:10.5px;color:#6f6f6f;" title="<?= h($prop['fee_note'] ?? 'Includes payment processing fee') ?>"><?= h($prop['fee_note'] ?? 'Incl. payment processing fee') ?></span>
                     </span>
                 <?php endif; ?>
             </div>
 
-            <!-- Row 2: Rating "4.x ★ (66) · 3-star hotel" — screenshot style -->
+            <!-- Location + Rating "4.2 ★ Excellent (66)" + description fallback -->
+            <?php if ($locText !== ''): ?>
+                <div class="gh-card-loc"><i class="fa-solid fa-location-dot" aria-hidden="true"></i><span><?= h($locText) ?></span></div>
+            <?php endif; ?>
             <?php if ($ratingFmt !== null || $starLabel !== ''): ?>
                 <div class="gh-rating-inline">
                     <?php if ($ratingFmt !== null): ?>
                         <span class="gh-rating-num"><?= h($ratingFmt) ?></span>
                         <span class="gh-rating-star">★</span>
+                        <?php if ($ratingWord !== ''): ?><span class="gh-rating-word"><?= h($ratingWord) ?></span><?php endif; ?>
                         <?php if ($reviewsCount > 0): ?>
                             <span class="gh-rating-count">(<?= number_format($reviewsCount) ?>)</span>
                         <?php else: ?>
-                            <span class="gh-rating-count" style="background:#e6f4ea;color:#137333;border-radius:8px;padding:0 6px;font-size:11px;font-weight:600;">New</span>
+                            <span class="gh-rating-new">New</span>
                         <?php endif; ?>
                         <?php if ($starLabel !== ''): ?><span style="color:#5f6368; margin:0 4px;">·</span><span style="color:#5f6368; font-size:12.5px;"><?= h($starLabel) ?></span><?php endif; ?>
                     <?php elseif ($starLabel !== ''): ?>
                         <span style="color:#5f6368; font-size:12.5px;"><?= h($starLabel) ?></span>
                     <?php endif; ?>
                 </div>
+            <?php else: ?>
+                <div class="gh-rating-inline"><span class="gh-rating-new">New property</span></div>
+            <?php endif; ?>
+            <?php if (empty($amenities) && $descSnippet !== ''): ?>
+                <div class="gh-card-desc"><?= h($descSnippet) ?></div>
             <?php endif; ?>
 
             <!-- Amenity 3-column grid -->
@@ -311,16 +319,15 @@ if (!function_exists('ghPropImages')) {
             <div class="gh-card-viewmap">
                 <?php if ($priceLabel !== ''): ?>
                 <div style="display:flex;flex-direction:column;line-height:1.2;min-width:0;">
-                    <span class="gh-hotel-price" style="display:inline-block !important;font-size:15px;font-weight:700;color:#202124;" data-nightly="<?= h($priceLabel) ?>" data-total="<?= h($totalLabel) ?>" data-nights="<?= (int)$nightsForPrice ?>"><?= h($priceLabel) ?><span class="gh-price-night" style="font-size:11px;font-weight:400;color:#5f6368;">/night</span></span>
+                    <span class="gh-hotel-price" style="display:inline-block !important;font-size:15px;font-weight:700;color:#202124;" data-tzs="<?= $price ?>"><?= h($priceLabel) ?><span class="gh-price-night" style="font-size:11px;font-weight:400;color:#5f6368;">/night</span></span>
                 </div>
                 <?php endif; ?>
                 <a href="<?= $detailUrl ?>" class="<?= !$hasPrice ? 'gh-btn-details' : 'gh-btn-prices' ?>" onclick="event.stopPropagation()" style="<?= $priceLabel!=='' ? 'flex:0 0 auto;' : 'flex:1;justify-content:center;' ?>min-height:44px;font-size:14px;font-weight:600;touch-action:manipulation;">
                     <?= !$hasPrice ? 'View details' : 'View prices' ?>
                 </a>
-                <button type="button" class="gh-viewmap-bm" onclick="event.stopPropagation();ghBookmark(<?= $propId ?>,this)" aria-label="Save" style="width:44px;height:44px;border:1px solid #dadce0;border-radius:50%;background:#fff;touch-action:manipulation;"><i class="fa-regular fa-bookmark"></i></button>
             </div>
         </div>
-    </div>
+    </article>
     <?php endforeach; ?>
 <?php else: ?>
     <?php

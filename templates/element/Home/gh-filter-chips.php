@@ -82,17 +82,13 @@ $toggleAmen = function(string $key) use ($buildUrl, $amenList): string {
 /* Rating dots etc */
 .fns-chip-rating .star{color:#F59E0B;font-size:12px;}
 .fns-chip-rating.active .star{color:#fff;}
-/* Mobile handle */
-.fns-chips-handle{display:none;}
 @media(max-width:991px){
   /* Single sticky bar on mobile: sits BELOW search bar (header 64px + search bar ~52px = 116px) */
   .fns-chips-wrap{top:116px;padding:0 16px 0;background:#fff;}
   .fns-chips-wrap .container-fluid{padding-left:0 !important;padding-right:0 !important;}
   .fns-chip{padding:10px 14px;font-size:13.5px;min-height:44px;height:44px;gap:8px;scroll-snap-align:start;}
   .fns-chip i{font-size:12px !important;}
-  .fns-chips-row{padding:10px 16px 12px 0;gap:8px;scroll-snap-type:x mandatory;scroll-padding-left:16px;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;overscroll-behavior-x:contain;}
-  .fns-chips-handle{display:flex;justify-content:center;padding:6px 0 2px;}
-  .fns-chips-handle span{width:40px;height:5px;background:#E5E7EB;border-radius:9999px;display:block;}
+  .fns-chips-row{padding:10px 16px 12px 0;gap:8px;scroll-snap-type:x proximity;scroll-padding-left:16px;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;overscroll-behavior-x:contain;}
   .fns-price-pop{position:fixed !important;left:12px !important;right:12px !important;top:auto !important;bottom:calc(12px + env(safe-area-inset-bottom)) !important;width:auto !important;max-width:none !important;border-radius:20px;max-height:82vh;max-height:82dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
   .fns-scroll-btn{display:none !important;}
   .fns-chips-outer::after{right:0 !important;}
@@ -101,15 +97,10 @@ $toggleAmen = function(string $key) use ($buildUrl, $amenList): string {
   /* Header shrinks to 58px + search bar ~52px = chips at 110px */
   .fns-chips-wrap{top:110px !important;}
 }
-/* Mobile UX: Google shows ~4 chips (All filters, Price, Offers, Guest rating).
-   Baymard: keep promoted key filters visible to save a trip to the modal.
-   Show: Hotel, Apartment, Safari Lodge, 4.0+, Free-cancel, Free Wi-Fi. Hide rest (still in All filters modal). */
+/* Mobile UX: short bar — Hotel, Apartment, Safari Lodge, 4.0+, Free-cancel,
+   Free Wi-Fi. Pool + Breakfast stay one tap away in All filters. */
 @media(max-width:767px){
-  .fns-chip[data-filter="property_type"][data-value="Resort"],
-  .fns-chip[data-filter="property_type"][data-value="Villa"]{display:none !important;}
   .fns-chip[data-filter="amenities"]:not([data-value="Wi-Fi"]){display:none !important;}
-  .fns-chip[data-filter="rating"][data-value="4.5"],
-  .fns-chip[data-filter="rating"][data-value="3.5"]{display:none !important;}
 }
 @media(max-width:380px){
   .fns-chip{padding:9px 12px;font-size:12.5px;min-height:38px;}
@@ -126,8 +117,6 @@ $toggleAmen = function(string $key) use ($buildUrl, $amenList): string {
       <label style="position:relative;display:inline-block;width:38px;height:22px;margin-left:4px;"><input type="checkbox" id="fns_track_chk" style="display:none;" onchange="fnsTrackToggle(this.checked)" role="switch" aria-checked="false" aria-label="Track prices"><span style="position:absolute;inset:0;border-radius:9999px;background:#E5E7EB;transition:.2s;display:flex;align-items:center;justify-content:flex-end;padding-right:3px;" id="fns_track_slider"><span style="width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);display:block;"></span></span></label>
       <span id="fns_track_status" style="font-size:12px;color:#6B7280;">Off</span>
     </div>
-    <div class="fns-chips-handle"><span></span></div>
-
     <div class="fns-chips-outer show-right" id="fns_chips_outer">
       <div class="fns-chips-row" id="fns_chips_row" role="toolbar" aria-label="Filters">
 
@@ -160,10 +149,10 @@ $toggleAmen = function(string $key) use ($buildUrl, $amenList): string {
           </div>
         </div>
 
-        <!-- Property Type -->
+        <!-- Property Type — popular only; full list lives in All filters -->
         <div class="fns-chip-group" role="group" aria-label="Property type" style="display:contents;">
           <?php
-          $types = ['Hotel'=>'fa-hotel','Resort'=>'fa-umbrella-beach','Apartment'=>'fa-building','Safari Lodge'=>'fa-campground','Villa'=>'fa-house-chimney'];
+          $types = ['Hotel'=>'fa-hotel','Apartment'=>'fa-building','Safari Lodge'=>'fa-campground'];
           foreach($types as $label=>$icon):
               $active = $propType === $label;
           ?>
@@ -173,15 +162,9 @@ $toggleAmen = function(string $key) use ($buildUrl, $amenList): string {
           <?php endforeach; ?>
         </div>
 
-        <!-- Guest Rating -->
-        <a href="<?= h($buildUrl(['rating'=> $ratingSel==='4.5' ? '' : '4.5'])) ?>" class="fns-chip fns-chip-rating <?= $ratingSel==='4.5'?'active':'' ?>" aria-pressed="<?= $ratingSel==='4.5'?'true':'false' ?>" data-filter="rating" data-value="4.5">
-          <span class="star">★</span> 4.5+ Exceptional
-        </a>
+        <!-- Guest Rating — one popular threshold; rest in All filters -->
         <a href="<?= h($buildUrl(['rating'=> $ratingSel==='4.0' ? '' : '4.0'])) ?>" class="fns-chip fns-chip-rating <?= $ratingSel==='4.0'?'active':'' ?>" aria-pressed="<?= $ratingSel==='4.0'?'true':'false' ?>" data-filter="rating" data-value="4.0">
           <span class="star">★</span> 4.0+ Very Good
-        </a>
-        <a href="<?= h($buildUrl(['rating'=> $ratingSel==='3.5' ? '' : '3.5'])) ?>" class="fns-chip fns-chip-rating <?= $ratingSel==='3.5'?'active':'' ?>" aria-pressed="<?= $ratingSel==='3.5'?'true':'false' ?>" data-filter="rating" data-value="3.5">
-          <span class="star">★</span> 3.5+ Good
         </a>
 
         <!-- Free Cancellation toggle chip -->
@@ -189,14 +172,13 @@ $toggleAmen = function(string $key) use ($buildUrl, $amenList): string {
           <i class="fa-solid fa-circle-check" style="font-size:12px;"></i> Free Cancellation
         </a>
 
-        <!-- Popular Amenities — only blue when user has actively clicked/filtered -->
+        <!-- Popular Amenities — only blue when user has actively clicked/filtered.
+             Rest live in All filters. -->
         <?php
         $amenChips = [
           'Wi-Fi'=>'fa-wifi',
           'Swimming pool'=>'fa-person-swimming',
-          'Air conditioning'=>'fa-snowflake',
           'Breakfast'=>'fa-mug-saucer',
-          'Airport shuttle'=>'fa-van-shuttle',
         ];
         foreach($amenChips as $amen=>$icon):
             $active = in_array($amen, $amenList, true) || in_array(strtolower($amen), array_map('strtolower',$amenList), true);
@@ -233,10 +215,11 @@ function fnsTrackCity(){
   }catch(e){ return ''; }
 }
 function fnsTrackPrice(){
+  // Alerts are priced in TZS (backend currency) — read the numeric base,
+  // never the rendered text (which follows the display currency).
   var min=0;
   document.querySelectorAll('.gh-hotel-price').forEach(function(el){
-    var t=(el.getAttribute('data-nightly')||el.textContent||'').replace(/[^0-9]/g,'');
-    var p=parseInt(t,10)||0;
+    var p=parseInt(el.getAttribute('data-tzs')||'0',10)||0;
     if(p>0 && (min===0||p<min)) min=p;
   });
   return min;

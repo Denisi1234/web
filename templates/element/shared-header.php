@@ -68,28 +68,28 @@ if (!str_starts_with($navAvatarBg, '#') && !str_starts_with($navAvatarBg, 'rgb')
                         </button>
 
                         <div class="trivago-user-dropdown" id="nav_lang_dropdown" onclick="event.stopPropagation();" style="width: 240px;">
-                            <div class="trivago-user-sec-title">Language</div>
-                            <a href="javascript:void(0);" class="trivago-user-item fw-bold text-primary" onclick="setLang('EN · $')">
-                                <i class="fa-solid fa-check trivago-user-item-icon text-primary"></i>
-                                <span>English (US)</span>
-                            </a>
-                            <a href="javascript:void(0);" class="trivago-user-item" onclick="setLang('SW · TSh')">
-                                <i class="fa-solid fa-globe trivago-user-item-icon"></i>
-                                <span>Kiswahili (TZ)</span>
-                            </a>
-
-                            <div class="trivago-user-sec-title" style="border-top: 1px solid #f1f5f9; margin-top: 6px; padding-top: 10px;">Currency</div>
-                            <a href="javascript:void(0);" class="trivago-user-item fw-bold text-primary" onclick="setLang('EN · $')">
-                                <i class="fa-solid fa-check trivago-user-item-icon text-primary"></i>
-                                <span>USD ($)</span>
-                            </a>
-                            <a href="javascript:void(0);" class="trivago-user-item" onclick="setLang('SW · TSh')">
+                            <div class="trivago-user-sec-title">Currency — display only, checkout stays in TZS</div>
+                            <a href="javascript:void(0);" class="trivago-user-item" data-fx-option="TZS" onclick="if(window.FastNetCurrency)FastNetCurrency.set('TZS')">
                                 <i class="fa-solid fa-coins trivago-user-item-icon"></i>
                                 <span>TZS (TSh)</span>
                             </a>
-                            <a href="javascript:void(0);" class="trivago-user-item" onclick="setLang('EN · €')">
+                            <a href="javascript:void(0);" class="trivago-user-item" data-fx-option="USD" onclick="if(window.FastNetCurrency)FastNetCurrency.set('USD')">
+                                <i class="fa-solid fa-coins trivago-user-item-icon"></i>
+                                <span>USD ($)</span>
+                            </a>
+                            <a href="javascript:void(0);" class="trivago-user-item" data-fx-option="EUR" onclick="if(window.FastNetCurrency)FastNetCurrency.set('EUR')">
                                 <i class="fa-solid fa-euro-sign trivago-user-item-icon"></i>
                                 <span>EUR (€)</span>
+                            </a>
+
+                            <div class="trivago-user-sec-title" style="border-top: 1px solid #f1f5f9; margin-top: 6px; padding-top: 10px;">Language</div>
+                            <a href="<?= $this->Url->build('/language-and-currency'); ?>" class="trivago-user-item fw-bold text-primary">
+                                <i class="fa-solid fa-check trivago-user-item-icon text-primary"></i>
+                                <span>English</span>
+                            </a>
+                            <a href="<?= $this->Url->build('/language-and-currency'); ?>" class="trivago-user-item">
+                                <i class="fa-solid fa-globe trivago-user-item-icon"></i>
+                                <span>More languages…</span>
                             </a>
                         </div>
                     </div>
@@ -186,24 +186,28 @@ if (!str_starts_with($navAvatarBg, '#') && !str_starts_with($navAvatarBg, 'rgb')
                         </button>
 
                         <div class="trivago-user-dropdown" id="nav_logged_out_lang_dropdown" onclick="event.stopPropagation();" style="width: 240px;">
-                            <div class="trivago-user-sec-title">Language</div>
-                            <a href="javascript:void(0);" class="trivago-user-item fw-bold text-primary" onclick="setLang('EN · $')">
-                                <i class="fa-solid fa-check trivago-user-item-icon text-primary"></i>
-                                <span>English (US)</span>
-                            </a>
-                            <a href="javascript:void(0);" class="trivago-user-item" onclick="setLang('SW · TSh')">
-                                <i class="fa-solid fa-globe trivago-user-item-icon"></i>
-                                <span>Kiswahili (TZ)</span>
-                            </a>
-
-                            <div class="trivago-user-sec-title" style="border-top: 1px solid #f1f5f9; margin-top: 6px; padding-top: 10px;">Currency</div>
-                            <a href="javascript:void(0);" class="trivago-user-item fw-bold text-primary" onclick="setLang('EN · $')">
-                                <i class="fa-solid fa-check trivago-user-item-icon text-primary"></i>
-                                <span>USD ($)</span>
-                            </a>
-                            <a href="javascript:void(0);" class="trivago-user-item" onclick="setLang('SW · TSh')">
+                            <div class="trivago-user-sec-title">Currency — display only, checkout stays in TZS</div>
+                            <a href="javascript:void(0);" class="trivago-user-item" data-fx-option="TZS" onclick="if(window.FastNetCurrency)FastNetCurrency.set('TZS')">
                                 <i class="fa-solid fa-coins trivago-user-item-icon"></i>
                                 <span>TZS (TSh)</span>
+                            </a>
+                            <a href="javascript:void(0);" class="trivago-user-item" data-fx-option="USD" onclick="if(window.FastNetCurrency)FastNetCurrency.set('USD')">
+                                <i class="fa-solid fa-coins trivago-user-item-icon"></i>
+                                <span>USD ($)</span>
+                            </a>
+                            <a href="javascript:void(0);" class="trivago-user-item" data-fx-option="EUR" onclick="if(window.FastNetCurrency)FastNetCurrency.set('EUR')">
+                                <i class="fa-solid fa-euro-sign trivago-user-item-icon"></i>
+                                <span>EUR (€)</span>
+                            </a>
+
+                            <div class="trivago-user-sec-title" style="border-top: 1px solid #f1f5f9; margin-top: 6px; padding-top: 10px;">Language</div>
+                            <a href="<?= $this->Url->build('/language-and-currency'); ?>" class="trivago-user-item fw-bold text-primary">
+                                <i class="fa-solid fa-check trivago-user-item-icon text-primary"></i>
+                                <span>English</span>
+                            </a>
+                            <a href="<?= $this->Url->build('/language-and-currency'); ?>" class="trivago-user-item">
+                                <i class="fa-solid fa-globe trivago-user-item-icon"></i>
+                                <span>More languages…</span>
                             </a>
                         </div>
                     </div>

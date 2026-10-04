@@ -337,38 +337,31 @@ img{max-width:100%;height:auto}
 </style>
 <?= $this->element('navbar') ?>
 
-<!-- Detail loading feedback: spinner from tap until content settles -->
+<!-- Detail loading feedback: thin top bar only (floating pill removed) -->
 <?= $this->element('Home/home-loader') ?>
 <script>
 (function () {
-  // The progress bar delegates to FastnetLoading. This page previously kept its
-  // own #home-top-loader-bar with hardcoded 65% / 150ms / 300ms timings, so
-  // the same journey showed different loading behaviour on the listing and
-  // detail pages. The mobile pill stays local — it is a separate surface.
-  function pill(on, text) {
-    var p = document.getElementById('home-mobile-loader-pill');
-    if (p) {
-      p.classList.toggle('pill-hidden', !on);
-      if (on && text) { var t = p.querySelector('.mobile-loader-text'); if (t) t.textContent = text; }
-    }
+  // Single-source: FastnetLoading.bar. The floating capsule pill was removed.
+  function load(on) {
+    if (!window.FastnetLoading || !FastnetLoading.bar) return;
     if (on) FastnetLoading.bar.start();
     else FastnetLoading.bar.done();
   }
-  pill(true, 'Loading stay details…');
-  function done() { pill(false); }
+  load(true);
+  function done() { load(false); }
   window.addEventListener('load', function () { setTimeout(done, 350); });
   setTimeout(done, 5000);
   window.addEventListener('pageshow', done);
-  // room card Reserve → booking flow: spinner while the system loads.
+  // room card Reserve → booking flow: bar while the system loads.
   // hold navigation briefly so it paints before unload.
   document.addEventListener('click', function (e) {
     if (e.defaultPrevented || (e.button !== undefined && e.button !== 0) || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     var a = e.target.closest ? e.target.closest('a[href*="/booking-page"]') : null;
     if (!a || (a.target && a.target !== '_self')) return;
     e.preventDefault();
-    pill(true, 'Loading booking…');
+    load(true);
     var href = a.href;
-    // Wait one painted frame so the loader is visible before unload. This was
+    // Wait one painted frame so the bar is visible before unload. This was
     // a flat 140ms hold on every booking click; a double rAF is ~16ms.
     requestAnimationFrame(function () {
       requestAnimationFrame(function () { window.location.href = href; });

@@ -343,77 +343,8 @@
     }
 }
 
-/* ── Trivago Shimmer / Skeleton Loading State ── */
-@keyframes trivagoShimmerWave {
-    0% { background-position: -500px 0; }
-    100% { background-position: 500px 0; }
-}
-
-.trivago-shimmer-card {
-    border-color: #f1f5f9 !important;
-    pointer-events: none;
-    user-select: none;
-}
-
-.trivago-shimmer-box,
-.trivago-shimmer-media,
-.trivago-shimmer-line,
-.trivago-shimmer-pill,
-.trivago-shimmer-btn {
-    background: #f1f5f9;
-    background-image: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 40%, #f1f5f9 80%);
-    background-size: 1000px 100%;
-    animation: trivagoShimmerWave 1.4s ease-in-out infinite;
-}
-
-.trivago-shimmer-media {
-    width: 100%;
-    height: 100%;
-    min-height: 200px;
-}
-
-.trivago-shimmer-line {
-    height: 14px;
-    border-radius: 4px;
-    margin-bottom: 8px;
-}
-
-.trivago-shimmer-line.title {
-    height: 20px;
-    width: 75%;
-    border-radius: 6px;
-}
-
-.trivago-shimmer-line.score {
-    height: 16px;
-    width: 45%;
-    border-radius: 4px;
-}
-
-.trivago-shimmer-line.location {
-    height: 13px;
-    width: 55%;
-    border-radius: 4px;
-}
-
-.trivago-shimmer-line.price {
-    height: 28px;
-    width: 60%;
-    border-radius: 6px;
-}
-
-.trivago-shimmer-pill {
-    height: 22px;
-    width: 70px;
-    border-radius: 9999px;
-}
-
-.trivago-shimmer-btn {
-    height: 36px;
-    width: 100%;
-    border-radius: 6px;
-    margin-top: 10px;
-}
+/* Trivago shimmer removed: dead on home (cards use .gh-shimmer via
+   FastnetLoading.skeleton). Canonical sweep lives in loading.css. */
 .hotel-list-image-empty {
     align-items: center;
     background: #f8fafc;
@@ -467,7 +398,7 @@
 .gh-badge-photo{position:absolute;top:8px;left:8px;z-index:4;box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .gh-price-great{color:#137333 !important}
 .gh-price-sub{font-size:11px;color:#5f6368;font-weight:400;font-family:Roboto,sans-serif;line-height:1}
-.gh-shimmer{background:#fff;border:1px solid #e8eaed;border-radius:14px;margin-bottom:16px;display:flex;overflow:hidden;box-shadow:0 2px 8px rgba(60,64,67,.12),0 8px 24px rgba(60,64,67,.10)}
+.gh-shimmer{background:#fff;border:1px solid #e8eaed;border-radius:8px;margin-bottom:16px;display:flex;overflow:hidden;box-shadow:none}
 /* Skeleton blocks delegate to the canonical sweep in loading.css. This used
    to declare a second, byte-identical @keyframes ghShim — and its
    background-position sweep jumped visibly at the loop point because the
@@ -476,28 +407,18 @@
 .gh-hotel-price{font-size:18px;font-weight:700;color:#202124}
 @media(max-width:991px){.gh-hotel-price{font-size:16px}}
 .gh-card-media-row{display:contents}
-.gh-card-map-mobile{display:none}
 .gh-card-viewmap{display:none}
 @media(max-width:767px){
   .gh-card{flex-direction:column;border-radius:12px}
-  .gh-card-media-row{display:flex !important;height:168px;overflow:hidden;width:100%}
-  .gh-card-photo{flex:1 1 58%;min-height:0;height:168px;border-right:none;border-bottom:none;aspect-ratio:auto}
-  .gh-card-map-mobile{display:block;flex:0 0 42%;position:relative;background:#e8ecef;overflow:hidden;border-left:1px solid #f1f3f4}
-  .gh-card-map-mobile img{width:100%;height:100%;object-fit:cover}
-  .gh-card-map-price{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:#1a73e8;color:#fff;font-size:13px;font-weight:700;padding:6px 12px;border-radius:8px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.25);font-family:'Google Sans',Roboto,sans-serif}
+  .gh-card-media-row{display:block !important;width:100%}
+  .gh-card-photo{width:100%;min-height:0;height:168px;border-right:none;border-bottom:1px solid #f1f3f4}
   .gh-card-body{padding:10px 12px 0}
-  .gh-card.gh-no-map .gh-card-photo{flex:1 1 100%}
   .gh-name-price-row{margin-bottom:2px}
   .gh-hotel-price{display:none}
   .gh-hotel-name{font-size:15px;font-weight:500;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .gh-amenity-grid{display:none}
   .gh-card-bottom{display:none}
   .gh-card-viewmap{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #e8eaed;margin-top:10px;padding:10px 0 8px}
-  .gh-card-viewmap-price{font-size:15px;font-weight:700;color:#202124;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Google Sans',Roboto,sans-serif}
-  .gh-card-viewmap-price .gh-price-night{font-size:11px;font-weight:400;color:#5f6368;margin-left:3px}
-  .gh-viewmap-btn{display:inline-flex;align-items:center;gap:8px;color:#1a73e8;font-size:13.5px;font-weight:500;text-decoration:none;font-family:'Google Sans',Roboto,sans-serif}
-  .gh-viewmap-divider{width:1px;height:18px;background:#e8eaed}
-  .gh-viewmap-bm{color:#5f6368;font-size:16px;background:none;border:none}
 }
 @media(max-width:360px){.gh-hotel-name{font-size:15px}}
 .gh-empty{ background:#fff; border:1px solid #e8eaed; border-radius:16px; padding:32px 24px; text-align:center; box-shadow:0 2px 8px rgba(60,64,67,.08)}

@@ -18,100 +18,50 @@ $this->assign('description', $seoDesc);
 // preload first hotel image (LCP)
 $firstImg = $properties[0]['image_url'] ?? ($properties[0]['primary_image_url'] ?? '');
 if ($firstImg) $this->Html->meta(['rel'=>'preload','as'=>'image','href'=>$firstImg,'fetchpriority'=>'high'], null, ['block'=>true]);
-// canonical self for this filtered view — also emitted in layout, but set here for social share
-$seoCanon = 'https://www.fastnetstays.com/' . ($seoCity !== '' ? '?city=' . rawurlencode($seoCity) : '');
+// canonical is emitted once in layout/default.php (city-only); no second copy here.
 ?>
 <?= $this->Html->css('/assets/css/google-travel-layout.css?v=' . filemtime(WWW_ROOT . 'assets/css/google-travel-layout.css')) ?>
 <?= $this->Html->css('/assets/css/google-travel-cards.css?v=' . filemtime(WWW_ROOT . 'assets/css/google-travel-cards.css')) ?>
 <?= $this->Html->css('/assets/css/hotel-card.css?v=' . filemtime(WWW_ROOT . 'assets/css/hotel-card.css')) ?>
-<?= $this->Html->css('/assets/css/search-spacing.css?v=' . filemtime(WWW_ROOT . 'assets/css/search-spacing.css')) ?>
 <?= $this->Html->css('/assets/css/google-travel-home.css?v=' . filemtime(WWW_ROOT . 'assets/css/google-travel-home.css')) ?>
 <?php
-// Hotel ItemList JSON-LD for SEO (production)
+// Hotel ItemList JSON-LD for SEO (production). Nulls omitted: emitting
+// "aggregateRating": null or "image": "" fails schema validation.
+$hotelListSlice = array_slice($properties ?? [], 0, 10);
 $hotelListLd = [
   '@context'=>'https://schema.org',
   '@type'=>'ItemList',
   'name'=>'Hotels in ' . ($queryParams['city'] ?? $queryParams['destination'] ?? 'Tanzania'),
-  'numberOfItems'=> count($properties ?? []),
+  'numberOfItems'=> count($hotelListSlice),
   'itemListElement'=> array_values(array_map(function($p,$i){
-    return [
-      '@type'=>'ListItem',
-      'position'=>$i+1,
-      'item'=>[
-        '@type'=>'Hotel',
-        'name'=> $p['name'] ?? 'Hotel',
-        'image'=> $p['image_url'] ?? '',
-        'address'=> ['@type'=>'PostalAddress','addressLocality'=> $p['city'] ?? 'Tanzania','addressCountry'=>'TZ'],
-        'aggregateRating'=> isset($p['rating']) ? ['@type'=>'AggregateRating','ratingValue'=> (float)$p['rating'],'reviewCount'=> (int)($p['review_count'] ?? 0)] : null,
-      ]
+    $hotel = [
+      '@type'=>'Hotel',
+      'name'=> $p['name'] ?? 'Hotel',
+      'address'=> ['@type'=>'PostalAddress','addressLocality'=> $p['city'] ?? 'Tanzania','addressCountry'=>'TZ'],
     ];
-  }, array_slice($properties ?? [],0,10), array_keys(array_slice($properties ?? [],0,10))))
+    $img = trim((string)($p['image_url'] ?? ($p['primary_image_url'] ?? '')));
+    if ($img !== '') $hotel['image'] = $img;
+    $rating = isset($p['rating']) ? (float)$p['rating'] : 0.0;
+    $rc = (int)($p['review_count'] ?? ($p['reviews_count'] ?? 0));
+    if ($rating > 0 && $rc > 0) $hotel['aggregateRating'] = ['@type'=>'AggregateRating','ratingValue'=>$rating,'reviewCount'=>$rc];
+    return ['@type'=>'ListItem','position'=>$i+1,'item'=>$hotel];
+  }, $hotelListSlice, array_keys($hotelListSlice)))
 ];
-echo $this->Html->scriptBlock(json_encode($hotelListLd, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE), ['block'=>true]);
-$this->Html->meta(['name'=>'format-detection','content'=>'telephone=no'], null, ['block'=>true]);
+// Inline with explicit type: scriptBlock defaults to text/javascript, which
+// makes browsers EXECUTE the payload (SyntaxError) and crawlers miss it.
+$hotelListJson = json_encode($hotelListLd, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP);
+echo '<script type="application/ld+json">' . $hotelListJson . '</script>';
 ?>
 
 <!-- ── Retained Header (do not modify) ── -->
 <?= $this->element('navbar') ?>
 
-<?php
-// ── Mobile tabs — real working (Apartment / Home / Hotels / Lodge) ──
-$tabCity = trim((string)($queryParams['city'] ?? $destination ?? ''));
-$tabProp = trim((string)($queryParams['property_type'] ?? ''));
-$isApartment = $tabProp === 'Apartment';
-$isLodge = $tabProp === 'Safari Lodge';
-$isHome = !$isApartment && !$isLodge;
-$isHotels = !$isApartment && !$isLodge;
-$buildTabUrl = function(array $overrides) use ($tabCity): string {
-    $p = [];
-    if ($tabCity !== '') $p['city'] = $tabCity;
-    foreach ($overrides as $k=>$v) {
-        if ($v === '' || $v === null) unset($p[$k]); else $p[$k] = $v;
-    }
-    return $p ? '/?' . http_build_query($p) : '/';
-};
-// Apartment (was Explore), Home same as Hotels (no filter), Lodge (was Vacation)
-$apartmentUrl = $buildTabUrl(['property_type'=>'Apartment']);
-$homeUrl = $buildTabUrl(['property_type'=>'']);
-$hotelsUrl = $buildTabUrl(['property_type'=>'']);
-$lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
-?>
-<!-- Mobile stack: header → breadcrumb (Home > Dar es Salaam Hotels) → tabs. Single wrapper guarantees visual order. -->
-<div id="gh_mobile_stack">
-  <div class="gh-m-tabs gh-m-tabs-in-stack" role="tablist" aria-label="Travel types">
-    <a href="<?= h($apartmentUrl) ?>" role="tab" class="<?= $isApartment ? 'active' : '' ?>" <?= $isApartment ? 'aria-selected="true"' : '' ?>>Apartment</a>
-    <a href="<?= h($homeUrl) ?>" role="tab" class="<?= $isHome ? 'active' : '' ?>" <?= $isHome ? 'aria-selected="true"' : '' ?>>Home</a>
-    <a href="<?= h($hotelsUrl) ?>" role="tab" class="<?= $isHotels ? 'active' : '' ?>" <?= $isHotels ? 'aria-selected="true"' : '' ?>>Hotels</a>
-    <a href="<?= h($lodgeUrl) ?>" role="tab" class="<?= $isLodge ? 'active' : '' ?>" <?= $isLodge ? 'aria-selected="true"' : '' ?>>Lodge</a>
-  </div>
-</div>
 <style>
-#gh_mobile_stack{display:none}
-#gh_mobile_breadcrumb{background:var(--cds-gray-10);border-bottom:1px solid #e8eaed;padding:8px 16px 6px;padding-left:calc(16px + env(safe-area-inset-left,0px));font-size:11px;line-height:1.2}
-#gh_mobile_breadcrumb .breadcrumb{background:transparent;font-size:11px;line-height:1;padding:0;--bs-breadcrumb-divider:'›';margin:0;flex-wrap:nowrap;white-space:nowrap;overflow:hidden}
-#gh_mobile_breadcrumb .breadcrumb-item a{color:#5f6368;text-decoration:none}
-#gh_mobile_breadcrumb .breadcrumb-item.active{color:#5f6368;overflow:hidden;text-overflow:ellipsis}
-@media(max-width:991px){
-  /* Single static stack: header → breadcrumb → tabs scroll away together; only filter chips stay sticky */
-  /* No top margin here: body{padding-top} already clears the fixed header (double offset = dead gap) */
-  #gh_mobile_stack{display:block !important;position:static !important;top:auto !important;margin-top:0 !important;z-index:auto !important}
-  #gh_mobile_stack #gh_mobile_breadcrumb{display:block !important;position:static !important;top:auto !important;z-index:auto !important}
-  #gh_mobile_stack .gh-m-tabs{display:flex !important;position:static !important;top:auto !important;z-index:auto !important}
-  #gh_desktop_breadcrumb{display:none !important}
-  /* Legacy theme (style.css) puts 80px padding on every <section> — reset for the split layout */
-  .gh-split-container section.gh-left-fixed{padding-top:0 !important;padding-bottom:0 !important}
-  .gh-split-container section.gh-left-scroll{padding-top:0 !important}
-}
-@media(min-width:992px){
-  #gh_mobile_stack{display:none !important}
-  /* Desktop: same legacy-theme reset as mobile — prevents style.css 80px section gap leaking into split layout */
-  .gh-split-container section.gh-left-fixed{padding-top:0 !important;padding-bottom:0 !important}
-  .gh-split-container section.gh-left-scroll{padding-top:0 !important}
-}
+/* Legacy theme (style.css) puts 80px padding on every <section> — reset for the split layout */
+.gh-split-container section.gh-left-fixed{padding-top:0 !important;padding-bottom:0 !important}
+.gh-split-container section.gh-left-scroll{padding-top:0 !important}
 </style>
-<!-- ── Split styles moved to google-travel-home.css ── -->
-<!-- Breadcrumb (ultra-compact) desktop only — mobile uses #gh_mobile_breadcrumb AFTER header, BEFORE tabs -->
-<!-- ── Split Screen: HALF — LEFT (search+chips+list scroll) + RIGHT (map full-height from header) ── -->
+<!-- ── Split view: LEFT search+chips+list · RIGHT map ── -->
 <main id="main-content" class="gh-split-container" style="background:var(--cds-gray-10); min-height:85vh; margin-top:0;" role="main" aria-label="Hotel search results">
     <!-- 4px gutters — close to zero as requested -->
     <div class="container-fluid px-0" style="max-width:100%; margin:0 auto; height:100%; padding-top:0; padding-left:4px !important; padding-right:4px !important;">
@@ -127,6 +77,7 @@ $lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
                 </section>
                 <!-- Removed Bootstrap pt-1 pb-0 pe-1: gh-left-scroll CSS fully manages its own padding -->
                 <section class="gh-left-scroll" aria-label="Stays list" aria-live="polite" aria-busy="false" id="gh_results_section">
+                    <h1 class="sr-only">Hotels in <?= h($seoCity !== '' ? $seoCity : 'Tanzania') ?> — book direct on FastNet Stays</h1>
 
                     <!-- Search warnings / notices (hardened) — auto-dismiss to avoid blocking results -->
                     <?php if (!empty($searchErrors)): ?>
@@ -145,10 +96,8 @@ $lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
                         <script>try{setTimeout(function(){var el=document.getElementById('fns_search_alert'); if(el) el.style.display='none';}, 6000);}catch(e){}</script>
                     <?php endif; ?>
 
-                    <!-- Results count header: "near Mikocheni, Dar es Salaam · 118 results" + info icon — EXACT screenshot -->
                     <?= $this->element('Home/gh-results-header') ?>
 
-                    <!-- Google Hotels Cards Grid — EXACT: photo left + dots + bookmark, name+price, rating ★, amenity 3-col, View prices (blue) / View details (outline) -->
                     <div id="gh_cards_live" aria-live="polite">
                     <?= $this->element('Home/gh-hotel-cards') ?>
                     </div>
@@ -207,35 +156,29 @@ $lodgeUrl = $buildTabUrl(['property_type'=>'Safari Lodge']);
 <!-- Filters Modal -->
 <?= $this->element('Home/gh-filters-modal') ?>
 
-<!-- Mobile loading indicator (bar + pill) + controller -->
+<!-- Loading: single-source top bar + skeletons (floating pill removed) -->
 <?= $this->element('Home/home-loader') ?>
 <?= $this->Html->script('/assets/js/home-carousel.js?v=' . filemtime(WWW_ROOT . 'assets/js/home-carousel.js'), ['defer' => true]) ?>
 <script>
-/* State-aware mobile loader: destination in the pill, hide on settle */
+/* Thin top bar only: start on search submit, stop when results settle.
+   Detail navigation uses native paint (double rAF) so the bar shows before unload. */
 (function () {
-  function dest() {
-    var d = document.getElementById('gh_dest');
-    var m = document.getElementById('fns_m_input');
-    return ((m && m.value) || (d && d.value) || 'Tanzania').trim() || 'Tanzania';
-  }
-  function show() { if (typeof window.showHomeLoader === 'function') window.showHomeLoader('Searching ' + dest() + '…'); }
+  function show() { if (typeof window.showHomeLoader === 'function') window.showHomeLoader(); }
   function hide() { if (typeof window.hideHomeLoader === 'function') window.hideHomeLoader(); }
   var f = document.getElementById('gh_search_form');
   if (f) f.addEventListener('submit', show);
-  // every detail entry (card, View prices/details, Show details, name) → spinner while system loads.
-  // anchors: paint one frame so the loader shows before unload (was a flat 140ms hold).
   document.addEventListener('click', function (e) {
     if (e.defaultPrevented || (e.button !== undefined && e.button !== 0) || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     var a = e.target.closest ? e.target.closest('a[href*="/hotel-detail/"]') : null;
     if (!a) {
       var card = e.target.closest ? e.target.closest('.gh-card[data-property-id]') : null;
-      if (card && typeof window.showHomeLoader === 'function') window.showHomeLoader('Loading stay details…');
+      if (card && typeof window.showHomeLoader === 'function') window.showHomeLoader();
       return;
     }
     if (a.target && a.target !== '_self') return;
     if (typeof window.showHomeLoader === 'function') {
       e.preventDefault();
-      window.showHomeLoader('Loading stay details…');
+      window.showHomeLoader();
       var href = a.href;
       requestAnimationFrame(function () {
         requestAnimationFrame(function () { window.location.href = href; });
@@ -291,7 +234,8 @@ foreach ($properties as $p) {
         'id'    => (int)($p['id'] ?? 0),
         'lat'   => $lat,
         'lng'   => $lng,
-        'label' => 'TSH ' . number_format($price),
+        'price' => $price, // numeric nightly TZS base — map labels render from this (view + currency aware)
+        'label' => 'TSh ' . number_format($price),
         'title' => $p['name'] ?? '',
     ];
 }
@@ -374,11 +318,6 @@ echo json_encode($markers, JSON_UNESCAPED_UNICODE);
         startMap();
     });
     document.addEventListener('DOMContentLoaded', function () {
-        // perf: web-vitals beacon (production) + CLS guard
-        try{
-          const po=new PerformanceObserver((l)=>{ l.getEntries().forEach(e=>{ if(e.entryType==='largest-contentful-paint') console.debug('LCP',e.startTime); }); });
-          po.observe({type:'largest-contentful-paint', buffered:true});
-        }catch(e){}
         // aria-busy toggle on hydrate — also sync real Mapbox token from JSON hydration payload
         const sec=document.getElementById('gh_results_section');
         if(sec && window.FastNetState){
@@ -400,8 +339,6 @@ echo json_encode($markers, JSON_UNESCAPED_UNICODE);
               sec.setAttribute('aria-busy','false');
               return r;
           };
-          // wrap FastNetState setState hydrate already handles markers — also keep token fresh
-          const origFetchUrl = window.FastNetState.hydrate;
         }
         // If token already injected server-side, start immediately; otherwise wait for backend fetch (layout) or 800ms
         if(window.MAPBOX_TOKEN) setTimeout(startMap, 150);

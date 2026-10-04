@@ -31,12 +31,12 @@ $isCompact = !empty($compact) && $compact === true;
                         <p class="footer-tagline <?= $isDark ? 'text-light-50' : 'text-muted' ?>">Book hotel rooms and fast stays instantly across Tanzania with fastnetstays.com.</p>
                         <div class="foot-socials">
                             <ul>
-                                <li><a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a></li>
-                                <li><a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a></li>
-                                <li><a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a></li>
-                                <li><a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="X"><i class="fa-brands fa-x-twitter"></i></a></li>
+                                <li><a href="mailto:support@fastnetstays.com" aria-label="Email support"><i class="fa-regular fa-envelope"></i></a></li>
+                                <li><a href="<?= $this->Url->build('/help-center'); ?>" aria-label="Help center"><i class="fa-regular fa-circle-question"></i></a></li>
+                                <li><a href="<?= $this->Url->build('/language-and-currency'); ?>" aria-label="Language and currency"><i class="fa-solid fa-globe"></i></a></li>
                             </ul>
                         </div>
+
                     </div>
                 </div>
                 <!-- Column 2 Product ~18% -->
@@ -45,8 +45,9 @@ $isCompact = !empty($compact) && $compact === true;
                         <h4 class="widget-title">Product</h4>
                         <ul class="footer-menu">
                             <li><a href="<?= $this->Url->build('/about-us'); ?>">How FastNetStays Works</a></li>
-                            <li><a href="<?= $this->Url->build('/'); ?>">Browse Stays</a></li>
-                            <li><a href="<?= $this->Url->build('/destination-01'); ?>">Destinations</a></li>
+                            <li><a href="<?= $this->Url->build('/?city=' . rawurlencode('Zanzibar')); ?>">Zanzibar Hotels</a></li>
+                            <li><a href="<?= $this->Url->build('/?city=' . rawurlencode('Dar es Salaam')); ?>">Dar es Salaam Hotels</a></li>
+                            <li><a href="<?= $this->Url->build('/?city=' . rawurlencode('Arusha')); ?>">Arusha Hotels</a></li>
                             <li><a href="<?= $this->Url->build('/privacy-policy'); ?>">Privacy Policy</a></li>
                             <li><a href="<?= $this->Url->build('/terms-of-service'); ?>">Terms of Use</a></li>
                         </ul>
@@ -81,8 +82,9 @@ $isCompact = !empty($compact) && $compact === true;
     </div>
     <div class="footer-bottom">
         <div class="container">
-            <div class="footer-bottom-inner" style="justify-content:flex-start;">
+            <div class="footer-bottom-inner" style="justify-content:space-between;">
                 <p>© <?= date('Y') ?> fastnetstays.com. All rights reserved.</p>
+                <p><a href="<?= $this->Url->build('/language-and-currency'); ?>" aria-label="Language and currency settings"><i class="fa-solid fa-globe" style="margin-right:6px;"></i><span data-fx-footer-label>English · TZS</span></a></p>
             </div>
         </div>
     </div>

@@ -385,7 +385,12 @@
 
         if (href.startsWith('/') || href.startsWith(window.location.origin)) {
             FastnetLoader.bar.start();
-            navSchedule();
+            // Stay-detail / booking journeys use the thin top bar + skeletons
+            // only — the centered nav pill is suppressed there (it stacked
+            // with page-level loaders and felt cheap on mobile taps).
+            if (href.indexOf('/hotel-detail/') === -1 && href.indexOf('/booking-page') === -1) {
+                navSchedule();
+            }
         }
     });
 

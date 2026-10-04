@@ -1,0 +1,241 @@
+/* mobile-clean.css — Mobile declutter pass (phone <992px only, desktop untouched)
+ * Goal: desktop stays professional; phone drops stacked control rows + heavy
+ * per-card mini-maps so the list reads like Google Hotels / Booking.
+ * Load LAST in layout/default.php so it wins over google-travel-*.css,
+ * hotel-card.css, carbon-home.css and inline <style> blocks.
+ * Every rule is scoped to max-width:991px (or 767px) — no desktop impact.
+ */
+
+@media (max-width: 991px) {
+  /* ── 0. Kill legacy 80px section padding leaking into the split list ── */
+  .gh-split-container section,
+  .gh-split-container section.gh-left-fixed,
+  .gh-split-container section.gh-left-scroll {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+  .gh-split-container {
+    background: #f4f4f4 !important;
+    min-height: auto !important;
+    height: auto !important;
+    padding-bottom: 0 !important;
+  }
+  #gh_list_col { height: auto !important; }
+  .gh-left-scroll {
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 8px 12px 24px !important;
+    padding-left: calc(12px + env(safe-area-inset-left, 0px)) !important;
+    padding-right: calc(12px + env(safe-area-inset-right, 0px)) !important;
+    background: #f4f4f4 !important;
+  }
+
+  /* ── 1. Search chip: single compact row that scrolls away ── */
+  .fns-search-wrap {
+    position: static !important;
+    top: auto !important;
+    z-index: auto !important;
+    padding: 8px 0 !important;
+    background: #fff !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+  }
+  .fns-mobile-chip {
+    height: 48px !important;
+    min-height: 48px !important;
+    padding: 6px 8px 6px 6px !important;
+    border-radius: 8px !important;
+    gap: 8px !important;
+    box-shadow: 0 1px 2px rgba(22,22,22,.06) !important;
+  }
+  .fns-mobile-chip-icon { width: 32px !important; height: 32px !important; font-size: 13px !important; }
+  .fns-mobile-chip-text {
+    font-size: 13px !important;
+    line-height: 1.25 !important;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    white-space: nowrap !important;
+  }
+  .fns-mobile-chip-chevron { width: 28px !important; height: 28px !important; }
+
+  /* ── 3. Filter chips: THE only sticky bar, pinned under the fixed header ──
+     Reads the single header-height token (navbar.css: --fn-header-h) so the
+     bar can never drift into a dead gap again. Legacy 110/116/132px tops
+     assumed a sticky search bar; search now scrolls away. */
+  .fns-chips-wrap {
+    position: sticky !important;
+    top: var(--fn-header-h, 64px) !important;
+    z-index: 800 !important;
+    background: #fff !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    padding: 0 12px !important;
+  }
+  .fns-chips-row {
+    padding: 8px 0 !important;
+    gap: 6px !important;
+    scroll-snap-type: none !important;
+  }
+  .fns-chip {
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 6px 11px !important;
+    font-size: 12.5px !important;
+    gap: 6px !important;
+  }
+  .fns-chip i { font-size: 11px !important; }
+
+  /* Track-prices: one slim line on tablet (phones: hidden outright, see
+     phone-only block at end of file; still in All-filters + desktop). */
+  .fns-chips-wrap .cds-toggle-track {
+    padding: 6px 0 0 !important;
+    font-size: 12px !important;
+    gap: 6px !important;
+  }
+  .fns-chips-wrap .cds-toggle-track .cds-toggle-label { font-size: 12px !important; }
+  #fns_track_status { font-size: 11px !important; }
+
+  /* ── 4. Results header: single compact line, never overflows 320px ── */
+  .gh-results-count-row {
+    border-bottom: 1px solid #e0e0e0 !important;
+    padding: 8px 0 !important;
+    font-size: 13px !important;
+    flex-wrap: nowrap !important;
+  }
+  .gh-results-count-row > div:first-child { min-width: 0 !important; overflow: hidden !important; }
+  .gh-results-count-row > div:last-child { flex-shrink: 0 !important; }
+  .gh-near-part {
+    max-width: 46vw !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .gh-m-sort-btn {
+    padding: 5px 10px !important;
+    font-size: 12.5px !important;
+    border-radius: 16px !important;
+  }
+
+  /* ── 5. Cards: pro single-photo layout ──
+     Remove the per-card mini-map column (2nd image per card = heavy +
+     poor), full-width 16:10 photo, tight body, one CTA row. */
+  #gh_cards_live { padding-bottom: 4px !important; }
+  #gh-cards-container .gh-card {
+    flex-direction: column !important;
+    border-radius: 8px !important;
+    margin-bottom: 10px !important;
+    box-shadow: 0 1px 2px rgba(22,22,22,.06) !important;
+  }
+  #gh-cards-container .gh-card-photo,
+  .gh-card-photo {
+    flex: none !important;
+    width: 100% !important;
+    height: 190px !important;
+    min-height: 190px !important;
+    border-right: none !important;
+    border-bottom: 1px solid #f1f3f4 !important;
+  }
+  /* Carousel chrome removed on phones: swipe still works, prev/next arrows
+     + dots were 7 tab stops per card for zero information. */
+  .gh-card-nav { display: none !important; }
+  .gh-card-dots { display: none !important; }
+  .gh-card-bm { width: 30px !important; height: 30px !important; top: 8px !important; right: 8px !important; }
+  .gh-card-locate { display: none !important; } /* locate pin per card = clutter */
+  .gh-card-count { display: none !important; }
+  /* Decorative info glyph next to the count adds noise on narrow rows */
+  .gh-results-count-row .fa-circle-question { display: none !important; }
+
+  .gh-card-body { padding: 10px 12px 12px !important; }
+  .gh-name-price-row { margin-bottom: 2px !important; gap: 8px !important; }
+  .gh-hotel-name {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    white-space: normal !important;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .gh-rating-inline { margin-bottom: 6px !important; font-size: 12.5px !important; }
+  .gh-amenity-grid { display: none !important; } /* amenities live on detail page */
+
+  /* Single CTA row: price left, button right, bookmark compact */
+  .gh-card-bottom { display: none !important; }
+  .gh-card-viewmap {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    border-top: 1px solid #f1f3f4 !important;
+    margin-top: 8px !important;
+    padding: 10px 0 0 !important;
+  }
+  .gh-card-viewmap .gh-hotel-price { font-size: 15px !important; }
+  /* One CTA row: price left, full-width button right. The second (bottom)
+     bookmark duplicated the top-corner one, so it is removed on phones. */
+  .gh-card-viewmap .gh-btn-prices,
+  .gh-card-viewmap .gh-btn-details {
+    min-height: 38px !important;
+    height: 38px !important;
+    padding: 0 16px !important;
+    font-size: 13px !important;
+    border-radius: 4px !important;
+    flex: 1 1 auto !important;
+    justify-content: center !important;
+  }
+  /* Fee microcopy hidden on phones (kept on desktop/detail) */
+  .gh-card-body span[title] { display: none !important; }
+
+  /* Shimmer matches new single-photo cards */
+  .gh-shimmer { flex-direction: column !important; }
+  .gh-shimmer > div:first-child { flex: none !important; width: 100% !important; height: 150px !important; }
+  .gh-shimmer div[style*="grid-template-columns"] { display: none !important; }
+
+  /* Footer already hidden on mobile — also kill its wrapper spacing */
+  .gh-index-footer-wrap { display: none !important; }
+
+  /* Search alert + empty state tighter */
+  #fns_search_alert { font-size: 12.5px !important; margin-bottom: 8px !important; }
+  .gh-empty, .cds-empty { padding: 24px 16px !important; margin-top: 8px !important; }
+}
+
+/* Phones: track-prices lives in All-filters; chips stay the single sticky row */
+@media (max-width: 767px) {
+  .fns-chips-wrap .cds-toggle-track { display: none !important; }
+}
+
+/* Small phones: even tighter */
+@media (max-width: 575px) {
+  .fns-chips-wrap { padding: 0 10px !important; }
+  .gh-left-scroll {
+    padding: 8px 10px 20px !important;
+    padding-left: calc(10px + env(safe-area-inset-left, 0px)) !important;
+    padding-right: calc(10px + env(safe-area-inset-right, 0px)) !important;
+  }
+  #gh-cards-container .gh-card-photo,
+  .gh-card-photo { height: 176px !important; min-height: 176px !important; }
+  .gh-hotel-name { font-size: 14.5px !important; }
+  .fns-mobile-chip-text { font-size: 12.5px !important; }
+}
+
+/* Tiny phones: prevent header + chip overflow */
+@media (max-width: 380px) {
+  .gh-near-part { max-width: 40vw !important; }
+  .gh-results-count-row { font-size: 12.5px !important; }
+  .fns-chip { padding: 5px 9px !important; font-size: 12px !important; }
+  #gh-cards-container .gh-card-photo,
+  .gh-card-photo { height: 160px !important; min-height: 160px !important; }
+}
+
+/* ── 6. Hotel detail (same file loads there): tighten stacked gaps ── */
+@media (max-width: 768px) {
+  .agoda-breadcrumb { margin: 0 !important; padding: 0 !important; }
+  .agoda-breadcrumb .agoda-bc-inner { padding: 10px 16px !important; }
+  .agoda-gallery { margin: 12px auto !important; gap: 6px !important; }
+  .agoda-detail-grid { margin: 12px auto !important; gap: 12px !important; }
+  .agoda-tabs-wrap { margin: 0 auto !important; }
+  .agoda-card { padding: 14px !important; }
+  .agoda-rooms-header { margin: 8px 0 !important; }
+}
+
+

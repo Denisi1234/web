@@ -3,36 +3,26 @@
    Professional Google/Agoda-grade loading indicators. GPU-accelerated, zero jank.
    ========================================================================== */
 
-/* 1. Sleek Top-Bar Progress Indicator (YouTube / GitHub / Turbo style) */
+/* 1. Top progress bar — Google-clean: single solid blue, no rainbow, no
+   glow, no trailing beam. Width/opacity are driven by FastnetLoading.bar
+   (reference-counted, delayed appear, creep-to-90, watchdog). */
 #fastnet-top-progress {
     position: fixed;
     top: 0;
     left: 0;
     width: 0%;
     height: 3px;
-    background: linear-gradient(90deg, #1a73e8 0%, #34a853 50%, #4285f4 100%);
+    background: #0f62fe;
     z-index: 999999;
     pointer-events: none;
-    /* GPU-composited: only transform/opacity animated — no layout thrash */
-    will-change: transform, opacity;
+    /* GPU-composited: only width/opacity animated — no layout thrash */
+    will-change: width, opacity;
     transition: width 0.18s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease;
     opacity: 0;
     transform: translateZ(0); /* Force GPU layer */
-    box-shadow: 0 0 8px rgba(26, 115, 232, 0.55), 0 0 3px rgba(26, 115, 232, 0.35);
 }
 #fastnet-top-progress.active {
     opacity: 1;
-}
-#fastnet-top-progress::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 80px;
-    height: 100%;
-    box-shadow: 0 0 10px #1a73e8, 0 0 5px #1a73e8;
-    opacity: 0.85;
-    transform: rotate(3deg) translateY(-3px);
 }
 
 /* 2. Full-Screen App Loading Modal / Splash Overlay */
@@ -204,58 +194,15 @@
     50%       { transform: scale(1.1); opacity: 1;    }
 }
 
-/* 5. Single centered action loader — fast, compact, no scroll lock.
-   Shown only when navigation takes > 300ms so instant clicks never flash. */
+/* 5. Centered navigation card — RETIRED (Google uses bar-only).
+   The full-screen veil + centered "Loading…" pill stacked with page-level
+   skeletons and blocked pointer input, which felt cheap. Slow navigations
+   now show only the thin top bar (section 1) + inline skeletons; the page
+   stays readable and tappable. navShow()/navHide() in app-loader.js keep
+   toggling classes harmlessly; nothing in templates calls showNavLoading. */
 #fastnet-nav-loader {
-    position: fixed;
-    inset: 0;
-    z-index: 999997;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    /* Ultra-light overlay — page still readable */
-    background: rgba(255, 255, 255, 0.35);
-    pointer-events: auto;
-    font-family: 'IBM Plex Sans', 'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    /* Smooth fade in so it never "pops" */
-    animation: fastnet-navOverlayIn 0.15s ease forwards;
-}
-@keyframes fastnet-navOverlayIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-}
-#fastnet-nav-loader.visible { display: flex; }
-.fastnet-nav-card {
-    background: #fff;
-    border: 1px solid #e8eaed;
-    border-radius: 9999px;
-    padding: 11px 22px 11px 14px;
-    box-shadow: 0 8px 28px rgba(60, 64, 67, 0.18), 0 2px 8px rgba(60, 64, 67, 0.09);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    will-change: transform;
-    transform: translateY(-6px) scale(0.96) translateZ(0);
-    animation: fastnet-navCardIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-@keyframes fastnet-navCardIn {
-    to { transform: translateY(0) scale(1) translateZ(0); }
-}
-.fastnet-nav-ring {
-    width: 24px;
-    height: 24px;
-    flex: none;
-    border-radius: 50%;
-    border: 3px solid #e8eaed;
-    border-top-color: #1a73e8;
-    animation: fastnet-rotate 0.7s linear infinite;
-    will-change: transform;
-}
-.fastnet-nav-txt {
-    font-size: 13.5px;
-    font-weight: 600;
-    color: #3c4043;
-    letter-spacing: 0.01em;
+    display: none !important;
+    pointer-events: none !important;
 }
 
 /* 6. Professional Confirm Modal (replaces browser window.confirm) */

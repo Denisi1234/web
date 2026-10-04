@@ -191,12 +191,13 @@
 		}
 	});
 
-	// Date Range
+	// Date Range — guarded: flatpickr lib is not shipped on every page (home skips it)
+	if ($.fn.flatpickr) {
 	$("#basicDate").flatpickr({
 		enableTime: false,
 		dateFormat: "Y-m-d"
 	});
-	
+
 	// Date Range
 	$(".choosedate").flatpickr({
 		mode: "range",
@@ -215,8 +216,10 @@
 			}
 		]
 	});
+	}
 
-	// All Select Form Classes
+	// All Select Form Classes — guarded: select2 lib is not shipped on every page
+	if ($.fn.select2) {
 	$('.select').select2();
 
 	$('.multiple-select').select2();
@@ -228,26 +231,27 @@
 	$(".goingto").select2({
 		placeholder: "Where To"
 	});
-	
+
 	$(".ptypes").select2({
 		placeholder: "Home Types"
 	});
-	
+
 	$(".occupant").select2({
 		placeholder: "Occupant"
 	});
-	
+
 	$(".pickup").select2({
 		placeholder: "Select Pickup Location"
 	});
-	
+
 	$(".drop").select2({
 		placeholder: "Select Drop Location"
 	});
-	
+
 	$(".tour").select2({
 		placeholder: "Select Tour Types"
 	});
+	}
 
 
 	$("body").on('click', '.toggle-password', function () {

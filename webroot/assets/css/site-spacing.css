@@ -104,7 +104,7 @@ main article + article { margin-top: var(--fn-card-gap); }
     font-size: 10px;
 }
 
-/* Right: price text — solid white on blue (same as mobile .gh-card-map-price) */
+/* Right: price text — solid white on blue */
 .gh-mm-price {
     font-size: 12px;
     font-weight: 700;

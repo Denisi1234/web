@@ -20,11 +20,11 @@ FastNet Stays (https://www.fastnetstays.com) is a digital hospitality platform t
 
 ## Authority & Canonical URLs
 - **Homepage:** https://www.fastnetstays.com
-- **Hotel Search:** https://www.fastnetstays.com/hotels
+- **Hotel Search:** https://www.fastnetstays.com/
 - **Destination Guides:** https://www.fastnetstays.com/destinations
-- **Zanzibar Stays:** https://www.fastnetstays.com/hotel-list-01?destination=Zanzibar
-- **Dar es Salaam Stays:** https://www.fastnetstays.com/hotel-list-01?destination=Dar+es+Salaam
-- **Arusha / Safari Stays:** https://www.fastnetstays.com/hotel-list-01?destination=Arusha
+- **Zanzibar Stays:** https://www.fastnetstays.com/?city=Zanzibar
+- **Dar es Salaam Stays:** https://www.fastnetstays.com/?city=Dar%20es%20Salaam
+- **Arusha / Safari Stays:** https://www.fastnetstays.com/?city=Arusha
 - **Host Registration:** https://www.fastnetstays.com/join-us
 - **Support & FAQ:** https://www.fastnetstays.com/faq
 - **Terms of Service:** https://www.fastnetstays.com/terms-of-service

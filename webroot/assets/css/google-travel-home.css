@@ -110,7 +110,6 @@
 .gh-m-tabs::-webkit-scrollbar{display:none}
 .gh-m-tabs a{flex:0 0 auto;padding:12px 16px;font-size:14px;font-weight:500;color:#5f6368;text-decoration:none;border-bottom:2px solid transparent;white-space:nowrap;font-family:'Google Sans',Roboto,sans-serif}
 .gh-m-tabs a.active{color:#1a73e8;border-bottom-color:#1a73e8}
-@media(max-width:767px){.gh-m-tabs{display:flex;position:sticky;top:110px;z-index:849}}
 .gh-split-container{align-items:stretch}
 #gh_list_col{min-height:0}
 @media(min-width:992px){
@@ -119,20 +118,17 @@
   #main-wrapper{height:100vh;overflow:hidden;display:flex;flex-direction:column;padding-top:64px;box-sizing:border-box}
   .gh-split-container{flex:1;overflow:hidden;min-height:0;height:calc(100vh - 64px)}
   .gh-split-container>.container-fluid,.gh-split-container .row{flex:1;overflow:hidden;min-height:0;height:100%}
-  #gh_list_col{display:flex;flex-direction:column;overflow:hidden;height:100%;min-height:0;padding-right:4px}
-  #gh_map_col{padding-left:4px}
+  /* Deterministic 50/50: Bootstrap's wrap + gutter math wrapped the map
+     column below the list on some widths (map clipped invisible). Flex
+     halves with no wrap cannot wrap — the split holds at every width. */
+  .gh-split-container .row{flex-wrap:nowrap !important;margin-left:0 !important;margin-right:0 !important}
+  #gh_list_col{display:flex;flex-direction:column;overflow:hidden;height:100%;min-height:0;min-width:0;flex:0 0 50% !important;max-width:50% !important;padding-right:4px}
+  #gh_map_col{padding-left:4px;min-width:0;min-height:0;overflow:hidden;flex:0 0 50% !important;max-width:50% !important}
   .gh-left-fixed{flex:0 0 auto;background:#fff;z-index:5;border-right:1px solid #f1f3f4}
-  .gh-left-fixed .gh-sb-wrap,.gh-left-fixed .gh-chips-wrap{position:relative !important;top:0 !important}
-  .gh-left-fixed .gh-sb-wrap{padding:8px 12px 6px !important;border-bottom:none !important}
+  .gh-left-fixed .gh-chips-wrap{position:relative !important;top:0 !important}
   .gh-left-fixed .gh-chips-wrap{padding:6px 12px 8px !important;border-bottom:1px solid #e8eaed}
   .gh-left-fixed .fns-search-wrap{padding:10px 12px 8px !important}
   .gh-left-fixed .fns-chips-wrap{padding:6px 12px 8px !important}
-  .gh-left-fixed .gh-sb-row{gap:6px !important;height:auto !important;flex-wrap:nowrap !important}
-  .gh-left-fixed .gh-sb-loc{flex:1 1 0 !important;min-width:0 !important;padding:0 6px 0 8px !important}
-  .gh-left-fixed .gh-sb-loc-input{font-size:13px !important}
-  .gh-left-fixed .gh-sb-date{flex:0 0 auto !important;padding:0 4px !important;gap:1px !important}
-  .gh-left-fixed .gh-date-seg-label{font-size:12px !important;padding:2px 3px !important}
-  .gh-left-fixed .gh-sb-guests{flex:0 0 64px !important;padding:0 8px !important;gap:4px !important}
   .gh-left-fixed .gh-chips-row{padding:4px 0 6px !important}
   .gh-left-fixed .gh-chip{padding:5px 10px !important;font-size:12px !important;margin-right:6px !important}
   .gh-left-fixed .gh-track-row{padding:6px 0 4px !important}
@@ -149,7 +145,6 @@
 }
 /* Short laptop screens 1366x768 — reduce fixed pane overhead (~180px → ~125px) */
 @media(min-width:992px) and (max-height:800px){
-  .gh-left-fixed .gh-sb-wrap{padding:8px 12px 6px !important}
   .gh-left-fixed .fns-search-wrap{padding:8px 12px 6px !important}
   .gh-left-fixed .fns-chips-wrap{padding:6px 12px 8px !important}
   .gh-left-fixed .fns-pill{height:52px !important; min-height:52px !important}
@@ -168,16 +163,4 @@
   .gh-left-fixed .fns-pill{height:48px !important; min-height:48px !important}
   .fns-chip{height:28px !important; padding:4px 9px !important; font-size:11px !important}
 }
-/* Breadcrumb mobile — sticky below header+tabs, not clipped (excludes index stacks which manage their own order/visibility) */
-@media(max-width:991px){
-}
-/* Mobile peek drawer */
-.gh-mobile-sheet{display:none}
-@media(max-width:991px){
-  .gh-mobile-sheet{position:fixed;left:0;right:0;bottom:0;z-index:1035;background:#fff;border-radius:16px 16px 0 0;box-shadow:0 -8px 32px rgba(0,0,0,.18);max-height:85vh;display:flex;flex-direction:column;transform:translateY(110%);visibility:hidden;pointer-events:none;transition:transform .35s cubic-bezier(.32,.72,0,1),visibility .35s}
-  .gh-mobile-sheet.open{transform:translateY(0);visibility:visible;pointer-events:auto}
-  .gh-mobile-sheet.peek{transform:translateY(55%)}
-  .gh-sheet-handle{display:flex;justify-content:center;padding:10px 0 6px;cursor:grab;touch-action:none}
-  .gh-sheet-handle span{width:36px;height:4px;background:#dadce0;border-radius:2px;display:block}
-  .gh-sheet-scroll{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:0 12px calc(16px + env(safe-area-inset-bottom, 0px))}
-}
+

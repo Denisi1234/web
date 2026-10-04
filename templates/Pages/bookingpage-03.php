@@ -1,14 +1,17 @@
 <?php
 $this->assign('title', 'Payment information');
-$propTitle = $property['name'] ?? 'Divi Village Golf and Beach Resort';
-$propCity = $property['city'] ?? 'Dar es Salaam';
-$propAddress = $property['address'] ?? 'Msasani Peninsula, Dar es Salaam, Tanzania';
-$propStars = !empty($property['star_rating']) ? max(1,min(5,(int)$property['star_rating'])) : 4;
-$checkIn = $queryParams['checkIn'] ?? $queryParams['check_in'] ?? date('Y-m-d', strtotime('+7 days'));
-$checkOut = $queryParams['checkOut'] ?? $queryParams['check_out'] ?? date('Y-m-d', strtotime('+13 days'));
-$nights = max(1, (int)round((strtotime($checkOut)-strtotime($checkIn))/86400));
-if ($nights <1) $nights=6;
-$roomTitle = $room['name'] ?? 'Golf Villa One Bedroom Suite';
+// No invented fallbacks: missing backend data renders neutral labels or hides
+// the section — never a real-sounding hotel, address, or night count.
+$propTitle = trim((string)($property['name'] ?? '')) !== '' ? $property['name'] : 'Your stay';
+$propCity = $property['city'] ?? '';
+$propAddress = trim((string)($property['address'] ?? ''));
+$propStars = !empty($property['star_rating']) ? max(1,min(5,(int)$property['star_rating'])) : 0;
+$checkIn = $queryParams['checkIn'] ?? $queryParams['check_in'] ?? '';
+$checkOut = $queryParams['checkOut'] ?? $queryParams['check_out'] ?? '';
+$ciTs = strtotime((string)$checkIn); $coTs = strtotime((string)$checkOut);
+$hasDates = $ciTs && $coTs && $coTs > $ciTs;
+$nights = $hasDates ? max(1, (int)round(($coTs - $ciTs) / 86400)) : 1;
+$roomTitle = trim((string)($room['name'] ?? '')) !== '' ? $room['name'] : 'Selected room';
 $origPrice = (float)($calculation['original_price'] ?? $calculation['subtotal'] ?? 0);
 $roomPrice = (float)($calculation['subtotal'] ?? $calculation['room_price'] ?? 0);
 $taxes = (float)($calculation['taxes'] ?? 0);
@@ -272,8 +275,6 @@ $payFmt = sprintf('%02d:%02d:%02d', (int)($payRemainingSrv / 3600), (int)(($payR
           </div>
         </fieldset>
 
-        <div class="agoda-green-tip">Last step! You're almost done.</div>
-
         <!-- Local mobile money fields -->
         <div id="momoFormSection" style="padding:16px">
           <div class="cds-momo-box">
@@ -289,15 +290,18 @@ $payFmt = sprintf('%02d:%02d:%02d', (int)($payRemainingSrv / 3600), (int)(($payR
       </form>
 
       <div class="agoda-divider"></div>
-      <label class="agoda-checkbox"><input type="checkbox" checked> I agree to receive updates and promotions about FastNet Stays via various channels, including WhatsApp. Opt out anytime. Read more in the Privacy Policy.</label>
-      <div class="agoda-terms">By proceeding with this booking, I agree to FastNet Stays' <a href="/terms-of-service">Terms of Use</a> and <a href="/privacy-policy">Privacy Policy</a>.</div>
+      <div class="agoda-terms">By paying, you agree to FastNet Stays' <a href="/terms-of-service">Terms of Use</a> and <a href="/privacy-policy">Privacy Policy</a>.</div>
     </div>
 
     <div class="agoda-email-note"><i class="fa-solid fa-envelope" style="color:#5f6368"></i> We'll send confirmation of your booking to <b><?= h($guestEmail) ?></b></div>
 
+    <?php $cancelPolicy03 = trim((string)($calculation['cancellation_policy'] ?? ($quote['calculation']['cancellation_policy'] ?? ''))); ?>
     <div class="agoda-card" style="padding:14px">
-      <button type="button" class="agoda-book-btn" onclick="document.getElementById('agodaPaymentForm').requestSubmit()"><i class="fa-solid fa-lock"></i> BOOK NOW!</button>
-      <div class="agoda-flexi">Stay flexible! Cancel for free</div>
+      <div id="payFormError" style="display:none;background:#fdecea;border:1px solid #f5c6cb;color:#7d2e2e;padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:10px"></div>
+      <button type="button" class="agoda-book-btn" onclick="document.getElementById('agodaPaymentForm').requestSubmit()"><i class="fa-solid fa-lock"></i> <?= $total > 0 ? 'Pay TSh ' . number_format($total) : 'Pay now' ?></button>
+      <?php if ($cancelPolicy03 !== ''): ?>
+      <div class="agoda-flexi"><?= h($cancelPolicy03) ?></div>
+      <?php endif; ?>
     </div>
   </div>
 
@@ -307,7 +311,7 @@ $payFmt = sprintf('%02d:%02d:%02d', (int)($payRemainingSrv / 3600), (int)(($payR
       <div class="agoda-side-head" style="cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
         <div>
           <div class="agoda-side-title"><?= h($propTitle) ?></div>
-          <div class="agoda-side-sub">Mon, Oct 12 - Sun, Oct 18 • <?= h($nights) ?> nights • 1 x <?= h($roomTitle) ?></div>
+          <div class="agoda-side-sub"><?php if ($hasDates): ?><?= h(date('D, M j', $ciTs)) ?> - <?= h(date('D, M j', $coTs)) ?> • <?php endif; ?><?= h($nights) ?> night<?= $nights !== 1 ? 's' : '' ?> • <?= h($roomTitle) ?></div>
         </div>
         <i class="fa-solid fa-chevron-down" style="font-size:12px;color:#5f6368"></i>
       </div>
@@ -333,25 +337,21 @@ $payFmt = sprintf('%02d:%02d:%02d', (int)($payRemainingSrv / 3600), (int)(($payR
       </div>
     </div>
 
+     <?php $cancelCard03 = trim((string)($calculation['cancellation_policy'] ?? ($quote['calculation']['cancellation_policy'] ?? ''))); ?>
+     <?php if ($cancelCard03 !== ''): ?>
      <div class="agoda-side-card">
       <div class="agoda-cancel-card">
-        <div class="agoda-cancel-title">How much will it cost to cancel?</div>
-        <div class="agoda-cancel-text"><span style="color:#0f7a2b">Stay flexible!</span> <?= h($calculation['cancellation_policy'] ?? $quote['calculation']['cancellation_policy'] ?? 'Cancel for free before ' . date('j M Y', strtotime($checkIn))) ?>. Quickly edit your booking online - no added cost! <a href="#" style="color:#0f62fe;font-weight:700">See more details</a></div>
-        <div class="agoda-timeline">
-          <div class="fill"></div>
-          <div class="agoda-dot active"></div>
-          <div class="agoda-dot next"></div>
-          <div class="agoda-dot next"></div>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:#5f6368;margin-top:4px"><span>Today</span><span><?= h(date('j M', strtotime($checkIn))) ?></span><span>Arrival</span></div>
+        <div class="agoda-cancel-title">Cancellation</div>
+        <div class="agoda-cancel-text"><?= h($cancelCard03) ?></div>
       </div>
     </div>
+     <?php endif; ?>
   </div>
 </div>
 
 <script>
-// Real countdown, same guarantee as step 1. On expiry BOOK NOW is blocked and the
-// guest is sent back to step 1 for an honest re-price (backend enforces this too).
+// Real countdown, same guarantee as step 1. On expiry the pay button is blocked and
+// the guest is sent back to step 1 for an honest re-price (backend enforces this too).
 (function(){
   const bar = document.getElementById('agodaPayTimerBar');
   if (!bar) return;
@@ -416,17 +416,21 @@ function updatePayUI(){
 document.querySelectorAll('[name=payment_method]').forEach(r=>{r.addEventListener('change',updatePayUI)});
 document.addEventListener('DOMContentLoaded',updatePayUI);
 document.getElementById('agodaPaymentForm')?.addEventListener('submit',function(e){
-  if(window.agodaPayExpired && window.agodaPayExpired()){
+  const errBox=document.getElementById('payFormError');
+  const fail=function(msg, focusEl){
     e.preventDefault();
-    alert('This price guarantee has expired. Please go back to refresh the live price.');
+    if(errBox){ errBox.style.display='block'; errBox.textContent=msg; }
+    if(focusEl && focusEl.focus) focusEl.focus();
+    errBox?.scrollIntoView({behavior:'smooth', block:'center'});
+  };
+  if(window.agodaPayExpired && window.agodaPayExpired()){
+    fail('This price guarantee has expired. Please go back to refresh the live price.');
     return;
   }
   const payMethod=this.querySelector('[name=payment_method]:checked')?.value || 'vodacom';
   const phone=this.querySelector('[name=payment_phone]');
   if(!phone.value.trim()){
-    e.preventDefault();
-    alert('Please enter your mobile money number for ' + payMethod);
-    phone.focus();
+    fail('Enter your mobile money number to receive the payment prompt.', phone);
     return;
   }
 });

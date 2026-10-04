@@ -75,28 +75,16 @@ function initHorizontalCarousel(containerId, prevBtnId, nextBtnId, cardSelector)
 }
 
 // ── Home loader ──────────────────────────────────────────────────────────
-// The progress bar delegates to FastnetLoading so the homepage shows the same
-// indicator as every other page. This used to be a second, independent bar
-// with its own 35%→75%→100% timings, so home felt slower and behaved
-// differently from the rest of the product.
-//
-// The mobile pill is a genuinely separate surface (a bottom sheet affordance,
-// not a progress indicator) and keeps its own show/hide.
-window.showHomeLoader = function (customText) {
-	const pill = document.getElementById('home-mobile-loader-pill');
-	const textEl = pill ? pill.querySelector('.mobile-loader-text') : null;
-
-	if (textEl && customText) textEl.innerText = customText;
-
-	FastnetLoading.bar.start();
-	if (pill) pill.classList.remove('pill-hidden');
+// Single-source: thin top bar via FastnetLoading only. The dark floating
+// capsule pill was removed (clashed with Carbon white theme, tripled with
+// bar + skeletons). These two functions stay as bar-only aliases so existing
+// callers (index.php, hero.php, hotel-detail.php) keep working unchanged.
+window.showHomeLoader = function () {
+	if (window.FastnetLoading && FastnetLoading.bar) FastnetLoading.bar.start();
 };
 
 window.hideHomeLoader = function () {
-	FastnetLoading.bar.done();
-
-	const pill = document.getElementById('home-mobile-loader-pill');
-	if (pill) pill.classList.add('pill-hidden');
+	if (window.FastnetLoading && FastnetLoading.bar) FastnetLoading.bar.done();
 };
 
 // Reveal server-rendered homepage content immediately; loaders are reserved for navigation.

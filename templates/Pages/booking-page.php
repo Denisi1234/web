@@ -264,9 +264,11 @@ $fmtRem = sprintf('%02d:%02d:%02d', (int)($quoteRemainingSrv / 3600), (int)(($qu
 <div class="agoda-checkout-wrap">
   <!-- LEFT -->
   <div style="display:flex;flex-direction:column;gap:12px">
+    <?php if ($prefillFirstName !== ''): ?>
     <div class="agoda-card" style="padding:12px 16px">
-      <div class="agoda-welcome"><span class="icon"><i class="fa-regular fa-user"></i></span> <span>Welcome, <?= h($prefillFirstName ?: 'Guest') ?> ! (Not <?= h($prefillFirstName ?: 'Guest') ?> ? <a href="#" class="agoda-link">Sign out</a>)</span></div>
+      <div class="agoda-welcome"><span class="icon"><i class="fa-regular fa-user"></i></span> <span>Booking as <?= h($prefillFirstName) ?> (<a href="<?= $this->Url->build('/logout') ?>" class="agoda-link">Sign out</a>)</span></div>
     </div>
+    <?php endif; ?>
 
     <form id="agodaCheckoutForm" action="<?= $this->Url->build('/bookingpage-03') ?>" method="GET" style="display:flex;flex-direction:column;gap:12px" novalidate>
       <input type="hidden" name="property_id" value="<?= h($propId) ?>">
@@ -328,20 +330,21 @@ $fmtRem = sprintf('%02d:%02d:%02d', (int)($quoteRemainingSrv / 3600), (int)(($qu
         </div>
       </div>
 
+      <?php $cancelPolicy01 = trim((string)($calculation['cancellation_policy'] ?? ($quote['calculation']['cancellation_policy'] ?? ''))); ?>
+      <?php if ($cancelPolicy01 !== ''): ?>
       <div class="agoda-card">
-        <div class="agoda-card-title" style="color:#0f7a2b">Free room benefits</div>
+        <div class="agoda-card-title">Cancellation</div>
         <div class="agoda-benefit">
           <i class="fa-solid fa-calendar-check" style="color:#0f62fe;font-size:28px"></i>
           <div style="flex:1">
-            <div style="font-size:13px;font-weight:700;color:#202124">Fully refundable</div>
-            <div style="font-size:12px;color:#5f6368"><?= h($calculation['cancellation_policy'] ?? $quote['calculation']['cancellation_policy'] ?? 'Free cancellation before ' . date('j F Y', strtotime($checkIn))) ?></div>
+            <div style="font-size:12px;color:#5f6368"><?= h($cancelPolicy01) ?></div>
           </div>
-          <span class="free-badge">FREE</span>
         </div>
       </div>
+      <?php endif; ?>
 
       <div class="agoda-card" style="padding:14px">
-        <button type="submit" class="agoda-next-btn">NEXT: FINAL STEP</button>
+        <button type="submit" class="agoda-next-btn">Continue to payment</button>
         <div class="agoda-not-charged">You won't be charged yet.</div>
       </div>
     </form>
@@ -366,7 +369,7 @@ $fmtRem = sprintf('%02d:%02d:%02d', (int)($quoteRemainingSrv / 3600), (int)(($qu
             <div class="agoda-hotel-title"><?= h($propTitle) ?></div>
             <?php if ($propStars > 0): ?><div class="agoda-stars"><?= str_repeat('★', $propStars) ?></div><?php endif; ?>
             <?php if ($hasRating): ?><div class="agoda-rating"><b><?= h(number_format($propRating,1)) ?> Excellent</b> <span style="color:#5f6368;font-size:12px"><?= h($propReviews) ?> reviews</span></div><?php else: ?><div class="agoda-rating"><span style="color:#5f6368;font-size:12px">New property — no reviews yet</span></div><?php endif; ?>
-            <div style="font-size:11px;color:#5f6368;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px"><?= h($propAddressShort) ?>...</div>
+            <div style="font-size:11px;color:#5f6368;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px"><?= h($propAddressShort) ?></div>
 
           </div>
         </div>
@@ -393,17 +396,15 @@ $fmtRem = sprintf('%02d:%02d:%02d', (int)($quoteRemainingSrv / 3600), (int)(($qu
         <?php if (!empty($realAmenities)): ?>
         <div style="margin-top:10px" class="agoda-amenities">
           <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:4px 8px">
-            <?php foreach (array_slice($realAmenities, 0, 8) as $amItem): ?>
+            <?php foreach (array_slice($realAmenities, 0, 6) as $amItem): ?>
             <span><i class="fa-solid fa-check" style="font-size:10px"></i> <?= h($amItem) ?></span>
             <?php endforeach; ?>
-            <?php if (count($realAmenities) > 8): ?><span style="color:#5f6368">+<?= count($realAmenities) - 8 ?> more</span><?php endif; ?>
           </div>
         </div>
         <?php endif; ?>
       </div>
     </div>
 
-    <?php if ($hasRating): ?><div class="agoda-green-banner"><i class="fa-solid fa-thumbs-up" style="color:#0f7a2b"></i> <span><b>Great choice of property</b> – with an average guest rating of <b><?= h(number_format($propRating,1)) ?></b></span></div><?php endif; ?>
   </div>
 </div>
 

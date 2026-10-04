@@ -65,8 +65,6 @@ $propCity = $queryParams['property_city'] ?: ($property['city'] ?? '');
 							<p style="color:#9aa0a6;font-size:12px" class="mb-0">Complete the payment from <a href="<?= $this->Url->build('/my-booking') ?>" style="color:#0f62fe;font-weight:700">My bookings</a> to confirm it.</p>
 							<?php endif; ?>
 						</div>
-						<div class="booking-success-watermark mb-3">fastnetstays.com &nbsp; fastnetstays.com &nbsp; fastnetstays.com &nbsp; fastnetstays.com &nbsp; fastnetstays.com</div>
-
 						<div class="d-flex align-items-center justify-content-center flex-column mb-4">
 							<div class="border br-dashed full-width rounded-3 p-4 bg-slate-50">
 								<ul class="row align-items-center justify-content-start g-3 m-0 p-0 list-unstyled">
@@ -104,18 +102,23 @@ $propCity = $queryParams['property_city'] ?: ($property['city'] ?? '');
 											<p class="text-slate-900 fw-bold mb-0"><?= h($propName) ?> (<?= h($propCity) ?>)</p>
 										</div>
 									</li>
+									<?php $ciOk = strtotime((string)$checkIn); $coOk = strtotime((string)$checkOut); ?>
+								<?php if ($ciOk && $coOk): ?>
 									<li class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
 										<div class="d-block">
 											<p class="text-slate-500 text-xs text-uppercase fw-bold mb-0">Stay Dates</p>
-											<p class="text-slate-900 fw-bold mb-0"><?= date('d M Y', strtotime($checkIn)) ?> - <?= date('d M Y', strtotime($checkOut)) ?></p>
+											<p class="text-slate-900 fw-bold mb-0"><?= date('d M Y', $ciOk) ?> - <?= date('d M Y', $coOk) ?></p>
 										</div>
 									</li>
+								<?php endif; ?>
+									<?php if (trim((string)$guestName) !== ''): ?>
 									<li class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
 										<div class="d-block">
 											<p class="text-slate-500 text-xs text-uppercase fw-bold mb-0">Guest Name</p>
 											<p class="text-slate-900 fw-medium mb-0"><?= h($guestName) ?></p>
 										</div>
 									</li>
+								<?php endif; ?>
 									<li class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
 										<div class="d-block">
 											<p class="text-slate-500 text-xs text-uppercase fw-bold mb-0">Payment Method (Local)</p>
@@ -125,12 +128,15 @@ $propCity = $queryParams['property_city'] ?: ($property['city'] ?? '');
 											</p>
 										</div>
 									</li>
+									<?php $contactBits = array_filter([trim((string)$guestPhone), trim((string)$guestEmail)]); ?>
+								<?php if (!empty($contactBits)): ?>
 									<li class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
 										<div class="d-block">
 											<p class="text-slate-500 text-xs text-uppercase fw-bold mb-0">Guest Contact</p>
-											<p class="text-slate-900 fw-medium mb-0"><?= h($guestPhone) ?> (<?= h($guestEmail) ?>)</p>
+											<p class="text-slate-900 fw-medium mb-0"><?= h(implode(' · ', $contactBits)) ?></p>
 										</div>
 									</li>
+								<?php endif; ?>
 								</ul>
 							</div>
 						</div>
@@ -204,10 +210,10 @@ $propCity = $queryParams['property_city'] ?: ($property['city'] ?? '');
         if (data && data.status === 'success' && data.receipt_url) {
           window.open(data.receipt_url, '_blank', 'noopener');
         } else {
-          window.alert((data && data.message) || 'Could not generate your receipt.');
+          if (typeof window.fnsToast === 'function') window.fnsToast((data && data.message) || 'Could not generate your receipt.');
         }
       })
-      .catch(function () { window.alert('Could not reach the server. Please try again.'); })
+      .catch(function () { if (typeof window.fnsToast === 'function') window.fnsToast('Could not reach the server. Please try again.'); })
       .finally(function () {
         btn.disabled = false;
         btn.innerHTML = label;

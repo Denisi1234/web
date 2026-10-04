@@ -250,6 +250,19 @@
 .cds-search-pill .fns-seg-input:focus-visible, .fns-m-input-wrap .fns-m-input:focus-visible {
   outline: none !important; box-shadow: none !important;
 }
+/* ui-tokens.css styles every input[type=text] site-wide (46px + border +
+   radius), which hijacks the search pill's borderless segments into nested
+   boxes and squeezes the date segments. Restore the pill design here — this
+   file loads last on home so it wins. */
+.fns-pill .fns-seg .fns-seg-input {
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+}
 @media (prefers-reduced-motion: reduce) {
   .cds-search-pill, .fns-chip, .gh-card { transition: none !important; }
 }
@@ -318,35 +331,13 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   9. Loading indicators → Carbon (top bar + mobile pill + shimmer)
+   9. Loading indicators → Carbon (thin top bar + shimmer only;
+      floating capsule pill removed — single-source FastnetLoading.bar)
    ═══════════════════════════════════════════════════════════════ */
-.home-top-loader-bar {
-  background: #0f62fe !important;
-  box-shadow: 0 0 8px rgba(15,98,254,.55) !important;
-  height: 3px !important;
-}
-.mobile-loader-pill-inner {
-  background: #161616 !important;
-  border: 1px solid #393939 !important;
-  border-radius: 4px !important;
-  box-shadow: 0 4px 16px rgba(0,0,0,.3) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-.mobile-loader-spinner {
-  border: 2px solid rgba(255,255,255,.25) !important;
-  border-top-color: #0f62fe !important;
-  border-right-color: #0f62fe !important;
-}
-.mobile-loader-text {
-  font-family: 'IBM Plex Sans','Inter',Roboto,sans-serif !important;
-  font-weight: 600 !important;
-  color: #f4f4f4 !important;
-}
 /* card photo shimmer while lazy images load */
 .gh-card-photo { background: #f4f4f4 !important; }
 .gh-card-photo img { background: #e0e0e0; }
 .gh-card-photo img[src=""] { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) {
-  .home-top-loader-bar, .mobile-loader-spinner { animation: none !important; transition: none !important; }
+  #fastnet-top-progress { animation: none !important; transition: none !important; }
 }

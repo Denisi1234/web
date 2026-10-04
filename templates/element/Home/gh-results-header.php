@@ -1,7 +1,6 @@
 <?php
 /**
- * fastnetstays.com — Google Hotels Results Header
- * "near Dar es Salaam • 118 results" style subheader.
+ * fastnetstays.com — Results header: "near X · N results" + sort.
  */
 $count    = $totalCount ?? count($properties ?? []);
 $totalHits = $totalHits ?? null;
@@ -11,10 +10,6 @@ $countLabel = number_format($count) . ' results';
 if ($totalHits !== null && $totalHits > $count) $countLabel = number_format($count) . ' of ' . number_format($totalHits) . ' stays';
 ?>
 <style>
-.gh-m-price-toggle { display:none; gap:8px; margin-top:8px; overflow-x:auto; scrollbar-width:none; }
-.gh-m-price-toggle::-webkit-scrollbar{display:none}
-.gh-m-price-pill { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:16px; border:1px solid #dadce0; background:#fff; font-size:13px; font-weight:500; color:#3c4043; white-space:nowrap; font-family:'Google Sans',Roboto,sans-serif; }
-.gh-m-price-pill.active { background:#e8f0fe; border-color:#aecbfa; color:#1967d2; }
 /* Mobile sort button */
 .gh-m-sort-btn { display:none; align-items:center; gap:6px; padding:6px 12px; border:1px solid #dadce0; border-radius:18px; background:#fff; font-size:13px; font-weight:500; color:#3c4043; cursor:pointer; font-family:'Google Sans',Roboto,sans-serif; white-space:nowrap; touch-action:manipulation; }
 .gh-m-sort-btn i { font-size:11px; color:#5f6368; }
@@ -29,7 +24,6 @@ if ($totalHits !== null && $totalHits > $count) $countLabel = number_format($cou
 .gh-m-sort-backdrop { display:none; position:fixed; inset:0; z-index:1999; background:rgba(0,0,0,.4); }
 .gh-m-sort-backdrop.open { display:block; }
 @media(max-width:767px){
-  .gh-m-price-toggle{ display:flex; }
   .gh-results-count-row{ border-bottom:none !important; padding-bottom:4px !important; }
   .gh-near-part{ display:inline-block !important; max-width:52vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:bottom; }
   .gh-m-sort-btn { display:inline-flex; }
@@ -86,65 +80,11 @@ if ($totalHits !== null && $totalHits > $count) $countLabel = number_format($cou
         </button>
     </div>
 </div>
-<div class="gh-m-price-toggle" role="group" aria-label="Price display mode">
-    <button type="button" class="gh-m-price-pill active" id="gh_price_nightly" data-mode="nightly" aria-pressed="true" onclick="ghSetPriceMode('nightly')"><i class="fa-solid fa-xmark" style="font-size:11px;"></i> Nightly total price</button>
-    <button type="button" class="gh-m-price-pill" id="gh_price_stay" data-mode="stay" aria-pressed="false" onclick="ghSetPriceMode('stay')">Stay total price</button>
-</div>
 <script>
 (function(){
-  var NIGHTLY='nightly', STAY='stay';
-  function applyMode(mode){
-    var nBtn=document.getElementById('gh_price_nightly'), sBtn=document.getElementById('gh_price_stay');
-    if(!nBtn||!sBtn) return;
-    var isNightly = mode===NIGHTLY;
-    nBtn.classList.toggle('active', isNightly); nBtn.setAttribute('aria-pressed', isNightly?'true':'false');
-    sBtn.classList.toggle('active', !isNightly); sBtn.setAttribute('aria-pressed', !isNightly?'true':'false');
-    try{ localStorage.setItem('gh_price_mode', mode); }catch(e){}
-    // update all card prices (desktop + mobile bottom bar)
-    document.querySelectorAll('.gh-hotel-price[data-nightly],.gh-card-viewmap-price[data-nightly]').forEach(function(el){
-      var nightly=el.getAttribute('data-nightly')||'', total=el.getAttribute('data-total')||'';
-      var sub=el.querySelector('.gh-price-night');
-      if(mode===STAY && total){
-        el.childNodes[0].textContent=total+' ';
-        if(sub) sub.textContent='total';
-      } else {
-        el.childNodes[0].textContent=nightly+' ';
-        if(sub) sub.textContent='/night';
-      }
-    });
-    // also update map mini price pills
-    document.querySelectorAll('.gh-card-map-price[data-nightly]').forEach(function(el){
-      el.textContent = mode===STAY ? (el.getAttribute('data-total')||el.textContent) : (el.getAttribute('data-nightly')||el.textContent);
-    });
-    // map markers (Mapbox pills)
-    if(window._ghCfg && window._ghCfg.markers){
-      // markers label is nightly; stay mode shows total = nightly * nights * rooms (matches cards + checkout math)
-      try{
-        var nights = parseInt(document.getElementById('gh_results_count')?.getAttribute('data-nights')||'1',10)||1;
-        var roomsQ = 1;
-        try{ var uq = new URL(window.location.href); roomsQ = Math.max(1, parseInt(uq.searchParams.get('rooms')||'1',10)||1); }catch(e){}
-        if(window.ghRefreshMarkers){
-          // rebuild labels for stay mode
-          var m = window._ghCfg.markers.map(function(x){
-            var p = parseInt(String(x.label).replace(/[^0-9]/g,''))||0;
-            var stay = p*nights*roomsQ;
-            var lbl = mode===STAY && (nights>1||roomsQ>1) ? (x.label.replace(String(p), String(stay))) : x.label;
-            // keep original nightly in _orig
-            if(!x._orig) x._orig=x.label;
-            x.label = (mode===STAY && (nights>1||roomsQ>1)) ? x._orig.replace(String(p), String(stay)) : x._orig;
-            return x;
-          });
-          // only refresh if mode switch needs visual (avoid full re-cluster flicker — just update DOM)
-          document.querySelectorAll('.gh-mm-price').forEach(function(node){
-            var id=node.closest('.gh-map-marker')?.getAttribute('data-id');
-            var mk= m.find(function(v){ return String(v.id)===String(id); });
-            if(mk) node.textContent=mk.label;
-          });
-        }
-      }catch(e){}
-    }
-  }
-  window.ghSetPriceMode=function(mode){ applyMode(mode); };
+  // Prices are nightly everywhere. Stay totals render inline on each card
+  // ("TSh X total for N nights") and map pills show nightly rates — one rule,
+  // no mode switch. Display currency is owned by FastNetCurrency via [data-tzs].
   // Mobile sort — same keys as desktop dropdown (?sort=...), via AJAX state when available
   window.ghMobileSort=function(v){
     if(window.FastNetState && window.FastNetState.pushState){ window.FastNetState.pushState({sort:v}); return; }
@@ -154,23 +94,6 @@ if ($totalHits !== null && $totalHits > $count) $countLabel = number_format($cou
       window.location.href=u.toString();
     }catch(e){ window.location.search='?sort='+encodeURIComponent(v); }
   };
-  // init from storage
-  document.addEventListener('DOMContentLoaded', function(){
-    var saved='nightly';
-    try{ saved=localStorage.getItem('gh_price_mode')||'nightly'; }catch(e){}
-    // also respect query ?price_mode=
-    try{ var u=new URL(window.location.href); var q=u.searchParams.get('price_mode'); if(q==='stay'||q==='nightly') saved=q; }catch(e){}
-    applyMode(saved);
-    // expose nights for markers
-    var ci='<?= h($queryParams['checkin'] ?? $queryParams['checkIn'] ?? '') ?>', co='<?= h($queryParams['checkout'] ?? $queryParams['checkOut'] ?? '') ?>';
-    var nights=1; try{ if(ci&&co) nights=Math.max(1, Math.round((new Date(co)-new Date(ci))/86400000)); }catch(e){}
-    var rc=document.getElementById('gh_results_count'); if(rc) rc.setAttribute('data-nights', String(nights));
-  });
-  // keep price mode after AJAX hydrate (FastNetState replaces cards)
-  window.addEventListener('fastnet:shimmer-hide', function(){
-    var m='nightly'; try{ m=localStorage.getItem('gh_price_mode')||'nightly'; }catch(e){}
-    setTimeout(function(){ applyMode(m); }, 30);
-  });
   // live total stays: update "X results" when markers change (filter/map)
   window.addEventListener('fastnet:markers-update', function(e){
     var arr=e.detail; if(!Array.isArray(arr)) return;

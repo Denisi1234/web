@@ -23,14 +23,10 @@
     </div>
 </div>
 
-<!-- 3. Single centered action loader — shown automatically on ANY slow
-     navigation/submit (>300ms). Small pill, no scroll lock. -->
-<div id="fastnet-nav-loader" aria-hidden="true" role="status" aria-label="Loading">
-    <div class="fastnet-nav-card">
-        <span class="fastnet-nav-ring" aria-hidden="true"></span>
-        <span class="fastnet-nav-txt">Loading…</span>
-    </div>
-</div>
+<!-- 3. Centered navigation card — RETIRED (bar-only, Google pattern).
+     Container kept so navShow()/navHide() stay null-safe; inner card removed
+     and the container is display:none via app-loader.css. -->
+<div id="fastnet-nav-loader" aria-hidden="true" role="status" aria-label="Loading"></div>
 
 <!-- 4. Floating Background Task Pill Indicator Container -->
 <div id="fastnet-bg-loader" role="status" aria-live="polite" aria-atomic="true"></div>

@@ -24,7 +24,7 @@
         <link rel="canonical" href="<?= h($canonUrl) ?>" />
         <link rel="alternate" hreflang="en-TZ" href="<?= h($canonUrl) ?>" />
         <!-- sw-TZ omitted: no Swahili content ships yet — claiming it would mislead crawlers -->
-        <link rel="alternate" hreflang="x-default" href="https://www.fastnetstays.com/" />
+        <link rel="alternate" hreflang="x-default" href="<?= h($canonUrl) ?>" />
         <link rel="alternate" type="text/plain" href="https://www.fastnetstays.com/llms.txt" title="LLM Knowledge Graph" />
         <!-- Production: resource hints — fast LCP + CLS -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,10 +35,10 @@
         <link rel="preconnect" href="https://api.fastnetstays.com" crossorigin>
         <link rel="dns-prefetch" href="https://images.unsplash.com">
         <?php if (!in_array($this->getRequest()->getParam('controller'), ['Account'], true)): ?>
-        <link rel="preload" href="/assets/css/google-travel-layout.css" as="style">
-        <link rel="preload" href="/assets/css/google-travel-cards.css" as="style">
+        <link rel="preload" href="/assets/css/google-travel-layout.css?v=<?= filemtime(WWW_ROOT . 'assets/css/google-travel-layout.css') ?>" as="style">
+        <link rel="preload" href="/assets/css/google-travel-cards.css?v=<?= filemtime(WWW_ROOT . 'assets/css/google-travel-cards.css') ?>" as="style">
         <?php else: ?>
-        <link rel="preload" href="/assets/css/google-travel-layout.css" as="style">
+        <link rel="preload" href="/assets/css/google-travel-layout.css?v=<?= filemtime(WWW_ROOT . 'assets/css/google-travel-layout.css') ?>" as="style">
         <?php endif; ?>
         <meta http-equiv="x-dns-prefetch-control" content="on">
         <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
@@ -50,14 +50,14 @@
         <meta property="og:url" content="<?= h($canonUrl) ?>" />
         <meta property="og:title" content="<?= $this->fetch('title') ? h($this->fetch('title')) . ' | fastnetstays.com' : 'FastNet Stays — Online Hotel Booking & Best Prices Guaranteed' ?>" />
         <meta property="og:description" content="Online Hotel Booking — FastNet Stays - Best Prices Guaranteed with Deals, Special Member Prices. Book Hotels, Lodges & Beach Resorts Across Tanzania!" />
-        <meta property="og:image" content="https://www.fastnetstays.com/assets/img/og-preview.png" />
+        <meta property="og:image" content="https://www.fastnetstays.com/favicon-512.png" />
 
         <!-- Twitter Card -->
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:site" content="@fastnetstays" />
         <meta name="twitter:title" content="FastNet Stays — Online Hotel Booking & Best Prices Guaranteed" />
         <meta name="twitter:description" content="Book hotel rooms, luxury resorts, and beach escapes across Tanzania with fastnetstays.com." />
-        <meta name="twitter:image" content="https://www.fastnetstays.com/assets/img/og-preview.png" />
+        <meta name="twitter:image" content="https://www.fastnetstays.com/favicon-512.png" />
 
         <!-- Favicon & Touch Icons for Google Search Snippet Logo -->
         <link rel="icon" type="image/png" sizes="16x16" href="<?= $this->Url->build('/assets/img/favicon-16x16.png'); ?>">
@@ -87,9 +87,13 @@
                 "@type": "SearchAction",
                 "target": {
                   "@type": "EntryPoint",
-                  "urlTemplate": "https://www.fastnetstays.com/hotel-list-01?destination={search_term_string}"
+                  "urlTemplate": "https://www.fastnetstays.com/?city={search_term_string}"
                 },
-                "query-input": "required name=search_term_string"
+                "query-input": {
+                  "@type": "PropertyValueSpecification",
+                  "valueRequired": true,
+                  "valueName": "search_term_string"
+                }
               }
             },
             {
@@ -105,10 +109,9 @@
               },
               "contactPoint": {
                 "@type": "ContactPoint",
-                "telephone": "+255-700-000-000",
                 "contactType": "customer service",
                 "email": "support@fastnetstays.com",
-                "availableLanguage": ["English", "Swahili"]
+                "availableLanguage": ["English"]
               },
               "sameAs": [
                 "https://www.fastnetstays.com"
@@ -136,8 +139,8 @@
                   "@type": "SiteNavigationElement",
                   "position": 3,
                   "name": "Hotel Deals",
-                  "description": "Describe your ideal stay — desired length, time of the year, location ...",
-                  "url": "https://www.fastnetstays.com/?city=Zanzibar"
+                  "description": "Browse hotel deals across Tanzania — compare prices and book direct.",
+                  "url": "https://www.fastnetstays.com/"
                 },
                 {
                   "@type": "SiteNavigationElement",
@@ -222,6 +225,8 @@
         <?php else: ?>
         <?= $this->Html->css('/assets/css/carbon-journey.css?v=' . filemtime(WWW_ROOT . 'assets/css/carbon-journey.css')) ?>
         <?php endif; ?>
+        <!-- Mobile declutter pass: phone-only overrides, loaded LAST so it wins -->
+        <?= $this->Html->css('/assets/css/mobile-clean.css?v=' . filemtime(WWW_ROOT . 'assets/css/mobile-clean.css')) ?>
 
         <!-- Canonical loading controller. Must precede app-loader.js, which
              delegates its progress bar to it. -->
@@ -230,6 +235,8 @@
         <?= $this->Html->script('/assets/js/app-loader.js?v=' . filemtime(WWW_ROOT . 'assets/js/app-loader.js')) ?>
         <!-- Direct-to-backend forms (Bearer in JS, CakePHP proxy as fallback) -->
         <?= $this->Html->script('/assets/js/fastnet-api.js?v=' . filemtime(WWW_ROOT . 'assets/js/fastnet-api.js')) ?>
+        <!-- Display currency (TZS/USD/EUR): deferred so it runs before page-level deferred scripts -->
+        <?= $this->Html->script('/assets/js/fastnet-currency.js?v=' . filemtime(WWW_ROOT . 'assets/js/fastnet-currency.js'), ['defer' => true]) ?>
 
         <!-- Mapbox GL JS — production CSS & JS -->
         <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css" rel="stylesheet">
@@ -346,7 +353,7 @@
             <nav aria-label="Sitelinks" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">
                 <a href="https://www.fastnetstays.com/?city=Dar%20es%20Salaam">FastNet Hotels</a>
                 <a href="https://www.fastnetstays.com/?city=Dar%20es%20Salaam#track-prices">Track and Compare Hotel Prices</a>
-                <a href="https://www.fastnetstays.com/?city=Zanzibar">Hotel Deals</a>
+                <a href="https://www.fastnetstays.com/">Hotel Deals</a>
                 <a href="https://www.fastnetstays.com/?city=Zanzibar">Hotels to Zanzibar</a>
                 <a href="https://www.fastnetstays.com/?city=Arusha">Hotels to Arusha</a>
                 <a href="https://www.fastnetstays.com/">Stays</a>
@@ -364,6 +371,7 @@
             '/assets/js/custom.js',
             '/assets/js/active.js',
         ]); ?>
+        <?php if (!$isHomePage): ?>
         <?= $this->Html->script([
             '/assets/js/dropzone.min.js',
             '/assets/js/flatpickr.js',
@@ -378,6 +386,7 @@
             '/assets/js/browselocation.js',
             '/assets/js/contact.js',
         ], ['defer' => true]); ?>
+        <?php endif; ?>
 
         <?= $this->fetch('script') ?>
 
