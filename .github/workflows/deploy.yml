@@ -27,3 +27,29 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           echo "161.97.154.131 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPrgqvU1urEUB/Lbjh/BOYwNxTkWqvSn9/y2rl6SNxrG" > ~/.ssh/known_hosts
           ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o ServerAliveInterval=30 root@161.97.154.131 web
+
+      # The gate returns as soon as the deploy is QUEUED, so a green trigger
+      # does not mean the live URL serves the new code (stale opcache,
+      # unfinished pull, CDN cache). Poll the live homepage for a marker
+      # string that only exists in the new templates — fail loudly on timeout
+      # instead of leaving "committed but not showing" silent.
+      - name: Verify live URL serves the new code
+        env:
+          MARKER: fns-m-google
+          LIVE_URL: https://fastnetstays.com/
+          SHA: ${{ github.sha }}
+        run: |
+          echo "Waiting for marker '$MARKER' on $LIVE_URL ..."
+          sleep 60
+          for i in $(seq 1 30); do
+            BODY=$(curl -skL --max-time 25 "$LIVE_URL?deploy=$SHA" || true)
+            if printf '%s' "$BODY" | grep -q "$MARKER"; then
+              echo "Marker found after ~$((1 + i * 1)) min — live URL serves $SHA"
+              exit 0
+            fi
+            echo "attempt $i/30: marker not yet live, waiting 20s..."
+            sleep 20
+          done
+          echo "::error::Live URL never served marker '$MARKER' for $SHA after ~11 min."
+          echo "::error::Likely causes: gate deploy still running/failed on the VPS, PHP opcache serving stale files (reload php-fpm), or CDN/browser HTML cache (hard-refresh with Ctrl+Shift+R)."
+          exit 1
