@@ -168,6 +168,14 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
     })();
 
     var osmMap = null, osmMarker = null, useOsm = false;
+    // A previous visit already proved Mapbox tiles dead (gray canvas) — skip
+    // it entirely and paint OSM instantly instead of re-proving the failure.
+    function mbxRememberedDead() {
+      try {
+        var t = parseInt(window.localStorage.getItem('fns_mbx_dead') || '0', 10);
+        return t > 0 && (Date.now() - t) < 7 * 86400000;
+      } catch (e) { return false; }
+    }
     function setPoint(lng, lat) {
       latEl.value = (+lat).toFixed(6);
       lngEl.value = (+lng).toFixed(6);
@@ -397,10 +405,33 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
           hideStatic();
           try { map.resize(); } catch (e) {}
         }
-        map.on('load', ready);
-        setTimeout(ready, 2500);
-        setTimeout(function () { try { map.resize(); } catch (e) {} }, 400);
-        map.on('error', function () { mapEl.classList.remove('loading'); });
+        // Gray-canvas guard (the reported bug: logo + pin render, tiles never
+        // paint — e.g. key valid for geocoding but blocked for tiles). Any
+        // 401/403 switches instantly; otherwise a 7s no-paint watchdog heals
+        // to the OSM backup instead of stranding the host on gray.
+        var styleOk = false, switched = false;
+        function switchToOsm(reason) {
+          if (switched) return; switched = true;
+          try { if (map) map.remove(); } catch (e) {}
+          map = null; marker = null;
+          // Remember the failure for 7 days: next visits skip Mapbox
+          // entirely and paint OSM instantly instead of re-proving gray.
+          try { window.localStorage.setItem('fns_mbx_dead', String(Date.now())); } catch (e) {}
+          if (geoMsg) geoMsg.textContent = reason || 'Live map failed — backup map loaded.';
+          initOsmMap();
+        }
+        map.on('load', function () {
+          styleOk = true;
+          try { window.localStorage.removeItem('fns_mbx_dead'); } catch (e) {}
+          ready();
+        });
+        setTimeout(function () { if (!styleOk) switchToOsm('Live map did not paint — backup map loaded.'); }, 4000);
+        setTimeout(function () { try { if (map) map.resize(); } catch (e) {} }, 400);
+        map.on('error', function (ev) {
+          var st = ev && ev.error && ev.error.status;
+          if (st === 401 || st === 403) switchToOsm('Map key blocked for tiles — backup map loaded.');
+          else mapEl.classList.remove('loading');
+        });
         marker = new mapboxgl.Marker({ draggable: true }).setLngLat([DAR.lng, DAR.lat]).addTo(map);
         marker.on('dragend', function () {
           var p = marker.getLngLat();
@@ -417,13 +448,18 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
     // /api/map-config round trip and start the map immediately.
     // No token (typical Contabo miss-config) → real OSM map, not a dead box.
     (function bootMap() {
+      // Fastest path: tiles already proven dead on this device → OSM now.
+      if (mbxRememberedDead()) { initOsmMap(); return; }
       var pre = (typeof window.MAPBOX_TOKEN === 'string' && window.MAPBOX_TOKEN.indexOf('pk.') === 0) ? window.MAPBOX_TOKEN : '';
       if (pre) { initMap(pre); return; }
-      fetch('/api/map-config', { headers: { 'Accept': 'application/json' } })
+      // 3s cap: a hanging backend must never stall the map (was unbounded).
+      var ctl = null;
+      try { ctl = new AbortController(); setTimeout(function () { try { ctl.abort(); } catch (e) {} }, 3000); } catch (e) { ctl = null; }
+      fetch('/api/map-config', { headers: { 'Accept': 'application/json' }, signal: ctl ? ctl.signal : undefined })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (j) {
           var t = j && (j.mapbox_token || j.mapboxToken || j.token);
-          if (t && t.indexOf('pk.') === 0) initMap(t);
+          if (t && t.indexOf('pk.') === 0 && !mbxRememberedDead()) initMap(t);
           else initOsmMap();
         })
         .catch(initOsmMap);

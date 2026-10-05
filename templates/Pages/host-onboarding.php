@@ -8,8 +8,10 @@ $labels = [1 => 'Basics', 2 => 'Location', 3 => 'Photos', 4 => 'Rooms', 5 => 'Re
 $roomTypes = ['Standard', 'Deluxe', 'Suite', 'Executive'];
 $draftCats = (isset($d['roomCats']) && is_array($d['roomCats']) && !empty($d['roomCats'])) ? array_values($d['roomCats']) : [[]];
 ?>
-<?= $this->Html->css('https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css') ?>
 <?= $this->element('host_onboard_css') ?>
+<?php if ($step === 2): ?>
+<?= $this->Html->css('https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css') ?>
+<?php endif; ?>
 
 <div class="p-card obx">
   <h3>Onboard new lodge</h3>
@@ -257,7 +259,9 @@ $draftCats = (isset($d['roomCats']) && is_array($d['roomCats']) && !empty($d['ro
   <?php endif; ?>
 </div>
 
-<?= $this->Html->script('https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js') ?>
+<?php if (($step ?? 1) === 2): ?>
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js" defer></script>
+<?php endif; ?>
 <?php if (($step ?? 1) === 2 && !empty($mapToken)): ?>
 <script>window.MAPBOX_TOKEN = <?= json_encode($mapToken) ?>;window.MAPBOX_STYLE = <?= json_encode($mapStyle ?? 'mapbox://styles/mapbox/streets-v12') ?>;</script>
 <?php endif; ?>

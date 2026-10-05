@@ -26,8 +26,10 @@ foreach ((array)($rooms ?? []) as $rr) {
     $revCats[$t]['rooms'][] = $rr;
 }
 ?>
-<?= $this->Html->css('https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css') ?>
 <?= $this->element('host_onboard_css') ?>
+<?php if ($step === 2): ?>
+<?= $this->Html->css('https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css') ?>
+<?php endif; ?>
 
 <div class="p-card obx">
   <h3><?= h($property['name'] ?? 'Lodge') ?></h3>
@@ -169,7 +171,9 @@ foreach ((array)($rooms ?? []) as $rr) {
   <?php endif; ?>
 </div>
 
-<?= $this->Html->script('https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js') ?>
+<?php if (($step ?? 1) === 2): ?>
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js" defer></script>
+<?php endif; ?>
 <?php if (($step ?? 1) === 2 && !empty($mapToken)): ?>
 <script>window.MAPBOX_TOKEN = <?= json_encode($mapToken) ?>;window.MAPBOX_STYLE = <?= json_encode($mapStyle ?? 'mapbox://styles/mapbox/streets-v12') ?>;</script>
 <?php endif; ?>
