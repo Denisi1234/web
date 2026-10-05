@@ -1344,7 +1344,7 @@ class HostController extends AppController
     private function uploadAvatar(array $headers): ?string
     {
         $file = $this->getRequest()->getUploadedFile('avatarFile');
-        if ($file === null || $file->getError() !== UPLOAD_ERR_OK || !$file->isValid()) {
+        if ($file === null || $file->getError() !== UPLOAD_ERR_OK) {
             return null;
         }
 
@@ -1362,7 +1362,7 @@ class HostController extends AppController
             '/profile/photo',
             'photo',
             $tmp,
-            $file->getClientOriginalName(),
+            $file->getClientFilename(),
             $file->getClientMediaType() ?: 'image/jpeg',
             $headers
         );
@@ -1455,7 +1455,10 @@ class HostController extends AppController
         $this->autoRender = false;
         $headers = $this->hostHeaders();
         $file = $this->getRequest()->getUploadedFile('file');
-        if ($file === null || !$file->isValid()) {
+        // NOTE: CakePHP 5 UploadedFile (laminas-diactoros) has NO isValid()
+        // method — getError() is the only validity check. Calling isValid()
+        // fataled every valid upload (500 on /host/upload, Oct 2026).
+        if ($file === null || $file->getError() !== UPLOAD_ERR_OK) {
             $code = $file ? $file->getError() : UPLOAD_ERR_NO_FILE;
             $msg = match ($code) {
                 UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'Photo is too large (max 10 MB).',
@@ -1493,7 +1496,7 @@ class HostController extends AppController
             '/upload',
             'file',
             $tmp,
-            $file->getClientOriginalName(),
+            $file->getClientFilename(),
             $mime,
             $headers,
             30
@@ -1504,7 +1507,7 @@ class HostController extends AppController
                     '[Host upload] backend %s -> %s for %s (%s, %d bytes)',
                     $this->apiClient->getBaseUrl() . '/upload',
                     (string)($res['_status'] ?? 'no-response'),
-                    $file->getClientOriginalName(),
+                    $file->getClientFilename(),
                     $mime,
                     (int)$file->getSize()
                 ));

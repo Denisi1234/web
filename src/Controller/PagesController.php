@@ -515,7 +515,7 @@ class PagesController extends AppController
             if ($file === null) {
                 return null;
             }
-            if ($file->getError() !== UPLOAD_ERR_OK || !$file->isValid()) {
+            if ($file->getError() !== UPLOAD_ERR_OK) {
                 throw new BadRequestException(__('Could not read the uploaded file. Please try again.'));
             }
             if ($file->getSize() > 10 * 1024 * 1024) {
@@ -531,7 +531,7 @@ class PagesController extends AppController
                 '/upload',
                 'file',
                 $tmp,
-                $file->getClientOriginalName(),
+                $file->getClientFilename(),
                 $file->getClientMediaType() ?? 'application/octet-stream',
                 $headers
             );
