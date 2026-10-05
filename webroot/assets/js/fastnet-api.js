@@ -31,15 +31,20 @@ window.FastAPI = (function () {
     var h = window.location.hostname || '';
     return (h === 'localhost' || h === '127.0.0.1' || h === '') ? 'http://127.0.0.1:8000/api' : 'https://api.fastnetstays.com/api';
   }
-  // Token: localStorage first (written at login, always freshest), then the
-  // server-rendered meta (covers portal sessions without localStorage).
+  // Token: the server-rendered meta FIRST. It is the token of the PHP session
+  // that just rendered (and, on /admin, role-verified) this page. localStorage
+  // can hold a stale token or another account's token from an earlier login in
+  // the same browser — preferring it made every admin action fail with 401
+  // (bounce to login) or 403 "Admin role required". localStorage is only a
+  // fallback for pages rendered without a session token.
   function token() {
-    try {
-      var t = window.localStorage.getItem('auth_token') || window.localStorage.getItem('token') || window.sessionStorage.getItem('auth_token');
-      if (t) return t;
-    } catch (e) {}
     var m = document.querySelector('meta[name="api-token"]');
-    return m ? (m.getAttribute('content') || '') : '';
+    var mt = m ? (m.getAttribute('content') || '') : '';
+    if (mt) return mt;
+    try {
+      return window.localStorage.getItem('auth_token') || window.localStorage.getItem('token') || window.sessionStorage.getItem('auth_token') || '';
+    } catch (e) {}
+    return '';
   }
   // Professional toast: white card, colored accent + glyph by kind.
   function toast(msg, kind) {
@@ -398,40 +403,12 @@ window.FastAPI = (function () {
     } else {
       setBusy(form, true);
     }
-    // Verify shapes: backend builds vary (POST vs PATCH, /admin prefix vs
-    // plain). Try the matrix in order; 404/405 means "try next shape", any
-    // other error is a real verdict — stop and show it.
-    async function reqVerifyShapes(vMethod, vPath, vData) {
-      var cands = [];
-      var alt = vPath.indexOf('/admin/verification/') === 0
-        ? vPath.replace('/admin/verification/', '/verification/')
-        : vPath;
-      [vMethod, vMethod === 'POST' ? 'PATCH' : 'POST'].forEach(function (m) {
-        [vPath, alt].forEach(function (p) {
-          var key = m + ' ' + p;
-          if (!cands.some(function (c) { return c.k === key; })) cands.push({ k: key, m: m, p: p });
-        });
-      });
-      var lastErr = null;
-      for (var ci = 0; ci < cands.length; ci++) {
-        try {
-          var out = await req(cands[ci].m, cands[ci].p, vData);
-          return out;
-        } catch (e2) {
-          lastErr = e2;
-          if (e2 && (e2.status === 404 || e2.status === 405)) continue;
-          throw e2;
-        }
-      }
-      throw lastErr || new Error('Request failed. Please try again.');
-    }
-
+    // Verify goes to the one real route (POST /admin/verification/{type}/{id}).
+    // The old "shape matrix" retried 404s against /verification/lodge/{id} —
+    // that is the HOST submission endpoint, so a missing lodge could be
+    // re-submitted as pending instead of reporting "not found".
     try {
-      if (build === 'verify') {
-        await reqVerifyShapes(method, path, method === 'GET' || method === 'DELETE' ? undefined : data);
-      } else {
-        await req(method, path, method === 'GET' || method === 'DELETE' ? undefined : data);
-      }
+      await req(method, path, method === 'GET' || method === 'DELETE' ? undefined : data);
       if (opt === 'patch' || opt === 'remove') {
         setBusy(form, false);
         toast(okMsg, 'ok');

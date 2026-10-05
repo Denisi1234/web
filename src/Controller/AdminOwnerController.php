@@ -845,12 +845,19 @@ class AdminOwnerController extends AppController
                 'suspended' => 'Removed',
             ];
             $low = strtolower($status);
-            $status = $map[$low] ?? 'Active';
+            if (!isset($map[$low])) {
+                // Never default an unknown value to an approval.
+                return $this->writeFail('Unknown verification status.', 'lodges', 422);
+            }
+            $status = $map[$low];
         } else {
             // owner: normalise to backend lowercase set
             $low = strtolower($status);
             $allowedOwner = ['approved', 'rejected', 'changes_requested', 'suspended'];
-            $status = in_array($low, $allowedOwner, true) ? $low : 'approved';
+            if (!in_array($low, $allowedOwner, true)) {
+                return $this->writeFail('Unknown verification status.', 'owners', 422);
+            }
+            $status = $low;
             $type = 'owner';
         }
         if (($status === 'rejected' || $status === 'changes_requested') && $reason === '' && $this->wantsJson()) {
@@ -870,34 +877,12 @@ class AdminOwnerController extends AppController
         // Release the session lock: the write below is the slowest part and
         // must not serialize parallel PJAX/prefetch on the session file.
         $this->releaseSession();
-        // Method + path matrix: the spec says POST /admin/verification/…,
-        // but backend builds have varied (PATCH-only, non-admin prefix).
-        // 404/405 = "try next shape"; any other 4xx is a REAL validation
-        // verdict (bad status value, missing reason) — stop and surface it
-        // instead of masking it behind another shape's 404.
-        $paths = $isLodge
-            ? ['/admin/verification/lodge/' . $id, '/verification/lodge/' . $id]
-            : ['/admin/verification/owner/' . $id, '/verification/owner/' . $id];
-        $res = null;
-        $tried = 0;
-        foreach ($paths as $endpoint) {
-            foreach (['post', 'patch'] as $verb) {
-                $tried++;
-                $attempt = $verb === 'post'
-                    ? $this->apiClient->post($endpoint, $payload, $headers)
-                    : $this->apiClient->patch($endpoint, $payload, $headers);
-                if ($attempt === null) {
-                    $res = null;
-                    break 2; // transport dead: no point trying more shapes
-                }
-                $code = (int)($attempt['_status'] ?? 200);
-                if (($code === 404 || $code === 405) && !($endpoint === end($paths) && $verb === 'patch')) {
-                    continue; // try next shape
-                }
-                $res = $attempt;
-                break 2;
-            }
-        }
+        // One real route: POST /admin/verification/{owner|lodge}/{id}
+        // (fastnet_backend routes/api.php). The old path matrix retried 404s
+        // against /verification/lodge/{id} — the HOST submission endpoint —
+        // which could re-submit a lodge instead of reporting "not found".
+        $endpoint = ($isLodge ? '/admin/verification/lodge/' : '/admin/verification/owner/') . $id;
+        $res = $this->apiClient->post($endpoint, $payload, $headers);
         $back = $isLodge ? '/admin/lodges' : '/admin/owners';
         if ($bounce = $this->bounceOnUnauth($res, $back)) return $bounce;
         if ($res === null) {
