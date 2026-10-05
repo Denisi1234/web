@@ -62,111 +62,30 @@ $this->assign('page_actions', '<span style="font-size:13px;color:var(--p-text-2)
           <?php if (empty($pid)): ?>
           <div style="font-size:11px;color:var(--p-text-2)">Record has no id — cannot verify.</div>
           <?php else: ?>
-          <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'verify', 'lodge', $pid], 'style' => 'display:inline', 'data-api' => 'POST /admin/verification/lodge/' . $pid, 'data-api-build' => 'verify', 'data-api-omit-empty' => 'reason', 'data-api-ok' => 'Lodge approved.', 'data-opt' => 'patch', 'data-opt-scope' => 'closest:div.p-card', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'lodge', 'data-opt-badgetext' => 'lower', 'data-opt-bust' => 'properties', 'data-api-go' => '/admin/cache-bust?scope=properties&go=' . urlencode('/admin/lodges')]) ?>
-            <?= $this->Form->hidden('status', ['value' => 'Active']) ?><button class="p-btn" style="min-height:36px;font-size:13px">Approve</button>
+          <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'verify', 'lodge', $pid], 'style' => 'display:inline']) ?>
+            <?= $this->Form->hidden('status', ['value' => 'Active']) ?>
+            <button type="submit" class="p-btn" style="min-height:36px;font-size:13px">Approve</button>
           <?= $this->Form->end() ?>
-          <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'verify', 'lodge', $pid], 'style' => 'display:inline', 'data-api' => 'POST /admin/verification/lodge/' . $pid, 'data-api-build' => 'verify', 'data-api-omit-empty' => 'reason', 'data-api-ok' => 'Lodge rejected.', 'data-opt' => 'patch', 'data-opt-scope' => 'closest:div.p-card', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'lodge', 'data-opt-badgetext' => 'lower', 'data-opt-bust' => 'properties', 'data-api-go' => '/admin/cache-bust?scope=properties&go=' . urlencode('/admin/lodges')]) ?>
-            <?= $this->Form->hidden('status', ['value' => 'rejected']) ?><input type="hidden" name="reason" value=""><button class="p-btn ghost" style="min-height:36px;font-size:13px" data-reason-prompt="Why is this lodge being rejected? The host will see this.">Reject</button>
-          <?= $this->Form->end() ?>
-          <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'verify', 'lodge', $pid], 'style' => 'display:inline', 'data-api' => 'POST /admin/verification/lodge/' . $pid, 'data-api-build' => 'verify', 'data-api-omit-empty' => 'reason', 'data-api-ok' => 'Changes requested.', 'data-opt' => 'patch', 'data-opt-scope' => 'closest:div.p-card', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'lodge', 'data-opt-badgetext' => 'lower', 'data-opt-bust' => 'properties', 'data-api-go' => '/admin/cache-bust?scope=properties&go=' . urlencode('/admin/lodges')]) ?>
-            <?= $this->Form->hidden('status', ['value' => 'changes_requested']) ?><input type="hidden" name="reason" value=""><button class="p-btn ghost" style="min-height:36px;font-size:13px" data-reason-prompt="What must the host change? The host will see this.">Request changes</button>
-          <?= $this->Form->end() ?>
+
+          <button type="button" class="p-btn ghost" style="min-height:36px;font-size:13px" onclick="var p=document.getElementById('reason-box-<?= h($pid) ?>'); if(p){p.hidden=!p.hidden; document.getElementById('status-<?= h($pid) ?>').value='rejected'; document.getElementById('label-<?= h($pid) ?>').innerText='Reason for rejection:';}">Reject</button>
+
+          <button type="button" class="p-btn ghost" style="min-height:36px;font-size:13px" onclick="var p=document.getElementById('reason-box-<?= h($pid) ?>'); if(p){p.hidden=!p.hidden; document.getElementById('status-<?= h($pid) ?>').value='changes_requested'; document.getElementById('label-<?= h($pid) ?>').innerText='What changes are requested?';}">Request changes</button>
           <?php endif; ?>
         </div>
-        <!-- Inline reason box. Rejecting or requesting changes without saying
-             why leaves a useless audit trail, so the reason is collected here
-             on the card — typed, visible, cancellable — instead of a native
-             prompt(). -->
-        <div class="p-reason" hidden style="padding:0 16px 16px">
-          <label style="font-size:12px;font-weight:600;color:var(--p-text-2)" class="p-reason-label">Reason for the host</label>
-          <textarea class="form-control p-reason-text" rows="2" maxlength="500" placeholder="Tell the host exactly what is wrong…" style="min-height:40px;font-size:13px"></textarea>
-          <div class="p-reason-err" style="font-size:12px;color:#b91c1c;margin-top:4px" hidden>A reason is required — the host needs to know what to fix.</div>
-          <div style="display:flex;gap:8px;margin-top:8px">
-            <button type="button" class="p-btn p-reason-go" style="min-height:36px;font-size:13px">Confirm</button>
-            <button type="button" class="p-btn ghost p-reason-cancel" style="min-height:36px;font-size:13px">Cancel</button>
-          </div>
+
+        <div id="reason-box-<?= h($pid) ?>" class="p-reason" hidden style="padding:0 16px 16px">
+          <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'verify', 'lodge', $pid]]) ?>
+            <input type="hidden" name="status" id="status-<?= h($pid) ?>" value="rejected">
+            <label style="font-size:12px;font-weight:600;color:var(--p-text-2)" id="label-<?= h($pid) ?>">Reason for the host</label>
+            <textarea name="reason" class="form-control" rows="2" maxlength="500" placeholder="Tell the host what needs to be changed..." required style="min-height:40px;font-size:13px;margin-bottom:8px"></textarea>
+            <div style="display:flex;gap:8px">
+              <button type="submit" class="p-btn" style="min-height:34px;font-size:13px">Submit Decision</button>
+              <button type="button" class="p-btn ghost" style="min-height:34px;font-size:13px" onclick="document.getElementById('reason-box-<?= h($pid) ?>').hidden=true">Cancel</button>
+            </div>
+          <?= $this->Form->end() ?>
         </div>
       </div>
     </div>
     <?php endforeach; ?>
   </div>
 <?php endif; ?>
-
-<script>
-// Review reasons: Reject / Request-changes must carry a typed reason for the
-// audit trail. The button click (capture, before the data-api submit handler)
-// opens the inline reason box on that card instead of submitting; Confirm fills
-// the hidden reason and submits through requestSubmit() so the normal
-// data-api flow — optimistic badge, toast, cache-bust — still runs.
-(function () {
-  var pendingForm = null;
-  var pendingBox = null;
-
-  function closeBox() {
-    if (pendingBox) pendingBox.hidden = true;
-    pendingForm = null;
-    pendingBox = null;
-  }
-
-  document.addEventListener('click', function (e) {
-    var btn = e.target && e.target.closest ? e.target.closest('[data-reason-prompt]') : null;
-
-    // Confirm inside an open reason box.
-    if (e.target && e.target.closest && e.target.closest('.p-reason-go')) {
-      var box = e.target.closest('.p-reason');
-      var text = box ? box.querySelector('.p-reason-text') : null;
-      var err = box ? box.querySelector('.p-reason-err') : null;
-      var value = text ? text.value.trim() : '';
-      if (value === '') {
-        if (err) err.hidden = false;
-        if (text) text.focus();
-        return;
-      }
-      if (pendingForm) {
-        var reason = pendingForm.querySelector('input[name="reason"]');
-        if (reason) reason.value = value;
-        var f = pendingForm;
-        closeBox();
-        f.requestSubmit();
-      }
-      return;
-    }
-
-    // Cancel inside an open reason box.
-    if (e.target && e.target.closest && e.target.closest('.p-reason-cancel')) {
-      closeBox();
-      return;
-    }
-
-    if (!btn) return;
-    var form = btn.closest('form');
-    if (!form) return;
-
-    // Hold the submission and ask for the reason first.
-    e.preventDefault();
-    e.stopPropagation();
-    closeBox();
-    var card = btn.closest('div.p-card');
-    var panel = card ? card.querySelector('.p-reason') : null;
-    if (!panel) {
-      form.requestSubmit();
-      return;
-    }
-    var label = panel.querySelector('.p-reason-label');
-    if (label) label.textContent = btn.getAttribute('data-reason-prompt') || 'Reason for the host';
-    var area = panel.querySelector('.p-reason-text');
-    var go = panel.querySelector('.p-reason-go');
-    if (area) {
-      area.value = '';
-      var errBox = panel.querySelector('.p-reason-err');
-      if (errBox) errBox.hidden = true;
-    }
-    if (go) go.textContent = btn.textContent.trim() || 'Confirm';
-    pendingForm = form;
-    pendingBox = panel;
-    panel.hidden = false;
-    if (area) area.focus();
-    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }, true);
-})();
-</script>
