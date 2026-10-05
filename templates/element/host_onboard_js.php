@@ -167,10 +167,12 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
       if (isFinite(la) && isFinite(ln) && (la !== DAR.lat || ln !== DAR.lng)) DAR = { lng: ln, lat: la };
     })();
 
+    var osmMap = null, osmMarker = null, useOsm = false;
     function setPoint(lng, lat) {
       latEl.value = (+lat).toFixed(6);
       lngEl.value = (+lng).toFixed(6);
-      if (marker) marker.setLngLat([lng, lat]);
+      if (marker) { try { marker.setLngLat([lng, lat]); } catch (e) {} }
+      if (osmMarker) { try { osmMarker.setLatLng([lat, lng]); } catch (e) {} }
     }
     function ctxVal(ctx, keys) {
       if (!ctx) return '';
@@ -186,7 +188,8 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
       var c = f.center || [];
       if (c.length === 2) {
         setPoint(c[0], c[1]);
-        if (map) map.flyTo({ center: c, zoom: 14 });
+        if (map) { try { map.flyTo({ center: c, zoom: 14 }); } catch (e) {} }
+        if (osmMap) { try { osmMap.setView([c[1], c[0]], 14); } catch (e) {} }
       }
       if (f.place_name) addrEl.value = f.place_name;
       var city = ctxVal(f.context, ['place']);
@@ -197,25 +200,67 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
       listEl.style.display = 'none';
     }
     function geoSearch(q, cb) {
-      if (!mbToken || q.length < 2) { cb([]); return; }
-      fetch('https://api.mapbox.com/geocoding/v5/mapbox.places/' + encodeURIComponent(q) + '.json?access_token=' + mbToken + '&country=tz&limit=5&types=address,place,locality,neighborhood,poi')
+      if (!q || q.length < 2) { cb([]); return; }
+      if (mbToken) {
+        fetch('https://api.mapbox.com/geocoding/v5/mapbox.places/' + encodeURIComponent(q) + '.json?access_token=' + mbToken + '&country=tz&limit=5&types=address,place,locality,neighborhood,poi')
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (j) { cb((j && j.features) || []); })
+          .catch(function () { osmGeoSearch(q, cb); });
+        return;
+      }
+      osmGeoSearch(q, cb);
+    }
+    // OpenStreetMap fallback — works on Contabo with zero Mapbox config.
+    function osmGeoSearch(q, cb) {
+      fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=tz&limit=5&addressdetails=1&q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json' } })
         .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (j) { cb((j && j.features) || []); })
+        .then(function (arr) {
+          (arr || []).forEach(function (p) {
+            // Normalize to the Mapbox feature shape the UI already consumes.
+            p.text = (p.display_name || '').split(',')[0];
+            p.place_name = p.display_name;
+            p.center = [parseFloat(p.lon), parseFloat(p.lat)];
+            var a = p.address || {};
+            p.context = [
+              { id: 'place', text: a.city || a.town || a.village || a.municipality || '' },
+              { id: 'neighborhood', text: a.suburb || a.neighbourhood || a.quarter || '' }
+            ];
+          });
+          cb(arr || []);
+        })
         .catch(function () { cb([]); });
     }
     function reverse(lng, lat) {
-      if (!mbToken) return;
-      fetch('https://api.mapbox.com/geocoding/v5/mapbox.places/' + lng + ',' + lat + '.json?access_token=' + mbToken + '&country=tz&limit=1&types=address,place,locality,neighborhood,poi')
+      if (mbToken) {
+        fetch('https://api.mapbox.com/geocoding/v5/mapbox.places/' + lng + ',' + lat + '.json?access_token=' + mbToken + '&country=tz&limit=1&types=address,place,locality,neighborhood,poi')
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (j) {
+            var f = j && j.features && j.features[0];
+            if (!f) { osmReverse(lng, lat); return; }
+            addrEl.value = f.place_name || addrEl.value;
+            var city = ctxVal(f.context, ['place']);
+            var area = ctxVal(f.context, ['neighborhood', 'locality']);
+            if (city) cityEl.value = city;
+            if (area) areaEl.value = area;
+            if (geoMsg) geoMsg.textContent = 'Pinned: ' + (f.text || 'location');
+          })
+          .catch(function () { osmReverse(lng, lat); });
+        return;
+      }
+      osmReverse(lng, lat);
+    }
+    function osmReverse(lng, lat) {
+      fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + encodeURIComponent(lat) + '&lon=' + encodeURIComponent(lng) + '&addressdetails=1', { headers: { 'Accept': 'application/json' } })
         .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (j) {
-          var f = j && j.features && j.features[0];
-          if (!f) return;
-          addrEl.value = f.place_name || addrEl.value;
-          var city = ctxVal(f.context, ['place']);
-          var area = ctxVal(f.context, ['neighborhood', 'locality']);
+        .then(function (p) {
+          if (!p) return;
+          if (p.display_name) addrEl.value = p.display_name;
+          var a = p.address || {};
+          var city = a.city || a.town || a.village || a.municipality || '';
+          var area = a.suburb || a.neighbourhood || a.quarter || '';
           if (city) cityEl.value = city;
           if (area) areaEl.value = area;
-          if (geoMsg) geoMsg.textContent = 'Pinned: ' + (f.text || 'location');
+          if (geoMsg) geoMsg.textContent = 'Pinned: ' + ((p.display_name || '').split(',')[0] || 'location');
         })
         .catch(function () {});
     }
@@ -248,14 +293,14 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
       el.addEventListener('input', function () {
         clearTimeout(fldDeb);
         fldDeb = setTimeout(function () {
-          if (!mbToken || !map || !marker) return;
           var q = [addrEl.value.trim(), areaEl.value.trim(), cityEl.value.trim()].filter(Boolean).join(', ');
           if (q.length < 3) return;
           geoSearch(q, function (feats) {
             var f = feats && feats[0];
             if (!f || !f.center) return;
             setPoint(f.center[0], f.center[1]);
-            try { map.easeTo({ center: f.center, zoom: Math.max(map.getZoom(), 13), duration: 600 }); } catch (e) {}
+            try { if (map) map.easeTo({ center: f.center, zoom: Math.max(map.getZoom(), 13), duration: 600 }); } catch (e) {}
+            try { if (osmMap) osmMap.setView([f.center[1], f.center[0]], Math.max(osmMap.getZoom(), 13)); } catch (e) {}
             if (geoMsg) geoMsg.textContent = 'Pinned: ' + (f.text || 'location');
           });
         }, 700);
@@ -264,6 +309,62 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
     function hideStatic() {
       var st = document.getElementById('obStatic');
       if (st && st.parentNode) st.parentNode.removeChild(st);
+    }
+    function loadLeaflet(cb) {
+      if (typeof window.L !== 'undefined' && window.L.map) { cb(true); return; }
+      var css = document.querySelector('link[data-leaflet]');
+      if (!css) {
+        css = document.createElement('link');
+        css.rel = 'stylesheet';
+        css.setAttribute('data-leaflet', '1');
+        css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(css);
+      }
+      var js = document.querySelector('script[data-leaflet]');
+      if (js) {
+        var tries = 0;
+        (function poll() {
+          if (typeof window.L !== 'undefined') { cb(true); return; }
+          if (++tries >= 40) { cb(false); return; }
+          setTimeout(poll, 100);
+        })();
+        return;
+      }
+      js = document.createElement('script');
+      js.setAttribute('data-leaflet', '1');
+      js.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      js.onload = function () { cb(true); };
+      js.onerror = function () { cb(false); };
+      document.head.appendChild(js);
+    }
+    function initOsmMap() {
+      // Real map with zero config: OSM tiles + draggable pin + Nominatim search.
+      mapEl.classList.add('loading');
+      loadLeaflet(function (ok) {
+        mapEl.classList.remove('loading');
+        if (!ok || typeof window.L === 'undefined') { unlockManual(); return; }
+        try {
+          hideStatic();
+          useOsm = true;
+          var lat = parseFloat(latEl.value) || DAR.lat;
+          var lng = parseFloat(lngEl.value) || DAR.lng;
+          osmMap = window.L.map('obMap').setView([lat, lng], 13);
+          window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(osmMap);
+          osmMarker = window.L.marker([lat, lng], { draggable: true }).addTo(osmMap);
+          osmMarker.on('dragend', function () {
+            var p = osmMarker.getLatLng();
+            setPoint(p.lng.toFixed(6), p.lat.toFixed(6));
+            reverse(p.lng.toFixed(6), p.lat.toFixed(6));
+          });
+          osmMap.on('click', function (e) {
+            setPoint(e.latlng.lng.toFixed(6), e.latlng.lat.toFixed(6));
+            osmMarker.setLatLng(e.latlng);
+            reverse(e.latlng.lng.toFixed(6), e.latlng.lat.toFixed(6));
+          });
+          setTimeout(function () { try { osmMap.invalidateSize(); } catch (e) {} }, 300);
+          if (geoMsg) geoMsg.textContent = 'Tap the map or drag the pin to set the location.';
+        } catch (e) { unlockManual(); }
+      });
     }
     function unlockManual() {
       mapEl.classList.remove('loading');
@@ -286,7 +387,7 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
       mapEl.classList.add('loading');
       var preStyle = (typeof window.MAPBOX_STYLE === 'string' && window.MAPBOX_STYLE) ? window.MAPBOX_STYLE : 'mapbox://styles/mapbox/streets-v12';
       waitForGL(function (ok) {
-        if (!ok) { unlockManual(); return; }
+        if (!ok) { initOsmMap(); return; }
         mapboxgl.accessToken = token;
         try {
           map = new mapboxgl.Map({ container: 'obMap', style: preStyle, center: [DAR.lng, DAR.lat], zoom: 12 });
@@ -314,6 +415,7 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
     }
     // Server inlines window.MAPBOX_TOKEN on step 2 — skip the extra
     // /api/map-config round trip and start the map immediately.
+    // No token (typical Contabo miss-config) → real OSM map, not a dead box.
     (function bootMap() {
       var pre = (typeof window.MAPBOX_TOKEN === 'string' && window.MAPBOX_TOKEN.indexOf('pk.') === 0) ? window.MAPBOX_TOKEN : '';
       if (pre) { initMap(pre); return; }
@@ -322,9 +424,9 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
         .then(function (j) {
           var t = j && (j.mapbox_token || j.mapboxToken || j.token);
           if (t && t.indexOf('pk.') === 0) initMap(t);
-          else unlockManual();
+          else initOsmMap();
         })
-        .catch(unlockManual);
+        .catch(initOsmMap);
     })();
     if (geoBtn) {
       geoBtn.addEventListener('click', function () {
@@ -333,7 +435,8 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
         navigator.geolocation.getCurrentPosition(function (pos) {
           var lng = +pos.coords.longitude.toFixed(6), lat = +pos.coords.latitude.toFixed(6);
           setPoint(lng, lat);
-          if (map) map.flyTo({ center: [lng, lat], zoom: 14 });
+          if (map) { try { map.flyTo({ center: [lng, lat], zoom: 14 }); } catch (e) {} }
+          if (osmMap) { try { osmMap.setView([lat, lng], 14); } catch (e) {} }
           reverse(lng, lat);
           if (geoMsg) geoMsg.textContent = 'Pinned to your location.';
         }, function () {

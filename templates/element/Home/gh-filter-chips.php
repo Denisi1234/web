@@ -83,24 +83,42 @@ $toggleAmen = function(string $key) use ($buildUrl, $amenList): string {
 .fns-chip-rating .star{color:#F59E0B;font-size:12px;}
 .fns-chip-rating.active .star{color:#fff;}
 @media(max-width:991px){
-  /* Single sticky bar on mobile: sits BELOW search bar (header 64px + search bar ~52px = 116px) */
-  .fns-chips-wrap{top:116px;padding:0 16px 0;background:#fff;}
+  /* Google-Hotels mobile filter bar (screenshot parity) — sits below stacked search */
+  .fns-chips-wrap{top:auto !important;position:static !important;padding:0 12px;background:#fff;border-bottom:none;}
   .fns-chips-wrap .container-fluid{padding-left:0 !important;padding-right:0 !important;}
-  .fns-chip{padding:10px 14px;font-size:13.5px;min-height:44px;height:44px;gap:8px;scroll-snap-align:start;}
-  .fns-chip i{font-size:12px !important;}
-  .fns-chips-row{padding:10px 16px 12px 0;gap:8px;scroll-snap-type:x proximity;scroll-padding-left:16px;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;overscroll-behavior-x:contain;}
+  .fns-chips-wrap .cds-toggle-track{display:none !important;}
+  .fns-chips-row{padding:2px 4px 12px 4px;gap:10px;scroll-snap-type:x proximity;scroll-padding-left:12px;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;overscroll-behavior-x:contain;}
+  .fns-chip{height:46px;min-height:46px;padding:0 16px;border:1px solid #dadce0;border-radius:12px;background:#fff;color:#202124;font-family:Roboto,'Google Sans',Arial,sans-serif;font-size:15px;font-weight:400;gap:10px;scroll-snap-align:start;box-shadow:none;}
+  .fns-chip:hover{background:#f8f9fa;border-color:#dadce0;box-shadow:none;}
+  .fns-chip.active{border-color:#1a73e8;background:#e8f0fe;color:#1a73e8;box-shadow:none;}
+  .fns-chip i{font-size:17px !important;color:#202124;}
+  .fns-chip.active i{color:#1a73e8;}
+  .fns-chip .fns-caret{font-size:11px !important;color:#5f6368 !important;margin-left:2px;}
+  .fns-chip-filters{background:transparent !important;border:none !important;color:#1a73e8 !important;font-weight:500;font-size:16px;padding:0 8px 0 4px !important;height:46px;box-shadow:none !important;}
+  .fns-chip-filters svg{stroke:#1a73e8;}
+  .fns-chip-filters .badge{background:#1a73e8;color:#fff;}
+  .fns-chip-filters.active{background:transparent !important;border:none !important;color:#1a73e8 !important;}
+  .fns-chip-filters.active .badge{background:#1a73e8;color:#fff;}
+  .fns-chip-rating .star{color:#202124;font-size:16px;}
+  .fns-chip-rating.active .star{color:#1a73e8;}
+  .fns-chip .fns-chip-long{display:none !important;}
+  .fns-chip .fns-chip-short{display:inline !important;}
   .fns-price-pop{position:fixed !important;left:12px !important;right:12px !important;top:auto !important;bottom:calc(12px + env(safe-area-inset-bottom)) !important;width:auto !important;max-width:none !important;border-radius:20px;max-height:82vh;max-height:82dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
   .fns-scroll-btn{display:none !important;}
-  .fns-chips-outer::after{right:0 !important;}
+  .fns-chips-outer::before,.fns-chips-outer::after{display:none !important;}
+  /* Screenshot parity: only All filters / Price / Offers / Guest rating on mobile */
+  .fns-chip[data-filter="property_type"],.fns-chip[data-filter="free_cancellation"],.fns-chip[data-filter="amenities"]{display:none !important;}
+  .fns-chip[data-filter="offers"]{display:inline-flex !important;}
+}
+@media(min-width:992px){
+  .fns-chip .fns-chip-short{display:none !important;}
+  .fns-chip[data-filter="offers"]{display:none !important;}
 }
 @media(max-width:575px){
-  /* Header shrinks to 58px + search bar ~52px = chips at 110px */
-  .fns-chips-wrap{top:110px !important;}
+  .fns-chips-wrap{top:auto !important;position:static !important;}
 }
-/* Mobile UX: short bar — Hotel, Apartment, Safari Lodge, 4.0+, Free-cancel,
-   Free Wi-Fi. Pool + Breakfast stay one tap away in All filters. */
-@media(max-width:767px){
-  .fns-chip[data-filter="amenities"]:not([data-value="Wi-Fi"]){display:none !important;}
+@media(max-width:380px){
+  .fns-chip{padding:0 12px;font-size:14px;min-height:44px;height:44px;}
 }
 @media(max-width:380px){
   .fns-chip{padding:9px 12px;font-size:12.5px;min-height:38px;}
@@ -122,16 +140,20 @@ $toggleAmen = function(string $key) use ($buildUrl, $amenList): string {
 
         <!-- All Filters -->
         <button type="button" class="fns-chip fns-chip-filters <?= $hasFilters ? 'active' : '' ?>" data-bs-toggle="modal" data-bs-target="#fnsFiltersModal" aria-haspopup="dialog" aria-expanded="false">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="7" x2="20" y2="7"/><circle cx="9" cy="7" r="2.2" fill="#fff"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="15" cy="17" r="2.2" fill="#fff"/></svg>
           All filters<?php if($filterCount>0): ?><span class="badge"><?= $filterCount ?></span><?php endif; ?>
         </button>
 
         <!-- Price Range -->
         <div style="position:relative;flex-shrink:0;" id="fns_price_anchor">
           <button type="button" class="fns-chip <?= ($priceMin!==''||$priceMax!=='')?'active':'' ?>" id="fns_price_chip" aria-haspopup="dialog" aria-expanded="false" aria-controls="fns_price_pop" onclick="fnsTogglePrice(event)">
-            <i class="fa-solid fa-tag" style="font-size:11px;"></i>
-            <?= ($priceMin!==''||$priceMax!=='') ? 'TZS '.($priceMin!==''?number_format((int)$priceMin):'0').' – '.($priceMax!==''?number_format((int)$priceMax):'Any') : 'Price Range' ?>
-            <i class="fa-solid fa-chevron-down" style="font-size:9px;color:currentColor;"></i>
+            <i class="fa-solid fa-money-bill-wave"></i>
+            <?php if($priceMin!==''||$priceMax!==''): ?>
+              <?= 'TZS '.($priceMin!==''?number_format((int)$priceMin):'0').' – '.($priceMax!==''?number_format((int)$priceMax):'Any') ?>
+            <?php else: ?>
+              <span class="fns-chip-long">Price Range</span><span class="fns-chip-short" style="display:none;">Price</span>
+            <?php endif; ?>
+            <i class="fa-solid fa-caret-down fns-caret"></i>
           </button>
           <div class="fns-price-pop" id="fns_price_pop" role="dialog" aria-label="Price range" onclick="event.stopPropagation()">
             <div style="font-size:13px;font-weight:700;color:#1F2937;font-family:'Inter',Roboto,sans-serif;margin-bottom:4px;">Price per night</div>
@@ -162,9 +184,14 @@ $toggleAmen = function(string $key) use ($buildUrl, $amenList): string {
           <?php endforeach; ?>
         </div>
 
+        <!-- Offers — mobile parity (opens All filters); desktop hidden via CSS -->
+        <button type="button" class="fns-chip" data-filter="offers" data-bs-toggle="modal" data-bs-target="#fnsFiltersModal" aria-haspopup="dialog">
+          <i class="fa-solid fa-tag"></i> Offers <i class="fa-solid fa-caret-down fns-caret"></i>
+        </button>
+
         <!-- Guest Rating — one popular threshold; rest in All filters -->
         <a href="<?= h($buildUrl(['rating'=> $ratingSel==='4.0' ? '' : '4.0'])) ?>" class="fns-chip fns-chip-rating <?= $ratingSel==='4.0'?'active':'' ?>" aria-pressed="<?= $ratingSel==='4.0'?'true':'false' ?>" data-filter="rating" data-value="4.0">
-          <span class="star">★</span> 4.0+ Very Good
+          <span class="star">★</span> <span class="fns-chip-long">4.0+ Very Good</span><span class="fns-chip-short" style="display:none;">Guest rating</span> <i class="fa-solid fa-caret-down fns-caret d-lg-none"></i>
         </a>
 
         <!-- Free Cancellation toggle chip -->

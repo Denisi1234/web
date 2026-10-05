@@ -176,34 +176,13 @@
         },
 
         /**
-         * Full-Screen App Loading Modal (heavy ops only)
-         * @param {Object|string} options - { title, subtext, lockScroll } or title string
+         * Full-Screen modal — DELETED. Bar-only alias (professional, instant).
+         * Never locks scroll or shows a veil; heavy ops use bar + skeletons.
+         * @param {Object|string} options - ignored, kept for call-site compat
          */
         show: function (options) {
-            const els = getElements();
-            if (!els.modal) return;
-
-            let title   = 'Loading...';
-            let subtext = 'Please wait a moment';
-
-            if (typeof options === 'string') {
-                title = options;
-            } else if (typeof options === 'object' && options !== null) {
-                if (options.title   || options.message)  title   = options.title   || options.message;
-                if (options.subtext || options.subtitle) subtext = options.subtext || options.subtitle;
-            }
-
-            if (els.modalTitle) els.modalTitle.textContent = title;
-            if (els.modalSub)   els.modalSub.textContent   = subtext;
-
-            els.modal.classList.add('visible');
-            els.modal.setAttribute('aria-hidden', 'false');
             isLoaderVisible = true;
             this.bar.start();
-
-            if (options && options.lockScroll !== false) {
-                document.body.style.overflow = 'hidden';
-            }
         },
 
         /**
@@ -226,11 +205,6 @@
             if (typeof navHide === 'function') navHide();
             var nav = document.getElementById('fastnet-nav-loader');
             if (nav) { nav.classList.remove('visible'); nav.setAttribute('aria-hidden', 'true'); }
-            const els = getElements();
-            if (els.modal) {
-                els.modal.classList.remove('visible');
-                els.modal.setAttribute('aria-hidden', 'true');
-            }
             document.body.style.overflow = '';
             isLoaderVisible = false;
             this.bar.done();
@@ -411,13 +385,13 @@
         if (!managedZone(form)) navSchedule();
 
         // Safety net for native submits cancelled late (e.g. validation that
-        // preventDefaults after an async check): release the bar + pill.
+        // preventDefaults after an async check): release the bar instantly.
         setTimeout(function () {
             if (e.defaultPrevented) {
                 FastnetLoader.bar.done();
                 navHide();
             }
-        }, 800);
+        }, 200);
     });
 
 })(window, document);

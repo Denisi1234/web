@@ -28,7 +28,11 @@ return [
      *   You should treat it as extremely sensitive data.
      */
     'Security' => [
-        'salt' => env('SECURITY_SALT'),
+        // SECURITY_SALT env wins when set. Otherwise the placeholder below
+        // is replaced with a random key by `composer install` (Installer::
+        // setSecuritySalt), so a fresh deployment boots exactly like local
+        // instead of throwing on every request.
+        'salt' => env('SECURITY_SALT', '__SALT__'),
     ],
 
     /*

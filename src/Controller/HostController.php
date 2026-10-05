@@ -447,6 +447,9 @@ class HostController extends AppController
             'address' => trim((string)($data['address'] ?? '')),
             'city' => $city,
             'area' => $area,
+            // Step-1 type (Lodge/Hotel/Apartment) was previously dropped here,
+            // so every property saved without a type. Map to the backend enum.
+            'property_type' => self::mapPropertyType($data['type'] ?? $data['property_type'] ?? ''),
             'price_per_night' => (float)($data['price_per_night'] ?? 0),
             'latitude' => is_numeric($data['latitude'] ?? null) ? (float)$data['latitude'] : -6.7924,
             'longitude' => is_numeric($data['longitude'] ?? null) ? (float)$data['longitude'] : 39.2083,
@@ -455,6 +458,23 @@ class HostController extends AppController
             // comma-separated string, so the free-text field works directly.
             'amenities' => $this->amenityList($data['property_amenities'] ?? []),
         ];
+    }
+
+    /**
+     * Map the onboarding step-1 type to the backend property_type enum
+     * (Hotel, Resort, Apartment, Safari Lodge, Villa).
+     */
+    public static function mapPropertyType(mixed $raw): string
+    {
+        $t = strtolower(trim((string)$raw));
+        return match (true) {
+            $t === 'hotel' => 'Hotel',
+            $t === 'resort' => 'Resort',
+            $t === 'apartment' => 'Apartment',
+            $t === 'villa' => 'Villa',
+            $t === 'safari lodge', $t === 'lodge', $t === 'safari' => 'Safari Lodge',
+            default => 'Safari Lodge',
+        };
     }
 
     private function propertyErrorMessage(?array $res): string
@@ -1247,42 +1267,65 @@ class HostController extends AppController
                 $this->set(compact('userProfile', 'draft', 'step'));
                 return $this->render('/Pages/host-onboarding');
             }
-            $pid = (int)(($res['id'] ?? $res['data']['id'] ?? 0));
-            $roomFails = [];
-            $roomUnauth = false;
-            
-            if ($pid > 0) {
-                $multiRequests = [];
-                foreach ((array)($draft['rooms'] ?? []) as $i => $rm) {
-                    $multiRequests[$i] = ['endpoint' => '/properties/' . $pid . '/rooms', 'data' => $rm];
+            $pid = (int)($res['id'] ?? $res['data']['id'] ?? $res['property']['id'] ?? $res['data']['property']['id'] ?? 0);
+            if ($pid <= 0) {
+                // Backend said OK but returned no id — never claim success.
+                try {
+                    \Cake\Log\Log::error(sprintf('[Host onboarding] POST /properties ok but no id: %s', json_encode($res)));
+                } catch (\Throwable $e) {
                 }
-                if (!empty($multiRequests)) {
-                    $multiResults = $this->apiClient->postMulti($multiRequests, $headers);
-                    foreach ($multiResults as $i => $rRes) {
-                        if (is_array($rRes) && (int)($rRes['_status'] ?? 0) === 401) { $roomUnauth = true; }
-                        if (empty($rRes) || (!empty($rRes['_status']) && (int)$rRes['_status'] >= 400)) {
-                            // Extract original room number to report failure
-                            $rm = $multiRequests[$i]['data'];
-                            $roomFails[] = (string)($rm['room_number'] ?? '?');
+                $this->Flash->error(__($this->propertyErrorMessage($res) ?: 'Could not create listing. Please try again.'));
+                $step = 5;
+                $session->write('OnboardDraft', $draft);
+                $this->set(compact('userProfile', 'draft', 'step'));
+                return $this->render('/Pages/host-onboarding');
+            }
+            $roomFails = [];
+            $roomFailMsg = '';
+            $roomUnauth = false;
+
+            $multiRequests = [];
+            foreach ((array)($draft['rooms'] ?? []) as $i => $rm) {
+                $multiRequests[$i] = ['endpoint' => '/properties/' . $pid . '/rooms', 'data' => $rm];
+            }
+            if (!empty($multiRequests)) {
+                $multiResults = $this->apiClient->postMulti($multiRequests, $headers);
+                foreach ($multiResults as $i => $rRes) {
+                    if (is_array($rRes) && (int)($rRes['_status'] ?? 0) === 401) { $roomUnauth = true; }
+                    if (empty($rRes) || (!empty($rRes['_status']) && (int)$rRes['_status'] >= 400)) {
+                        // Extract original room number to report failure
+                        $rm = $multiRequests[$i]['data'];
+                        $roomFails[] = (string)($rm['room_number'] ?? '?');
+                        if ($roomFailMsg === '') {
+                            $roomFailMsg = is_array($rRes) ? (string)($rRes['message'] ?? '') : 'room service unavailable';
+                            try {
+                                \Cake\Log\Log::error(sprintf('[Host onboarding] POST /properties/%d/rooms failed for room %s: %s', $pid, (string)($rm['room_number'] ?? '?'), json_encode($rRes)));
+                            } catch (\Throwable $e) {
+                            }
                         }
                     }
                 }
             }
-            
+
             if ($roomUnauth) {
                 // Lodge exists — rooms can be added after re-login; keep no stale draft
                 $session->delete('OnboardDraft');
                 $this->Flash->error(__('Session expired — please sign in again to add rooms.'));
                 return $this->redirect('/login?redirect=' . urlencode('/host/rooms/add?property_id=' . $pid));
             }
-            if ($pid > 0) $this->submitLodgeVerification($pid, $headers);
+            $this->submitLodgeVerification($pid, $headers);
             $this->clearHostPropertiesCache();
             $session->delete('OnboardDraft');
             $nRooms = count((array)($draft['rooms'] ?? [])) - count($roomFails);
             if (!empty($roomFails)) {
-                $this->Flash->error(__('Rooms not created ({0}) — numbers may already exist. Add them under Rooms.', implode(', ', $roomFails)));
+                $detail = $roomFailMsg !== '' ? ' (' . mb_substr($roomFailMsg, 0, 120) . ')' : ' — numbers may already exist';
+                $this->Flash->error(__('Rooms not created ({0}){1}. Add them under Rooms.', implode(', ', $roomFails), $detail));
             }
-            $this->Flash->success(__('Property onboarded with {0} room(s) and submitted for verification.', $nRooms));
+            if ($nRooms > 0) {
+                $this->Flash->success(__('Property onboarded with {0} room(s) and submitted for verification.', $nRooms));
+            } else {
+                $this->Flash->success(__('Property created — add rooms under Rooms. It was submitted for verification.'));
+            }
             return $this->redirect(['action' => 'rooms']);
         }
 
@@ -1412,31 +1455,71 @@ class HostController extends AppController
         $this->autoRender = false;
         $headers = $this->hostHeaders();
         $file = $this->getRequest()->getUploadedFile('file');
-        if ($file === null || $file->getError() !== UPLOAD_ERR_OK || !$file->isValid()) {
+        if ($file === null || !$file->isValid()) {
+            $code = $file ? $file->getError() : UPLOAD_ERR_NO_FILE;
+            $msg = match ($code) {
+                UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'Photo is too large (max 10 MB).',
+                UPLOAD_ERR_PARTIAL => 'Upload was interrupted — please try again.',
+                UPLOAD_ERR_NO_FILE => 'No photo selected.',
+                default => 'No valid file uploaded.',
+            };
             return $this->response
                 ->withType('application/json')
                 ->withStatus(400)
-                ->withStringBody((string)json_encode(['message' => 'No valid file uploaded.']));
+                ->withStringBody((string)json_encode(['ok' => false, 'message' => $msg]));
+        }
+        // Match the wizard JS (10 MB) so Contabo php.ini slips give a clear message, not a silent fail.
+        if ($file->getSize() > 10 * 1024 * 1024) {
+            return $this->response
+                ->withType('application/json')
+                ->withStatus(400)
+                ->withStringBody((string)json_encode(['ok' => false, 'message' => 'Photo is too large (max 10 MB).']));
+        }
+        $mime = $file->getClientMediaType() ?: 'image/jpeg';
+        if (!str_starts_with($mime, 'image/')) {
+            return $this->response
+                ->withType('application/json')
+                ->withStatus(400)
+                ->withStringBody((string)json_encode(['ok' => false, 'message' => 'Only image files please.']));
         }
         $tmp = $file->getStream()->getMetadata('uri');
         if (!is_string($tmp) || !is_readable($tmp)) {
             return $this->response
                 ->withType('application/json')
                 ->withStatus(400)
-                ->withStringBody((string)json_encode(['message' => 'Could not read uploaded file.']));
+                ->withStringBody((string)json_encode(['ok' => false, 'message' => 'Could not read uploaded file.']));
         }
         $res = $this->apiClient->uploadFile(
             '/upload',
             'file',
             $tmp,
             $file->getClientOriginalName(),
-            $file->getClientMediaType() ?: 'image/jpeg',
-            $headers
+            $mime,
+            $headers,
+            30
         );
-        $status = (!empty($res['_status']) && (int)$res['_status'] >= 400) ? (int)$res['_status'] : 200;
+        if ($res === null || (!empty($res['_status']) && (int)$res['_status'] >= 400)) {
+            try {
+                \Cake\Log\Log::error(sprintf(
+                    '[Host upload] backend %s -> %s for %s (%s, %d bytes)',
+                    $this->apiClient->getBaseUrl() . '/upload',
+                    (string)($res['_status'] ?? 'no-response'),
+                    $file->getClientOriginalName(),
+                    $mime,
+                    (int)$file->getSize()
+                ));
+            } catch (\Throwable $e) {
+            }
+            $status = (!empty($res['_status']) && (int)$res['_status'] >= 400) ? (int)$res['_status'] : 502;
+            $msg = (string)($res['message'] ?? 'Upload service unavailable. Check BACKEND_API_URL and try again.');
+            return $this->response
+                ->withType('application/json')
+                ->withStatus($status)
+                ->withStringBody((string)json_encode(['ok' => false, 'message' => $msg]));
+        }
         return $this->response
             ->withType('application/json')
-            ->withStatus($status)
+            ->withStatus(200)
             ->withStringBody((string)json_encode($res));
     }
 }

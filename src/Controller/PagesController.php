@@ -147,22 +147,21 @@ class PagesController extends AppController
         };
         $checkIn = $parseDate(is_string($rawCheckIn) ? $rawCheckIn : null);
         if (!$checkIn || $checkIn < $today) {
-            if ($checkIn && $checkIn < $today) $searchErrors[] = 'Check-in was in the past — moved to ' . $today->modify('+7 days')->format('M j, Y') . '.';
+            // Silent auto-correction: no "moved" notice on first open or stale URLs.
             $checkIn = $today->modify('+7 days');
         }
         $checkOut = $parseDate(is_string($rawCheckOut) ? $rawCheckOut : null);
         if (!$checkOut || $checkOut <= $checkIn) {
-            if ($rawCheckOut && $checkOut && $checkOut <= $checkIn) $searchErrors[] = 'Check-out must be after check-in — set to 1 night after check-in.';
             $checkOut = $checkIn->modify('+1 day');
         }
 
         // Guests — spec: adults 1-10, children 0-6, rooms 1-5
         $adults   = max(1, min(10, (int)($input['adults']   ?? 2)));
         $childrenRaw = (int)($input['children'] ?? 0);
-        if ($childrenRaw > 6) { $searchErrors[] = 'Children capped at 6.'; $childrenRaw = 6; }
+        if ($childrenRaw > 6) { $childrenRaw = 6; }
         $children = max(0, min(6, $childrenRaw));
         $roomsRaw = (int)($input['rooms']    ?? 1);
-        if ($roomsRaw > 5) { $searchErrors[] = 'Rooms capped at 5.'; $roomsRaw = 5; }
+        if ($roomsRaw > 5) { $roomsRaw = 5; }
         $rooms    = max(1, min(5, $roomsRaw));
 
         // Filters — dedupe, remove empty to keep URL clean
@@ -182,7 +181,6 @@ class PagesController extends AppController
         $maxPrice = $rawMax ?? '';
         // validate price range
         if ($minPrice !== '' && $maxPrice !== '' && (float)$minPrice > (float)$maxPrice) {
-            $searchErrors[] = 'Min price cannot exceed max price — swapped.';
             [$minPrice, $maxPrice] = [$maxPrice, $minPrice];
         }
         $selectedRating = $input['rating']           ?? '';

@@ -86,9 +86,14 @@ class FastnetApiClient
      * @param string $filename   original client filename
      * @param string $mimeType   content type for the part
      */
-    public function uploadFile(string $endpoint, string $field, string $path, string $filename, string $mimeType, array $headers = [], ?int $timeout = null): ?array
+    public function uploadFile(string $endpoint, string $field, string $path, string $filename, string $mimeType, array $headers = [], ?int $timeout = 30): ?array
     {
         if (!is_readable($path)) {
+            return ['_status' => 400, 'message' => 'Upload file could not be read.'];
+        }
+
+        $contents = @file_get_contents($path);
+        if ($contents === false) {
             return ['_status' => 400, 'message' => 'Upload file could not be read.'];
         }
 
@@ -99,15 +104,19 @@ class FastnetApiClient
         $body = "--{$boundary}\r\n"
             . "Content-Disposition: form-data; name=\"{$field}\"; filename=\"{$safeName}\"\r\n"
             . "Content-Type: {$safeMime}\r\n\r\n"
-            . file_get_contents($path) . "\r\n"
+            . $contents . "\r\n"
             . "--{$boundary}--\r\n";
+        unset($contents);
 
         $url = $this->baseUrl . '/' . ltrim($endpoint, '/');
 
+        // Picture uploads on slow production links need longer than the 10s
+        // default API timeout — 30s unless the caller overrides.
         $http = $this->http;
-        if ($timeout !== null && $timeout !== $this->timeout) {
+        $effTimeout = $timeout ?? 30;
+        if ($effTimeout !== $this->timeout) {
             $http = new Client([
-                'timeout' => $timeout,
+                'timeout' => $effTimeout,
                 'headers' => [
                     'Accept'     => 'application/json',
                     'User-Agent' => 'FastNetStays/1.0 (CakePHP 5; fastnetstays.com)'
@@ -133,54 +142,80 @@ class FastnetApiClient
 
             if (is_array($json)) {
                 $json['_status'] = $status;
+                if ($status >= 400) {
+                    Log::error(sprintf('[FastnetApiClient] upload %s -> %d: %s', $url, $status, (string)($json['message'] ?? 'no message')));
+                }
                 return $json;
             }
 
+            Log::error(sprintf('[FastnetApiClient] upload %s -> %d (non-JSON)', $url, $status));
             return ['_status' => $status, 'message' => 'Upload failed.'];
         } catch (\Throwable $e) {
-            return ['_status' => 502, 'message' => 'Upload service unavailable.'];
+            Log::error(sprintf('[FastnetApiClient] upload %s failed: %s', $url, $e->getMessage()));
+            return ['_status' => 502, 'message' => 'Upload service unavailable. Check BACKEND_API_URL and try again.'];
         }
     }
 
     /**
      * Perform concurrent POST requests to prevent PHP worker blocking on loops.
      */
-    public function postMulti(array $requests, array $headers = []): array
+    public function postMulti(array $requests, array $headers = [], int $timeout = 15): array
     {
         $mh = curl_multi_init();
         $chList = [];
+        $urlList = [];
         foreach ($requests as $i => $req) {
-            $ch = curl_init($this->baseUrl . '/' . ltrim($req['endpoint'], '/'));
+            $url = $this->baseUrl . '/' . ltrim($req['endpoint'], '/');
+            $urlList[$i] = $url;
+            $ch = curl_init($url);
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($req['data'] ?? []));
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 6);
-            
+            curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+
             $reqHeaders = array_merge(['Accept: application/json', 'Content-Type: application/json'], $headers);
             $flatHeaders = [];
             foreach ($reqHeaders as $k => $v) {
                 $flatHeaders[] = is_int($k) ? $v : "$k: $v";
             }
             curl_setopt($ch, CURLOPT_HTTPHEADER, $flatHeaders);
-            
+
             curl_multi_add_handle($mh, $ch);
             $chList[$i] = $ch;
         }
-        
+
         $active = null;
-        do { curl_multi_exec($mh, $active); } while ($active);
-        
+        do {
+            $mrc = curl_multi_exec($mh, $active);
+            if ($active) curl_multi_select($mh, 1);
+        } while ($active && $mrc === CURLM_OK);
+
         $results = [];
         foreach ($chList as $i => $ch) {
-            $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $json = json_decode((string)curl_multi_getcontent($ch), true);
+            $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlErr = curl_error($ch);
+            $raw = (string)curl_multi_getcontent($ch);
+            $json = json_decode($raw, true);
             curl_multi_remove_handle($mh, $ch);
             curl_close($ch);
-            if (is_array($json) && $status >= 400) $json['_status'] = $status;
+            if ($curlErr !== '') {
+                Log::error(sprintf('[FastnetApiClient] postMulti %s transport error: %s', $urlList[$i] ?? '?', $curlErr));
+                $results[$i] = ['_status' => 502, 'message' => 'Room service unavailable.'];
+                continue;
+            }
+            if (!is_array($json)) {
+                Log::error(sprintf('[FastnetApiClient] postMulti %s -> %d (non-JSON)', $urlList[$i] ?? '?', $status));
+                $results[$i] = ['_status' => $status ?: 502, 'message' => 'Room service returned an invalid response.'];
+                continue;
+            }
+            if ($status >= 400) {
+                $json['_status'] = $status;
+                Log::error(sprintf('[FastnetApiClient] postMulti %s -> %d: %s', $urlList[$i] ?? '?', $status, (string)($json['message'] ?? substr($raw, 0, 200))));
+            }
             $results[$i] = $json;
         }
         curl_multi_close($mh);
-        
+
         $this->clearPropertiesCache();
         return $results;
     }

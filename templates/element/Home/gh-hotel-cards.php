@@ -460,7 +460,7 @@ window.ghSlide = function(propId, dir){ var cur = window._ghSlideIdx[propId] || 
   // during AJAX transitions (fastnet:shimmer-show from FastNetState.hydrate).
   // fail-safe: hide after 8s if network hangs
   var t=null;
-  window.addEventListener('fastnet:shimmer-show', function(){ clearTimeout(t); show(); t=setTimeout(hide,8000); });
+  window.addEventListener('fastnet:shimmer-show', function(){ clearTimeout(t); show(); t=setTimeout(hide,4000); });
   window.addEventListener('fastnet:shimmer-hide', function(){ clearTimeout(t); hide(); });
   // hook FastNetState hydrate
   var w=0;

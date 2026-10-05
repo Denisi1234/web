@@ -108,7 +108,13 @@ return [
             if (filter_var(env('DEBUG', true), FILTER_VALIDATE_BOOLEAN)) {
                 return 'dev-insecure-salt-' . bin2hex(random_bytes(16));
             }
-            throw new \RuntimeException('SECURITY_SALT environment variable is required — generate with `bin/cake security get_salt` and set in .env / app_local.php. No default is shipped for production.');
+            // Deploy parity: never white-screen production for a missing salt
+            // (the classic "works local, 500 on Contabo"). Boot with an
+            // ephemeral key so `bin/cake deploy:check` can run and report the
+            // exact fix; sessions/cookies reset on restart until a real salt
+            // is set via SECURITY_SALT env or `composer install`.
+            error_log('[FastNet] SECURITY_SALT missing — booting with ephemeral key. Set SECURITY_SALT env or run `composer install` to bake a salt into config/app_local.php.');
+            return 'ephemeral-' . bin2hex(random_bytes(32));
         })(),
     ],
 

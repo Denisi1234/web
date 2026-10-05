@@ -79,23 +79,6 @@ echo '<script type="application/ld+json">' . $hotelListJson . '</script>';
                 <section class="gh-left-scroll" aria-label="Stays list" aria-live="polite" aria-busy="false" id="gh_results_section">
                     <h1 class="sr-only">Hotels in <?= h($seoCity !== '' ? $seoCity : 'Tanzania') ?> — book direct on FastNet Stays</h1>
 
-                    <!-- Search warnings / notices (hardened) — auto-dismiss to avoid blocking results -->
-                    <?php if (!empty($searchErrors)): ?>
-                        <div class="alert alert-warning d-flex align-items-start gap-2 mb-3 rounded-3" role="alert" style="font-size:13.5px;position:relative;" id="fns_search_alert">
-                            <i class="fa-solid fa-circle-info mt-1 flex-shrink-0"></i>
-                            <div style="flex:1;">
-                                <strong>Search updated</strong>
-                                <ul class="mb-0 ps-3 mt-1">
-                                    <?php foreach ($searchErrors as $err): ?>
-                                        <li><?= h($err) ?></li>
-                                    <?php endforeach; ?>
-                                </ul>
-                            </div>
-                            <button type="button" class="btn-close" style="font-size:11px;flex-shrink:0;" aria-label="Dismiss" onclick="this.closest('#fns_search_alert').style.display='none'"></button>
-                        </div>
-                        <script>try{setTimeout(function(){var el=document.getElementById('fns_search_alert'); if(el) el.style.display='none';}, 6000);}catch(e){}</script>
-                    <?php endif; ?>
-
                     <?= $this->element('Home/gh-results-header') ?>
 
                     <div id="gh_cards_live" aria-live="polite">

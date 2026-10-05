@@ -21,17 +21,17 @@
 .fn-skeleton,
 .fn-skeleton > .fn-skeleton-line,
 .fn-skeleton-line {
-    background-color: #e8eaed;
+    background-color: #eef0f3;
     background-image: linear-gradient(
         90deg,
-        #e8eaed 0%,
-        #f6f8fa 50%,
-        #e8eaed 100%
+        #eef0f3 0%,
+        #f8fafc 50%,
+        #eef0f3 100%
     );
     background-size: 200% 100%;
     background-repeat: no-repeat;
     border-radius: 8px;
-    animation: fns-shimmer-wave 1.25s linear infinite;
+    animation: fns-shimmer-wave 0.9s linear infinite;
     will-change: background-position;
 }
 

@@ -101,30 +101,25 @@
   left: 0;
   z-index: 999999;
   width: 0%;
-  height: 3px;
+  height: 2px;
   pointer-events: none;
   opacity: 0;
-  background: linear-gradient(
-    90deg,
-    var(--fn-brand) 0%,
-    var(--fn-brand-ink) 100%
-  );
-  box-shadow: 0 0 6px rgba(15, 98, 254, 0.45);
+  background: var(--fn-brand);
   will-change: width, opacity;
   transform: translateZ(0);
   transition:
-    width var(--fn-dur-base) var(--fn-ease),
-    opacity var(--fn-dur-base) var(--fn-ease);
+    width 120ms var(--fn-ease),
+    opacity 120ms var(--fn-ease);
 }
 
 .fn-progress.is-active {
   opacity: 1;
 }
 
-/* Indeterminate state: the bar creeps toward 90% and waits. It never
+/* Indeterminate state: the bar snaps toward 90% and waits. It never
    reverses, so progress only ever moves forward. */
 .fn-progress.is-indeterminate {
-  transition: width 450ms var(--fn-ease), opacity var(--fn-dur-base) var(--fn-ease);
+  transition: width 120ms var(--fn-ease), opacity 120ms var(--fn-ease);
 }
 
 /* --------------------------------------------------------------------------
@@ -198,17 +193,17 @@
 .fn-skeleton-line,
 /* Legacy alias: the home results grid used its own placeholder class. */
 .gh-shim-block {
-  background-color: var(--fn-surface);
+  background-color: #eef0f3;
   background-image: linear-gradient(
     90deg,
-    var(--fn-surface) 0%,
-    var(--fn-surface-2) 50%,
-    var(--fn-surface) 100%
+    #eef0f3 0%,
+    #f8fafc 50%,
+    #eef0f3 100%
   );
   background-size: 200% 100%;
   background-repeat: no-repeat;
   border-radius: var(--fn-radius);
-  animation: fn-sweep 1.25s linear infinite;
+  animation: fn-sweep 0.9s linear infinite;
 }
 
 .fn-skeleton-line {

@@ -199,31 +199,54 @@ $mSummary = h($destVal ?: 'All Tanzanian Destinations') . ' • ' . date('M j', 
 .fns-sheet-footer .fns-btn-apply{flex:1;min-height:48px;font-size:15px;font-weight:700;box-shadow:0 4px 12px rgba(37,99,235,.2);}
 .fns-sheet-footer .fns-btn-apply:active{transform:scale(.98);}
 .fns-sheet-footer .fns-btn-reset{min-height:48px;padding:0 18px;font-size:14px;}
+/* ── Mobile Google-Hotels stacked search (screenshot parity) ── */
+.fns-m-google{display:none;}
 /* ── Responsive ── */
 @media(max-width:991px){
   /* UX: search chip scrolls away on mobile; only filter chips stay sticky under fixed header */
   .fns-search-wrap{position:static !important;top:auto !important;padding:0;background:#fff;border-bottom:1px solid #E5E7EB;z-index:auto;}
-  .fns-search-wrap .container-fluid:first-child{padding-left:16px !important;padding-right:16px !important;}
+  .fns-search-wrap .container-fluid:first-child{padding-left:12px !important;padding-right:12px !important;}
   .fns-pill{display:none !important;}
   .fns-divider{display:none !important;}
   .fns-pop{position:fixed !important;inset:auto 12px 12px 12px !important;top:auto !important;left:12px !important;right:12px !important;transform:none !important;width:auto !important;max-width:none !important;max-height:72vh;overflow-y:auto;}
   .fns-pop-cal{left:12px !important;right:12px !important;transform:none !important;width:auto !important;}
   .fns-pop-cal.open{transform:none !important;}
-  .fns-mobile-chip{display:flex !important;height:56px;padding:8px 16px;box-shadow:0 4px 20px rgba(0,0,0,.08);border-color:#E5E7EB;background:#fff;}
+  .fns-mobile-chip{display:none !important;}
   .fns-mobile-chip.hidden{display:none !important;}
   .fns-pill-mobile-hidden{display:none !important;}
+  /* Google-style stacked search */
+  .fns-m-google{display:block !important;padding:12px 4px 10px;background:#fff;}
+  .fns-g-searchbox{display:flex;align-items:center;gap:12px;width:100%;height:56px;background:#fff;border:1px solid #dadce0;border-radius:12px;padding:0 16px;cursor:text;text-align:left;transition:border-color .15s, box-shadow .15s;-webkit-tap-highlight-color:transparent;}
+  .fns-g-searchbox:active{border-color:#1a73e8;}
+  .fns-g-searchbox .fns-g-search-icon{color:#1a73e8;font-size:20px;flex-shrink:0;width:24px;text-align:center;}
+  .fns-g-searchbox .fns-g-search-text{flex:1;min-width:0;font-family:Roboto,'Google Sans',Arial,sans-serif;font-size:16px;font-weight:400;color:#5f6368;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:20px;}
+  .fns-g-searchbox .fns-g-search-text.has-value{color:#202124;}
+  .fns-g-row2{display:flex;gap:8px;margin-top:8px;}
+  .fns-g-dates{flex:1;display:flex;align-items:center;background:#fff;border:2px solid #1a73e8;border-radius:12px;height:52px;padding:0 6px 0 12px;cursor:pointer;min-width:0;-webkit-tap-highlight-color:transparent;}
+  .fns-g-dates:active{background:#f8faff;}
+  .fns-g-dates .fns-g-cal-icon{color:#1a73e8;font-size:19px;flex-shrink:0;margin-right:8px;}
+  .fns-g-date{font-family:Roboto,'Google Sans',Arial,sans-serif;font-size:15px;font-weight:500;color:#1a73e8;white-space:nowrap;line-height:20px;}
+  .fns-g-date-co{flex:1;text-align:center;}
+  .fns-g-vdiv{width:1px;height:24px;background:#dadce0;margin:0 10px;flex-shrink:0;}
+  .fns-g-guests{flex:0 0 96px;display:flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #dadce0;border-radius:12px;height:52px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+  .fns-g-guests:active{background:#f8f9fa;}
+  .fns-g-guests .fns-g-person-icon{color:#1a73e8;font-size:19px;}
+  .fns-g-guests .fns-g-guest-count{font-family:Roboto,'Google Sans',Arial,sans-serif;font-size:16px;font-weight:400;color:#202124;line-height:20px;}
   /* chips wrap top is managed by gh-filter-chips.php — do NOT override here */
   /* reduce desktop-only spacing */
   .gh-left-fixed .fns-search-wrap{padding:0 !important;}
 }
 @media(min-width:992px){
   .fns-mobile-chip{display:none !important;}
+  .fns-m-google{display:none !important;}
   .fns-mobile-sheet,.fns-sheet-backdrop{display:none !important;}
   .fns-search-wrap{padding:0;}
 }
 @media(max-width:380px){
   .fns-mobile-chip-text{font-size:13px;}
   .fns-sheet-step{padding:12px 12px 16px;}
+  .fns-g-date{font-size:13.5px;}
+  .fns-g-guests{flex-basis:84px;}
 }
 /* a11y helper */
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
@@ -347,12 +370,31 @@ $mSummary = h($destVal ?: 'All Tanzanian Destinations') . ' • ' . date('M j', 
         </div>
       </div>
     </form>
-    <!-- Mobile: sticky chip (visible only <992px, replaces desktop pill) -->
-    <div class="container-fluid px-1 px-lg-2 d-lg-none" style="max-width:100%;margin:6px auto 0;padding-left:16px !important;padding-right:16px !important;">
-      <div class="fns-mobile-chip" id="fns_mobile_chip" role="button" tabindex="0" aria-label="Open search, current: <?= h($mSummary) ?>" onclick="fnsOpenMobile()" onkeydown="if(event.key==='Enter'||event.key===' ') {event.preventDefault(); fnsOpenMobile();}">
-        <span class="fns-mobile-chip-icon" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
+    <!-- Mobile: Google-Hotels stacked search (screenshot parity, <992px) -->
+    <div class="container-fluid px-1 px-lg-2 d-lg-none" style="max-width:100%;margin:0 auto;">
+      <!-- legacy chip kept hidden for JS compat -->
+      <div class="fns-mobile-chip" id="fns_mobile_chip" role="button" tabindex="-1" aria-hidden="true" style="display:none !important;">
         <span class="fns-mobile-chip-text" id="fns_chip_text"><?= h($mSummary) ?></span>
-        <span class="fns-mobile-chip-chevron" aria-hidden="true"><i class="fa-solid fa-sliders"></i></span>
+      </div>
+      <div class="fns-m-google" id="fns_m_google">
+        <!-- Row 1: destination search box -->
+        <button type="button" class="fns-g-searchbox" id="fns_g_searchbox" aria-label="Search for places, hotels and more" onclick="fnsOpenMobile();fnsSheetGo('where');">
+          <span class="fns-g-search-icon" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
+          <span class="fns-g-search-text <?= trim((string)$destVal) !== '' ? 'has-value' : '' ?>" id="fns_g_dest_text"><?= trim((string)$destVal) !== '' ? h($destVal) : 'Search for places, hotels and more' ?></span>
+        </button>
+        <!-- Row 2: dates + guests -->
+        <div class="fns-g-row2">
+          <button type="button" class="fns-g-dates" id="fns_g_dates" aria-label="Change dates: <?= h($fmtCI) ?> to <?= h($fmtCO) ?>" onclick="fnsOpenMobile();fnsSheetGo('when');">
+            <span class="fns-g-cal-icon" aria-hidden="true"><i class="fa-regular fa-calendar"></i></span>
+            <span class="fns-g-date" id="fns_g_ci"><?= h($fmtCI) ?></span>
+            <span class="fns-g-vdiv" aria-hidden="true"></span>
+            <span class="fns-g-date fns-g-date-co" id="fns_g_co"><?= h($fmtCO) ?></span>
+          </button>
+          <button type="button" class="fns-g-guests" id="fns_g_guests_btn" aria-label="Change guests, currently <?= (int)($adults + $children) ?> guests" onclick="fnsOpenMobile();fnsSheetGo('who');">
+            <span class="fns-g-person-icon" aria-hidden="true"><i class="fa-regular fa-user"></i></span>
+            <span class="fns-g-guest-count" id="fns_g_guest_count"><?= (int)($adults + $children) ?></span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -582,6 +624,8 @@ window.fnsPickDest=function(val, lat, lng, bbox){
   if(bbEl) bbEl.value=bbox||'';
   fnsClosePopovers();
   document.getElementById('fns_m_where_val').textContent=val;
+  var _gDt=document.getElementById('fns_g_dest_text');
+  if(_gDt){ _gDt.textContent=val||'Search for places, hotels and more'; _gDt.classList.toggle('has-value', !!val); }
   if(window.FastNetState) FastNetState.replaceState({city:val, destination:val, lat:(lat||''), lng:(lng||''), bbox:(bbox||'')});
   updateClear();
 };
@@ -604,6 +648,8 @@ function updateClear(){
   if(c) c.classList.toggle('show', v.length>0);
   var mWhere=document.getElementById('fns_m_where_val');
   if(mWhere) mWhere.textContent= v || 'All Tanzanian Destinations';
+  var gDt=document.getElementById('fns_g_dest_text');
+  if(gDt){ gDt.textContent=v||'Search for places, hotels and more'; gDt.classList.toggle('has-value', !!v); }
   var chip=document.getElementById('fns_chip_text');
   if(chip){
     var ciLbl=document.getElementById('fns_ci_lbl')?document.getElementById('fns_ci_lbl').textContent:'';
@@ -672,6 +718,10 @@ function syncDate(){
   var badge=document.getElementById('fns_nights_badge'); if(badge) badge.textContent=nights+' night'+(nights!==1?'s':'');
   var mCi=document.getElementById('fns_m_ci_lbl'), mCo=document.getElementById('fns_m_co_lbl');
   if(mCi) mCi.textContent=fmt(_ci); if(mCo) mCo.textContent=fmt(_co);
+  var gCi=document.getElementById('fns_g_ci'), gCo=document.getElementById('fns_g_co');
+  if(gCi) gCi.textContent=fmt(_ci); if(gCo) gCo.textContent=fmt(_co);
+  var gDates=document.getElementById('fns_g_dates');
+  if(gDates) gDates.setAttribute('aria-label','Change dates: '+fmt(_ci)+' to '+fmt(_co));
   var mBadge=document.getElementById('fns_m_nights_badge'); if(mBadge) mBadge.textContent=nights+'n';
   var mWhen=document.getElementById('fns_m_when_val'); if(mWhen) mWhen.textContent=fmt(_ci)+' – '+fmt(_co)+' · '+nights+'n';
   var sum=document.getElementById('fns_cal_summary');
@@ -783,6 +833,8 @@ function syncGuests(){
   if(_ch>0) txt=_ad+' adults · '+_ch+' child'+(_ch!==1?'ren':'')+' · '+_rm+' room'+(_rm!==1?'s':'');
   document.getElementById('fns_guests_lbl').textContent=txt;
   var mWho=document.getElementById('fns_m_who_val'); if(mWho) mWho.textContent=txt;
+  var gCount=document.getElementById('fns_g_guest_count'); if(gCount) gCount.textContent=_ad+_ch;
+  var gBtn=document.getElementById('fns_g_guests_btn'); if(gBtn) gBtn.setAttribute('aria-label','Change guests, currently '+(_ad+_ch)+' guests');
   if(window.FastNetState) window.FastNetState.replaceState({adults:String(_ad), children:String(_ch), rooms:String(_rm)});
   updateClear();
 }

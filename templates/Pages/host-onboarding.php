@@ -199,12 +199,15 @@ $draftCats = (isset($d['roomCats']) && is_array($d['roomCats']) && !empty($d['ro
       var amenities = amenList(amenRaw ? amenRaw.value : '') ;
       if (!amenities.length && Array.isArray(draft.amenities)) amenities = draft.amenities;
       var city = String(draft.city || 'Dar es Salaam').trim() || 'Dar es Salaam';
+      var rawType = String(draft.type || 'Safari Lodge').trim().toLowerCase();
+      var propType = rawType === 'hotel' ? 'Hotel' : rawType === 'apartment' ? 'Apartment' : rawType === 'resort' ? 'Resort' : rawType === 'villa' ? 'Villa' : 'Safari Lodge';
       var payload = {
         name: String(draft.name || '').trim(),
         description: String(draft.description || '').trim(),
         address: String(draft.address || '').trim(),
         city: city,
         area: String(draft.area || '').trim() || city,
+        property_type: propType,
         price_per_night: Number(draft.price_per_night) || 0,
         latitude: isFinite(Number(draft.latitude)) ? Number(draft.latitude) : -6.7924,
         longitude: isFinite(Number(draft.longitude)) ? Number(draft.longitude) : 39.2083,

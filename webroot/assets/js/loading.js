@@ -29,9 +29,10 @@
   if (global.FastnetLoading) return;
 
   /** Longest an indicator may stay up before the watchdog force-completes it. */
-  var MAX_MS = 20000;
-  /** Delay before the bar appears, so fast work never flashes a loader. */
-  var APPEAR_DELAY = 120;
+  var MAX_MS = 8000;
+  /** Appear delay — 1ms: the bar starts instantly and finishes instantly,
+     so loading feels professional with zero perceived wait. */
+  var APPEAR_DELAY = 1;
   /** Where an indeterminate bar creeps to and waits. */
   var CREEP_TO = 90;
 
@@ -81,39 +82,7 @@
       }
     }
 
-    if (!els.overlay) {
-      els.overlay = d.getElementById('fastnet-app-loader');
-
-      if (els.overlay) {
-        // Reuse the layout's splash markup, styled by the canonical system.
-        els.overlay.classList.add('fn-overlay');
-        els.overlayTitle =
-          els.overlay.querySelector('.fastnet-loader-title, .fn-overlay__title') ||
-          els.overlay.querySelector('#fastnet-loader-title');
-        els.overlayHint =
-          els.overlay.querySelector('.fastnet-loader-subtext, .fn-overlay__hint') ||
-          els.overlay.querySelector('#fastnet-loader-subtext');
-      } else {
-        var ov = d.createElement('div');
-        ov.id = 'fastnet-app-loader';
-        ov.className = 'fn-overlay';
-        ov.setAttribute('role', 'dialog');
-        ov.setAttribute('aria-modal', 'true');
-        ov.setAttribute('aria-hidden', 'true');
-        ov.setAttribute('aria-labelledby', 'fn-overlay-title');
-        ov.innerHTML =
-          '<div class="fn-overlay__card">' +
-          '<div class="fn-spinner fn-spinner--lg"></div>' +
-          '<div class="fn-overlay__title" id="fn-overlay-title">Loading…</div>' +
-          '<div class="fn-overlay__hint" data-fn-overlay-hint>Please wait a moment</div>' +
-          '</div>';
-        d.body.appendChild(ov);
-        els.overlay = ov;
-        els.overlayTitle = ov.querySelector('.fn-overlay__title');
-        els.overlayHint = ov.querySelector('[data-fn-overlay-hint]');
-      }
-    }
-
+    // Overlay intentionally never created (deleted): bar + skeletons only.
     return true;
   }
 
@@ -176,16 +145,16 @@
       if (barTimer) global.clearTimeout(barTimer);
       barTimer = global.setTimeout(function () {
         barTimer = null;
-        paintBar(12);
+        paintBar(35);
 
-        // Creep toward 90% and hold. Never retreats.
-        var pct = 12;
+        // Professional snap: jump fast toward 90% and hold. Never retreats.
+        var pct = 35;
         if (creepTimer) global.clearInterval(creepTimer);
         creepTimer = global.setInterval(function () {
           if (pct >= CREEP_TO) return;
-          pct = Math.min(CREEP_TO, pct + Math.max(1, Math.round((CREEP_TO - pct) / 6)));
+          pct = Math.min(CREEP_TO, pct + Math.max(3, Math.round((CREEP_TO - pct) / 3)));
           paintBar(pct);
-        }, 180);
+        }, 90);
       }, APPEAR_DELAY);
     },
 
@@ -224,7 +193,7 @@
         els.progress.style.width = '0%';
         els.progress.setAttribute('aria-valuenow', '0');
         disarmWatchdog();
-      }, 240);
+      }, 120);
     },
 
     isActive: function () {
@@ -415,25 +384,14 @@
 
   /* ------------------------------------------------------------- overlay */
 
+  // Overlay — DELETED. Bar + skeletons only (professional, never blocks).
+  // show()/hide() are kept as no-op aliases so old call sites keep working.
   var overlay = {
     show: function (opts) {
-      if (!ensureChrome()) return;
-      opts = opts || {};
-      armWatchdog();
-
-      if (opts.title) els.overlayTitle.textContent = opts.title;
-      els.overlayHint.textContent = opts.hint || 'Please wait a moment';
-      els.overlay.classList.add('is-visible');
-      els.overlay.setAttribute('aria-hidden', 'false');
-      doc().body.style.overflow = 'hidden';
+      bar.start();
     },
 
     hide: function () {
-      if (els.overlay) {
-        els.overlay.classList.remove('is-visible');
-        els.overlay.setAttribute('aria-hidden', 'true');
-      }
-      if (doc() && doc().body) doc().body.style.removeProperty('overflow');
       if (pending === 0) disarmWatchdog();
     }
   };
