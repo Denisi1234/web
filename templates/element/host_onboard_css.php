@@ -80,6 +80,11 @@ input[readonly].locked{background:var(--cds-gray-10);color:var(--cds-gray-70)}
 .ob-rphotos .ph{position:relative;width:96px;height:72px;overflow:hidden;border:1px solid var(--cds-gray-20)}
 .ob-rphotos img{width:100%;height:100%;object-fit:cover;display:block}
 .ob-rphotos .rm{position:absolute;top:2px;right:2px;width:20px;height:20px;border:none;border-radius:50%;background:var(--cds-gray-100);color:#fff;font-size:12px;line-height:1;cursor:pointer}
+/* Failed optional photo → inline retry chip (room form shares .ph markup).
+   Amber, tappable, impossible to mistake for a fatal error. */
+.ob-rphotos .ph-retry,.ob-rphotos.ph-retry,button.ph-retry{width:auto !important;min-width:150px;max-width:100%;height:auto !important;min-height:56px;padding:10px 14px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;background:#fcf4d6 !important;border:1px dashed #f1c21b !important;border-radius:10px;cursor:pointer;text-align:left;font-family:inherit}
+.ph-retry span{font-size:12px;color:#5f4800;line-height:1.4}
+.ph-retry b{font-size:13px;color:#0f62fe}
 .ob-review{display:grid;gap:0;border:1px solid var(--cds-gray-20);background:var(--cds-white)}
 .ob-review>div{display:flex;gap:12px;padding:10px 14px;border-bottom:1px solid var(--cds-gray-10);font-size:13px}
 .ob-review>div:last-child{border-bottom:none}

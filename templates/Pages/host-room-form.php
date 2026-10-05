@@ -208,10 +208,23 @@ $bedsVal = $room['number_of_beds'] ?? 1;
   box.querySelectorAll('.rm').forEach(function (b) {
     b.onclick = function () { var p = b.closest('.ph'); if (p) p.parentNode.removeChild(p); refreshCount(); };
   });
-  if (file) file.addEventListener('change', function () {
-    var fs = file.files;
-    for (var k = 0; k < fs.length; k++) {
-      (function (f) {
+  // Failed optional photo → inline retry chip (keeps the File). Calm copy:
+  // the room saves fine without photos, so it must not read like a failure.
+  function rfFailChip(f, msg) {
+    var chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'ph ph-retry';
+    chip.setAttribute('aria-label', 'Retry uploading ' + (f.name || 'photo'));
+    chip.innerHTML = '<span>Photo skipped — ' + msg + '</span><b>Tap to retry</b>';
+    chip.onclick = function () {
+      if (chip.parentNode) chip.parentNode.removeChild(chip);
+      sendRfPhoto(f);
+    };
+    box.appendChild(chip);
+    refreshCount();
+    toast(msg + ' Room still saves without it.');
+  }
+  function sendRfPhoto(f) {
         if (!/^image\//.test(f.type)) { toast('Only image files please.'); return; }
         if (f.size > 10 * 1024 * 1024) { toast('Max 10 MB per photo.'); return; }
         uploading++;
@@ -245,7 +258,7 @@ $bedsVal = $room['number_of_beds'] ?? 1;
               }
               uploading--;
               syncUp();
-              toast(rfFailMsg(xhr, j));
+              rfFailChip(f, rfFailMsg(xhr, j));
             } catch (e) {
               if (url !== '/host/upload') {
                 sendRoomPhoto('/host/upload', false);
@@ -253,7 +266,7 @@ $bedsVal = $room['number_of_beds'] ?? 1;
               }
               uploading--;
               syncUp();
-              toast(rfFailMsg(xhr, null));
+              rfFailChip(f, rfFailMsg(xhr, null));
             }
           };
           xhr.onerror = function () {
@@ -263,14 +276,16 @@ $bedsVal = $room['number_of_beds'] ?? 1;
             }
             uploading--;
             syncUp();
-            toast('No connection to media server.');
+            rfFailChip(f, 'No connection to media server.');
           };
           xhr.send(fd);
         }
 
         sendRoomPhoto(targetUrl, Boolean(token));
-      })(fs[k]);
-    }
+  }
+  if (file) file.addEventListener('change', function () {
+    var fs = file.files;
+    for (var k = 0; k < fs.length; k++) sendRfPhoto(fs[k]);
     file.value = '';
   });
 

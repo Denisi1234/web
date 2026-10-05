@@ -59,6 +59,23 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
     var photoErr = document.getElementById('obPhotoErr');
     var uploading = 0;
     window.__obUploading = function () { return uploading; };
+    // Persistent inline upload error (stays until the next attempt or a
+    // success). A 2.6s toast alone confused hosts: the property saved fine
+    // afterwards and the scary message made no sense. One clear signal here.
+    var upErr = document.getElementById('obUpErr');
+    if (!upErr && bar && bar.parentNode) {
+      upErr = document.createElement('div');
+      upErr.id = 'obUpErr';
+      upErr.className = 'field-err';
+      upErr.style.display = 'none';
+      bar.parentNode.insertBefore(upErr, bar.nextSibling);
+    }
+    function showUpErr(msg) {
+      if (!upErr) { toast(msg); return; }
+      upErr.textContent = msg + ' — tap the box to try again.';
+      upErr.style.display = 'block';
+    }
+    function hideUpErr() { if (upErr) upErr.style.display = 'none'; }
     (function renderPrev() {
       var url = coverInput.value;
       prev.innerHTML = '';
@@ -78,6 +95,7 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
       if (!f || !/^image\//.test(f.type)) { toast('Only image files please.'); return; }
       if (f.size > 10 * 1024 * 1024) { toast('Max 10 MB per photo.'); return; }
       uploading++;
+      hideUpErr();
       if (bar) { bar.style.display = 'block'; if (barFill) barFill.style.width = '30%'; }
       var fd = new FormData();
       fd.append('file', f);
@@ -104,6 +122,7 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
               if (bar) { if (barFill) barFill.style.width = '100%'; setTimeout(function(){ bar.style.display = 'none'; if (barFill) barFill.style.width = '0'; }, 400); }
               coverInput.value = photoUrl;
               if (photoErr) photoErr.style.display = 'none';
+              hideUpErr();
               window.__obRenderPrev();
               return;
             }
@@ -113,7 +132,7 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
             }
             uploading--;
             if (bar) bar.style.display = 'none';
-            toast(obFailMsg(xhr, j));
+            showUpErr(obFailMsg(xhr, j));
           } catch (e) {
             if (url !== '/host/upload') {
               sendCoverXhr('/host/upload', false);
@@ -121,7 +140,7 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
             }
             uploading--;
             if (bar) bar.style.display = 'none';
-            toast(obFailMsg(xhr, null));
+            showUpErr(obFailMsg(xhr, null));
           }
         };
         xhr.onerror = function () {
@@ -131,7 +150,7 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
           }
           uploading--;
           if (bar) bar.style.display = 'none';
-          toast('No connection to media server.');
+          showUpErr('No connection to media server.');
         };
         xhr.send(fd);
       }
@@ -517,6 +536,76 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
       var b = row.querySelector('.p-badge');
       if (t && b) b.textContent = t.value;
     }
+    // Failed optional photo → inline retry chip (keeps the File, one tap to
+    // retry). Calm copy: rooms save fine without photos, so the message must
+    // never read like the whole property failed.
+    function catFailChip(box, idx, f, msg) {
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'ph ph-retry';
+      chip.setAttribute('aria-label', 'Retry uploading ' + (f.name || 'photo'));
+      chip.innerHTML = '<span>Photo skipped — ' + msg + '</span><b>Tap to retry</b>';
+      chip.onclick = function () {
+        if (chip.parentNode) chip.parentNode.removeChild(chip);
+        sendCatPhoto(f, box, idx);
+      };
+      box.appendChild(chip);
+      toast(msg + ' Room still saves without it.');
+    }
+    function sendCatPhoto(f, box, idx) {
+      if (!/^image\//.test(f.type)) { toast('Only image files please.'); return; }
+      if (f.size > 10 * 1024 * 1024) { toast('Max 10 MB per photo.'); return; }
+      roomUp++;
+      var fd = new FormData();
+      fd.append('file', f);
+
+      var token = getAuthToken();
+      var targetUrl = token ? (BACKEND + '/upload') : '/host/upload';
+
+      function sendRoomReq(url, useAuth) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', url, true);
+        xhr.setRequestHeader('Accept', 'application/json');
+        if (useAuth && token) {
+          xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+        }
+        xhr.onload = function () {
+          try {
+            var j = JSON.parse(xhr.responseText);
+            var photoUrl = j.url || j.photo_url || (j.data && (j.data.url || j.data.photo_url));
+            if (xhr.status >= 200 && xhr.status < 300 && photoUrl) {
+              roomUp--;
+              thumb(box, idx, photoUrl);
+              return;
+            }
+            if (url !== '/host/upload' && (xhr.status === 401 || xhr.status === 403 || xhr.status === 0)) {
+              sendRoomReq('/host/upload', false);
+              return;
+            }
+            roomUp--;
+            catFailChip(box, idx, f, obFailMsg(xhr, j));
+          } catch (e) {
+            if (url !== '/host/upload') {
+              sendRoomReq('/host/upload', false);
+              return;
+            }
+            roomUp--;
+            catFailChip(box, idx, f, obFailMsg(xhr, null));
+          }
+        };
+        xhr.onerror = function () {
+          if (url !== '/host/upload') {
+            sendRoomReq('/host/upload', false);
+            return;
+          }
+          roomUp--;
+          catFailChip(box, idx, f, 'No connection to media server.');
+        };
+        xhr.send(fd);
+      }
+
+      sendRoomReq(targetUrl, Boolean(token));
+    }
     function wireCat(row) {
       var idx = row.getAttribute('data-i');
       var file = row.querySelector('.ob-rfile');
@@ -528,62 +617,7 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
       if (typeSel) typeSel.addEventListener('change', function () { syncBadge(row); });
       if (file) file.addEventListener('change', function () {
         var fs = file.files;
-        for (var k = 0; k < fs.length; k++) {
-          (function (f) {
-            if (!/^image\//.test(f.type)) { toast('Only image files please.'); return; }
-            if (f.size > 10 * 1024 * 1024) { toast('Max 10 MB per photo.'); return; }
-            roomUp++;
-            var fd = new FormData();
-            fd.append('file', f);
-
-            var token = getAuthToken();
-            var targetUrl = token ? (BACKEND + '/upload') : '/host/upload';
-
-            function sendRoomReq(url, useAuth) {
-              var xhr = new XMLHttpRequest();
-              xhr.open('POST', url, true);
-              xhr.setRequestHeader('Accept', 'application/json');
-              if (useAuth && token) {
-                xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-              }
-              xhr.onload = function () {
-                try {
-                  var j = JSON.parse(xhr.responseText);
-                  var photoUrl = j.url || j.photo_url || (j.data && (j.data.url || j.data.photo_url));
-                  if (xhr.status >= 200 && xhr.status < 300 && photoUrl) {
-                    roomUp--;
-                    thumb(box, idx, photoUrl);
-                    return;
-                  }
-                  if (url !== '/host/upload' && (xhr.status === 401 || xhr.status === 403 || xhr.status === 0)) {
-                    sendRoomReq('/host/upload', false);
-                    return;
-                  }
-                  roomUp--;
-                  toast(obFailMsg(xhr, j));
-                } catch (e) {
-                  if (url !== '/host/upload') {
-                    sendRoomReq('/host/upload', false);
-                    return;
-                  }
-                  roomUp--;
-                  toast(obFailMsg(xhr, null));
-                }
-              };
-              xhr.onerror = function () {
-                if (url !== '/host/upload') {
-                  sendRoomReq('/host/upload', false);
-                  return;
-                }
-                roomUp--;
-                toast('No connection to media server.');
-              };
-              xhr.send(fd);
-            }
-
-            sendRoomReq(targetUrl, Boolean(token));
-          })(fs[k]);
-        }
+        for (var k = 0; k < fs.length; k++) sendCatPhoto(fs[k], box, idx);
         file.value = '';
       });
       // numbers: add / remove inputs
