@@ -37,6 +37,17 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
     return '';
   }
 
+  // Status-aware upload failure message — never a bare "Upload failed" when
+  // the server actually told us why. 413s arrive as HTML (unparseable), so
+  // the status code itself is the message there.
+  function obFailMsg(xhr, j) {
+    if (xhr && xhr.status === 413) return 'Photo too large for the server (max 10 MB). Try a smaller photo.';
+    if (xhr && (xhr.status === 401 || xhr.status === 403)) return 'Session expired — please sign in again.';
+    if (j && j.message) return j.message;
+    if (xhr && xhr.status >= 500) return 'Media server error — please try again in a moment.';
+    return 'Upload failed. Try again.';
+  }
+
   /* ---------- step 3 · cover photo drag & drop (only when present) ---------- */
   var drop = document.getElementById('obDrop');
   if (drop) {
@@ -102,7 +113,7 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
             }
             uploading--;
             if (bar) bar.style.display = 'none';
-            toast((j && j.message) || 'Upload failed. Try again.');
+            toast(obFailMsg(xhr, j));
           } catch (e) {
             if (url !== '/host/upload') {
               sendCoverXhr('/host/upload', false);
@@ -110,7 +121,7 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
             }
             uploading--;
             if (bar) bar.style.display = 'none';
-            toast('Upload failed. Try again.');
+            toast(obFailMsg(xhr, null));
           }
         };
         xhr.onerror = function () {
@@ -549,14 +560,14 @@ $backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'htt
                     return;
                   }
                   roomUp--;
-                  toast((j && j.message) || 'Photo upload failed.');
+                  toast(obFailMsg(xhr, j));
                 } catch (e) {
                   if (url !== '/host/upload') {
                     sendRoomReq('/host/upload', false);
                     return;
                   }
                   roomUp--;
-                  toast('Photo upload failed.');
+                  toast(obFailMsg(xhr, null));
                 }
               };
               xhr.onerror = function () {

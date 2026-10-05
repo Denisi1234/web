@@ -166,6 +166,14 @@ $bedsVal = $room['number_of_beds'] ?? 1;
     return '';
   }
 
+  function rfFailMsg(xhr, j) {
+    if (xhr && xhr.status === 413) return 'Photo too large for the server (max 10 MB). Try a smaller photo.';
+    if (xhr && (xhr.status === 401 || xhr.status === 403)) return 'Session expired — please sign in again.';
+    if (j && j.message) return j.message;
+    if (xhr && xhr.status >= 500) return 'Media server error — please try again in a moment.';
+    return 'Photo upload failed.';
+  }
+
   /* photos: preview grid + file upload (same /upload endpoint as onboarding) */
   var box = document.getElementById('rf-prev');
   var file = document.getElementById('rf-file');
@@ -237,7 +245,7 @@ $bedsVal = $room['number_of_beds'] ?? 1;
               }
               uploading--;
               syncUp();
-              toast((j && j.message) || 'Photo upload failed.');
+              toast(rfFailMsg(xhr, j));
             } catch (e) {
               if (url !== '/host/upload') {
                 sendRoomPhoto('/host/upload', false);
@@ -245,7 +253,7 @@ $bedsVal = $room['number_of_beds'] ?? 1;
               }
               uploading--;
               syncUp();
-              toast('Photo upload failed.');
+              toast(rfFailMsg(xhr, null));
             }
           };
           xhr.onerror = function () {
