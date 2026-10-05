@@ -68,6 +68,14 @@
   <div class="p-main">
     <?= $this->element('portal_topbar', $this->viewVars) ?>
     <div class="p-flash"><?= $this->Flash->render() ?></div>
+    <?php if (!empty($backendDown)): ?>
+    <div class="p-flash" style="margin-top:-4px">
+      <div class="alert alert-warning d-flex align-items-center gap-2" role="alert" style="font-size:13px;margin:0 0 12px">
+        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+        <span><strong>Backend admin API is failing right now.</strong> Lists may be stale and Approve / Reject cannot be saved until it recovers. Your clicks are reaching the server — the backend answers with an error.</span>
+      </div>
+    </div>
+    <?php endif; ?>
     <main class="p-content" id="main-content"><?= $this->fetch('content') ?></main>
   </div>
 </div>

@@ -54,21 +54,26 @@ if (empty($list)) $list = $users;
           <td><span class="p-badge <?= $badge ?>"><?= h($st) ?></span></td>
           <td style="text-align:right"><div style="font-weight:600">TSh <?= number_format((float)$gross) ?></div><div style="font-size:11px;color:var(--p-text-2)">Net TSh <?= number_format((float)$net) ?></div></td>
           <td>
+            <?php if (empty($oid)): ?>
+            <span class="p-badge yellow">pending</span>
+            <div style="font-size:11px;color:var(--p-text-2);margin-top:4px">Record has no id — cannot verify. Backend row is missing its key.</div>
+            <?php else: ?>
             <div style="display:flex;gap:6px;flex-wrap:wrap">
-              <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'verify', 'owner', $oid], 'style' => 'display:inline', 'data-api' => 'POST /admin/verification/owner/' . $oid, 'data-api-omit-empty' => 'reason', 'data-api-ok' => 'Verification updated.', 'data-opt' => 'patch', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'verify', 'data-opt-badgetext' => 'lower', 'data-opt-bust' => 'users,owners', 'data-api-go' => '/admin/cache-bust?scope=users,owners&go=' . urlencode('/admin/owners')]) ?>
+              <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'verify', 'owner', $oid], 'style' => 'display:inline', 'data-api' => 'POST /admin/verification/owner/' . $oid, 'data-api-build' => 'verify', 'data-api-omit-empty' => 'reason', 'data-api-ok' => 'Owner approved.', 'data-opt' => 'patch', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'verify', 'data-opt-badgetext' => 'lower', 'data-opt-bust' => 'users,owners', 'data-api-go' => '/admin/cache-bust?scope=users,owners&go=' . urlencode('/admin/owners')]) ?>
                 <?= $this->Form->hidden('status', ['value' => 'approved']) ?><button class="p-btn" style="min-height:32px;font-size:12px">Approve</button>
               <?= $this->Form->end() ?>
-              <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'verify', 'owner', $oid], 'style' => 'display:inline', 'data-api' => 'POST /admin/verification/owner/' . $oid, 'data-api-omit-empty' => 'reason', 'data-api-ok' => 'Verification updated.', 'data-opt' => 'patch', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'verify', 'data-opt-badgetext' => 'lower', 'data-opt-bust' => 'users,owners', 'data-api-go' => '/admin/cache-bust?scope=users,owners&go=' . urlencode('/admin/owners')]) ?>
-                <?= $this->Form->hidden('status', ['value' => 'rejected']) ?><input type="hidden" name="reason" value="Rejected by admin"><button class="p-btn ghost" style="min-height:32px;font-size:12px">Reject</button>
+              <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'verify', 'owner', $oid], 'style' => 'display:inline', 'data-api' => 'POST /admin/verification/owner/' . $oid, 'data-api-build' => 'verify', 'data-api-omit-empty' => 'reason', 'data-api-ok' => 'Owner rejected.', 'data-opt' => 'patch', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'verify', 'data-opt-badgetext' => 'lower', 'data-opt-bust' => 'users,owners', 'data-api-go' => '/admin/cache-bust?scope=users,owners&go=' . urlencode('/admin/owners')]) ?>
+                <?= $this->Form->hidden('status', ['value' => 'rejected']) ?><input type="hidden" name="reason" value="Rejected by admin"><input type="hidden" name="admin_notes" value="Rejected by admin"><button class="p-btn ghost" style="min-height:32px;font-size:12px">Reject</button>
               <?= $this->Form->end() ?>
-              <button class="p-btn ghost" style="min-height:32px;font-size:12px" onclick="document.getElementById('reason-<?= $oid ?>').classList.toggle('d-none')">Request changes</button>
+              <button class="p-btn ghost" style="min-height:32px;font-size:12px" onclick="document.getElementById('reason-<?= h($oid) ?>').classList.toggle('d-none')">Request changes</button>
             </div>
-            <div id="reason-<?= $oid ?>" class="d-none mt-2">
-              <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'verify', 'owner', $oid], 'style' => 'display:flex;gap:6px', 'data-api' => 'POST /admin/verification/owner/' . $oid, 'data-api-omit-empty' => 'reason', 'data-api-ok' => 'Verification updated.', 'data-opt' => 'patch', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'verify', 'data-opt-badgetext' => 'lower', 'data-opt-bust' => 'users,owners', 'data-api-go' => '/admin/cache-bust?scope=users,owners&go=' . urlencode('/admin/owners')]) ?>
+            <div id="reason-<?= h($oid) ?>" class="d-none mt-2">
+              <?= $this->Form->create(null, ['url' => ['controller' => 'AdminOwner', 'action' => 'verify', 'owner', $oid], 'style' => 'display:flex;gap:6px', 'data-api' => 'POST /admin/verification/owner/' . $oid, 'data-api-build' => 'verify', 'data-api-ok' => 'Changes requested.', 'data-opt' => 'patch', 'data-opt-badge' => '.p-badge', 'data-opt-badgesrc' => 'status', 'data-opt-badgemap' => 'verify', 'data-opt-badgetext' => 'lower', 'data-opt-bust' => 'users,owners', 'data-api-go' => '/admin/cache-bust?scope=users,owners&go=' . urlencode('/admin/owners')]) ?>
                 <?= $this->Form->hidden('status', ['value' => 'changes_requested']) ?>
-                <input name="reason" placeholder="Reason" class="form-control form-control-sm" style="min-height:32px"><button class="p-btn" style="min-height:32px;font-size:12px">Send</button>
+                <input name="reason" placeholder="Reason (required)" class="form-control form-control-sm" style="min-height:32px" required maxlength="500"><button class="p-btn" style="min-height:32px;font-size:12px">Send</button>
               <?= $this->Form->end() ?>
             </div>
+            <?php endif; ?>
           </td>
         </tr>
         <?php endforeach; ?>

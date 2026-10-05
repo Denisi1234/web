@@ -774,6 +774,10 @@ class HostController extends AppController
         $payouts = $session->read('PayoutsCache');
         $fts = (int)$session->read('FinanceCacheTs');
         if (!is_array($finance) || !is_array($payouts) || $fts < time() - 90) {
+            // Drop the session lock: the 3 calls below are the slowest in
+            // the portal (~7-8s each per legacy notes) and must not block
+            // parallel prefetch/navigation on the session file.
+            $this->releaseSession();
             // Try finance overview, fallback to admin dashboardStats (admin_owner_portal/chart-flot.php parity)
             $res = $this->apiClient->get('/finance/overview', [], $headers);
             if (empty($res) || !empty($res['_status'])) {

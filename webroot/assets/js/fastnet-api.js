@@ -103,7 +103,12 @@ window.FastAPI = (function () {
       window.location.href = '/login?redirect=' + encodeURIComponent(back);
       throw new Error('unauthorized');
     }
-    if (!r.ok) throw new Error(errText(r.status, json));
+    if (!r.ok) {
+      var err = new Error(errText(r.status, json));
+      err.status = r.status;
+      err.payload = json;
+      throw err;
+    }
     return json;
   }
 
@@ -285,6 +290,42 @@ window.FastAPI = (function () {
   // Named payload builders (data-api-build="property") for shapes that need
   // server-side defaults applied client-side. Mirrors controller code 1:1.
   var builders = {
+    // Mirrors AdminOwnerController::verify() — the direct path must send the
+    // exact payload the server proxy sends, or rows fail with 422 while the
+    // UI already flipped the badge (the "can't approve/reject" trash look).
+    // Duplicates reason across every key any backend build validates and
+    // normalises lodge approve to the backend's capitalised Active.
+    verify: function (d, form) {
+      var out = {};
+      Object.keys(d).forEach(function (k) {
+        var v = typeof d[k] === 'string' ? d[k].trim() : d[k];
+        if (v !== '' && v !== undefined) out[k] = v;
+      });
+      // Owner rows need lowercase approved/rejected/…; lodge rows need the
+      // capitalised Active/Pending/Removed set. Detect from the target path
+      // so one builder serves both without corrupting either.
+      var api = form && form.getAttribute ? (form.getAttribute('data-api') || '') : '';
+      var isLodge = api.indexOf('/lodge') !== -1 || api.indexOf('/property') !== -1;
+      var st = String(out.status || '');
+      var low = st.toLowerCase();
+      if (isLodge) {
+        if (low === 'approved' || low === 'approve' || low === 'active') out.status = 'Active';
+        else if (low === 'rejected' || low === 'reject') out.status = 'rejected';
+        else if (low === 'changes_requested') out.status = 'changes_requested';
+        else if (low === 'pending') out.status = 'Pending';
+        else if (low === 'removed' || low === 'suspended') out.status = 'Removed';
+      } else {
+        if (low === 'approved' || low === 'approve' || low === 'active') out.status = 'approved';
+        else if (low === 'rejected' || low === 'reject') out.status = 'rejected';
+        else if (low === 'changes_requested') out.status = 'changes_requested';
+        else if (low === 'suspended' || low === 'removed') out.status = 'suspended';
+        else if (low === 'pending') out.status = 'pending';
+      }
+      var reason = String(out.reason || out.admin_notes || out.notes || '').trim();
+      if (reason) { out.reason = reason; out.admin_notes = reason; out.notes = reason; }
+      else { delete out.reason; delete out.admin_notes; delete out.notes; }
+      return out;
+    },
     // Mirrors HostController::profile() — drops empties, duplicates phone.
     profile: function (d) {
       var out = {};
@@ -357,12 +398,48 @@ window.FastAPI = (function () {
     } else {
       setBusy(form, true);
     }
+    // Verify shapes: backend builds vary (POST vs PATCH, /admin prefix vs
+    // plain). Try the matrix in order; 404/405 means "try next shape", any
+    // other error is a real verdict — stop and show it.
+    async function reqVerifyShapes(vMethod, vPath, vData) {
+      var cands = [];
+      var alt = vPath.indexOf('/admin/verification/') === 0
+        ? vPath.replace('/admin/verification/', '/verification/')
+        : vPath;
+      [vMethod, vMethod === 'POST' ? 'PATCH' : 'POST'].forEach(function (m) {
+        [vPath, alt].forEach(function (p) {
+          var key = m + ' ' + p;
+          if (!cands.some(function (c) { return c.k === key; })) cands.push({ k: key, m: m, p: p });
+        });
+      });
+      var lastErr = null;
+      for (var ci = 0; ci < cands.length; ci++) {
+        try {
+          var out = await req(cands[ci].m, cands[ci].p, vData);
+          return out;
+        } catch (e2) {
+          lastErr = e2;
+          if (e2 && (e2.status === 404 || e2.status === 405)) continue;
+          throw e2;
+        }
+      }
+      throw lastErr || new Error('Request failed. Please try again.');
+    }
+
     try {
-      await req(method, path, method === 'GET' || method === 'DELETE' ? undefined : data);
+      if (build === 'verify') {
+        await reqVerifyShapes(method, path, method === 'GET' || method === 'DELETE' ? undefined : data);
+      } else {
+        await req(method, path, method === 'GET' || method === 'DELETE' ? undefined : data);
+      }
       if (opt === 'patch' || opt === 'remove') {
         setBusy(form, false);
         toast(okMsg, 'ok');
-        quietBust(bust);
+        // Converge to backend truth: the badge already flipped optimistically,
+        // but the list must re-render from the server (which just cleared its
+        // cache via quietBust). Without this a failed write looks successful
+        // until reload — the "trash" feel. Failure path below restores anyway.
+        quietBust(bust).then(silentRefresh);
       } else if (opt === 'refresh') {
         setBusy(form, false);
         toast(okMsg, 'ok');
@@ -385,7 +462,14 @@ window.FastAPI = (function () {
         form.submit();
         return;
       }
-      if (!e || e.message !== 'unauthorized') toast((e && e.message) || 'Request failed. Please try again.', 'err');
+      if (e && e.message === 'unauthorized') return; // req() already redirected to login
+      var msg = (e && e.message) || 'Request failed. Please try again.';
+      if (e && e.status >= 500) {
+        // Backend itself failing — say NOT-saved plainly or admins keep
+        // clicking a dead button thinking the portal is trash.
+        msg = 'Backend error (' + e.status + ') — NOT saved. ' + msg;
+      }
+      toast(msg, 'err');
     }
   }
 

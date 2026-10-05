@@ -58,7 +58,10 @@ class AuthService
             }
         }
 
-        $res = $this->apiClient->get('/user/personal-details', [], $headers);
+        // Fail-fast: sidebar/topbar must never wait 10s on this ~2.3s endpoint.
+        // Callers (AdminOwner/Host cachedProfile) already prefer session data;
+        // this is the last-resort network path only.
+        $res = $this->apiClient->get('/user/personal-details', [], $headers, 2);
         if (!empty($res['details']) && is_array($res['details'])) {
             return $res['details'];
         }
@@ -148,20 +151,34 @@ class AuthService
     /**
      * Rebuild session auth from the persistent cookie token (transparent
      * re-login after session loss). Returns the restored user or null.
-     * Verified users are cached 120s by token hash — never hits backend
-     * twice for the same token. Never throws.
+     * Verified users are memoized per-request + cached 300s by token hash —
+     * never hits backend twice for the same token. Fail-fast 2s so a slow
+     * backend never blocks rendering. Never throws.
      */
+    private static array $restoreMemo = [];
+
     public function restoreSession(Session $session, string $token): ?array
     {
         $token = trim($token);
         if ($token === '' || $session->read('is_logged_out')) {
             return null;
         }
-        $cacheKey = 'auth_restore_' . md5($token);
+        $mkey = md5($token);
+        if (isset(self::$restoreMemo[$mkey])) {
+            $user = self::$restoreMemo[$mkey];
+            try {
+                $session->write('User', $user);
+                $session->write('auth_token', $token);
+            } catch (\Throwable $e) {
+            }
+            return $user;
+        }
+        $cacheKey = 'auth_restore_' . $mkey;
         try {
             $cached = \Cake\Cache\Cache::read($cacheKey, 'default');
             if (is_array($cached) && isset($cached['exp'], $cached['user']) && $cached['exp'] > time()) {
                 $user = $cached['user'];
+                self::$restoreMemo[$mkey] = $user;
                 $session->write('User', $user);
                 $session->write('auth_token', $token);
                 return $user;
@@ -169,7 +186,7 @@ class AuthService
         } catch (\Throwable $e) {
         }
         try {
-            $me = $this->apiClient->get('/me', [], ['Authorization' => 'Bearer ' . $token], 3);
+            $me = $this->apiClient->get('/me', [], ['Authorization' => 'Bearer ' . $token], 2);
             $cand = null;
             if (is_array($me) && empty($me['_status'])) {
                 $cand = $me['user'] ?? $me['data'] ?? $me;
@@ -193,10 +210,11 @@ class AuthService
                 $user['first_name'] = explode(' ', trim($user['name']))[0];
             }
             $user['token'] = $token;
+            self::$restoreMemo[$mkey] = $user;
             $session->write('User', $user);
             $session->write('auth_token', $token);
             try {
-                \Cake\Cache\Cache::write($cacheKey, ['exp' => time() + 120, 'user' => $user], 'default');
+                \Cake\Cache\Cache::write($cacheKey, ['exp' => time() + 300, 'user' => $user], 'default');
             } catch (\Throwable $e) {
             }
             return $user;

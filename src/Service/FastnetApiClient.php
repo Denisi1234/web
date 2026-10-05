@@ -220,6 +220,89 @@ class FastnetApiClient
         return $results;
     }
 
+    /**
+     * Concurrent GET requests over one curl_multi handle.
+     *
+     * Portal pages used to fetch 2-4 backend resources sequentially
+     * (dashboard = properties + bookings + users + verification), so every
+     * cold view paid the sum of all latencies. Batched reads pay roughly the
+     * max instead. Response shape matches request(): decoded JSON on success,
+     * JSON with _status on 4xx/5xx, transport failures as 502.
+     *
+     * Fail-fast: connect timeout 2s, total timeout capped at 3s for portal
+     * reads so a slow backend degrades to stale/empty in ~1ms server time
+     * instead of hanging every portal page.
+     *
+     * @param array<int|string, array{endpoint:string,params?:array}> $requests
+     * @return array<int|string, ?array> keyed like $requests
+     */
+    public function getMulti(array $requests, array $headers = [], int $timeout = 3): array
+    {
+        $timeout = min(max(1, $timeout), 5);
+        $mh = curl_multi_init();
+        $chList = [];
+        $urlList = [];
+        foreach ($requests as $key => $req) {
+            $endpoint = (string)($req['endpoint'] ?? '');
+            $params = is_array($req['params'] ?? null) ? $req['params'] : [];
+            $url = $this->baseUrl . '/' . ltrim($endpoint, '/');
+            if ($params !== []) {
+                $url .= (str_contains($url, '?') ? '&' : '?') . http_build_query($params);
+            }
+            $urlList[$key] = $url;
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_HTTPGET, 1);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+            curl_setopt($ch, CURLOPT_TCP_NODELAY, 1);
+            curl_setopt($ch, CURLOPT_ENCODING, '');
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+
+            $flatHeaders = ['Accept: application/json'];
+            foreach ($headers as $k => $v) {
+                $flatHeaders[] = is_int($k) ? (string)$v : "$k: $v";
+            }
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $flatHeaders);
+
+            curl_multi_add_handle($mh, $ch);
+            $chList[$key] = $ch;
+        }
+
+        $active = null;
+        do {
+            $mrc = curl_multi_exec($mh, $active);
+            if ($active) curl_multi_select($mh, 1);
+        } while ($active && $mrc === CURLM_OK);
+
+        $results = [];
+        foreach ($chList as $key => $ch) {
+            $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlErr = curl_error($ch);
+            $raw = (string)curl_multi_getcontent($ch);
+            curl_multi_remove_handle($mh, $ch);
+            curl_close($ch);
+            if ($curlErr !== '') {
+                Log::error(sprintf('[FastnetApiClient] getMulti %s transport error: %s', $urlList[$key] ?? '?', $curlErr));
+                $results[$key] = ['_status' => 502, 'message' => 'Service unavailable.'];
+                continue;
+            }
+            $json = json_decode($raw, true);
+            if (!is_array($json)) {
+                Log::error(sprintf('[FastnetApiClient] getMulti %s -> %d (non-JSON)', $urlList[$key] ?? '?', $status));
+                $results[$key] = ['_status' => $status ?: 502, 'message' => 'Service returned an invalid response.'];
+                continue;
+            }
+            if ($status >= 400) {
+                $json['_status'] = $status;
+            }
+            $results[$key] = $json;
+        }
+        curl_multi_close($mh);
+
+        return $results;
+    }
+
     public function patch(string $endpoint, array $data = [], array $headers = []): ?array
     {
         $res = $this->request('PATCH', $endpoint, $data, $headers);
@@ -267,7 +350,11 @@ class FastnetApiClient
         $attempts = 0;
         // Retry transient timeouts only for idempotent methods — retrying
         // POST can execute a write twice (double booking/payment/room).
-        $maxAttempts = strtoupper($method) === 'POST' ? 1 : 2;
+        // Fail-fast portal reads (timeout <= 3s) never retry: a retry doubles
+        // the worst case (3s -> 6s) and PortalService already serves stale
+        // instantly, so one attempt is the ~1ms contract.
+        $upper = strtoupper($method);
+        $maxAttempts = $upper === 'POST' ? 1 : (($timeout !== null && $timeout <= 3) ? 1 : 2);
         while ($attempts < $maxAttempts) {
             try {
                 if (strtoupper($method) === 'POST') {
