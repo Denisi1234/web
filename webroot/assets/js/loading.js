@@ -30,9 +30,10 @@
 
   /** Longest an indicator may stay up before the watchdog force-completes it. */
   var MAX_MS = 8000;
-  /** Appear delay — 1ms: the bar starts instantly and finishes instantly,
-     so loading feels professional with zero perceived wait. */
-  var APPEAR_DELAY = 1;
+  /** Appear delay — 120ms: fully server-rendered first opens (the Google
+     arrival) never flash a loader at all; real async work still feels
+     instant thanks to the fast creep below. Zero unnecessary loading. */
+  var APPEAR_DELAY = 120;
   /** Where an indeterminate bar creeps to and waits. */
   var CREEP_TO = 90;
 

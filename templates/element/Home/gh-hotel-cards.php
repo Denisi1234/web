@@ -215,7 +215,7 @@ if (!function_exists('ghPropImages')) {
             <?php if ($isSlider): ?>
                 <div class="gh-card-track" id="gh-track-<?= $propId ?>">
                     <?php foreach ($cardImgs as $ci => $u): ?>
-                        <img src="<?= str_starts_with($u,'http') ? h($u) : $this->Url->build('/'.h($u)) ?>" alt="<?= h($title) ?> photo <?= $ci+1 ?>" loading="<?= $ci===0?'eager':'lazy' ?>" draggable="false" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop'">
+                        <img src="<?= str_starts_with($u,'http') ? h($u) : $this->Url->build('/'.h($u)) ?>" alt="<?= h($title) ?> photo <?= $ci+1 ?>" loading="<?= $ci===0?'eager':'lazy' ?>"<?= ($idx===0 && $ci===0) ? ' fetchpriority="high" decoding="async"' : ' decoding="async"' ?> draggable="false" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop'">
                     <?php endforeach; ?>
                 </div>
                 <button type="button" class="gh-card-nav gh-card-prev" onclick="event.stopPropagation();ghSlide(<?= $propId ?>,-1)" aria-label="Previous image">‹</button>
@@ -223,7 +223,7 @@ if (!function_exists('ghPropImages')) {
             <?php else: ?>
                 <?php $img = $cardImgs[0] ?? ghPropImage2($prop); ?>
                 <?php if ($img !== ''): ?>
-                    <img src="<?= str_starts_with($img,'http') ? h($img) : $this->Url->build('/'.h($img)) ?>" alt="<?= h($title) ?>" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop'">
+                    <img src="<?= str_starts_with($img,'http') ? h($img) : $this->Url->build('/'.h($img)) ?>" alt="<?= h($title) ?>" loading="<?= $idx===0?'eager':'lazy' ?>"<?= $idx===0?' fetchpriority="high" decoding="async"':' decoding="async"' ?> onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop'">
                 <?php else: ?>
                     <div class="gh-card-no-photo"><div><i class="fa-solid fa-image" style="font-size:30px;color:#bdbdbd;"></i><br>No photo</div></div>
                 <?php endif; ?>

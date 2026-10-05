@@ -29,8 +29,9 @@
         <!-- Production: resource hints — fast LCP + CLS -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <!-- IBM Carbon productive type: IBM Plex Sans 400/500/600/700 -->
-        <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <!-- IBM Carbon productive type: IBM Plex Sans 400/500/600/700 + Roboto 400/500 (search UI).
+             Single preconnected request — replaces the old render-blocking @import in google-travel-home.css. -->
+        <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
         <link rel="preconnect" href="https://api.mapbox.com" crossorigin>
         <link rel="preconnect" href="https://api.fastnetstays.com" crossorigin>
         <link rel="dns-prefetch" href="https://images.unsplash.com">

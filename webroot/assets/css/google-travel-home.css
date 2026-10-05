@@ -2,7 +2,7 @@
    Tokens matched via DevTools: #202124 #5f6368 #dadce0 #e8f0fe #1a73e8 #f8f9fa
    Fonts: Google Sans / Roboto, 400/500, letter-spacing -0.01em
 */
-@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&family=Roboto:wght@400;500&display=swap');
+/* Roboto + IBM Plex Sans load once via layout <link> (preconnected) — no @import here (was render-blocking). */
 .gt-page{font-family:"Google Sans",Roboto,Arial,sans-serif; color:#202124; background:#fff; -webkit-font-smoothing:antialiased}
 .gt-page *{box-sizing:border-box}
 .gt-tabs-wrap{background:#fff; border-bottom:1px solid #dadce0; position:sticky; top:0; z-index:30; overflow-x:auto; scrollbar-width:none}
