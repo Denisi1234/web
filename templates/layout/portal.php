@@ -87,8 +87,7 @@
 <?= $this->Html->script('/assets/js/fastnet-api-core.js?v=' . filemtime(WWW_ROOT . 'assets/js/fastnet-api-core.js')) ?>
 <?= $this->Html->script('/assets/js/fastnet-api-opt.js?v=' . filemtime(WWW_ROOT . 'assets/js/fastnet-api-opt.js')) ?>
 <?= $this->Html->script('/assets/js/fastnet-api-submit.js?v=' . filemtime(WWW_ROOT . 'assets/js/fastnet-api-submit.js')) ?>
-<?= $this->Html->script('/assets/js/portal-pjax-core.js?v=' . filemtime(WWW_ROOT . 'assets/js/portal-pjax-core.js')) ?>
-<?= $this->Html->script('/assets/js/portal-pjax-nav.js?v=' . filemtime(WWW_ROOT . 'assets/js/portal-pjax-nav.js')) ?>
+<?= $this->Html->script('/assets/js/portal-pjax.js?v=' . filemtime(WWW_ROOT . 'assets/js/portal-pjax.js')) ?>
 <?= $this->fetch('script') ?>
 </body>
 </html>
