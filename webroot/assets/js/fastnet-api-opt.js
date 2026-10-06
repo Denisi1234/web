@@ -175,6 +175,23 @@ window.FastAPIOpt = (function () {
         d[k] = d[k] == null ? '' : String(d[k]).trim();
       });
       return d;
+    },
+    room: function (d) {
+      if (d.price != null && d.price !== '') {
+        var p = Number(d.price) || 0;
+        d.price = p;
+        d.price_per_night = p;
+        d.customer_price = p;
+      }
+      if (d.capacity != null && d.capacity !== '') {
+        var cap = Number(d.capacity) || 1;
+        d.capacity = cap;
+        if (d.max_adults == null || d.max_adults === '') d.max_adults = cap;
+      }
+      if (d.property_id != null && d.property_id !== '') {
+        d.property_id = Number(d.property_id) || d.property_id;
+      }
+      return d;
     }
   };
   return { builders: builders, optScope: optScope, snapshot: snapshot, restore: restore, applyBadge: applyBadge, closeModal: closeModal, quietBust: quietBust, silentRefresh: silentRefresh, pendingNotice: pendingNotice };

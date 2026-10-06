@@ -64,7 +64,7 @@ $bedsVal = $room['number_of_beds'] ?? 1;
     'class' => 'cds-form',
     'id' => 'roomForm',
     'data-api' => $isEdit ? ('PUT /rooms/' . (int)($room['id'] ?? 0)) : 'POST /properties/{property_id}/rooms',
-    'data-api-strip' => 'property_id',
+    'data-api-build' => 'room',
     'data-api-ok' => $isEdit ? 'Room updated.' : 'Room created.', 'data-opt' => 'go',
     'data-api-go' => '/host/cache-bust?scope=rooms,properties&go=' . urlencode('/host/rooms'),
   ]) ?>

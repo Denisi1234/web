@@ -10,6 +10,7 @@
     var method = (spec[0] || 'POST').toUpperCase();
     var path = spec.slice(1).join(' ') || '/';
     var data = FastAPI.collect(form);
+    var builders = (Opt && Opt.builders) || {};
     var build = form.getAttribute('data-api-build');
     if (build && builders[build]) data = builders[build](data, form) || data;
     path = path.replace(/\{(\w+)\}/g, function (m, k) { return encodeURIComponent(data[k] == null ? '' : data[k]); });
@@ -59,7 +60,15 @@
     // that is the HOST submission endpoint, so a missing lodge could be
     // re-submitted as pending instead of reporting "not found".
     try {
-      await FastAPI.req(method, path, method === 'GET' || method === 'DELETE' ? undefined : data);
+      try {
+        await FastAPI.req(method, path, method === 'GET' || method === 'DELETE' ? undefined : data);
+      } catch (reqErr) {
+        if (method === 'POST' && /^\/properties\/\d+\/rooms$/.test(path) && (reqErr.status === 404 || reqErr.status === 405)) {
+          await FastAPI.req('POST', '/rooms', data);
+        } else {
+          throw reqErr;
+        }
+      }
       if (opt === 'patch' || opt === 'remove') {
         setBusy(form, false);
         FastAPI.toast(okMsg, 'ok');

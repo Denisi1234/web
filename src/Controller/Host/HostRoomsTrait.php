@@ -87,6 +87,22 @@ trait HostRoomsTrait
         return array_values(array_unique($out));
     }
 
+    private function roomErrorMessage(mixed $res, string $default = 'An error occurred.'): string
+    {
+        if (!is_array($res)) return $default;
+        $msg = trim((string)($res['message'] ?? $default));
+        if (!empty($res['errors']) && is_array($res['errors'])) {
+            $flat = [];
+            foreach ($res['errors'] as $fieldErrors) {
+                foreach ((array)$fieldErrors as $e) {
+                    if (is_string($e) && trim($e) !== '') $flat[] = trim($e);
+                }
+            }
+            if (!empty($flat)) $msg .= ': ' . implode(' ', array_slice($flat, 0, 3));
+        }
+        return $msg;
+    }
+
     public function addRoom()
     {
         $headers = $this->hostHeaders();
@@ -107,12 +123,17 @@ trait HostRoomsTrait
             if ($propertyId <= 0) {
                 $this->Flash->error(__('No property available. Create a property first.'));
             } else {
+                $price = (float)($data['price'] ?? $data['price_per_night'] ?? $data['customer_price'] ?? 0);
+                $cap = (int)($data['capacity'] ?? $data['max_adults'] ?? 1);
                 $payload = [
+                    'property_id' => $propertyId,
                     'room_number' => trim((string)($data['room_number'] ?? '')),
                     'room_type' => trim((string)($data['room_type'] ?? 'Standard')),
-                    'price' => (float)($data['price'] ?? 0),
-                    'capacity' => (int)($data['capacity'] ?? 1),
-                    'max_adults' => (int)($data['max_adults'] ?? $data['capacity'] ?? 2),
+                    'price' => $price,
+                    'price_per_night' => $price,
+                    'customer_price' => $price,
+                    'capacity' => $cap,
+                    'max_adults' => (int)($data['max_adults'] ?? $cap),
                     'max_children' => (int)($data['max_children'] ?? 0),
                     'bed_configuration' => trim((string)($data['bed_configuration'] ?? '')),
                     'number_of_beds' => (int)($data['number_of_beds'] ?? 1),
@@ -120,7 +141,7 @@ trait HostRoomsTrait
                     'room_size' => trim((string)($data['room_size'] ?? '')),
                     'status' => trim((string)($data['status'] ?? 'available')),
                     'description' => trim((string)($data['description'] ?? '')),
-                    'amenities' => $this->amenityList($data['amenities'] ?? []),
+                    'amenities' => $this->amenityList($data['amenities'] ?? ($data['amenities_raw'] ?? [])),
                     'photos' => array_values(array_filter(array_map('trim', (array)($data['photos'] ?? [])))),
                 ];
                 if ($payload['room_number'] === '' || $payload['price'] <= 0) {
@@ -128,8 +149,14 @@ trait HostRoomsTrait
                 } else {
                     $res = $this->apiClient->post('/properties/' . $propertyId . '/rooms', $payload, $headers);
                     if ($bounce = $this->bounceOnUnauth($res, '/host/rooms/add')) return $bounce;
-                    if (!empty($res['_status']) && (int)$res['_status'] >= 400) {
-                        $this->Flash->error(__($res['message'] ?? 'Could not create room.'));
+                    if (empty($res) || (!empty($res['_status']) && (int)$res['_status'] >= 400)) {
+                        $altRes = $this->apiClient->post('/rooms', $payload, $headers);
+                        if (!empty($altRes) && (empty($altRes['_status']) || (int)$altRes['_status'] < 400)) {
+                            $res = $altRes;
+                        }
+                    }
+                    if (empty($res) || (!empty($res['_status']) && (int)$res['_status'] >= 400)) {
+                        $this->Flash->error(__($this->roomErrorMessage($res, 'Could not create room.')));
                     } else {
                         $this->Flash->success(__('Room created.'));
                         return $this->redirect(['action' => 'rooms']);
@@ -164,22 +191,31 @@ trait HostRoomsTrait
         if ($this->getRequest()->is(['post','put','patch'])) {
             $data = (array)$this->getRequest()->getData();
             $payload = [];
-            foreach (['room_number','room_type','type','price','capacity','max_adults','max_children','bed_configuration','number_of_beds','floor','room_size','status','description'] as $k) {
+            foreach (['room_number','room_type','type','price','price_per_night','customer_price','capacity','max_adults','max_children','bed_configuration','number_of_beds','floor','room_size','status','description'] as $k) {
                 if (isset($data[$k])) {
-                    if (in_array($k, ['price','capacity','max_adults','max_children','number_of_beds'])) {
+                    if (in_array($k, ['price','price_per_night','customer_price','capacity','max_adults','max_children','number_of_beds'])) {
                         $payload[$k === 'type' ? 'room_type' : $k] = is_numeric($data[$k]) ? (float)$data[$k] : trim((string)$data[$k]);
                     } else {
                         $payload[$k === 'type' ? 'room_type' : $k] = trim((string)$data[$k]);
                     }
                 }
             }
-            if (isset($data['amenities'])) $payload['amenities'] = $this->amenityList($data['amenities']);
+            if (isset($payload['price'])) {
+                $payload['price_per_night'] = $payload['price'];
+                $payload['customer_price'] = $payload['price'];
+            }
+            if (isset($data['property_id'])) {
+                $payload['property_id'] = (int)$data['property_id'];
+            }
+            if (isset($data['amenities']) || isset($data['amenities_raw'])) {
+                $payload['amenities'] = $this->amenityList($data['amenities'] ?? ($data['amenities_raw'] ?? []));
+            }
             if (isset($data['photos'])) $payload['photos'] = array_values(array_filter(array_map('trim', (array)$data['photos'])));
 
             $res = $this->apiClient->put('/rooms/' . $roomId, $payload, $headers);
             if ($bounce = $this->bounceOnUnauth($res, '/host/rooms/' . $roomId)) return $bounce;
-            if (!empty($res['_status']) && (int)$res['_status'] >= 400) {
-                $this->Flash->error(__($res['message'] ?? 'Could not update room.'));
+            if (empty($res) || (!empty($res['_status']) && (int)$res['_status'] >= 400)) {
+                $this->Flash->error(__($this->roomErrorMessage($res, 'Could not update room.')));
             } else {
                 $this->Flash->success(__('Room updated.'));
                 return $this->redirect(['action' => 'rooms']);
