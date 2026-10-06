@@ -88,76 +88,7 @@ $normImgUrl = function(string $url): string {
     <div style="font-size:16px;font-weight:700;color:#202124;margin-bottom:4px;">No rooms available</div>
     <p style="font-size:13px;margin:0;">There are currently no rooms available for this property. Please try selecting different travel dates.</p>
   </div>
-<?php else:
-  // Category picks: cheapest CATEGORY by from-price, roomiest CATEGORY by max capacity.
-  // Groups come pre-sorted cheapest-first per category from the controller.
-  $groupPicks = $roomGroups ?? [];
-  $cheapestGroup = $groupPicks[0] ?? null;
-  $roomiestGroup = null;
-  foreach ($groupPicks as $gp) {
-      if ($roomiestGroup === null || (int)($gp['maxCapacity'] ?? 0) > (int)($roomiestGroup['maxCapacity'] ?? 0)) {
-          $roomiestGroup = $gp;
-      }
-  }
-  if ($roomiestGroup !== null && $cheapestGroup !== null && $roomiestGroup['label'] === $cheapestGroup['label'] && ($roomiestGroup['fromPrice'] ?? 0) === ($cheapestGroup['fromPrice'] ?? 0)) {
-      $roomiestGroup = null; // same category wins both — don't duplicate the card
-  }
-  $groupCover = function(array $gp) use ($normImgUrl): string {
-      foreach (($gp['rooms'] ?? []) as $gm) {
-          if (!is_array($gm)) continue;
-          $ph = $gm['photos'] ?? ($gm['images'] ?? []);
-          if (is_string($ph)) $ph = json_decode($ph, true) ?: [];
-          if (is_array($ph)) foreach ($ph as $one) {
-              $u = $normImgUrl(is_array($one) ? ($one['url'] ?? $one['image_url'] ?? '') : (string)$one);
-              if ($u !== '') return $u;
-          }
-          if (!empty($gm['primary_image_url'])) {
-              $u = $normImgUrl((string)$gm['primary_image_url']);
-              if ($u !== '') return $u;
-          }
-      }
-      return '';
-  };
-?>
-
-  <?php if ($cheapestGroup):
-    $cPrice = (float)($cheapestGroup['fromPrice'] ?? 0);
-    $cName = ($cheapestGroup['label'] ?? 'Standard') . ' Room';
-    $cAvail = (int)($cheapestGroup['availableCount'] ?? 0);
-    $cImg = $groupCover($cheapestGroup);
-  ?>
-  <!-- Recommended Summary Cards — Phase 2: mobile chip palette parity -->
-   <div style="font-size:14px;font-weight:800;color:#202124;margin:8px 0">Recommended for you</div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:10px;margin-bottom:12px">
-    <div class="recommended-card" style="background:#fff;border:1px solid #e8eaed;border-radius:12px;padding:12px;display:flex;gap:12px;align-items:center">
-      <div style="flex:1">
-        <span style="background:rgba(232,212,201,0.9);color:#9A4B2F;font-size:10px;font-weight:700;border-radius:6px;padding:3px 7px">Lowest Price</span>
-        <div style="font-size:13.5px;font-weight:700;color:#202124;margin-top:6px"><?= h($cName) ?></div>
-        <div style="font-size:11.5px;color:#5f6368">From <span style="color:#C2410C;font-weight:800">TSh <?= number_format($cPrice) ?></span>/night · <?= $cAvail ?> of <?= (int)($cheapestGroup['count'] ?? 1) ?> available</div>
-        <div style="font-size:11px;color:#137333;font-weight:600;margin-top:2px"><i class="fa-solid fa-check" style="font-size:10px"></i> Best value available</div>
-      </div>
-      <?php if ($cImg !== ''): ?><img src="<?= h($cImg) ?>" alt="<?= h($cName) ?>" style="width:84px;height:64px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#e5e7eb"><?php endif; ?>
-    </div>
-
-    <?php if ($roomiestGroup):
-      $mPrice = (float)($roomiestGroup['fromPrice'] ?? 0);
-      $mName = ($roomiestGroup['label'] ?? 'Standard') . ' Room';
-      $mImg = $groupCover($roomiestGroup);
-      $mCap = (int)($roomiestGroup['maxCapacity'] ?? 0);
-      $diff = $mPrice - $cPrice;
-    ?>
-    <div class="recommended-card" style="background:#fff;border:1px solid #e8eaed;border-radius:12px;padding:12px;display:flex;gap:12px;align-items:center">
-      <div style="flex:1">
-        <span style="background:rgba(231,219,248,0.9);color:#7B3FE4;font-size:10px;font-weight:700;border-radius:6px;padding:3px 7px">Most Spacious</span>
-        <div style="font-size:13.5px;font-weight:700;color:#202124;margin-top:6px"><?= h($mName) ?></div>
-        <div style="font-size:11.5px;color:#5f6368">From <span style="color:#C2410C;font-weight:800">TSh <?= number_format($mPrice) ?></span>/night<?= $mCap > 0 ? ' · Sleeps ' . $mCap : '' ?></div>
-        <div style="font-size:11px;color:#7B3FE4;font-weight:600;margin-top:2px"><i class="fa-solid fa-sparkles" style="font-size:10px"></i> <?= $diff > 0 ? '+TSh ' . number_format($diff) . ' for extra comfort' : 'Spacious retreat' ?></div>
-      </div>
-      <?php if ($mImg !== ''): ?><img src="<?= h($mImg) ?>" alt="<?= h($mName) ?>" style="width:84px;height:64px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#e5e7eb"><?php endif; ?>
-    </div>
-    <?php endif; ?>
-  </div>
-  <?php endif; ?>
+<?php else: ?>
 
   <!-- Detailed Room Cards — one card per PHYSICAL ROOM, each with its own
        Reserve button. A category with 2 rooms renders 2 cards, not 1. -->
@@ -213,8 +144,6 @@ $normImgUrl = function(string $url): string {
 .room-stat-pills span{transition:background 150ms ease}
 .room-amenity-chips span{transition:border-color 150ms ease}
 .room-price-main{color:#C2410C !important}
-.recommended-card{border-radius:12px !important;transition:box-shadow 150ms ease}
-.recommended-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.06)}
 @media (min-width:993px){
   .agoda-room-card{box-shadow:0 4px 12px rgba(0,0,0,0.04) !important}
   .agoda-room-card > div:first-child{background:#fafafa}

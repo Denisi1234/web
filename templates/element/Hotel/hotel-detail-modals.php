@@ -131,7 +131,7 @@ document.addEventListener('keydown',function(e){
   else window.addEventListener('load',paint);
   setTimeout(paint,2500);
 })();
-function openHotelMapModal(){document.getElementById('hotel_map_modal').style.display='flex'; if(!detailMapInstance) initDetailMap(); else setTimeout(()=>detailMapInstance.resize(),200)}
+function openHotelMapModal(){document.getElementById('hotel_map_modal').style.display='flex'; if(!detailMapInstance)initDetailMap(); else setTimeout(()=>{try{if(detailMapInstance.resize)detailMapInstance.resize();else if(detailMapInstance.invalidateSize)detailMapInstance.invalidateSize();}catch(e){}},200)}
 function closeHotelMapModal(){document.getElementById('hotel_map_modal').style.display='none'}
 document.querySelectorAll('.agoda-tab').forEach(btn=>{
   btn.addEventListener('click',()=>{
@@ -143,33 +143,74 @@ document.querySelectorAll('.agoda-tab').forEach(btn=>{
     if(target) target.scrollIntoView({behavior:'smooth',block:'start'});
   });
 });
+// Genuine Mapbox token, or '' when the configured value is a placeholder.
+function detailMapToken(){
+  var t=window.MAPBOX_TOKEN||window.DEFAULT_MAPBOX_TOKEN||'';
+  if(!t||t.indexOf('pk.')!==0||t.indexOf('your_real')!==-1||t.slice(-5)==='.demo')return '';
+  return t;
+}
+// Leaflet loader (shared): OSM maps with zero config when Mapbox has no key.
+var __leafletQueue=null;
+function ensureLeaflet(cb){
+  if(typeof window.L!=='undefined'&&window.L.map){cb(true);return;}
+  if(__leafletQueue){__leafletQueue.push(cb);return;}
+  __leafletQueue=[cb];
+  function done(ok){var q=__leafletQueue;__leafletQueue=null;q.forEach(function(f){try{f(ok)}catch(e){}});}
+  var css=document.querySelector('link[data-leaflet]');
+  if(!css){css=document.createElement('link');css.rel='stylesheet';css.setAttribute('data-leaflet','1');css.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';document.head.appendChild(css);}
+  var js=document.querySelector('script[data-leaflet]');
+  if(js){var t=0;(function poll(){if(typeof window.L!=='undefined'&&window.L.map)done(true);else if(++t>=40)done(false);else setTimeout(poll,100);})();return;}
+  js=document.createElement('script');js.setAttribute('data-leaflet','1');js.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  js.onload=function(){done(typeof window.L!=='undefined'&&!!window.L.map);};
+  js.onerror=function(){done(false);};
+  document.head.appendChild(js);
+}
+function paintOsmMap(container,lat,lng,zoom){
+  var m=window.L.map(container).setView([lat,lng],zoom||14);
+  window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(m);
+  window.L.marker([lat,lng]).addTo(m);
+  setTimeout(function(){try{m.invalidateSize()}catch(e){}},300);
+  return m;
+}
 document.addEventListener('DOMContentLoaded',()=>{
   const inline=document.getElementById('hotel-detail-inline-map');
-  if(inline && typeof mapboxgl!=='undefined'){
-    setTimeout(()=>{
-      try{
-        const lat=<?= json_encode((float)($property['latitude'] ?? -6.7924)) ?>;
-        const lng=<?= json_encode((float)($property['longitude'] ?? 39.2083)) ?>;
-        mapboxgl.accessToken=window.MAPBOX_TOKEN||window.DEFAULT_MAPBOX_TOKEN||'';
+  if(!inline)return;
+  setTimeout(()=>{
+    try{
+      const lat=<?= json_encode((float)($property['latitude'] ?? -6.7924)) ?>;
+      const lng=<?= json_encode((float)($property['longitude'] ?? 39.2083)) ?>;
+      const tok=detailMapToken();
+      if(tok&&typeof mapboxgl!=='undefined'){
+        mapboxgl.accessToken=tok;
         const m=new mapboxgl.Map({container:'hotel-detail-inline-map',style:'mapbox://styles/mapbox/streets-v12',center:[lng,lat],zoom:13});
         m.addControl(new mapboxgl.NavigationControl(),'top-right');
         new mapboxgl.Marker({color:'#e53935'}).setLngLat([lng,lat]).addTo(m);
-      }catch(e){console.warn('inline map',e)}
-    },600);
-  }
+      }else{
+        ensureLeaflet(function(ok){if(ok)paintOsmMap('hotel-detail-inline-map',lat,lng,13);});
+      }
+    }catch(e){console.warn('inline map',e)}
+  },600);
 });
 function initDetailMap(){
   const lat=<?= json_encode((float)($property['latitude'] ?? -6.7924)) ?>;
   const lng=<?= json_encode((float)($property['longitude'] ?? 39.2083)) ?>;
   const container=document.getElementById('web1-hotel-detail-map');
-  if(typeof mapboxgl==='undefined'||!container) return;
-  mapboxgl.accessToken=window.MAPBOX_TOKEN||window.DEFAULT_MAPBOX_TOKEN||'';
-  try{
-    detailMapInstance=new mapboxgl.Map({container:'web1-hotel-detail-map',style:'mapbox://styles/mapbox/streets-v12',center:[lng,lat],zoom:14.5});
-    detailMapInstance.addControl(new mapboxgl.NavigationControl(),'top-right');
-    new mapboxgl.Marker({color:'#e53935'}).setLngLat([lng,lat]).addTo(detailMapInstance);
-    setTimeout(()=>detailMapInstance.resize(),300);
-  }catch(e){console.error(e)}
+  if(!container)return;
+  const tok=detailMapToken();
+  if(tok&&typeof mapboxgl!=='undefined'){
+    mapboxgl.accessToken=tok;
+    try{
+      detailMapInstance=new mapboxgl.Map({container:'web1-hotel-detail-map',style:'mapbox://styles/mapbox/streets-v12',center:[lng,lat],zoom:14.5});
+      detailMapInstance.addControl(new mapboxgl.NavigationControl(),'top-right');
+      new mapboxgl.Marker({color:'#e53935'}).setLngLat([lng,lat]).addTo(detailMapInstance);
+      setTimeout(()=>detailMapInstance.resize(),300);
+    }catch(e){console.error(e)}
+    return;
+  }
+  ensureLeaflet(function(ok){
+    if(!ok)return;
+    try{detailMapInstance=paintOsmMap('web1-hotel-detail-map',lat,lng,14);}catch(e){console.error(e)}
+  });
 }
 
 // Save to Recently Viewed in LocalStorage

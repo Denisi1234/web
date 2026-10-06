@@ -111,7 +111,8 @@
     (function bootMap() {
       // Fastest path: tiles already proven dead on this device → OSM now.
       if (window.__obMap.dead()) { initOsmMap(); return; }
-      var pre = (typeof window.MAPBOX_TOKEN === 'string' && window.MAPBOX_TOKEN.indexOf('pk.') === 0) ? window.MAPBOX_TOKEN : '';
+      var preRaw = (typeof window.MAPBOX_TOKEN === 'string') ? window.MAPBOX_TOKEN : '';
+      var pre = (preRaw.indexOf('pk.') === 0 && preRaw.indexOf('your_real') === -1 && preRaw.slice(-5) !== '.demo') ? preRaw : '';
       if (pre) { initMap(pre); return; }
       // 3s cap: a hanging backend must never stall the map (was unbounded).
       var ctl = null;
@@ -120,7 +121,7 @@
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (j) {
           var t = j && (j.mapbox_token || j.mapboxToken || j.token);
-          if (t && t.indexOf('pk.') === 0 && !window.__obMap.dead()) initMap(t);
+          if (t && t.indexOf('pk.') === 0 && t.indexOf('your_real') === -1 && t.slice(-5) !== '.demo' && !window.__obMap.dead()) initMap(t);
           else initOsmMap();
         })
         .catch(initOsmMap);

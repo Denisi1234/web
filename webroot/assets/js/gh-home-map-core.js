@@ -59,7 +59,11 @@
             ]
         };
 
-        var hasValidToken = window.MAPBOX_TOKEN && typeof window.MAPBOX_TOKEN === 'string' && window.MAPBOX_TOKEN.startsWith('pk.');
+        // Placeholder tokens (pk.your_real… / *.demo) start with pk. but buy
+        // nothing — Mapbox 401s and the frame goes grey. Reject them here so
+        // the OSM style is chosen up front instead of after a failure.
+        var _tok = (typeof window.MAPBOX_TOKEN === 'string') ? window.MAPBOX_TOKEN : '';
+        var hasValidToken = _tok.indexOf('pk.') === 0 && _tok.indexOf('your_real') === -1 && _tok.slice(-5) !== '.demo';
         var _style = (cfg && cfg.style) || window.MAPBOX_STYLE;
         
         if (!hasValidToken || !_style || _style.indexOf('mapbox://') !== 0) {
