@@ -1,0 +1,289 @@
+/* Theme base part 10 (split for the 300-line cap — order matters, keep sequence). */
+
+[data-scrim-bottom="8"]:before {
+  opacity: 0.8;
+}
+
+[data-scrim-bottom="9"]:before {
+  opacity: 0.9;
+}
+
+[data-scrim-bottom="10"]:before {
+  opacity: 1;
+}
+
+[data-scrim-top] {
+  position: relative;
+}
+
+[data-scrim-top]:before {
+  position: absolute;
+  content: "";
+  width: 100%;
+  height: 80%;
+  /* FF3.6+ */
+  /* Chrome,Safari4+ */
+  /* Chrome10+,Safari5.1+ */
+  /* Opera 11.10+ */
+  /* IE10+ */
+  background: linear-gradient(to bottom, #252525 0%, rgba(0, 0, 0, 0) 100%);
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+[data-scrim-top]:not(.image--light) h1,
+[data-scrim-top]:not(.image--light) h2,
+[data-scrim-top]:not(.image--light) h3,
+[data-scrim-top]:not(.image--light) h4,
+[data-scrim-top]:not(.image--light) h5,
+[data-scrim-top]:not(.image--light) h6 {
+  color: #fff;
+}
+
+[data-scrim-top]:not(.image--light) p,
+[data-scrim-top]:not(.image--light) span,
+[data-scrim-top]:not(.image--light) ul {
+  color: #e6e6e6;
+}
+
+[data-scrim-top].image--light:before {
+  background: #fff;
+}
+
+[data-scrim-top="1"]:before {
+  opacity: 0.1;
+}
+
+[data-scrim-top="2"]:before {
+  opacity: 0.2;
+}
+
+[data-scrim-top="3"]:before {
+  opacity: 0.3;
+}
+
+[data-scrim-top="4"]:before {
+  opacity: 0.4;
+}
+
+[data-scrim-top="5"]:before {
+  opacity: 0.5;
+}
+
+[data-scrim-top="6"]:before {
+  opacity: 0.6;
+}
+
+[data-scrim-top="7"]:before {
+  opacity: 0.7;
+}
+
+[data-scrim-top="8"]:before {
+  opacity: 0.8;
+}
+
+[data-scrim-top="9"]:before {
+  opacity: 0.9;
+}
+
+[data-scrim-top="10"]:before {
+  opacity: 1;
+}
+
+.imagebg {
+  position: relative;
+}
+
+.imagebg .container {
+  z-index: 2;
+}
+
+.imagebg .container:not(.pos-absolute) {
+  position: relative;
+}
+
+.imagebg:not(.image--light) h1,
+.imagebg:not(.image--light) h2,
+.imagebg:not(.image--light) h3,
+.imagebg:not(.image--light) h4,
+.imagebg:not(.image--light) h5,
+.imagebg:not(.image--light) h6,
+.imagebg:not(.image--light) p,
+.imagebg:not(.image--light) ul,
+.imagebg:not(.image--light) blockquote {
+  color: #fff;
+}
+
+.imagebg:not(.image--light) .bg--white h1,
+.imagebg:not(.image--light) .bg--white h2,
+.imagebg:not(.image--light) .bg--white h3,
+.imagebg:not(.image--light) .bg--white h4,
+.imagebg:not(.image--light) .bg--white h5,
+.imagebg:not(.image--light) .bg--white h6 {
+  color: #252525;
+}
+
+.imagebg:not(.image--light) .bg--white p,
+.imagebg:not(.image--light) .bg--white ul {
+  color: #666666;
+}
+
+div[data-overlay] h1,
+div[data-overlay] h2,
+div[data-overlay] h3,
+div[data-overlay] h4,
+div[data-overlay] h5,
+div[data-overlay] h6 {
+  color: #fff;
+}
+
+div[data-overlay] p {
+  color: #fff;
+}
+
+.parallax {
+  overflow: hidden;
+}
+
+/**! 07. Icons **/
+.icon {
+  line-height: 1em;
+  font-size: 3.14285714em;
+}
+
+.imagebg:not(.image--light) span {
+  color: #fff;
+}
+
+/*---------- Common Elentns: Background Settings ---------*/
+.object-fit {
+  -o-object-fit: cover;
+     object-fit: cover;
+}
+
+.bg-cover {
+  background-size: cover !important;
+  background-position: center !important;
+}
+
+.image-bg {
+  background-size: cover !important;
+  background-position: center !important;
+}
+
+.default-bg {
+  background-size: initial !important;
+  background-position: initial !important;
+}
+
+.image-bg-wrap {
+  background-size: cover !important;
+  background-position: center !important;
+  position: relative;
+}
+.image-bg-wrapbefore {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #182538;
+  display: block;
+  content: "";
+  opacity: 0.8;
+}
+
+.thumb-sm {
+  height: 32px;
+  width: 32px;
+}
+
+.thumb-md {
+  height: 48px;
+  width: 48px;
+}
+
+.thumb-lg {
+  height: 88px;
+  width: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.square--20 {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.square--30 {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.square--40 {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.square--50 {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.square--60 {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.square--70 {
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.square--80 {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.square--90 {
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.square--100 {
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hide {
+  display: none;
+}

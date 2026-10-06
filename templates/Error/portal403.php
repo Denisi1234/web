@@ -22,7 +22,7 @@ if (Configure::read('debug')) :
     $this->assign('title', $message);
     $this->assign('templateName', 'portal403.php');
     $this->start('file');
-    echo $this->element('auto_table_warning');
+    if ($this->elementExists('auto_table_warning')) echo $this->element('auto_table_warning');
     $this->end();
 endif;
 

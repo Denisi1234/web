@@ -10,8 +10,8 @@ $action = $this->request->getParam('action');
 // Hide nav inline search bar on home page — it has its own Google Hotels search bar.
 // Also hidden on hotel detail (removed per product decision — detail focuses on rooms, search lives on home).
 $isHomePage = ($controller === 'Pages' && $action === 'index');
-$isDetailPage = in_array($action, ['detail', 'hotelDetail']);
-$showNavSearchBar = !$isHomePage && !$isDetailPage && (in_array($action, ['hotelList01']) || ($controller === 'Stays' && in_array($action, ['index'])));
+$isDetailPage = $action === 'detail';
+$showNavSearchBar = !$isHomePage && !$isDetailPage && $controller === 'Stays' && $action === 'index';
 
 
 // ── Authentication Resolution ──
@@ -33,7 +33,10 @@ $navAvatarBg = $effectiveUser['avatar_bg'] ?? $effectiveUser['avatar'] ?? '#f0f9
 $navAvatarColor = $effectiveUser['avatar_color'] ?? '#0284c7';
 if (!str_starts_with($navAvatarBg, '#') && !str_starts_with($navAvatarBg, 'rgb')) $navAvatarBg = '#f0f9ff';
 ?>
-<?= $this->Html->css('/assets/css/navbar.css?v=' . filemtime(WWW_ROOT . 'assets/css/navbar.css')); ?>
+<?= $this->Html->css('/assets/css/navbar-01.css?v=' . filemtime(WWW_ROOT . 'assets/css/navbar-01.css')) ?>
+<?= $this->Html->css('/assets/css/navbar-02.css?v=' . filemtime(WWW_ROOT . 'assets/css/navbar-02.css')) ?>
+<?= $this->Html->css('/assets/css/navbar-03.css?v=' . filemtime(WWW_ROOT . 'assets/css/navbar-03.css')) ?>
+<?= $this->Html->css('/assets/css/navbar-04.css?v=' . filemtime(WWW_ROOT . 'assets/css/navbar-04.css')) ?>
 <?= $this->Html->css('/assets/css/shared-header-mobile.css?v=' . filemtime(WWW_ROOT . 'assets/css/shared-header-mobile.css')) ?>
 
 <!-- Shared fastnetstays.com Accommodation Header -->
@@ -254,86 +257,6 @@ if (!str_starts_with($navAvatarBg, '#') && !str_starts_with($navAvatarBg, 'rgb')
     </header>
 </div>
 
-<script>
-// Direct inline fail-safe event binding for instant click response
-(function() {
-    function closeAllPopups() {
-        document.querySelectorAll('.trivago-user-dropdown').forEach(function(d) {
-            d.classList.remove('show');
-        });
-        var btn = document.getElementById('nav_user_btn');
-        if (btn) btn.style.outline = 'none';
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        var signinBtn = document.getElementById('nav_signin_btn');
-        if (signinBtn) {
-            // The sign-in popup modal was removed: /login is the single
-            // sign-in surface, so this is a plain link. Strip the focus ring
-            // only; leave the href intact so it stays a real, middle-clickable
-            // and keyboard-navigable link.
-            signinBtn.style.outline = 'none';
-        }
-
-        var menuBtn = document.getElementById('nav_logged_out_menu_btn');
-        var userBtn = document.getElementById('nav_user_btn');
-        var langBtnIn = document.getElementById('nav_lang_btn');
-        var langBtnOut = document.getElementById('nav_logged_out_lang_btn');
-
-        if (menuBtn) {
-            menuBtn.onclick = function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                var drop = document.getElementById('nav_logged_out_menu_dropdown');
-                if (!drop) return;
-                var wasOpen = drop.classList.contains('show');
-                closeAllPopups();
-                if (!wasOpen) drop.classList.add('show');
-            };
-        }
-
-        if (userBtn) {
-            userBtn.onclick = function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                var drop = document.getElementById('nav_user_dropdown');
-                if (!drop) return;
-                var wasOpen = drop.classList.contains('show');
-                closeAllPopups();
-                if (!wasOpen) {
-                    drop.classList.add('show');
-                    userBtn.style.outline = '2px solid #0f62fe';
-                    userBtn.style.outlineOffset = '-2px';
-                }
-            };
-        }
-
-        [langBtnIn, langBtnOut].forEach(function(btn) {
-            if (!btn) return;
-            btn.onclick = function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                var inWrap = document.getElementById('nav_logged_in_wrapper');
-                var isLogged = inWrap && inWrap.style.display !== 'none';
-                var dropId = isLogged ? 'nav_lang_dropdown' : 'nav_logged_out_lang_dropdown';
-                var drop = document.getElementById(dropId) || document.getElementById('nav_lang_dropdown');
-                if (!drop) return;
-                var wasOpen = drop.classList.contains('show');
-                closeAllPopups();
-                if (!wasOpen) drop.classList.add('show');
-            };
-        });
-
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('#nav_logged_out_menu_wrapper') && 
-                !e.target.closest('#nav_user_menu_wrapper') && 
-                !e.target.closest('#nav_lang_menu_wrapper') && 
-                !e.target.closest('#nav_logged_out_lang_wrapper')) {
-                closeAllPopups();
-            }
-        });
-    });
-})();
-</script>
+<?= $this->Html->script('/assets/js/shared-header.js?v=' . filemtime(WWW_ROOT . 'assets/js/shared-header.js')) ?>
 
 <?= $this->Html->script('/assets/js/navbar.js?v=' . filemtime(WWW_ROOT . 'assets/js/navbar.js')); ?>

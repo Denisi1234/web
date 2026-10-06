@@ -1,0 +1,288 @@
+/* Theme base part 09 (split for the 300-line cap — order matters, keep sequence). */
+.btn--instagram:hover {
+  background: #125688 !important;
+  border: 1px solid #125688 !important;
+  color: #ffffff !important;
+}
+.btn--instagram:focus {
+  background: #125688 !important;
+  border: 1px solid #125688 !important;
+  color: #ffffff !important;
+}
+.btn--instagram:active {
+  background: #125688 !important;
+  border: 1px solid #125688 !important;
+  color: #ffffff !important;
+}
+
+.btn--pinterest {
+  background: #ffffff !important;
+  border: 1px solid #cb2027 !important;
+  color: #cb2027 !important;
+}
+.btn--pinterest:hover {
+  background: #cb2027 !important;
+  border: 1px solid #cb2027 !important;
+  color: #ffffff !important;
+}
+.btn--pinterest:focus {
+  background: #cb2027 !important;
+  border: 1px solid #cb2027 !important;
+  color: #ffffff !important;
+}
+.btn--pinterest:active {
+  background: #cb2027 !important;
+  border: 1px solid #cb2027 !important;
+  color: #ffffff !important;
+}
+
+.btn--dribbble {
+  background: #ffffff !important;
+  border: 1px solid #ea4c89 !important;
+  color: #ea4c89 !important;
+}
+.btn--dribbble:hover {
+  background: #ea4c89 !important;
+  border: 1px solid #ea4c89 !important;
+  color: #ffffff !important;
+}
+.btn--dribbble:focus {
+  background: #ea4c89 !important;
+  border: 1px solid #ea4c89 !important;
+  color: #ffffff !important;
+}
+.btn--dribbble:active {
+  background: #ea4c89 !important;
+  border: 1px solid #ea4c89 !important;
+  color: #ffffff !important;
+}
+
+.btn--behance {
+  background: #ffffff !important;
+  border: 1px solid #053eff !important;
+  color: #053eff !important;
+}
+.btn--behance:hover {
+  background: #053eff !important;
+  border: 1px solid #053eff !important;
+  color: #ffffff !important;
+}
+.btn--behance:focus {
+  background: #053eff !important;
+  border: 1px solid #053eff !important;
+  color: #ffffff !important;
+}
+.btn--behance:active {
+  background: #053eff !important;
+  border: 1px solid #053eff !important;
+  color: #ffffff !important;
+}
+
+.btn--linkedin {
+  background: #ffffff !important;
+  border: 1px solid #1685b9 !important;
+  color: #1685b9 !important;
+}
+.btn--linkedin:hover {
+  background: #1685b9 !important;
+  border: 1px solid #1685b9 !important;
+  color: #ffffff !important;
+}
+.btn--linkedin:focus {
+  background: #1685b9 !important;
+  border: 1px solid #1685b9 !important;
+  color: #ffffff !important;
+}
+.btn--linkedin:active {
+  background: #1685b9 !important;
+  border: 1px solid #1685b9 !important;
+  color: #ffffff !important;
+}
+
+.height-100,
+.height-90,
+.height-80,
+.height-70,
+.height-60,
+.height-50,
+.height-40,
+.height-30,
+.height-20,
+.height-10 {
+  height: auto;
+  padding: 5em 0;
+}
+
+/*---------- Common Elentns: Background & Images ---------------*/
+.bg-img-holder {
+  position: absolute;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background-size: cover !important;
+  background-position: 50% 50% !important;
+  z-index: 0;
+  transition: opacity 0.3s linear;
+  -webkit-transition: opacity 0.3s linear;
+  opacity: 0;
+  background: #252525;
+}
+
+.bg-img-holder:not([class*=col-]) {
+  width: 100%;
+}
+
+.bg-img-holder.background--bottom {
+  background-position: 50% 100% !important;
+}
+
+.bg-img-holder.background--top {
+  background-position: 50% 0% !important;
+}
+
+.image--light .bg-img-holder {
+  background: none;
+}
+
+.bg-img-holder img {
+  display: none;
+}
+
+.imagebg.border--round {
+  overflow: hidden;
+}
+
+[data-overlay] {
+  position: relative;
+}
+[data-overlay]:before {
+  position: absolute;
+  content: "";
+  background: #020d16;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+[data-overlay].image--light:before {
+  background: #fff;
+}
+
+[data-overlay].bg--primary:before {
+  background: #4a90e2;
+}
+
+[data-overlay="1"]:before {
+  opacity: 0.1;
+}
+
+[data-overlay="2"]:before {
+  opacity: 0.2;
+}
+
+[data-overlay="3"]:before {
+  opacity: 0.3;
+}
+
+[data-overlay="4"]:before {
+  opacity: 0.4;
+}
+
+[data-overlay="5"]:before {
+  opacity: 0.5;
+}
+
+[data-overlay="6"]:before {
+  opacity: 0.6;
+}
+
+[data-overlay="7"]:before {
+  opacity: 0.7;
+}
+
+[data-overlay="8"]:before {
+  opacity: 0.8;
+}
+
+[data-overlay="9"]:before {
+  opacity: 0.9;
+}
+
+[data-overlay="10"]:before {
+  opacity: 1;
+}
+
+[data-overlay="0"]:before {
+  opacity: 0;
+}
+
+[data-scrim-bottom] {
+  position: relative;
+}
+
+[data-scrim-bottom]:before {
+  position: absolute;
+  content: "";
+  width: 100%;
+  height: 80%;
+  /* FF3.6+ */
+  /* Chrome,Safari4+ */
+  /* Chrome10+,Safari5.1+ */
+  /* Opera 11.10+ */
+  /* IE10+ */
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, #252525 100%);
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  backface-visibility: hidden;
+}
+
+[data-scrim-bottom]:not(.image--light) h1,
+[data-scrim-bottom]:not(.image--light) h2,
+[data-scrim-bottom]:not(.image--light) h3,
+[data-scrim-bottom]:not(.image--light) h4,
+[data-scrim-bottom]:not(.image--light) h5,
+[data-scrim-bottom]:not(.image--light) h6 {
+  color: #a5a5a5;
+  color: #f1f1f1;
+}
+
+[data-scrim-bottom]:not(.image--light) p,
+[data-scrim-bottom]:not(.image--light) span,
+[data-scrim-bottom]:not(.image--light) ul {
+  color: #e6e6e6;
+}
+
+[data-scrim-bottom].image--light:before {
+  background: #fff;
+}
+
+[data-scrim-bottom="1"]:before {
+  opacity: 0.1;
+}
+
+[data-scrim-bottom="2"]:before {
+  opacity: 0.2;
+}
+
+[data-scrim-bottom="3"]:before {
+  opacity: 0.3;
+}
+
+[data-scrim-bottom="4"]:before {
+  opacity: 0.4;
+}
+
+[data-scrim-bottom="5"]:before {
+  opacity: 0.5;
+}
+
+[data-scrim-bottom="6"]:before {
+  opacity: 0.6;
+}
+
+[data-scrim-bottom="7"]:before {
+  opacity: 0.7;
+}

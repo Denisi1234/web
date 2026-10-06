@@ -1,0 +1,142 @@
+/* Theme base part 24 (split for the 300-line cap — order matters, keep sequence). */
+
+
+/* For Contact */
+
+.error_message,
+#success_page {
+  padding: 10px;
+  margin-bottom: 20px;
+  text-align: center;
+  border-radius: 5px;
+}
+
+.error_message {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  border: 1px solid rgba(239, 68, 68, 0.1) !important;
+  color: #ef4444 !important;
+  font-size: 14px;
+}
+
+#success_page {
+  background-color: rgba(132, 204, 22, 0.1) !important;
+  border: 1px solid rgba(132, 204, 22, 0.1) !important;
+  color: #84cc16 !important;
+}
+#success_page h3,
+#success_page p {
+  color: #84cc16 !important;
+}
+#success_page p {
+  margin-bottom: 0 !important;
+}
+
+fieldset {
+  border: none;
+}
+
+/* ==========================================================================
+   NATIVE-FEELING MOBILE BOTTOM NAVIGATION BAR FOR PORTED CAKEPHP APP
+   ========================================================================== */
+:root {
+  --mobile-nav-height: 60px;
+}
+
+.mobile-bottom-nav {
+  display: none;
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  height: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px)) !important;
+  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+  background-color: #ffffff !important;
+  border-top: 1px solid rgba(226, 232, 240, 0.9) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  justify-content: space-around !important;
+  align-items: center !important;
+  z-index: 10000 !important;
+  box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.05) !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  touch-action: manipulation;
+}
+
+.mobile-bottom-nav .nav-item {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-decoration: none !important;
+  color: #64748b !important;
+  font-size: 10.5px !important;
+  font-weight: 500 !important;
+  position: relative !important;
+  flex: 1 !important;
+  height: var(--mobile-nav-height) !important;
+  padding: 6px 0 4px 0 !important;
+  box-sizing: border-box !important;
+  transition: color 0.15s ease, transform 0.1s ease !important;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.mobile-bottom-nav .nav-item:active {
+  transform: scale(0.94);
+}
+
+.mobile-bottom-nav .nav-icon {
+  width: 20px !important;
+  height: 20px !important;
+  margin-bottom: 2px !important;
+  stroke: #64748b !important;
+  stroke-width: 2px !important;
+  transition: transform 0.15s ease, stroke 0.15s ease, fill 0.15s ease !important;
+}
+
+.mobile-bottom-nav .nav-label {
+  font-size: 10.5px !important;
+  line-height: 1.2 !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.01em;
+}
+
+.mobile-bottom-nav .nav-item.active {
+  color: #006CE4 !important;
+  font-weight: 700 !important;
+}
+
+.mobile-bottom-nav .nav-item.active .nav-label {
+  font-weight: 700 !important;
+  color: #006CE4 !important;
+}
+
+.mobile-bottom-nav .nav-item.active .nav-icon {
+  stroke: #006CE4 !important;
+  transform: scale(1.08) !important;
+}
+
+.mobile-bottom-nav .nav-active-dot {
+  display: none !important;
+  width: 4px !important;
+  height: 4px !important;
+  background-color: #006CE4 !important;
+  border-radius: 50% !important;
+  position: absolute !important;
+  bottom: 3px !important;
+}
+
+.mobile-bottom-nav .nav-item.active .nav-active-dot {
+  display: block !important;
+}
+
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    display: flex !important;
+  }
+  body {
+    padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + 10px) !important;
+  }
+}

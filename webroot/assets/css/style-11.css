@@ -1,0 +1,287 @@
+/* Theme base part 11 (split for the 300-line cap — order matters, keep sequence). */
+
+.text-xs {
+  font-size: 10px;
+}
+
+.text-sm {
+  font-size: 12px;
+}
+
+.text-md {
+  font-size: 14px;
+}
+
+.fs-md {
+  font-size: 15px;
+}
+
+.fw-bold {
+  font-weight: 600 !important;
+}
+
+/*----------- Common Elentns: Card Sedign ------------*/
+.card {
+  border: none;
+  overflow: hidden;
+  width: 100%;
+  background: #ffffff;
+}
+
+.card-header {
+  background: #ffffff;
+  padding: 0.8rem 1rem;
+  border-color: #e2e8ec;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-header h4 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+.card-header h5 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+.card-header h6 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+/*---------- Common Elentns: Custom Background Colors ------------*/
+.bg-seegreen {
+  background-color: var(--bs-cyan) !important;
+}
+
+.bg-purple {
+  background-color: var(--bs-purple) !important;
+}
+
+.bg-ratting {
+  background-color: #ff9800;
+}
+
+.bg-offer {
+  background-color: #e91e51;
+}
+
+.bg-white {
+  background-color: var(--bs-white) !important;
+}
+
+.bg-light-primary {
+  background-color: var(--bs-primary-bg-subtle) !important;
+}
+
+.bg-light-success {
+  background-color: var(--bs-success-bg-subtle) !important;
+}
+
+.bg-light-info {
+  background-color: var(--bs-info-bg-subtle) !important;
+}
+
+.bg-light-warning {
+  background-color: var(--bs-warning-bg-subtle) !important;
+}
+
+.bg-light-danger {
+  background-color: var(--bs-danger-bg-subtle) !important;
+}
+
+.bg-light-purple {
+  background-color: #e3e3ff !important;
+}
+
+.bg-light-seegreen {
+  background-color: #b2e7dc !important;
+}
+
+.bg-light-dark {
+  background-color: rgba(4, 27, 45, 0.1) !important;
+}
+
+.bg-transparents {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.bg--graysmoke {
+  background-image: linear-gradient(180deg, rgba(244, 244, 249, 0.8) 50%, rgba(244, 244, 249, 0.05) 100%);
+}
+
+.shape--bg:after {
+  width: 48%;
+  height: 72%;
+  top: 21%;
+  left: 52%;
+}
+
+.shape--bg:before {
+  width: 48%;
+  height: 72%;
+  top: 21%;
+  right: 52%;
+}
+
+/*----------- Common Elentns: Custom List Styles ----------*/
+ul.simple-list,
+ul.colored-list,
+ul.simple {
+  padding: 0;
+  margin: 0;
+}
+
+ul.simple-list li,
+ul.colored-list li {
+  list-style: none;
+  position: relative;
+  color: rgba(0, 44, 63, 0.6);
+  font-weight: 500;
+  padding: 0.2rem 0rem 0.2rem 1.4rem;
+}
+
+ul.simple-list li:before {
+  content: "\f192";
+  font-family: "Font Awesome 6 Free";
+  position: absolute;
+  left: 0;
+}
+
+ul.colored-list li:before {
+  content: "\f192";
+  font-family: "Font Awesome 6 Free";
+  color: #cd2c22;
+  position: absolute;
+  left: 0;
+}
+
+/*---------- Common Elentns: Info Styles --------------*/
+.label {
+  padding: 4px 15px;
+  font-weight: 500;
+  border-radius: 4px;
+  font-size: 75%;
+}
+
+.label-seegreen {
+  background-color: var(--bs-cyan);
+}
+
+.label-dark {
+  background-color: var(--bs-dark);
+}
+
+.label-inverse {
+  background-color: var(--bs-gray-700);
+}
+
+.label-white {
+  background-color: var(--bs-white);
+}
+
+.label-light-primary {
+  background-color: var(--bs-primary-bg-subtle);
+  color: var(--bs-primary);
+}
+
+.label-light-success {
+  background-color: var(--bs-success-bg-subtle);
+  color: var(--bs-success);
+}
+
+.label-light-info {
+  background-color: var(--bs-info-bg-subtle);
+  color: var(--bs-info);
+}
+
+.label-light-warning {
+  background-color: var(--bs-warning-bg-subtle);
+  color: var(--bs-warning-bg);
+}
+
+.label-light-danger {
+  background-color: var(--bs-danger-bg-subtle);
+  color: var(--bs-danger-bg);
+}
+
+.label-light-purple {
+  background-color: #e3e3ff;
+  color: var(--bs-purple);
+}
+
+.label-light-seegreen {
+  background-color: #b2e7dc;
+  color: var(--bs-cyan);
+}
+
+.label-light-dark {
+  background-color: rgba(4, 27, 45, 0.12);
+  color: #041b2d;
+}
+
+.label-light-inverse {
+  background-color: rgba(62, 69, 85, 0.1);
+  color: #3e4555;
+}
+
+/*--------- Common Elentns: Table Custom Settings -----------*/
+.table tr th,
+.table tr td {
+  padding: 12px 15px;
+  vertical-align: middle;
+}
+
+.table.tbl-big tr th,
+.table.tbl-big tr td {
+  padding: 20px 15px;
+}
+
+.table.tbl-big.center tr th,
+.table.tbl-big.center tr td {
+  padding: 20px 15px;
+  text-align: center;
+}
+
+table.table tr th {
+  font-weight: 600;
+}
+
+/*----------- Common Elentns: Custom badge Styles ----------*/
+.badge {
+  font-weight: 400;
+}
+
+.badge-xs {
+  font-size: 9px;
+}
+
+.badge-xs,
+.badge-sm {
+  transform: translate(0, -2px);
+}
+
+.badge-purple {
+  background-color: var(--bs-purple);
+}
+
+.badge-seegreen {
+  background-color: var(--bs-cyan);
+}
+
+.badge-dark {
+  background-color: var(--bs-dark);
+}
+
+/*----------- Common Elentns: Custom Alert Styles ----------*/
+.alert-primary {
+  color: var(--bs-primary);
+  background-color: var(--bs-primary-bg-subtle);
+  border-color: var(--bs-primary);
+}
+.alert-primary .alert-link {
+  color: var(--bs-primary-bg-dark);
+}

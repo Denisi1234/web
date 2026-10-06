@@ -34,7 +34,6 @@
         <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
         <link rel="preconnect" href="https://api.mapbox.com" crossorigin>
         <link rel="preconnect" href="https://api.fastnetstays.com" crossorigin>
-        <link rel="dns-prefetch" href="https://images.unsplash.com">
         <?php if (!in_array($this->getRequest()->getParam('controller'), ['Account'], true)): ?>
         <link rel="preload" href="/assets/css/google-travel-layout.css?v=<?= filemtime(WWW_ROOT . 'assets/css/google-travel-layout.css') ?>" as="style">
         <link rel="preload" href="/assets/css/google-travel-cards.css?v=<?= filemtime(WWW_ROOT . 'assets/css/google-travel-cards.css') ?>" as="style">
@@ -71,113 +70,7 @@
         <meta name="format-detection" content="telephone=no" />
 
         <!-- Google Rich Result Structured Data (Schema.org JSON-LD for Sitelinks & Brand Search) -->
-        <script type="application/ld+json">
-        {
-          "@context": "https://schema.org",
-          "@graph": [
-            {
-              "@type": "WebSite",
-              "@id": "https://www.fastnetstays.com/#website",
-              "url": "https://www.fastnetstays.com",
-              "name": "FastNet Stays",
-              "description": "Online Hotel Booking, Luxury Lodges & Beach Escapes across Tanzania",
-              "publisher": {
-                "@id": "https://www.fastnetstays.com/#organization"
-              },
-              "potentialAction": {
-                "@type": "SearchAction",
-                "target": {
-                  "@type": "EntryPoint",
-                  "urlTemplate": "https://www.fastnetstays.com/?city={search_term_string}"
-                },
-                "query-input": {
-                  "@type": "PropertyValueSpecification",
-                  "valueRequired": true,
-                  "valueName": "search_term_string"
-                }
-              }
-            },
-            {
-              "@type": "TravelAgency",
-              "@id": "https://www.fastnetstays.com/#organization",
-              "name": "FastNet Stays",
-              "url": "https://www.fastnetstays.com",
-              "logo": {
-                "@type": "ImageObject",
-                "url": "https://www.fastnetstays.com/favicon-512.png",
-                "width": "512",
-                "height": "512"
-              },
-              "contactPoint": {
-                "@type": "ContactPoint",
-                "contactType": "customer service",
-                "email": "support@fastnetstays.com",
-                "availableLanguage": ["English"]
-              },
-              "sameAs": [
-                "https://www.fastnetstays.com"
-              ]
-            },
-            {
-              "@type": "ItemList",
-              "name": "FastNet Stays Sitelinks",
-              "itemListElement": [
-                {
-                  "@type": "SiteNavigationElement",
-                  "position": 1,
-                  "name": "FastNet Hotels",
-                  "description": "When booking a hotel in Dar es Salaam, play around with dates and price options on ...",
-                  "url": "https://www.fastnetstays.com/?city=Dar%20es%20Salaam"
-                },
-                {
-                  "@type": "SiteNavigationElement",
-                  "position": 2,
-                  "name": "Track and Compare Hotel Prices",
-                  "description": "Set up price tracking. Track hotel prices for specific trip dates, or ...",
-                  "url": "https://www.fastnetstays.com/?city=Dar%20es%20Salaam#track-prices"
-                },
-                {
-                  "@type": "SiteNavigationElement",
-                  "position": 3,
-                  "name": "Hotel Deals",
-                  "description": "Browse hotel deals across Tanzania — compare prices and book direct.",
-                  "url": "https://www.fastnetstays.com/"
-                },
-                {
-                  "@type": "SiteNavigationElement",
-                  "position": 4,
-                  "name": "Hotels to Zanzibar",
-                  "description": "Beach stay. City hotel; Resort; Boutique — Off-peak travel is ...",
-                  "url": "https://www.fastnetstays.com/?city=Zanzibar"
-                },
-                {
-                  "@type": "SiteNavigationElement",
-                  "position": 5,
-                  "name": "Hotels to Arusha",
-                  "description": "Safari lodge. Safari stay; City hotel; Lodge — Peak season deals ...",
-                  "url": "https://www.fastnetstays.com/?city=Arusha"
-                },
-                {
-                  "@type": "SiteNavigationElement",
-                  "position": 6,
-                  "name": "Stays",
-                  "description": "Hotel suggestions are based on a route's cheapest nightly fares ...",
-                  "url": "https://www.fastnetstays.com/"
-                }
-              ]
-            },
-            {
-              "@type": "BreadcrumbList",
-              "@id": "https://www.fastnetstays.com/#breadcrumb",
-              "itemListElement": [
-                {"@type": "ListItem","position": 1,"name": "Home","item": "https://www.fastnetstays.com/"},
-                {"@type": "ListItem","position": 2,"name": "Hotels","item": "https://www.fastnetstays.com/?city=Dar%20es%20Salaam"},
-                {"@type": "ListItem","position": 3,"name": "Zanzibar Hotels","item": "https://www.fastnetstays.com/?city=Zanzibar"}
-              ]
-            }
-          ]
-        }
-        </script>
+        <?= $this->element('Layout/default-seo') ?>
 
         <!-- CSS Files -->
         <?php
@@ -200,18 +93,22 @@
                 '/assets/css/prism.css',
             ]);
         }
+        // Theme base, split into 300-line parts (order matters — keep sequence).
+        $themeParts = [];
+        for ($i = 1; $i <= 24; $i++) {
+            $themeParts[] = sprintf('/assets/css/style-%02d.css', $i);
+        }
         $globalCss = array_merge($globalCss, [
             '/assets/css/bootstrap-icons.css',
             '/assets/css/fontawesome.css',
-            '/assets/css/style.css',
-        ]);
+        ], $themeParts);
         echo $this->Html->css($globalCss);
         ?>
 
         <?= $this->Html->css('/assets/css/ui-tokens.css') ?>
         <!-- Canonical loading system: one set of tokens/motion for every
              loading state. Loaded after app-loader.css so it wins. -->
-        <?= $this->Html->css('/assets/css/loading.css') ?>
+        <?= $this->Html->css(['/assets/css/loading-01.css', '/assets/css/loading-02.css']) ?>
         <?= $this->Html->css('/assets/css/app-loader.css') ?>
         <?= $this->Html->css('/assets/css/fastnet-dots.css') ?>
         <?= $this->Html->css('/assets/css/shimmer.css') ?>
@@ -222,7 +119,8 @@
         <!-- IBM Carbon LAST so components win over page CSS (Baymard layout untouched) -->
         <?= $this->Html->css('/assets/css/carbon-polish.css?v=' . filemtime(WWW_ROOT . 'assets/css/carbon-polish.css')) ?>
         <?php if ($isHomePage): ?>
-        <?= $this->Html->css('/assets/css/carbon-home.css?v=' . filemtime(WWW_ROOT . 'assets/css/carbon-home.css')) ?>
+        <?= $this->Html->css('/assets/css/carbon-home-01.css?v=' . filemtime(WWW_ROOT . 'assets/css/carbon-home-01.css')) ?>
+        <?= $this->Html->css('/assets/css/carbon-home-02.css?v=' . filemtime(WWW_ROOT . 'assets/css/carbon-home-02.css')) ?>
         <?php else: ?>
         <?= $this->Html->css('/assets/css/carbon-journey.css?v=' . filemtime(WWW_ROOT . 'assets/css/carbon-journey.css')) ?>
         <?php endif; ?>
@@ -231,11 +129,15 @@
 
         <!-- Canonical loading controller. Must precede app-loader.js, which
              delegates its progress bar to it. -->
-        <?= $this->Html->script('/assets/js/loading.js?v=' . filemtime(WWW_ROOT . 'assets/js/loading.js')) ?>
+        <?= $this->Html->script('/assets/js/loading-core.js?v=' . filemtime(WWW_ROOT . 'assets/js/loading-core.js')) ?>
+        <?= $this->Html->script('/assets/js/loading-ui.js?v=' . filemtime(WWW_ROOT . 'assets/js/loading-ui.js')) ?>
         <!-- Universal App Loader Engine -->
-        <?= $this->Html->script('/assets/js/app-loader.js?v=' . filemtime(WWW_ROOT . 'assets/js/app-loader.js')) ?>
+        <?= $this->Html->script('/assets/js/app-loader-core.js?v=' . filemtime(WWW_ROOT . 'assets/js/app-loader-core.js')) ?>
+        <?= $this->Html->script('/assets/js/app-loader-dialog.js?v=' . filemtime(WWW_ROOT . 'assets/js/app-loader-dialog.js')) ?>
         <!-- Direct-to-backend forms (Bearer in JS, CakePHP proxy as fallback) -->
-        <?= $this->Html->script('/assets/js/fastnet-api.js?v=' . filemtime(WWW_ROOT . 'assets/js/fastnet-api.js')) ?>
+        <?= $this->Html->script('/assets/js/fastnet-api-core.js?v=' . filemtime(WWW_ROOT . 'assets/js/fastnet-api-core.js')) ?>
+        <?= $this->Html->script('/assets/js/fastnet-api-opt.js?v=' . filemtime(WWW_ROOT . 'assets/js/fastnet-api-opt.js')) ?>
+        <?= $this->Html->script('/assets/js/fastnet-api-submit.js?v=' . filemtime(WWW_ROOT . 'assets/js/fastnet-api-submit.js')) ?>
         <!-- Display currency (TZS/USD/EUR): deferred so it runs before page-level deferred scripts -->
         <?= $this->Html->script('/assets/js/fastnet-currency.js?v=' . filemtime(WWW_ROOT . 'assets/js/fastnet-currency.js'), ['defer' => true]) ?>
 
@@ -244,86 +146,7 @@
         <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js" defer></script>
         <?= $this->Html->script('/assets/js/fastnet-map-core.js') ?>
 
-        <script>
-            window.FASTNET_API_URL = (
-                window.location.hostname === 'localhost' ||
-                window.location.hostname === '127.0.0.1' ||
-                window.location.hostname === ''
-            ) ? 'http://127.0.0.1:8000' : 'https://api.fastnetstays.com';
-
-            window.API_URL = function (path) {
-                return window.FASTNET_API_URL + path;
-            };
-
-            // Mapbox configuration — public pk.* token only (never echo secret sk.*). Restrict token by HTTP Referrer in Mapbox dashboard.
-            <?php
-            $layoutMapboxToken = $mapboxToken ?? \Cake\Core\Configure::read('App.mapboxToken', env('MAPBOX_TOKEN', ''));
-            $layoutMapboxStyle = $mapboxStyle ?? \Cake\Core\Configure::read('App.mapboxStyle', 'mapbox://styles/mapbox/streets-v12');
-            if (!is_string($layoutMapboxToken) || !str_starts_with($layoutMapboxToken, 'pk.')) $layoutMapboxToken = '';
-            if (!is_string($layoutMapboxStyle) || $layoutMapboxStyle === '') $layoutMapboxStyle = 'mapbox://styles/mapbox/streets-v12';
-            // Only pk.* public tokens are echoed to HTML; secrets never leave server.
-            ?>
-            window.MAPBOX_TOKEN = <?= json_encode($layoutMapboxToken) ?> || window.MAPBOX_TOKEN || '';
-            window.MAPBOX_STYLE = <?= json_encode($layoutMapboxStyle) ?> || window.MAPBOX_STYLE || 'mapbox://styles/mapbox/streets-v12';
-            var _isMapboxStyle = window.MAPBOX_STYLE && window.MAPBOX_STYLE.indexOf('mapbox://') === 0;
-            if (!window.MAPBOX_TOKEN && _isMapboxStyle) {
-                window.MAPBOX_STYLE = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
-            }
-            window.DEFAULT_MAPBOX_TOKEN = window.MAPBOX_TOKEN || '';
-            if (window.MAPBOX_TOKEN && typeof mapboxgl !== 'undefined') {
-                mapboxgl.accessToken = window.MAPBOX_TOKEN;
-            }
-            if (window.MAPBOX_TOKEN) {
-                window.DEFAULT_MAPBOX_TOKEN = window.MAPBOX_TOKEN;
-                if (typeof mapboxgl !== 'undefined') {
-                    mapboxgl.accessToken = window.MAPBOX_TOKEN;
-                }
-            }
-            // always dispatch — gh-home-map.js handles OSM fallback without token
-            setTimeout(function(){ window.dispatchEvent(new CustomEvent('fastnet:mapbox-ready')); }, 0);
-
-            // Fallback runtime fetch if token not server-injected (e.g. other pages or env missing)
-            if (!window.MAPBOX_TOKEN) {
-                fetch(window.API_URL('/api/map-config'))
-                    .then(res => res.json())
-                    .then(data => {
-                        const tok = data && (data.mapbox_token || data.mapboxToken || data.token || (data.data && data.data.mapbox_token));
-                        const sty = data && (data.mapbox_style || data.style);
-                        if (tok && tok !== 'YOUR_MAPBOX_ACCESS_TOKEN' && tok !== 'pk.placeholder' && tok !== '' && tok.indexOf('pk.')===0) {
-                            window.MAPBOX_TOKEN = tok;
-                            window.DEFAULT_MAPBOX_TOKEN = tok;
-                            if (sty) window.MAPBOX_STYLE = sty;
-                            if (typeof mapboxgl !== 'undefined') {
-                                mapboxgl.accessToken = tok;
-                            }
-                            window.dispatchEvent(new CustomEvent('fastnet:mapbox-ready'));
-                        } else if (sty) {
-                            window.MAPBOX_STYLE = sty;
-                            window.dispatchEvent(new CustomEvent('fastnet:mapbox-ready'));
-                        }
-                    })
-                    .catch(err => console.warn('Mapbox config error:', err));
-            }
-
-            // Global password toggle helper function
-            function togglePasswordVisibility(fieldId, iconEl) {
-                const input = document.getElementById(fieldId);
-                if (!input) return;
-                const isPassword = input.type === 'password';
-                input.type = isPassword ? 'text' : 'password';
-                
-                const icon = iconEl.querySelector('i');
-                if (icon) {
-                    if (isPassword) {
-                        icon.classList.remove('fa-eye');
-                        icon.classList.add('fa-eye-slash');
-                    } else {
-                        icon.classList.remove('fa-eye-slash');
-                        icon.classList.add('fa-eye');
-                    }
-                }
-            }
-        </script>
+        <?= $this->element('Layout/default-bootstrap') ?>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/MaterialDesign-Webfont/7.4.47/css/materialdesignicons.min.css">
     </head>
 
@@ -336,13 +159,7 @@
 
             <!-- Flash messages (Carbon notifications) — rendered here so notices
                  never pile up unseen across public pages -->
-            <style>
-            .message{font-family:'IBM Plex Sans','Inter',Roboto,Arial,sans-serif;font-size:14px;line-height:1.5;padding:12px 16px;margin:12px 0;background:#f4f4f4;border:1px solid #e0e0e0;border-left:3px solid #0f62fe;color:#161616;cursor:pointer}
-            .message.error{background:#fff1f1;border-left-color:#da1e28}
-            .message.success{background:#defbe6;border-left-color:#24a148}
-            .message.warning{background:#fcf4d6;border-left-color:#f1c21b}
-            .message.hidden{display:none}
-            </style>
+            <?= $this->Html->css('/assets/css/default-flash.css') ?>
             <div class="container" style="max-width:1140px">
                 <?= $this->Flash->render() ?>
             </div>
@@ -369,7 +186,8 @@
             '/assets/js/jquery.min.js',
             '/assets/js/popper.min.js',
             '/assets/js/bootstrap.min.js',
-            '/assets/js/custom.js',
+            '/assets/js/custom-site.js',
+            '/assets/js/custom-nav.js',
             '/assets/js/active.js',
         ]); ?>
         <?php if (!$isHomePage): ?>
@@ -393,14 +211,7 @@
 
         <!-- Global toast (all pages): polite live region + fnsToast helper. Home defines its own richer copy. -->
         <div id="fns_toast" role="status" aria-live="polite" aria-atomic="true" style="position:fixed;bottom:20px;bottom:calc(20px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#161616;color:#fff;padding:11px 18px;border-radius:9999px;font-size:13px;font-weight:500;display:none;z-index:4000;box-shadow:0 8px 30px rgba(0,0,0,.18);max-width:min(92vw,420px);text-align:center;pointer-events:none;font-family:'IBM Plex Sans','Inter',Roboto,sans-serif"></div>
-        <script>
-        window.fnsToast = window.fnsToast || function(msg, ms){
-            var t = document.getElementById('fns_toast');
-            if(!t) return;
-            t.textContent = msg; t.style.display = 'block';
-            clearTimeout(t._t); t._t = setTimeout(function(){ t.style.display = 'none'; }, ms || 2800);
-        };
-        </script>
+        <?= $this->element('Layout/default-foot-script') ?>
 
     </body>
 </html>

@@ -1,0 +1,90 @@
+/* Split for the 300-line cap — order matters, keep sequence. */
+
+@media (max-width: 991px) {
+    .agoda-top-header {
+        height: auto !important;
+        min-height: 56px;
+        padding: 8px 0 !important;
+    }
+    .agoda-top-header .container-fluid > .d-flex {
+        flex-wrap: wrap !important;
+    }
+    #nav_search_wrapper {
+        order: 3 !important;
+        flex: 0 0 100% !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 8px 0 2px 0 !important;
+    }
+    #nav_search_form {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+    }
+    #nav_search_container {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        height: auto !important;
+        border-radius: 12px !important;
+        border: 1px solid #cbd5e1 !important;
+        background: #ffffff !important;
+        padding: 0 !important;
+        gap: 0 !important;
+        overflow: hidden !important;
+        width: 100% !important;
+    }
+    #nav_dest_pod {
+        grid-column: span 2 !important;
+        border-right: none !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        padding: 10px 14px !important;
+        width: 100% !important;
+        min-width: 100% !important;
+    }
+    #nav_date_pod {
+        grid-column: span 1 !important;
+        border-right: 1px solid #e2e8f0 !important;
+        border-bottom: none !important;
+        padding: 10px 12px !important;
+        min-width: auto !important;
+    }
+    #nav_guest_pod {
+        grid-column: span 1 !important;
+        border-right: none !important;
+        border-bottom: none !important;
+        padding: 10px 12px !important;
+        min-width: auto !important;
+    }
+    #nav_search_container button[type="submit"] {
+        display: none !important;
+    }
+    #nav_logged_in_wrapper,
+    #nav_logged_out_wrapper {
+        order: 2 !important;
+    }
+    .trivago-user-dropdown {
+        width: 92vw !important;
+        max-width: 320px;
+        right: 0 !important;
+        left: auto !important;
+    }
+    .trivago-datepicker-modal {
+        width: 94vw !important;
+        left: 0 !important;
+        right: 0 !important;
+        padding: 14px !important;
+    }
+    .trivago-cal-grid-wrapper {
+        grid-template-columns: 1fr !important;
+    }
+    .trivago-guests-modal {
+        width: 92vw !important;
+        max-width: 340px;
+        right: 0 !important;
+        left: auto !important;
+    }
+    .trivago-recent-dropdown {
+        width: 94vw !important;
+        left: 0 !important;
+    }
+}

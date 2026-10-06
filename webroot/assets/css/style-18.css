@@ -1,0 +1,290 @@
+/* Theme base part 18 (split for the 300-line cap — order matters, keep sequence). */
+.home-slider .slick-list.draggable .slick-track .single-slider.slick-slide .bg-slide {
+  height: 100%;
+  width: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+}
+.home-slider ul.slick-dots {
+  position: absolute;
+  bottom: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 10px;
+}
+.home-slider ul.slick-dots li {
+  list-style: none;
+}
+.home-slider ul.slick-dots li button {
+  font-size: 0;
+  border: none;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  line-height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+}
+.home-slider ul.slick-dots li.active {
+  list-style: none;
+}
+
+/*--------------------------------------------------
+GeoTrip Elements Styles
+---------------------------------------------------*/
+/*---------- GeoTrip Elements Styles: Tours and Place Styles ------------*/
+.pop-touritem {
+  position: relative;
+  height: 100% !important;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.fs-title {
+  font-size: 1.12rem !important;
+}
+
+.detail.ellipsis-container {
+  color: var(--bs-text-muted);
+  font-size: 14px;
+  padding-top: 3px;
+}
+
+.ellipsis-item__normal.separate {
+  display: inline-block;
+  width: 1px;
+  height: 10px;
+  margin: 0 5px;
+  background-color: #ced2d9;
+}
+
+.touritem-middle {
+  justify-content: space-between;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.flight-foots {
+  position: relative;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.low-price .tag-span {
+  font-size: 13px;
+  font-weight: 500;
+  color: #5f7388;
+}
+
+.pop-touritem-bg {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px 0 rgba(15, 41, 77, 0.08);
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+}
+
+.pop-touritem-bg .bg-cover {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  transition: 0.2s;
+  background-position-y: -10px;
+}
+
+.pop-touritem-bg .touritem-cnt {
+  position: absolute;
+  bottom: 0;
+  z-index: 1;
+  padding: 0 24px 16px;
+}
+
+.detail.ellipsis-container .ellipsis {
+  margin: 0 5px 5px 0px;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  display: inline-block;
+  color: #45596c;
+  border: 1px dashed var(--bs-bordercolor);
+}
+
+.flight-footer {
+  margin-top: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.star-rates {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  font-size: 11px;
+  letter-spacing: 3px;
+}
+
+.star-rates .fa-solid.active {
+  color: #ffa31a;
+}
+
+.rat-reviews {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.rat-reviews span {
+  margin-left: 3px;
+  color: var(--bs-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.activities-flex {
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--bs-navcolor);
+}
+
+.activities-flex li {
+  list-style: none;
+}
+
+.activities-flex li .actv-wrap-caps {
+  color: #808fa0;
+  font-size: 13px;
+}
+
+.popFlights-item-overHidden {
+  position: relative;
+  overflow: hidden;
+}
+
+.flight-thumb-wrapper .popFlights-item-overHidden > img,
+.flight-thumb-wrapper .popFlights-item-overHidden > img {
+  transition: all ease 0.4s;
+}
+
+.flight-thumb-wrapper:hover .popFlights-item-overHidden > img,
+.flight-thumb-wrapper:focus .popFlights-item-overHidden > img {
+  transform: scale(1.05);
+}
+
+.segmentDeparture ul {
+  padding: 0;
+  margin: 0;
+  position: relative;
+  border-left: 1px solid var(--bs-bordercolor);
+}
+
+.segmentDeparture ul li {
+  margin-bottom: 0;
+  padding-left: 1.2rem;
+}
+
+.segmentDeparture ul li:first-child {
+  margin-bottom: 1.8rem;
+}
+
+.segmentDeparture ul:before {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: var(--bs-primary);
+  border: 4px solid var(--bs-primary-bg-subtle);
+  border-radius: 50%;
+  left: -10px;
+  top: 0;
+}
+
+.segmentDeparture ul:after {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: var(--bs-primary);
+  border: 4px solid var(--bs-primary-bg-subtle);
+  border-radius: 50%;
+  left: -10px;
+  bottom: 0;
+}
+
+.segmentDeparture-block {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.segmentDeparture-overlay {
+  position: relative;
+  border-left: 1px dashed var(--bs-bordercolor);
+  padding: 3rem;
+}
+
+/*---------- GeoTrip Elements Styles: Tours Lists Styles ------------*/
+.main-carousel.list-layouts {
+  height: 100%;
+}
+
+.main-carousel.list-layouts .carousel-cell {
+  height: 100%;
+  width: 100%;
+}
+
+.arrow-hide .flickity-page-dots {
+  display: none;
+}
+
+.flickity-page-dot:focus {
+  outline: 0;
+  box-shadow: 0 0 0 5px var(--bs-primary-bg-subtle);
+}
+
+.flickity-page-dot {
+  background: var(--bs-primary-bg-subtle);
+}
+
+.flickity-page-dot.is-selected {
+  background: var(--bs-primary);
+}
+
+/*---------- GeoTrip Elements Styles: Gallery Images Styles ------------*/
+.geotrip-gallery {
+  display: flex;
+  max-height: 500px;
+  gap: 10px;
+}
+.geotrip-gallery .left-img {
+  flex: 2;
+}
+.geotrip-gallery .left-img img {
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+  border-radius: 10px;
+}
+.geotrip-gallery .right-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: repeat(2, 1fr);
+  gap: 10px;
+}

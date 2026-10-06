@@ -233,7 +233,10 @@ $navDest = $queryParams['destination'] ?? ($queryParams['q'] ?? 'Dar es Salaam')
                     });
                     </script>
 
-                    <?= $this->Html->script('/assets/js/nav-search.js?v=' . filemtime(WWW_ROOT . 'assets/js/nav-search.js')); ?>
+                    <?= $this->Html->script('/assets/js/nav-search-dates.js?v=' . filemtime(WWW_ROOT . 'assets/js/nav-search-dates.js')) ?>
+                    <?= $this->Html->script('/assets/js/nav-search-suggest.js?v=' . filemtime(WWW_ROOT . 'assets/js/nav-search-suggest.js')) ?>
+                    <?= $this->Html->script('/assets/js/nav-search-fetch.js?v=' . filemtime(WWW_ROOT . 'assets/js/nav-search-fetch.js')) ?>
+                    <?= $this->Html->script('/assets/js/nav-search-guests.js?v=' . filemtime(WWW_ROOT . 'assets/js/nav-search-guests.js')) ?>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     initNavSearch({

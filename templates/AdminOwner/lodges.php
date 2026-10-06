@@ -31,7 +31,7 @@ $this->assign('page_actions', '<span style="font-size:13px;color:var(--p-text-2)
       $pid = $p['id'] ?? null;
       $st = strtolower((string)($p['status'] ?? 'active'));
       $badge = $st === 'active' ? 'green' : ($st === 'pending' ? 'yellow' : ($st === 'rejected' ? 'red' : 'blue'));
-      $img = $p['image_url'] ?? $p['primary_image_url'] ?? 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop';
+      $img = $p['image_url'] ?? $p['primary_image_url'] ?? $this->Url->build('/assets/img/hotel/hotel-1.jpg');
       $host = $p['host'] ?? [];
       $hostName = $host['name'] ?? '';
       $hostEmail = $host['email'] ?? '';

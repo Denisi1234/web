@@ -1,0 +1,281 @@
+/* Theme base part 19 (split for the 300-line cap — order matters, keep sequence). */
+.geotrip-gallery .right-grid img {
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+  border-radius: 10px;
+}
+
+.mmt-gallery {
+  display: flex;
+  gap: 15px;
+  height: 400px;
+}
+.mmt-gallery .left-image {
+  flex: 2;
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+}
+.mmt-gallery .left-image img {
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+  display: block;
+}
+.mmt-gallery .right-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.mmt-gallery .right-column .image-box {
+  flex: 1;
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.mmt-gallery .right-column .image-box img {
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+}
+
+/*---------- GeoTrip Elements Styles: Select Date Styles ------------*/
+.fare-calendar {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  justify-content: space-between;
+}
+.fare-calendar .fare-day {
+  min-width: 125px;
+  border: 1px solid var(--bs-bordercolor);
+  border-radius: 0.325rem;
+  padding: 12px;
+  text-align: center;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.fare-calendar .fare-day:hover {
+  border-color: var(--bs-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+.fare-calendar .fare-day.active {
+  border-color: var(--bs-primary);
+  background-color: var(--bs-primary-bg-subtle);
+}
+.fare-calendar .fare-day .fare-date {
+  font-weight: 500;
+  font-size: 14px;
+}
+.fare-calendar .fare-day .fare-price {
+  margin-top: 5px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.fare-calendar .fare-day .fare-price.low-price {
+  color: var(--bs-success);
+}
+
+/*---------- GeoTrip Elements Styles: Detail Page Styles ------------*/
+.couponSep {
+  border-bottom: 1px solid var(--bs-bordercolor);
+  position: relative;
+  margin: 30px 0;
+}
+
+.couponSepText {
+  width: 28px;
+  height: 28px;
+  background: var(--bs-light);
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid var(--bs-bordercolor);
+  position: absolute;
+  top: -13px;
+  border-radius: 30px;
+  left: 45%;
+  padding: 4px 4px;
+  color: color-mix(in srgb, var(--paragraphColor), transparent 40%);
+}
+
+/*---------- GeoTrip Elements Styles: Flights List Styles ------------*/
+.flightLine {
+  position: relative;
+  width: 100%;
+  height: 0;
+  top: 10px;
+  border: 1px dashed var(--bs-bordercolor);
+}
+
+.flightLine > * {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--bs-bordercolor);
+  border-radius: 100%;
+}
+
+.flightLine > *:nth-child(1) {
+  left: -2px;
+  background-color: #ffffff;
+}
+
+.flightLine > *:nth-child(2) {
+  right: -2px;
+  background-color: var(--bs-bordercolor);
+}
+
+.flightLine.departure:before {
+  content: "\f0fb";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  top: 50%;
+  color: color-mix(in srgb, var(--paragraphColor), transparent 40%);
+  position: absolute;
+}
+
+.flightLine.return:before {
+  content: "\e518";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  left: 50%;
+  transform: translate(65%, -50%);
+  top: 65%;
+  position: absolute;
+  rotate: 275deg;
+  color: color-mix(in srgb, var(--paragraphColor), transparent 40%);
+}
+
+/*---------- GeoTrip Elements Styles: City Styles ------------*/
+.cardCities {
+  position: relative;
+  z-index: 0;
+}
+
+.cardCities.cursor:hover {
+  cursor: pointer;
+}
+
+.cardCities .cardCities-image {
+  border-radius: inherit;
+}
+
+.ratio {
+  position: relative;
+  display: block;
+  overflow: hidden;
+}
+
+.ratio-4::before {
+  padding-bottom: 125%;
+}
+
+.ratio::before {
+  display: block;
+  width: 100%;
+  content: "";
+}
+
+.ratio-full::before {
+  padding-bottom: 100%;
+}
+
+.cardCities .cardCities-image {
+  border-radius: inherit;
+}
+.cardCities .cardCities-image img {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.citiesCard-content {
+  overflow: hidden;
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+.citiesCard-content .cardCities-bg {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(2, 7, 45, 0.44);
+  border-radius: inherit;
+  transition: all ease 0.5s;
+  opacity: 0.3;
+}
+
+.citiesCard-topcaps {
+  transition: all ease 0.5s;
+  opacity: 0;
+}
+
+.citiesCard-bottomcaps {
+  transition: all ease 0.5s;
+  transform: translateY(80px);
+}
+
+.cardCities:hover .citiesCard-bottomcaps,
+.cardCities:focus .citiesCard-bottomcaps {
+  transform: translateY(0);
+}
+
+.cardCities:hover .cardCities-bg,
+.cardCities:focus .cardCities-bg {
+  opacity: 1;
+}
+
+.cardCities:hover .citiesCard-topcaps,
+.cardCities:focus .citiesCard-topcaps {
+  opacity: 1;
+}
+
+.destinations-pics a {
+  position: relative;
+  display: block;
+}
+.destinations-pics a:before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: #031628;
+  height: 100%;
+  opacity: 0.4;
+  z-index: 1;
+  transition: all ease 0.4s;
+}
+
+.cardOffer-content {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}

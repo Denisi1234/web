@@ -1,0 +1,282 @@
+/* Split for the 300-line cap — order matters, keep sequence. */
+/* ==========================================================================
+   FastNet Stays — Canonical Loading System (loading.css)
+
+   ONE stylesheet for every loading state in the product. Before this existed
+   the site carried five unrelated implementations (app-loader, p-dots,
+   home-loader, home shimmer, portal bar) with duplicated @keyframes and
+   hand-rolled markup in 20+ places.
+
+   Everything here is driven by the tokens below so a brand change lands in one
+   edit, and every animation collapses under prefers-reduced-motion.
+
+     --fn-brand      primary action colour
+     --fn-brand-ink  gradient partner for the progress bar
+     --fn-surface    skeleton base colour
+     --fn-surface-2  skeleton highlight (the sweep)
+     --fn-radius     corner radius
+     --fn-dur-*      shared durations so motion feels identical everywhere
+     --fn-ease       shared easing curve
+
+   Usage:
+     <span class="fn-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+     <div class="fn-spinner"></div>
+     <div class="fn-skeleton"><div class="fn-skeleton-line w60"></div></div>
+   ========================================================================== */
+
+:root {
+  --fn-brand: #0f62fe;
+  --fn-brand-ink: #1a73e8;
+  --fn-surface: #e8eaed;
+  --fn-surface-2: #f6f8fa;
+  --fn-radius: 8px;
+
+  --fn-dur-fast: 140ms;
+  --fn-dur-base: 220ms;
+  --fn-dur-slow: 320ms;
+
+  /* Material-style standard curve: fast out, gentle settle. */
+  --fn-ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* --------------------------------------------------------------------------
+   1. Motion primitives — the only @keyframes the loading system owns.
+   -------------------------------------------------------------------------- */
+
+@keyframes fn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fn-breathe {
+  0%,
+  100% {
+    opacity: 0.38;
+    transform: scale(0.86);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Single unidirectional sweep. The previous skeletons alternated direction,
+   which made a loading state look like it was running backwards. */
+@keyframes fn-sweep {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes fn-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fn-bar-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2. Top progress bar
+   -------------------------------------------------------------------------- */
+
+.fn-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 999999;
+  width: 0%;
+  height: 2px;
+  pointer-events: none;
+  opacity: 0;
+  background: var(--fn-brand);
+  will-change: width, opacity;
+  transform: translateZ(0);
+  transition:
+    width 120ms var(--fn-ease),
+    opacity 120ms var(--fn-ease);
+}
+
+.fn-progress.is-active {
+  opacity: 1;
+}
+
+/* Indeterminate state: the bar snaps toward 90% and waits. It never
+   reverses, so progress only ever moves forward. */
+.fn-progress.is-indeterminate {
+  transition: width 120ms var(--fn-ease), opacity 120ms var(--fn-ease);
+}
+
+/* --------------------------------------------------------------------------
+   3. Ring spinner — the single standalone spinner
+   -------------------------------------------------------------------------- */
+
+.fn-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border: 2px solid rgba(15, 98, 254, 0.22);
+  border-top-color: var(--fn-brand);
+  border-radius: 50%;
+  animation: fn-spin 640ms linear infinite;
+}
+
+.fn-spinner--sm {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+}
+
+.fn-spinner--lg {
+  width: 34px;
+  height: 34px;
+  border-width: 3px;
+}
+
+/* --------------------------------------------------------------------------
+   4. Dots — inline indicator for buttons, links and rows
+   -------------------------------------------------------------------------- */
+
+.fn-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  vertical-align: middle;
+  line-height: 0;
+}
+
+.fn-dots > i {
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: fn-breathe 1s var(--fn-ease) infinite;
+}
+
+.fn-dots > i:nth-child(2) {
+  animation-delay: 0.14s;
+}
+
+.fn-dots > i:nth-child(3) {
+  animation-delay: 0.28s;
+}
+
+.fn-dots--sm > i {
+  width: 4px;
+  height: 4px;
+}
+
+/* --------------------------------------------------------------------------
+   5. Skeleton — one placeholder, replacing gh-shim-block / fns-shimmer /
+      trivago-shimmer-* / pm-loading rows
+   -------------------------------------------------------------------------- */
+
+.fn-skeleton,
+.fn-skeleton > .fn-skeleton-line,
+.fn-skeleton-line,
+/* Legacy alias: the home results grid used its own placeholder class. */
+.gh-shim-block {
+  background-color: #eef0f3;
+  background-image: linear-gradient(
+    90deg,
+    #eef0f3 0%,
+    #f8fafc 50%,
+    #eef0f3 100%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  border-radius: var(--fn-radius);
+  animation: fn-sweep 0.9s linear infinite;
+}
+
+.fn-skeleton-line {
+  height: 12px;
+  margin-bottom: 8px;
+}
+
+.fn-skeleton-line:last-child {
+  margin-bottom: 0;
+}
+
+.fn-skeleton-chip {
+  height: 30px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+
+/* Width helpers */
+.fn-w-30 { width: 30%; }
+.fn-w-40 { width: 40%; }
+.fn-w-50 { width: 50%; }
+.fn-w-60 { width: 60%; }
+.fn-w-70 { width: 70%; }
+.fn-w-80 { width: 80%; }
+.fn-w-90 { width: 90%; }
+.fn-w-100 { width: 100%; }
+
+/* --------------------------------------------------------------------------
+   6. Region — centred inline "Loading…" block for a content area
+   -------------------------------------------------------------------------- */
+
+.fn-region {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 28px 16px;
+  color: #5f6b7a;
+  font-size: 14px;
+  text-align: center;
+  animation: fn-fade-in var(--fn-dur-base) var(--fn-ease);
+}
+
+.fn-region[hidden] {
+  display: none;
+}
+
+/* --------------------------------------------------------------------------
+   7. Overlay — blocking full-screen wait
+   -------------------------------------------------------------------------- */
+
+.fn-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity var(--fn-dur-base) var(--fn-ease),
+    visibility var(--fn-dur-base) var(--fn-ease);
+}
+
+.fn-overlay.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}

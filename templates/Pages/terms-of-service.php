@@ -5,101 +5,13 @@ $this->assign('title', 'Customer Terms of Service');
 <?= $this->Html->css('/assets/css/google-travel-layout.css') ?>
 <?= $this->Html->css('/assets/css/google-travel-home.css') ?>
 <?= $this->Html->css('/assets/css/google-travel-cards.css') ?>
-<style>
-/* Scroll fix: home split-view CSS locks body scroll on desktop — legal pages must scroll */
-html, body { height: auto !important; overflow-y: auto !important; }
-#main-wrapper { height: auto !important; overflow: visible !important; display: block !important; }
-</style>
+<?= $this->Html->css('/assets/css/terms-of-service.css') ?>
 
 <?= $this->element('navbar') ?>
 <?= $this->element('breadcrumb-schema', ['label' => 'Terms of service']) ?>
 <main id="main-content" style="background:var(--cds-gray-10);min-height:85vh;" role="main">
 
-<style>
-    .legal-content h1 {
-        font-size: 32px;
-        font-weight: 700;
-        color: #1a1a1a;
-        margin-bottom: 8px;
-    }
-    .legal-content h2 {
-        font-size: 22px;
-        font-weight: 700;
-        color: #1a1a1a;
-        margin-top: 36px;
-        margin-bottom: 14px;
-    }
-    .legal-content h3 {
-        font-size: 16px;
-        font-weight: 700;
-        color: #1a1a1a;
-        margin-top: 24px;
-        margin-bottom: 10px;
-    }
-    .legal-content p {
-        font-size: 14.5px;
-        line-height: 1.65;
-        color: #262626;
-        margin-bottom: 14px;
-    }
-    .legal-content ul, .legal-content ol {
-        font-size: 14.5px;
-        line-height: 1.65;
-        color: #262626;
-        margin-bottom: 14px;
-        padding-left: 24px;
-    }
-    .legal-content li {
-        margin-bottom: 6px;
-    }
-    .legal-content a {
-        color: #ea580c;
-        text-decoration: underline;
-    }
-    .legal-content a:hover {
-        color: #c2410c;
-    }
-    .toc-box {
-        background-color: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 20px 24px;
-        margin-bottom: 32px;
-    }
-    .toc-box ol {
-        padding-left: 20px;
-        margin-bottom: 0;
-    }
-    .toc-box li {
-        font-size: 14px;
-        margin-bottom: 6px;
-        font-weight: 600;
-    }
-    .toc-box a {
-        color: #ea580c;
-        text-decoration: none;
-    }
-    .toc-box a:hover {
-        text-decoration: underline;
-    }
-    .legal-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 20px;
-        font-size: 13.5px;
-    }
-    .legal-table th, .legal-table td {
-        border: 1px solid #e2e8f0;
-        padding: 10px 14px;
-        text-align: left;
-        vertical-align: top;
-    }
-    .legal-table th {
-        background-color: #f8fafc;
-        font-weight: 700;
-        color: #0f172a;
-    }
-</style>
+<?= $this->Html->css('/assets/css/terms-of-service.css') ?>
 
 <!-- Hero Header Banner Start -->
 <section class="position-relative" style="background:#fff;border-bottom:1px solid #e8eaed;padding:var(--cds-spacing-07) 0 var(--cds-spacing-06);">

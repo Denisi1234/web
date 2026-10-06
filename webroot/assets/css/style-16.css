@@ -1,0 +1,279 @@
+/* Theme base part 16 (split for the 300-line cap — order matters, keep sequence). */
+
+.nav-dropdown > li > .nav-dropdown-left {
+  left: auto;
+  right: 100%;
+}
+
+.navigation-landscape .nav-dropdown-left > li > a {
+  text-align: right;
+}
+
+.navigation-portrait .nav-dropdown > li > a {
+  padding: 12px 20px 12px 30px;
+}
+
+.navigation-portrait .nav-dropdown > li > ul > li > a {
+  padding-left: 50px;
+}
+
+.navigation-portrait .nav-dropdown > li > ul > li > ul > li > a {
+  padding-left: 70px;
+}
+
+.navigation-portrait .nav-dropdown > li > ul > li > ul > li > ul > li > a {
+  padding-left: 90px;
+}
+
+.navigation-portrait .nav-dropdown > li > ul > li > ul > li > ul > li > ul > li > a {
+  padding-left: 110px;
+}
+
+.nav-dropdown .submenu-indicator {
+  right: 15px;
+  top: 16px;
+  position: absolute;
+}
+
+.menu__list,
+.navbar,
+nav a {
+  position: relative;
+}
+
+.navigation-portrait .submenu-indicator {
+  right: 0;
+  top: 0;
+}
+
+.nav-dropdown .submenu-indicator .submenu-indicator-chevron {
+  transform: rotate(-45deg);
+}
+
+.navigation-portrait .nav-dropdown .submenu-indicator .submenu-indicator-chevron {
+  transform: rotate(45deg);
+}
+
+.navigation-portrait .nav-dropdown .submenu-indicator.submenu-indicator-up .submenu-indicator-chevron {
+  transform: rotate(225deg);
+}
+
+.nav-dropdown > .focus > a .submenu-indicator-chevron,
+.nav-dropdown > li:hover > a .submenu-indicator-chevron {
+  border-color: transparent var(--bs-primary) var(--bs-primary) transparent;
+}
+
+.navigation-landscape .nav-dropdown-left .submenu-indicator {
+  left: 10px;
+}
+
+.navigation-landscape .nav-dropdown-left .submenu-indicator .submenu-indicator-chevron {
+  transform: rotate(135deg);
+}
+
+nav a {
+  display: inline-block;
+}
+
+.header {
+  background: #fff;
+  position: relative;
+  padding: 13px 0;
+}
+
+.social-icons {
+  float: right;
+  margin-top: 0.7em;
+}
+
+.logo h1 a {
+  color: #fff;
+  font-size: 1.3em;
+}
+
+.logo span {
+  display: block;
+  font-size: 0.32em;
+  letter-spacing: 4px;
+}
+
+.navbar-nav {
+  float: left;
+  margin: 0;
+}
+
+.nav-menu.nav-menu-social > li.list-buttons a {
+  border-radius: 4px;
+  position: relative;
+  background: var(--bs-primary);
+}
+
+.nav-menu.nav-menu-social > li.list-buttons.light a {
+  background: #ffffff;
+}
+
+.header.header-theme .nav-menu.nav-menu-social > li.list-buttons.light:hover > a {
+  color: var(--bs-navcolor) !important;
+}
+
+.nav-menu.nav-menu-social > li.list-buttons.border a {
+  background: #ffffff;
+}
+
+.header-fixed .nav-menu.nav-menu-social > li.list-buttons.light a {
+  background: #ffffff;
+}
+
+.header-transparent.dark.header-fixed .nav-menu.nav-menu-social > li.list-buttons.light a {
+  background: var(--bs-primary);
+  color: #ffffff !important;
+}
+
+.nav-menu.nav-menu-social > li.list-buttons a {
+  top: 0px;
+  padding: 14px 14px;
+  color: #ffffff !important;
+}
+
+.nav-menu.nav-menu-social > li.list-buttons.light a {
+  color: var(--bs-navcolor) !important;
+}
+
+.nav-menu.nav-menu-social > li.list-buttons.border a {
+  color: var(--bs-primary) !important;
+}
+
+.header-fixed .nav-menu.nav-menu-social > li.list-buttons.light a {
+  color: var(--bs-navcolor) !important;
+}
+
+.nav-menu.nav-menu-social > li.list-buttons.dark {
+  background: var(--bs-navcolor);
+}
+
+.nav-menu.nav-menu-social > li.list-buttons.dark a {
+  color: #ffffff;
+}
+
+.header-fixed .nav-menu.nav-menu-social .text-light {
+  color: var(--bs-navcolor) !important;
+}
+
+.nav-brand img {
+  width: 130px;
+  position: relative;
+}
+
+.nav-menu.nav-menu-social > li.list-buttons > a {
+  display: inline-flex;
+  align-items: center;
+}
+
+.navigation-portrait .nav-dropdown.xxl-menu {
+  min-width: auto;
+  max-width: 100%;
+}
+
+.navigation-portrait .nav-dropdown.xxl-menu > li {
+  width: 100%;
+  flex: 0 0 100%;
+}
+
+.currencyDropdown .nav-link,
+.languageDropdown .nav-link,
+.notificationsDropdown .nav-link {
+  transform: scale(1.1);
+}
+
+a.selectCurrency {
+  border: none;
+  padding: 0.8rem 1.2rem;
+  border-radius: 0.32rem;
+  text-align: left;
+  background: #fff;
+  transition: all ease 0.4s;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+a.selectCurrency:hover,
+a.selectCurrency:focus {
+  background: #f4f5f7;
+  cursor: pointer;
+}
+
+a.selectCurrency.active {
+  background: rgba(76, 175, 80, 0.11);
+}
+
+a.selectCurrency.active > div:last-child {
+  color: #4caf50 !important;
+}
+
+a.selectCountry {
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: start;
+  padding: 0.8rem 1.2rem;
+  border-radius: 0.32rem;
+  text-align: left;
+  background: #ffffff;
+  transition: all ease 0.4s;
+  width: 100%;
+}
+
+a.selectCountry:hover,
+a.selectCountry:focus {
+  background: var(--bs-light);
+  cursor: pointer;
+}
+
+a.selectCountry.active {
+  background: var(--bs-primary-bg-subtle);
+}
+
+a.selectCountry.active > div:last-child {
+  color: var(--bs-primary) !important;
+}
+
+.devider-wraps {
+  height: 0.5px;
+  width: 100%;
+  border: 1px dashed var(--bs-bordercolor);
+  border-radius: 50px;
+}
+
+.devider-text {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: #ffffff;
+  padding: 0 10px;
+}
+
+/*--------- Dashboard Dropdown ----------*/
+.nav-menu.nav-menu-social > li:last-child .btn-group.account-drop {
+  padding-right: 0;
+}
+
+.btn-group.account-drop {
+  position: relative;
+}
+.btn-group.account-drop .btn.btn-order-by-filt {
+  padding: 0px;
+  height: 46px;
+  width: 46px;
+  color: var(--bs-navcolor);
+  font-size: 18px;
+  margin-top: 0;
+  font-weight: 600;
+  overflow: hidden;
+  border-radius: 50% !important;
+}
+.btn-group.account-drop .btn.btn-order-by-filt img.avater-img {
+  width: 30px;
+  border-radius: 50%;
+}

@@ -1,0 +1,289 @@
+/* Theme base part 02 (split for the 300-line cap — order matters, keep sequence). */
+
+blockquote {
+  font-size: 1.78571429em;
+  line-height: 1.5em;
+  padding: 0;
+  margin: 0;
+  border-left: 0;
+}
+
+blockquote {
+  font-style: italic;
+}
+
+blockquote:not(:last-child) {
+  margin-bottom: 1.04em;
+}
+
+.sec-heading {
+  margin-bottom: 2rem;
+}
+.sec-heading .lg {
+  margin-bottom: 30px;
+}
+.sec-heading .center {
+  text-align: center;
+}
+.sec-heading .light h2 {
+  color: #ffffff;
+}
+.sec-heading .light p {
+  color: #ffffff;
+}
+.sec-heading p {
+  margin-bottom: 5px;
+  line-height: 1.7;
+}
+
+.sec-heading2 {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--headingColor);
+  font-weight: 600;
+}
+
+.d-flippo {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  -moz-column-gap: 10px;
+       column-gap: 10px;
+}
+
+span.mod-close {
+  position: absolute;
+  right: 10px;
+  top: 16px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--bs-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  z-index: 1;
+}
+
+/* ----------------- Default Style: Animation ----------------------- */
+@keyframes preloader {
+  0% {
+    transform: scale(0, 0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1, 1);
+    opacity: 0;
+  }
+}
+@keyframes anim-francisco {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -100%, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes spinner-border {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes spinner-grow {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Honour the OS "reduce motion" setting. Every looping or sliding animation in
+   this stylesheet is decorative, so collapsing durations is always preferable
+   to leaving motion running for users who asked for none. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ----------------- Default Style: Buttons Styles ----------------------- */
+.btn {
+  padding: 10px 20px;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all ease 0.4s;
+  border-radius: 0.375rem;
+  overflow: hidden;
+  animation-delay: 0.7s;
+  animation-duration: 0.5s;
+  position: relative;
+}
+.btn::after {
+  background-color: rgba(255, 255, 255, 0.76);
+  content: "";
+  height: 150px;
+  left: -75px;
+  position: absolute;
+  top: -35px;
+  transform: rotate(35deg);
+  transition: all 1600ms cubic-bezier(0.19, 1, 0.22, 1);
+  width: 40px;
+  opacity: 0;
+}
+.btn:hover:after {
+  left: 120%;
+  transition: all 1300ms cubic-bezier(0.19, 1, 0.22, 1);
+  opacity: 0.25;
+}
+
+.btn:focus,
+.btn:hover {
+  box-shadow: none;
+}
+
+.btn-lg {
+  padding: 1em 1.5em;
+  height: 62px;
+  font-size: 1em;
+}
+
+.btn-md {
+  padding: 1em 1.5em;
+  height: 45px;
+  font-size: 0.9rem;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  height: 35px;
+  font-size: 12px;
+}
+
+.btn-rounded .btn-xxl {
+  width: 80px;
+  height: 80px;
+}
+
+.btn-rounded .btn-xl {
+  width: 70px;
+  height: 70px;
+}
+
+.btn-rounded .btn-lg {
+  width: 60px;
+  height: 60px;
+}
+
+.btn-rounded .btn-md {
+  width: 44px;
+  height: 44px;
+}
+
+.btn-rounded .btn-sm {
+  width: 35px;
+  height: 35px;
+}
+
+.btn-rounded .btn-xs {
+  width: 28px;
+  height: 28px;
+}
+
+.btn-filter {
+  padding: 0.25rem 0.8rem;
+  height: 40px;
+  font-size: 14px;
+}
+
+.btn-xs {
+  padding: 0.2rem 0.5rem;
+  height: 30px;
+  font-size: 10px;
+}
+
+.btn-rounded {
+  border-radius: 50px !important;
+  -webkit-border-radius: 50px !important;
+}
+
+.btn-arrow {
+  position: relative;
+}
+
+.btn-success {
+  --bs-btn-color: #ffffff;
+  --bs-btn-hover-color: #ffffff;
+  --bs-btn-active-color: #ffffff;
+  --bs-btn-disabled-color: #ffffff;
+}
+
+.btn-primary {
+  background: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: var(--bs-white);
+}
+.btn-primary:hover {
+  background: var(--bs-primary-bg-dark) !important;
+  border-color: var(--bs-primary-bg-dark) !important;
+  color: var(--bs-white) !important;
+}
+.btn-primary:focus {
+  background: var(--bs-primary-bg-dark) !important;
+  border-color: var(--bs-primary-bg-dark) !important;
+  color: var(--bs-white) !important;
+}
+.btn-primary:active {
+  background: var(--bs-primary-bg-dark) !important;
+  border-color: var(--bs-primary-bg-dark) !important;
+  color: var(--bs-white) !important;
+}
+
+.btn-light-primary {
+  background: var(--bs-primary-bg-subtle);
+  border-color: var(--bs-primary-bg-subtle);
+  color: var(--bs-primary);
+}
+.btn-light-primary:hover {
+  background: var(--bs-primary) !important;
+  border-color: var(--bs-primary) !important;
+  color: var(--bs-white) !important;
+}
+.btn-light-primary:focus {
+  background: var(--bs-primary) !important;
+  border-color: var(--bs-primary) !important;
+  color: var(--bs-white) !important;
+}
+.btn-light-primary:active {
+  background: var(--bs-primary) !important;
+  border-color: var(--bs-primary) !important;
+  color: var(--bs-white) !important;
+}
+
+.btn-outline-primary {
+  background: var(--bs-white);
+  border-color: var(--bs-primary);
+  color: var(--bs-primary);
+}

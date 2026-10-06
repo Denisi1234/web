@@ -30,7 +30,7 @@ $this->assign('title', 'Your favourites - FastNet Stays');
                     <h3 style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:12px;font-family:'Google Sans',sans-serif;">Saved stays</h3>
                     <div class="row g-3" id="savedStaysGrid">
                         <?php foreach ($wishlists as $w): 
-                            $img = $w['image_url'] ?? $w['primary_image_url'] ?? 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop';
+                            $img = $w['image_url'] ?? $w['primary_image_url'] ?? $this->Url->build('/assets/img/hotel/hotel-1.jpg');
                             $propTitle = \App\Utility\TextFormatter::formatTitle((string)($w['name'] ?? 'Stay'));
                             $propCity = \App\Utility\TextFormatter::formatTitle((string)($w['city'] ?? 'Tanzania'));
                             $priceVal = (float)($w['price_per_night'] ?? ($w['price'] ?? 0));
@@ -39,7 +39,7 @@ $this->assign('title', 'Your favourites - FastNet Stays');
                         <div class="col-md-6" id="wishlist_card_<?= $wId ?>">
                             <div class="card h-100 shadow-sm border-0" style="border:1px solid #e8eaed !important;border-radius:12px;overflow:hidden;background:#fff;">
                                 <div style="position:relative;height:160px;background:#e5e7eb;overflow:hidden;">
-                                    <img src="<?= h($img) ?>" style="height:100%;object-fit:cover;width:100%;display:block;" alt="<?= h($propTitle) ?>" onerror="this.src='https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop'">
+                                    <img src="<?= h($img) ?>" style="height:100%;object-fit:cover;width:100%;display:block;" alt="<?= h($propTitle) ?>" onerror="this.onerror=null;this.src='<?= $this->Url->build('/assets/img/hotel/hotel-1.jpg') ?>'">
                                     <span style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.92);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.15);"><i class="fa-solid fa-heart text-danger" style="font-size:14px;"></i></span>
                                 </div>
                                 <div class="p-3 d-flex flex-column justify-content-between" style="flex:1;">
@@ -106,6 +106,7 @@ $this->assign('title', 'Your favourites - FastNet Stays');
 <div id="trivago-toast"></div>
 
 
-<?= $this->Html->script('/assets/js/wishlists.js'); ?>
+<?= $this->Html->script('/assets/js/wishlists-store.js') ?>
+<?= $this->Html->script('/assets/js/wishlists-ui.js') ?>
 </main>
 <?= $this->element('footer', ['skin' => 'skin-light-footer']) ?>

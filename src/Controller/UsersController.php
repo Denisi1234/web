@@ -17,22 +17,6 @@ class UsersController extends AppController
     }
 
     /**
-     * User profile action - redirect to my-profile
-     */
-    public function profile(): ?Response
-    {
-        return $this->redirect(['controller' => 'Pages', 'action' => 'myProfile']);
-    }
-
-    /**
-     * User login action
-     */
-    public function login(): ?Response
-    {
-        return $this->redirect('/login');
-    }
-
-    /**
      * User logout action
      */
     public function logout(): ?Response
@@ -44,13 +28,5 @@ class UsersController extends AppController
         $this->Flash->success(__('You have been successfully logged out.'));
         $resp = $this->redirect('/');
         return $authService->clearToken($resp);
-    }
-
-    /**
-     * Register / Signup action
-     */
-    public function register(): ?Response
-    {
-        return $this->redirect('/signup');
     }
 }

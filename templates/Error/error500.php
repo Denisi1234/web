@@ -24,7 +24,7 @@ if (Configure::read('debug')) :
     <?= $this->Html->link(sprintf('%s, line %s', Debugger::trimPath($file), $line), Debugger::editorUrl($file, $line)); ?>
 <?php endif; ?>
 <?php
-    echo $this->element('auto_table_warning');
+    if ($this->elementExists('auto_table_warning')) echo $this->element('auto_table_warning');
 
     $this->end();
 endif;

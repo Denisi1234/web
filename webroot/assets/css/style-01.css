@@ -1,0 +1,291 @@
+/* Theme base part 01 (split for the 300-line cap — order matters, keep sequence). */
+@charset "UTF-8";
+/*
+* Theme Name: GeoTrip - Tour & Travel Agency HTML Template
+* Author: Shreethemes
+* Version: 1.0.0
+* Last Change: 26 Oct 2026
+  Author URI    : https://shreethemes.in
+
+This files table contents are outlined below>>>>>
+
+*******************************************
+*******************************************
+
+** - Common Elentns 
+** - Default Style
+** - Navbar & Header Styles
+** - Intro Banner & Hero Header
+** - GeoTrip Elements Styles
+** - Footer Style
+** - Responsiveness Start
+*/
+/*--------------------------------------------------
+Default Style
+---------------------------------------------------*/
+@import url("https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500;600;700;800&display=swap");
+:root,
+[data-bs-theme=light] {
+  --bs-primary: #0466c8;
+  --bs-primary-bg-subtle: #e0eeff;
+  --bs-primary-bg-dark: #0353a4;
+  --bs-secondary: #c3d2de;
+  --bs-secondary-bg-subtle: #dae5ee;
+  --bs-success: #009688;
+  --bs-success-bg-subtle: #d5f9f5;
+  --bs-success-bg-dark: #0ca799;
+  --bs-info: #106BDA;
+  --bs-info-bg-subtle: #cfe1f8;
+  --bs-info-bg-dark: #0b63d0;
+  --bs-warning: #ffc107;
+  --bs-warning-bg-subtle: #fff3cd;
+  --bs-warning-bg-dark: #f0b503;
+  --bs-danger: #e43f0b;
+  --bs-danger-bg-subtle: #ffefe9;
+  --bs-danger-bg-dark: #f1511f;
+  --bs-light: #f4f5f7;
+  --bs-dark: #13293D;
+  --bs-dark-bg-subtle: #1b344a;
+  --bs-cyan: #04765f;
+  --bs-cyan-bg-subtle: #cdf1e9;
+  --bs-cyan-bg-dark: #036f59;
+  --bs-purple: #6363f5;
+  --bs-purple-bg-subtle: #dedeff;
+  --bs-purple-bg-dark: #5b5bed;
+  --bs-primary-rgb: 4, 102, 200;
+  --bs-secondary-rgb: 195, 210, 222;
+  --bs-success-rgb: 0, 150, 136;
+  --bs-info-rgb: 16, 107, 218;
+  --bs-warning-rgb: 255, 193, 7;
+  --bs-danger-rgb: 228, 63, 11;
+  --bs-cyan-rgb: 4, 118, 95;
+  --bs-purple-rgb: 99, 99, 245;
+  --bs-light-rgb: 248, 249, 250;
+  --bs-dark-rgb: 19, 41, 61;
+  --bs-bordercolor: #dfe0e4;
+  --bs-navcolor: #191e3b;
+  --bs-placeholder: #191e3b;
+  --body-font-family: "Jost", sans-serif;
+  --heading-font-family: "Jost", sans-serif;
+  --bs-body-color: #2d3033;
+  --paragraphColor: #5d6f7d;
+  --headingColor: #191e3b;
+  --fontSize: 15px;
+  --bs-iconcolor: #bacad9;
+  --bs-text-muted: #455873;
+  --bs-footer-bg: #0e243a;
+  --bs-footexr-text: #5d6f7d;
+}
+
+/* ----------------- Default Style: Typography Styles ----------------------- */
+.dark #preloader {
+  background-color: #232323;
+}
+
+/*-------------- Not Use -----------
+#preloader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #f7f7f7;
+  z-index: 999999;
+}
+
+.preloader {
+  width: 50px;
+  height: 50px;
+  display: inline-block;
+  padding: 0px;
+  text-align: left;
+  box-sizing: border-box;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-left: -25px;
+  margin-top: -25px;
+}
+
+.preloader span {
+  position: absolute;
+  display: inline-block;
+  width: 50px;
+  height: 50px;
+  border-radius: 100%;
+  background: var(--bs-primary);
+  -webkit-animation: preloader 1.3s linear infinite;
+  animation: preloader 1.3s linear infinite;
+}
+
+.preloader span:last-child {
+  animation-delay: -0.8s;
+  -webkit-animation-delay: -0.8s;
+}
+---------------- */
+body {
+  background: #ffffff;
+  color: var(--bs-body-color);
+  font-size: 15px;
+  font-family: var(--body-font-family);
+  margin: 0;
+  overflow-x: hidden !important;
+  font-weight: 400;
+}
+
+.text-body-secondary {
+  --bs-text-opacity: 1;
+  color: #5d6f7d !important;
+}
+
+.opacity-1 {
+  opacity: 0.1;
+}
+
+.p,
+p {
+  line-height: 1.8;
+  color: var(--paragraphColor);
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.font--bold {
+  font-weight: 600;
+}
+
+.modal-open {
+  overflow: hidden !important;
+  padding-right: 0 !important;
+}
+
+.br-dashed {
+  border-style: dashed !important;
+}
+
+a {
+  text-decoration: none;
+  color: var(--bs-navcolor);
+}
+
+a:hover,
+a:focus {
+  text-decoration: none;
+}
+
+.nav-link {
+  color: var(--bs-text-muted);
+}
+
+.nav-link:hover,
+.nav-link:focus {
+  color: var(--bs-primary);
+}
+
+.page-link {
+  color: var(--bs-dark);
+}
+
+.page-link:hover,
+.page-link:focus {
+  color: var(--bs-primary);
+}
+
+html body .mdi:before,
+html body .mdi-set {
+  line-height: initial;
+}
+
+section {
+  padding: 80px 0 80px;
+}
+
+section.min {
+  padding: 50px 0 50px;
+}
+
+section.mid {
+  padding: 80px 0 50px;
+}
+
+.gray {
+  background: #f7f9fc !important;
+}
+
+.gray-simple {
+  background: #f1f5f8 !important;
+}
+
+.bg-title {
+  background: var(--bs-primary);
+}
+
+.tbl {
+  display: table;
+}
+
+.full-height {
+  height: 100%;
+}
+
+.alert p {
+  margin: 0;
+}
+
+.table-cell {
+  display: table-cell;
+  vertical-align: middle;
+}
+
+.no-ul-list {
+  padding: 0;
+}
+
+.no-ul-list li {
+  list-style: none;
+}
+
+.text-muted-2 {
+  color: var(--bs-text-muted) !important;
+}
+
+.text-muted {
+  color: #a5b2c4 !important;
+}
+
+.text-seegreen,
+.text-seagreen {
+  color: var(--bs-cyan);
+}
+
+.text-purple {
+  color: var(--bs-purple);
+}
+
+.text-sm-muted {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--bs-gray-600);
+}
+
+.text-xs {
+  font-size: 10px;
+}
+
+.text-sm {
+  font-size: 12px;
+}
+
+.text-md {
+  font-size: 14px;
+}
+
+.type--fade {
+  opacity: 0.5;
+}
+
+.type--fine-print {
+  font-size: 0.85714286em;
+}

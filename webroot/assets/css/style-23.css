@@ -1,0 +1,287 @@
+/* Theme base part 23 (split for the 300-line cap — order matters, keep sequence). */
+  .nav-header {
+    display: flex;
+    align-items: center;
+    float: left;
+    width: 100%;
+  }
+  .navigation-portrait .nav-brand {
+    margin-left: 35px;
+    flex: 1;
+    margin-top: 0;
+  }
+  .nav-menu > li .nav-dropdown {
+    box-shadow: none;
+    padding: 0;
+  }
+  .nav-menu > li > .nav-dropdown:before {
+    display: none;
+  }
+  .footer-widget {
+    padding-bottom: 60px;
+    padding-top: 0;
+  }
+  footer.dark-footer,
+  footer.skin-light-footer,
+  footer.skin-dark-footer {
+    padding-top: 60px;
+  }
+  ul.mobile_nav.dhsbrd {
+    margin: 0;
+  }
+  .w-50 {
+    width: 100% !important;
+  }
+  .cols-3 .carousel-cell {
+    width: 50%;
+  }
+  .cols-4 .carousel-cell {
+    width: 50%;
+  }
+}
+@media (max-width: 991px) {
+  a.nav-brand.static-logo {
+    display: none;
+  }
+}
+@media (max-width: 767px) {
+  h1 {
+    font-size: 35px;
+  }
+  h2 {
+    line-height: 28px;
+    font-size: 22px;
+  }
+  .fs-mob {
+    font-size: 1rem !important;
+  }
+  .h-mob-auto {
+    height: auto !important;
+  }
+  .footer-bottom .job-info-count-group {
+    justify-content: flex-start;
+    margin-top: 1rem;
+  }
+  footer .footer-widget {
+    padding-top: 32px;
+    padding-bottom: 24px;
+  }
+  footer .footer-bottom ul {
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-top: 10px !important;
+  }
+  footer .footer-bottom ul li {
+    margin-left: 0 !important;
+  }
+  .mob-full {
+    width: 100%;
+  }
+  .cols-3 .carousel-cell {
+    width: 100%;
+  }
+  .cols-4 .carousel-cell {
+    width: 50%;
+  }
+  #currencyModal .modal-body,
+  #countryModal .modal-body {
+    padding: 1rem 0.4rem !important;
+  }
+  a.selectCurrency,
+  a.selectCountry {
+    padding: 0.8rem 0.6rem;
+  }
+  .devider-text {
+    font-size: 12px;
+  }
+  #loginmodal .social-login .row .col {
+    padding: 0 2px;
+  }
+  .card-header.nds-block {
+    display: block !important;
+  }
+  .bs-stepper .step-trigger {
+    padding-top: 0px;
+  }
+  .flickity-enabled.is-draggable .flickity-viewport {
+    min-height: 280px;
+    width: 100%;
+  }
+  .carousel-cell img.object-fit {
+    width: 100%;
+  }
+  .flickity-prev-next-button.next {
+    right: 15px;
+  }
+  .flickity-prev-next-button.previous {
+    left: 15px;
+  }
+  .searchModern .brd-end {
+    border-right: none;
+  }
+  .searchModern {
+    border-radius: 0.4rem;
+  }
+  .searchModern .inputIicon {
+    border: 1px solid var(--bs-bordercolor) !important;
+  }
+  .searchModern .okButton {
+    margin-top: 0.7rem;
+  }
+  .searchModern .okButton .btn-primary {
+    width: 100% !important;
+    border-radius: 0.4rem !important;
+  }
+  .geotrip-gallery {
+    flex-direction: column;
+    max-height: none;
+  }
+  .geotrip-gallery .right-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+  }
+  .geotrip-gallery .right-grid img {
+    height: auto;
+  }
+  .geotrip-gallery .left-img {
+    height: auto;
+  }
+  .mmt-gallery {
+    flex-direction: column;
+    max-height: none;
+  }
+  .mmt-gallery .right-column {
+    flex-direction: row;
+  }
+  .mmt-gallery .right-column .image-box {
+    height: 150px;
+  }
+}
+@media (max-width: 600px) {
+  .cols-4 .carousel-cell {
+    width: 100%;
+  }
+  .nav-tabs.medium .nav-link {
+    padding: 0.6rem 1rem;
+    font-size: 13px;
+    font-weight: 500;
+  }
+}
+@media (max-width: 575px) {
+  .nav-brand {
+    padding-right: 0px;
+  }
+  .btn-flip-icon {
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    transform: translate(-50%, -50%);
+    margin-top: 0.5rem;
+  }
+  .nav-brand img {
+    max-width: 115px;
+    position: relative;
+  }
+  footer .position-absolute.bottom-0.start-0 img {
+    width: 100%;
+  }
+  .footer-widget {
+    padding-bottom: 45px;
+    padding-top: 0;
+  }
+  .social-login ul li a {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+@media all and (min-width: 768px) and (max-width: 1023px) {
+  .h1,
+  h1 {
+    font-size: 1.7rem;
+  }
+  .h2,
+  h2 {
+    font-size: 1.3rem;
+  }
+  .h3,
+  h3 {
+    font-size: 1.1rem;
+  }
+  .h4,
+  h4 {
+    font-size: 1rem;
+  }
+  .h5,
+  h5 {
+    font-size: 0.88rem;
+  }
+  .fs-1 {
+    font-size: 1.7rem;
+  }
+  .fs-2 {
+    font-size: 1.4rem;
+  }
+  .fs-3 {
+    font-size: 1.1rem;
+  }
+}/*# sourceMappingURL=style.css.map */
+
+.border-purple {
+  --bs-border-opacity: 1;
+  border-color: rgba(var(--bs-purple-rgb),var(--bs-border-opacity))!important;
+}
+
+.mt-6 {
+    margin-top: 4rem;
+}
+
+.user-Dashboard-menu li a.active {
+  border-color: var(--bs-primary);
+}
+
+.nav-dropdown.xxl-menu li:hover a .mega-advance-menu .mega-last h6,
+.nav-dropdown.xxl-menu li a.active .mega-advance-menu .mega-last h6,
+.nav-dropdown.xxl-menu li:hover a .mega-advance-menu .mega-last p,
+.nav-dropdown.xxl-menu li a.active .mega-advance-menu .mega-last p {
+  color: #fff;
+}
+
+.nav-dropdown.xxl-menu li:hover a,
+.nav-dropdown.xxl-menu li a.active {
+  background-color: var(--bs-primary) !important;
+  border-radius: 1em;
+}
+
+/* Active Class */
+
+.nav-menus-wrapper ul li:hover > a,
+.nav-submenu .active > a {
+    color: var(--bs-primary) !important;
+}
+.nav-menus-wrapper ul li > a.active{
+    color: var(--bs-primary) !important;
+}
+
+.header.header-light .nav-menu > li >a:hover .submenu-indicator-chevron,
+.header.header-light .nav-menu > li >a.active .submenu-indicator-chevron {
+    border-color: var(--bs-primary) !important;
+}
+
+.header.header-dark .nav-menu > li >a:hover .submenu-indicator-chevron,
+.header.header-dark .nav-menu > li >a.active .submenu-indicator-chevron {
+    border-color: var(--bs-primary) !important;
+}
+
+.header.header-transparent .nav-menu > li >a:hover .submenu-indicator-chevron,
+.header.header-transparent .nav-menu > li >a.active .submenu-indicator-chevron {
+    border-color: var(--bs-primary) !important;
+}
+
+.header.header-transparent.dark.header-fixed .nav-menu > li:hover > a {
+    color: var(--bs-primary) !important;
+}
+
+.header.header-transparent.dark .nav-menu > li:hover > a .submenu-indicator-chevron,
+.header.header-transparent.dark .nav-menu > li.active > a .submenu-indicator-chevron {
+    border-color: var(--bs-primary) !important;
+}

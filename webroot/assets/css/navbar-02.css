@@ -1,0 +1,285 @@
+/* Split for the 300-line cap — order matters, keep sequence. */
+.trivago-user-dropdown.show {
+    display: block !important;
+}
+
+.trivago-user-head-row {
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+    transition: background-color 0.12s ease;
+}
+.trivago-user-head-row:hover {
+    background-color: #f8fafc;
+}
+
+.trivago-user-scroll-body {
+    max-height: 420px;
+    overflow-y: auto;
+    padding-bottom: 10px;
+}
+
+.trivago-user-scroll-body::-webkit-scrollbar {
+    width: 6px;
+}
+.trivago-user-scroll-body::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 4px;
+}
+
+.trivago-user-sec-title {
+    padding: 14px 18px 4px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.trivago-user-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 9px 18px;
+    color: #1e293b;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none !important;
+    cursor: pointer;
+    transition: background-color 0.12s ease;
+}
+.trivago-user-item:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+}
+
+.trivago-user-item-icon {
+    width: 20px;
+    font-size: 16px;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* ── Agoda Mobile Experience & Architecture ────────────────────────────── */
+
+/* ── FIXED HEADER — non-scrollable on desktop + mobile (Google Travel) ── */
+.agoda-sticky-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1040;
+    background-color: #ffffff;
+    box-shadow: 0 1px 3px rgba(60,64,67,0.08);
+}
+/* Header height lives in one token. The fixed header, the body offset and every
+   sticky strip below it (breadcrumbs, tabs) all read this, so they can no longer
+   drift apart and leave dead gaps or overlap content. */
+:root {
+    --fn-header-h: 56px;
+}
+body {
+    padding-top: var(--fn-header-h);
+}
+html {
+    scroll-padding-top: calc(var(--fn-header-h) + 8px);
+}
+@media (max-width: 991px) {
+    :root { --fn-header-h: 64px; }
+}
+@media (max-width: 575px) {
+    :root { --fn-header-h: 58px; }
+    .agoda-sticky-wrapper { box-shadow: 0 1px 2px rgba(60,64,67,0.12); }
+    .agoda-top-header {
+        min-height: 58px;
+        height: auto !important;
+    }
+
+    .agoda-top-header .container-fluid {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+}
+
+/* Row 1: Global Top Header (56px) */
+.agoda-top-header {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    height: 56px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Row 2: Secondary Accommodation Category Bar (42px) */
+.agoda-cat-header {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    height: 42px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Consistent Icon Dimensions & Optical Alignment */
+.agoda-nav-icon {
+    font-size: 15px;
+    color: #64748b;
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+    transition: color 0.15s ease;
+}
+
+/* Nav Links in Row 2 */
+.agoda-cat-link {
+    color: #2a2a2e;
+    font-size: 13.5px;
+    font-weight: 600;
+    padding: 10px 14px;
+    text-decoration: none !important;
+    transition: color 0.15s ease, border-color 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+}
+.agoda-cat-link:hover {
+    color: #0055d4;
+    border-bottom-color: #0055d4;
+}
+.agoda-cat-link:hover .agoda-nav-icon,
+.agoda-cat-link.active .agoda-nav-icon {
+    color: #0055d4;
+}
+.agoda-cat-link.active {
+    color: #0055d4;
+    border-bottom-color: #0055d4;
+    font-weight: 700;
+}
+
+/* Utility Links in Row 1 */
+.agoda-top-utility {
+    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 4px;
+    text-decoration: none !important;
+    transition: color 0.15s ease, background-color 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+.agoda-top-utility:hover {
+    color: #0055d4;
+    background-color: #f1f5f9;
+}
+.agoda-top-utility:hover .agoda-nav-icon {
+    color: #0055d4;
+}
+
+.agoda-badge-pill {
+    background-color: #ff385c;
+    color: #ffffff;
+    font-size: 9.5px;
+    font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+/* Action CTAs in Row 1 */
+.agoda-btn-partner {
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    color: #1e293b;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 4px;
+    text-decoration: none !important;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.agoda-btn-partner:hover {
+    border-color: #0055d4;
+    color: #0055d4;
+    background-color: #f8fafc;
+}
+.agoda-btn-partner:hover .agoda-nav-icon {
+    color: #0055d4;
+}
+
+.agoda-btn-signin {
+    border: 1px solid #0055d4;
+    background-color: #ffffff;
+    color: #0055d4;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 5px 14px;
+    border-radius: 4px;
+    text-decoration: none !important;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+}
+.agoda-btn-signin:hover {
+    border-color: #0044b3;
+    color: #0044b3;
+    background-color: #eff6ff;
+}
+
+.agoda-btn-register {
+    border: 1px solid #0055d4;
+    background-color: #0055d4;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 5px 14px;
+    border-radius: 4px;
+    text-decoration: none !important;
+    transition: background-color 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+}
+.agoda-btn-register:hover {
+    background-color: #0044b3;
+    border-color: #0044b3;
+    color: #ffffff;
+}
+
+/* ── Trivago Dual-Month Datepicker Modal in Navbar Search ── */
+.trivago-datepicker-modal {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 660px;
+    max-width: 95vw;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
+    padding: 20px 22px;
+    z-index: 3500;
+    display: none;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    animation: trivagoFadeIn 0.15s ease-out;
+}
+.trivago-datepicker-modal.show {
+    display: block !important;
+}
+
+.trivago-cal-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}

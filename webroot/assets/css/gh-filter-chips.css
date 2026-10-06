@@ -1,0 +1,78 @@
+/* Extracted for the 300-line cap. */
+/* ── Filter chips bar ── */
+.fns-chips-wrap{position:sticky;top:132px;z-index:800;background:#fff;border-bottom:1px solid #E5E7EB;}
+.fns-chips-outer{position:relative;}
+.fns-chips-outer::before,
+.fns-chips-outer::after{content:'';position:absolute;top:0;bottom:0;width:24px;pointer-events:none;z-index:2;transition:opacity .18s;}
+.fns-chips-outer::before{left:0;background:linear-gradient(to right,#fff 30%, transparent);opacity:0;}
+.fns-chips-outer::after{right:36px;background:linear-gradient(to left,#fff 30%, transparent);opacity:1;}
+.fns-chips-outer.show-left::before{opacity:1;}
+.fns-chips-outer.show-right::after{opacity:1;}
+.fns-chips-row{display:flex;align-items:center;gap:8px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;scroll-behavior:smooth;padding:4px 0 8px;}
+.fns-chips-row::-webkit-scrollbar{display:none;}
+.fns-chip{position:relative;display:inline-flex;align-items:center;gap:8px;padding:8px 12px;margin-right:0;border:1px solid #E5E7EB;border-radius:9999px;background:#fff;color:#1F2937;font-size:13px;font-weight:500;font-family:'Inter','Google Sans',Roboto,sans-serif;cursor:pointer;text-decoration:none !important;white-space:nowrap;flex-shrink:0;line-height:16px;transition:all .15s;height:36px;}
+.fns-chip:hover{border-color:#D1D5DB;background:#F9FAFB;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.fns-chip.active{background:#edf5ff;border-color:#0f62fe;color:#0043ce;box-shadow:0 1px 2px rgba(15,98,254,.12);}
+.fns-chip:focus-visible{outline:2px solid #0f62fe;outline-offset:2px;}
+.fns-chip-filters{font-weight:700;gap:8px;}
+.fns-chip-filters.active{background:#1F2937;border-color:#1F2937;color:#fff;}
+.fns-chip-filters .badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:9999px;background:#fff;color:#1F2937;font-size:11px;font-weight:700;margin-left:2px;}
+.fns-chip-filters.active .badge{background:#fff;color:#1F2937;}
+.fns-scroll-btn{position:absolute;right:0;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;border:1px solid #E5E7EB;background:#fff;color:#6B7280;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.08);z-index:3;transition:all .15s;}
+.fns-scroll-btn:hover{background:#F9FAFB;border-color:#D1D5DB;color:#1F2937;}
+.fns-scroll-btn:focus-visible{outline:2px solid #0f62fe;outline-offset:2px;}
+/* Price popover */
+.fns-price-pop{position:absolute;top:calc(100% + 10px);left:0;background:#fff;border:1px solid #E5E7EB;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.12);z-index:1200;padding:16px;width:340px;display:none;}
+.fns-price-pop.open{display:block;animation:fnsPopIn .16s ease;}
+.fns-price-hist{display:flex;align-items:flex-end;gap:2px;height:48px;margin:8px 0 12px;padding:0 2px;}
+.fns-price-bar{flex:1;background:#E5E7EB;border-radius:2px 2px 0 0;min-width:2px;}
+.fns-price-bar.active{background:#0f62fe;}
+.fns-range-wrap{position:relative;height:6px;background:#E5E7EB;border-radius:9999px;margin:18px 0 8px;}
+.fns-range-fill{position:absolute;top:0;bottom:0;background:#0f62fe;border-radius:9999px;}
+.fns-range-input{position:absolute;top:-7px;width:100%;-webkit-appearance:none;appearance:none;background:transparent;pointer-events:none;}
+.fns-range-input::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid #0f62fe;box-shadow:0 1px 4px rgba(0,0,0,.12);pointer-events:auto;cursor:pointer;}
+.fns-range-input::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid #0f62fe;box-shadow:0 1px 4px rgba(0,0,0,.12);pointer-events:auto;cursor:pointer;}
+/* Rating dots etc */
+.fns-chip-rating .star{color:#F59E0B;font-size:12px;}
+.fns-chip-rating.active .star{color:#fff;}
+@media(max-width:991px){
+  /* Google-Hotels mobile filter bar (screenshot parity) — sits below stacked search */
+  .fns-chips-wrap{top:auto !important;position:static !important;padding:0 12px;background:#fff;border-bottom:none;}
+  .fns-chips-wrap .container-fluid{padding-left:0 !important;padding-right:0 !important;}
+  .fns-chips-wrap .cds-toggle-track{display:none !important;}
+  .fns-chips-row{padding:2px 4px 12px 4px;gap:10px;scroll-snap-type:x proximity;scroll-padding-left:12px;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;overscroll-behavior-x:contain;}
+  .fns-chip{height:46px;min-height:46px;padding:0 16px;border:1px solid #dadce0;border-radius:12px;background:#fff;color:#202124;font-family:Roboto,'Google Sans',Arial,sans-serif;font-size:15px;font-weight:400;gap:10px;scroll-snap-align:start;box-shadow:none;}
+  .fns-chip:hover{background:#f8f9fa;border-color:#dadce0;box-shadow:none;}
+  .fns-chip.active{border-color:#1a73e8;background:#e8f0fe;color:#1a73e8;box-shadow:none;}
+  .fns-chip i{font-size:17px !important;color:#202124;}
+  .fns-chip.active i{color:#1a73e8;}
+  .fns-chip .fns-caret{font-size:11px !important;color:#5f6368 !important;margin-left:2px;}
+  .fns-chip-filters{background:transparent !important;border:none !important;color:#1a73e8 !important;font-weight:500;font-size:16px;padding:0 8px 0 4px !important;height:46px;box-shadow:none !important;}
+  .fns-chip-filters svg{stroke:#1a73e8;}
+  .fns-chip-filters .badge{background:#1a73e8;color:#fff;}
+  .fns-chip-filters.active{background:transparent !important;border:none !important;color:#1a73e8 !important;}
+  .fns-chip-filters.active .badge{background:#1a73e8;color:#fff;}
+  .fns-chip-rating .star{color:#202124;font-size:16px;}
+  .fns-chip-rating.active .star{color:#1a73e8;}
+  .fns-chip .fns-chip-long{display:none !important;}
+  .fns-chip .fns-chip-short{display:inline !important;}
+  .fns-price-pop{position:fixed !important;left:12px !important;right:12px !important;top:auto !important;bottom:calc(12px + env(safe-area-inset-bottom)) !important;width:auto !important;max-width:none !important;border-radius:20px;max-height:82vh;max-height:82dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+  .fns-scroll-btn{display:none !important;}
+  .fns-chips-outer::before,.fns-chips-outer::after{display:none !important;}
+  /* Screenshot parity: only All filters / Price / Offers / Guest rating on mobile */
+  .fns-chip[data-filter="property_type"],.fns-chip[data-filter="free_cancellation"],.fns-chip[data-filter="amenities"]{display:none !important;}
+  .fns-chip[data-filter="offers"]{display:inline-flex !important;}
+}
+@media(min-width:992px){
+  .fns-chip .fns-chip-short{display:none !important;}
+  .fns-chip[data-filter="offers"]{display:none !important;}
+}
+@media(max-width:575px){
+  .fns-chips-wrap{top:auto !important;position:static !important;}
+}
+@media(max-width:380px){
+  .fns-chip{padding:0 12px;font-size:14px;min-height:44px;height:44px;}
+}
+@media(max-width:380px){
+  .fns-chip{padding:9px 12px;font-size:12.5px;min-height:38px;}
+}

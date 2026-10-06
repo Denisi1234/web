@@ -1,0 +1,14 @@
+/* Split for the 300-line cap — order matters, keep sequence. */
+
+/* ── Developer & Diagnostics Components ── */
+.cp-dev-box {
+  background: #1e1e1e;
+  color: #e0e0e0;
+  font-family: 'IBM Plex Mono', 'Menlo', monospace;
+  font-size: 12px;
+  padding: 16px 20px;
+  border-radius: 0;
+  border: 1px solid #333;
+  overflow-x: auto;
+  line-height: 1.6;
+}

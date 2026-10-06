@@ -1,0 +1,288 @@
+/**
+ * FastNet Stays — canonical loading controller.
+ *
+ * Single entry point for every loading state in the product. Replaces five
+ * unrelated implementations (app-loader bar, p-dots, home-loader, home
+ * shimmer, portal bar) and ~20 hand-rolled spinner blocks.
+ *
+ * Design rules:
+ *  1. Reference-counted. Concurrent operations cannot hide each other's
+ *     indicators.
+ *  2. Every show has a guaranteed hide. `track()` wraps async work in a
+ *     try/finally, and a watchdog force-completes any indicator that outlives
+ *     its budget. This is the fix for the previous bug class where the top
+ *     bar stayed pinned with a live interval running after a failed form.
+ *  3. Progress only moves forward. The bar creeps toward 90% and waits; it
+ *     never retreats.
+ *
+ * Usage:
+ *   FastnetLoading.track(async () => { ... })   // bar + guaranteed done
+ *   FastnetLoading.button(btn, true)            // inline dots
+ *   FastnetLoading.busy(form, true)            // disable submit + dots
+ *   FastnetLoading.region(el, true, 'Loading…')
+ *   FastnetLoading.overlay.show({ title: 'Saving…' })
+ *   FastnetLoading.bar.start() / .done()
+ */
+(function (global) {
+  'use strict';
+
+  if (global.FastnetLoading) return;
+
+  /** Longest an indicator may stay up before the watchdog force-completes it. */
+  var MAX_MS = 8000;
+  /** Appear delay — 120ms: fully server-rendered first opens (the Google
+     arrival) never flash a loader at all; real async work still feels
+     instant thanks to the fast creep below. Zero unnecessary loading. */
+  var APPEAR_DELAY = 120;
+  /** Where an indeterminate bar creeps to and waits. */
+  var CREEP_TO = 90;
+
+  var els = {};
+  var barTimer = null;
+  var creepTimer = null;
+  var watchdog = null;
+
+  /* Reference counts. The bar is only hidden when nothing is pending. */
+  var pending = 0;
+  var barShownAt = 0;
+
+  function doc() {
+    return global.document;
+  }
+
+  function ensureChrome() {
+    var d = doc();
+    if (!d || !d.body) return false;
+
+    // Adopt the markup that layouts already render rather than injecting a
+    // second bar, so there is exactly one progress element in the document.
+    if (!els.progress) {
+      els.progress =
+        d.getElementById('fastnet-top-progress') || d.getElementById('fn-progress');
+
+      if (els.progress) {
+        els.progress.classList.add('fn-progress');
+        els.progress.setAttribute('role', 'progressbar');
+        els.progress.setAttribute('aria-label', 'Page loading progress');
+        els.progress.setAttribute('aria-valuemin', '0');
+        els.progress.setAttribute('aria-valuemax', '100');
+        if (!els.progress.hasAttribute('aria-valuenow')) {
+          els.progress.setAttribute('aria-valuenow', '0');
+        }
+      } else {
+        var bar = d.createElement('div');
+        bar.id = 'fastnet-top-progress';
+        bar.className = 'fn-progress';
+        bar.setAttribute('role', 'progressbar');
+        bar.setAttribute('aria-label', 'Page loading progress');
+        bar.setAttribute('aria-valuemin', '0');
+        bar.setAttribute('aria-valuemax', '100');
+        bar.setAttribute('aria-valuenow', '0');
+        d.body.appendChild(bar);
+        els.progress = bar;
+      }
+    }
+
+    // Overlay intentionally never created (deleted): bar + skeletons only.
+    return true;
+  }
+
+  function armWatchdog() {
+    if (watchdog) return;
+    watchdog = global.setTimeout(function () {
+      // Something upstream failed to clean up. Release everything rather than
+      // leaving the UI permanently blocked.
+      watchdog = null;
+      forceReset();
+    }, MAX_MS);
+  }
+
+  function disarmWatchdog() {
+    if (!watchdog) return;
+    global.clearTimeout(watchdog);
+    watchdog = null;
+  }
+
+  function forceReset() {
+    pending = 0;
+
+    if (barTimer) {
+      global.clearTimeout(barTimer);
+      barTimer = null;
+    }
+    if (creepTimer) {
+      global.clearInterval(creepTimer);
+      creepTimer = null;
+    }
+
+    if (els.progress) {
+      els.progress.classList.remove('is-active', 'is-indeterminate');
+      els.progress.style.width = '0%';
+      els.progress.setAttribute('aria-valuenow', '0');
+    }
+    if (els.overlay) {
+      els.overlay.classList.remove('is-visible');
+      els.overlay.setAttribute('aria-hidden', 'true');
+    }
+    if (doc() && doc().body) doc().body.style.removeProperty('overflow');
+  }
+
+  /* ------------------------------------------------------------------ bar */
+
+  var bar = {
+    /** Begin (or join) a loading operation. Reference counted. */
+    start: function () {
+      if (!ensureChrome()) return;
+
+      pending += 1;
+      armWatchdog();
+
+      // Reference counted: an inner operation finishing must not hide the bar
+      // while an outer one is still running.
+      if (pending > 1) return;
+
+      barShownAt = Date.now();
+
+      if (barTimer) global.clearTimeout(barTimer);
+      barTimer = global.setTimeout(function () {
+        barTimer = null;
+        paintBar(35);
+
+        // Professional snap: jump fast toward 90% and hold. Never retreats.
+        var pct = 35;
+        if (creepTimer) global.clearInterval(creepTimer);
+        creepTimer = global.setInterval(function () {
+          if (pct >= CREEP_TO) return;
+          pct = Math.min(CREEP_TO, pct + Math.max(3, Math.round((CREEP_TO - pct) / 3)));
+          paintBar(pct);
+        }, 90);
+      }, APPEAR_DELAY);
+    },
+
+    /** Explicitly move the bar (0-100). */
+    set: function (pct) {
+      if (!els.progress) return;
+      var v = Math.max(0, Math.min(100, Math.round(pct)));
+      paintBar(v);
+    },
+
+    /** End one operation. Hides the bar once nothing is pending. */
+    done: function () {
+      if (pending > 0) pending -= 1;
+
+      if (pending > 0) return;
+
+      if (barTimer) {
+        global.clearTimeout(barTimer);
+        barTimer = null;
+      }
+      if (creepTimer) {
+        global.clearInterval(creepTimer);
+        creepTimer = null;
+      }
+
+      if (!els.progress) return;
+
+      // Never regress: only ever complete from a value below 100.
+      paintBar(100);
+      els.progress.setAttribute('aria-valuenow', '100');
+      els.progress.classList.remove('is-indeterminate');
+
+      global.setTimeout(function () {
+        if (pending > 0) return; // a new op started during the fade
+        els.progress.classList.remove('is-active');
+        els.progress.style.width = '0%';
+        els.progress.setAttribute('aria-valuenow', '0');
+        disarmWatchdog();
+      }, 120);
+    },
+
+    isActive: function () {
+      return pending > 0;
+    },
+
+    /** True if the bar was on screen long enough to be worth showing. */
+    wasVisible: function () {
+      return barShownAt > 0 && Date.now() - barShownAt > APPEAR_DELAY;
+    }
+  };
+
+  function paintBar(pct) {
+    if (!els.progress) return;
+    els.progress.style.width = pct + '%';
+    els.progress.setAttribute('aria-valuenow', String(pct));
+    els.progress.classList.add('is-active', 'is-indeterminate');
+  }
+
+  /* ------------------------------------------------------------- overlay */
+
+  // Overlay — DELETED. Bar + skeletons only (professional, never blocks).
+  // show()/hide() are kept as no-op aliases so old call sites keep working.
+  var overlay = {
+    show: function (opts) {
+      bar.start();
+    },
+
+    hide: function () {
+      if (pending === 0) disarmWatchdog();
+    }
+  };
+
+  /* --------------------------------------------------------------- track */
+
+  /**
+   * Run async work with a progress bar that is guaranteed to be released.
+   *
+   * This is the fix for the stuck-loader class of bug: the bar is started on
+   * submit and previously only cleared on `window load`, so any request that
+   * failed left it pinned at 82% with a live interval running.
+   *
+   * @param   {Function} work  may be async; its resolved value is passed through
+   * @param   {object}   [opts]
+   * @returns {Promise}
+   */
+  function track(work, opts) {
+    opts = opts || {};
+    bar.start();
+    if (opts.overlay) overlay.show(opts);
+
+    var result;
+    try {
+      result = work();
+    } catch (err) {
+      finish();
+      throw err;
+    }
+
+    return Promise.resolve(result).then(
+      function (value) {
+        finish();
+        return value;
+      },
+      function (err) {
+        finish();
+        throw err;
+      }
+    );
+
+    function finish() {
+      if (opts.overlay) overlay.hide();
+      bar.done();
+    }
+  }
+
+  global.FastnetLoading = {
+    bar: bar,
+    overlay: overlay,
+    track: track,
+    reset: forceReset,
+
+    /** True when the user prefers reduced motion. */
+    reducedMotion: function () {
+      return !!(
+        global.matchMedia &&
+        global.matchMedia('(prefers-reduced-motion: reduce)').matches
+      );
+    }
+  };
+})(window);

@@ -10,7 +10,8 @@ if ($isOwnerSignup) {
 ?>
 <?= $this->Html->css('/assets/css/google-travel-layout.css') ?>
 <?= $this->Html->css('/assets/css/google-travel-home.css') ?>
-<?= $this->Html->css('/assets/css/carbon-auth.css?v=' . filemtime(WWW_ROOT . 'assets/css/carbon-auth.css')) ?>
+<?= $this->Html->css('/assets/css/carbon-auth-01.css?v=' . filemtime(WWW_ROOT . 'assets/css/carbon-auth-01.css')) ?>
+<?= $this->Html->css('/assets/css/carbon-auth-02.css?v=' . filemtime(WWW_ROOT . 'assets/css/carbon-auth-02.css')) ?>
 <?= $this->element('navbar') ?>
 <?= $this->element('breadcrumb-schema', ['label' => $isOwnerSignup ? 'Become a host' : 'Create account']) ?>
 <main id="main-content" class="cx-auth cx-su" style="background:var(--cds-gray-10);min-height:85vh;" role="main">

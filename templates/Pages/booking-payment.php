@@ -4,7 +4,9 @@
 <?= $this->element('navbar') ?>
 <?= $this->element('breadcrumb-schema', ['label' => 'Payment']) ?>
 <main id="main-content" style="background:var(--cds-gray-10);min-height:85vh;" role="main">
-<link rel="stylesheet" href="<?= $this->Url->build('/assets/css/trivago-checkout.css') ?>">
+<link rel="stylesheet" href="<?= $this->Url->build('/assets/css/trivago-checkout-01.css') ?>">
+<link rel="stylesheet" href="<?= $this->Url->build('/assets/css/trivago-checkout-02.css') ?>">
+<link rel="stylesheet" href="<?= $this->Url->build('/assets/css/trivago-checkout-03.css') ?>">
 <style>
 /* Phase 4 — payment pending parity with mobile USSD dialog (#EBF5FF circle, r16, r30) */
 .trivago-card{border:1px solid #e8eaed !important;border-radius:16px !important;box-shadow:0 6px 16px rgba(0,0,0,0.05) !important;background:#fff}

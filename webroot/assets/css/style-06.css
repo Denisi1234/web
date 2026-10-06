@@ -1,0 +1,291 @@
+/* Theme base part 06 (split for the 300-line cap — order matters, keep sequence). */
+
+.dropdowns .menu-open {
+  display: block;
+  opacity: 1;
+}
+
+.dropdowns .menu-open .active {
+  background: var(--bs-primary-bg-subtle);
+  color: var(--bs-primary);
+}
+
+.form-check {
+  min-height: 0.8rem;
+  padding-left: 1.7rem;
+}
+
+.form-check-input {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.19em;
+  margin-left: -1.7rem !important;
+}
+
+.form-check.lg {
+  min-height: 1rem;
+  padding-left: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.form-check.lg .form-check-input {
+  width: 1.4rem;
+  height: 1.4rem;
+  margin-top: 0.1em;
+  margin-left: -2rem !important;
+}
+
+.form-check-input:checked {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+}
+
+.form-check-input:focus {
+  border-color: var(--bs-primary-bg-subtle);
+  outline: 0;
+  box-shadow: 0 0 0 0.25rem var(--bs-primary-bg-subtle);
+}
+
+.autocomplete-container {
+  width: 100%;
+}
+.autocomplete-container .suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-top: none;
+  border-radius: 0.325rem;
+  max-height: 350px;
+  overflow-y: auto;
+  z-index: 44;
+  margin-top: 22px;
+  scrollbar-width: none;
+}
+.autocomplete-container .suggestions .suggestion-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--bs-bordercolor);
+}
+.autocomplete-container .suggestions .suggestion-item:hover {
+  background-color: var(--bs-light);
+}
+.autocomplete-container .suggestions .suggestion-item .place-name {
+  font-size: 16px;
+  color: var(--bs-heading-color);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+.autocomplete-container .suggestions .suggestion-item .place-name i {
+  color: var(--bs-iconcolor);
+  margin-right: 10px;
+  font-size: 27px;
+}
+.autocomplete-container .suggestions .suggestion-item .duration {
+  font-size: 13px;
+  color: var(--bs-body-color);
+  margin-left: 37px;
+}
+
+/*------------------- Search Form with Icon ------------------*/
+.fill-primary {
+  fill: var(--bs-primary);
+}
+
+.inputIicon {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.7rem;
+  border-radius: 0.375rem;
+  padding-left: 0.5rem;
+  background: #ffffff;
+  border: 1px solid var(--bs-bordercolor);
+}
+.inputIicon .input-box {
+  flex: 2;
+}
+.inputIicon .input-box .form-control {
+  border: none;
+  padding-left: 0;
+}
+.inputIicon .input-box .select2-container .select2-selection--multiple,
+.inputIicon .input-box .select2-container .select2-selection--single {
+  border: none;
+  padding: 0;
+  background: transparent;
+}
+.inputIicon .input-box .select2-container .select2-selection--multiple .select2-selection__rendered,
+.inputIicon .input-box .select2-container .select2-selection--single .select2-selection__rendered {
+  font-weight: 500;
+}
+
+.searchModern {
+  background: #ffffff;
+  border-radius: 50px;
+  padding: 0.7rem;
+}
+.searchModern .inputIicon {
+  border: none !important;
+}
+.searchModern .okButton {
+  width: auto;
+}
+.searchModern .okButton .btn-ok {
+  width: 55px;
+  height: 55px;
+  border: none;
+  font-size: 18px;
+  border-radius: 50%;
+}
+.searchModern .brd-end {
+  border-right: 1px solid var(--bs-bordercolor);
+}
+
+/*--------------------------------------------------
+ Common Elentns 
+---------------------------------------------------*/
+.progress {
+  margin-bottom: 1.5em;
+}
+
+p,
+ul,
+ol,
+dl,
+dt,
+dd,
+blockquote,
+address {
+  margin: 0 0 10px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.explore-content p {
+  font-size: 19px;
+  font-family: "Lora", serif;
+  font-style: italic;
+}
+
+.shadow-0 {
+  box-shadow: none !important;
+}
+
+.ovr-top {
+  margin-top: -60px;
+  position: relative;
+  z-index: 1;
+}
+
+.shadow-wrap {
+  box-shadow: 0 8px 16px 0 rgba(15, 41, 77, 0.06);
+  -webkit-box-shadow: 0 8px 16px 0 rgba(15, 41, 77, 0.06);
+  -moz-box-shadow: 0 8px 16px 0 rgba(15, 41, 77, 0.06);
+}
+
+.dropdown-item {
+  padding: 8px 1rem;
+  color: #607394;
+  font-size: 15.5px;
+}
+
+/*---------- Common Elentns: Price Changer Styles ------------*/
+.js-yearlypricing {
+  display: none;
+}
+
+.js-yearlypricing,
+.js-montlypricing {
+  justify-content: center;
+}
+
+.js-yearlypricing sup,
+.js-montlypricing sup {
+  top: 15px;
+}
+
+.slideToggle {
+  display: flex;
+  justify-content: center;
+  margin: 25px 0;
+}
+.slideToggle i {
+  margin: 0 15px;
+}
+.slideToggle .form-switch {
+  align-items: center;
+  display: flex;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  justify-content: space-between;
+}
+.slideToggle .form-switch i {
+  position: relative;
+  display: inline-block;
+  width: 112px;
+  height: 44px;
+  border: 4px solid #ffffff;
+  border-radius: 50px;
+  transition: all 0.3s linear;
+}
+.slideToggle .form-switch i:after {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 46px;
+  height: 30px;
+  background-color: var(--bs-primary);
+  border-radius: 15px;
+  transform: translate3d(4px, 3px, 0);
+  transition: all 0.2s ease-in-out;
+}
+
+.slideToggle .form-switch input {
+  display: none;
+}
+
+.slideToggle .form-switch input:checked + i {
+  background-color: var(--bs-primary-bg-subtle);
+  border-color: #ffa6a1;
+}
+
+.slideToggle .form-switch input:checked + i::after {
+  transform: translate3d(54px, 3px, 0);
+}
+
+.no-wrap td,
+.no-wrap th {
+  white-space: nowrap;
+}
+
+.circle {
+  border-radius: 100%;
+}
+
+.offcanvas-body {
+  display: block !important;
+}
+
+/*-------------- Common Elentns: Custom Height ------------*/
+.ht-10 {
+  height: 10px;
+}
+
+.ht-20 {
+  height: 20px;
+}
+
+.ht-30 {
+  height: 30px;
+}
+
+.ht-40 {
+  height: 40px;
+}

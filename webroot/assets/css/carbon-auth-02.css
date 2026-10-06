@@ -1,0 +1,35 @@
+/* Split for the 300-line cap — order matters, keep sequence. */
+
+/* ── Sharp corners: hard requirement for the Carbon auth surface.
+ * Declared last and with !important so no later stylesheet, no Bootstrap
+ * theme override (.form-control sets --bs-border-radius: .375rem) and no
+ * :focus/:hover/:disabled state can re-round these fields. IBM Carbon inputs
+ * are square-cornered by definition. ── */
+.cx-auth input,
+.cx-auth select,
+.cx-auth textarea,
+.cx-auth .form-control,
+.cx-auth .form-select,
+.cx-auth .form-control:focus,
+.cx-auth .form-control:hover,
+.cx-auth .form-control:active,
+.cx-auth .form-control:disabled,
+.cx-auth .form-control[readonly],
+.cx-auth .form-control.is-invalid,
+.cx-auth .form-select:focus,
+.cx-auth .form-select:hover,
+.cx-auth .form-control[type='email'],
+.cx-auth .form-control[type='password'],
+.cx-auth .form-control[type='tel'],
+.cx-auth .form-control[type='text'],
+.cx-auth .form-floating > .form-control,
+.cx-auth .form-floating > .form-select,
+.cx-auth .input-group > .form-control {
+  border-radius: 0 !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cx-auth * { animation: none !important; transition: none !important; }
+}

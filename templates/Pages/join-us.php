@@ -11,110 +11,7 @@ $myList = (isset($myProperties) && is_array($myProperties)) ? $myProperties : []
 $juNeedsVerification = $juLoggedIn && $juRole === 'owner'
     && strtolower((string)($sessionUser['status'] ?? '')) === 'pending verification';
 ?>
-<style>
-/* Scroll fix: home split-view CSS locks body scroll on desktop — this page must scroll */
-html, body { height: auto !important; overflow-y: auto !important; }
-#main-wrapper { height: auto !important; overflow: visible !important; display: block !important; }
-/* ── Carbon-inspired host page ── */
-.ju { background: #f4f4f4; color: #161616; font-family: 'IBM Plex Sans', 'Inter', Roboto, sans-serif; }
-.ju-hero { background: #161616; color: #fff; }
-.ju-eyebrow { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #a6c8ff; border-bottom: 2px solid #0f62fe; padding-bottom: 6px; }
-.ju-h1 { font-size: clamp(32px, 4.6vw, 52px); font-weight: 600; line-height: 1.1; letter-spacing: -.01em; color: #f4f4f4; }
-.ju-h1 .accent { color: #ffd292; }
-@supports ((-webkit-background-clip: text) and (-webkit-text-fill-color: transparent)) {
-  .ju-h1 .accent { background: linear-gradient(92deg, #ffcf87 0%, #ffb3ab 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-}
-.ju-lead { font-size: 17px; line-height: 1.6; color: #c6c6c6; max-width: 620px; }
-.ju-meta { display: flex; gap: 24px; flex-wrap: wrap; font-size: 14px; color: #c6c6c6; }
-.ju-meta strong { display: block; font-size: 20px; color: #fff; }
-.ju-actions { display: flex; gap: 12px; flex-wrap: wrap; }
-.btn-ju { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 24px; font-size: 15px; font-weight: 600; text-decoration: none; border: 1px solid transparent; cursor: pointer; }
-.btn-ju-primary { background: #0f62fe; color: #fff; }
-.btn-ju-primary:hover { background: #0353e9; color: #fff; }
-.btn-ju-outline { background: transparent; color: #fff; border-color: #8d8d8d; }
-.btn-ju-outline:hover { border-color: #fff; color: #fff; }
-.btn-ju-light { background: #fff; color: #161616; }
-.btn-ju-light:hover { background: #e0e0e0; color: #161616; }
-.ju-section { padding: 56px 0; }
-.ju-label { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #0f62fe; }
-.ju-h2 { font-size: clamp(24px, 3vw, 32px); font-weight: 600; letter-spacing: -.01em; }
-.ju-tile { background: #fff; border-top: 3px solid #0f62fe; padding: 24px; height: 100%; }
-.ju-tile h3 { font-size: 18px; font-weight: 600; }
-.ju-tile p { font-size: 14px; line-height: 1.6; color: #525252; }
-.ju-tile .num { font-size: 13px; font-weight: 600; color: #6f6f6f; }
-.ju-perk { background: #fff; border-left: 3px solid #e0e0e0; padding: 20px; height: 100%; }
-.ju-perk h3 { font-size: 16px; font-weight: 600; }
-.ju-perk p { font-size: 14px; line-height: 1.6; color: #525252; }
-.ju-prop { background: #fff; border: 1px solid #e0e0e0; height: 100%; }
-.ju-prop img { height: 150px; width: 100%; object-fit: cover; display: block; }
-.ju-status { display: inline-block; font-size: 12px; font-weight: 600; padding: 4px 10px; }
-.ju-faq details { background: #fff; border-bottom: 1px solid #e0e0e0; padding: 18px 4px; }
-.ju-faq details:first-of-type { border-top: 1px solid #e0e0e0; }
-.ju-faq summary { font-size: 16px; font-weight: 600; cursor: pointer; }
-.ju-cta { background: #0f62fe; color: #fff; }
-.ju-note {
-  background: #fff;
-  border-left: 3px solid #0f62fe;
-  padding: 14px 16px;
-  max-width: 720px;
-  font-size: 14px;
-  line-height: 1.6;
-  color: #525252;
-}
-.ju-cta p { color: #d0e2ff; }
-.ju-cta-text { flex: 1; min-width: 240px; }
-.ju img { max-width: 100%; }
-.btn-ju { justify-content: center; }
-.btn-ju:focus-visible, .ju-faq summary:focus-visible, a:focus-visible { outline: 2px solid #0f62fe; outline-offset: 2px; }
-.ju-hero .btn-ju-outline:focus-visible { outline-color: #fff; }
-/* ── Responsive ── */
-@media (max-width: 767px) {
-  .ju-section { padding: 36px 0; }
-  .ju-hero .container { padding-top: 2rem !important; padding-bottom: 2rem !important; }
-  .ju-lead { font-size: 16px; }
-  .ju-meta { gap: 12px 20px; }
-  .ju-meta strong { font-size: 18px; }
-  .ju-tile, .ju-perk { padding: 20px; }
-}
-@media (max-width: 575px) {
-  .ju-actions { flex-direction: column; align-items: stretch; }
-  .ju-actions .btn-ju { width: 100%; }
-  .ju-meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; font-size: 12px; }
-  .ju-meta strong { font-size: 17px; }
-  .ju-cta { flex-direction: column; align-items: stretch !important; }
-  .ju-cta-text { min-width: 0; }
-  .ju-cta .btn-ju { width: 100%; }
-  .ju-cta form { width: 100%; }
-  .ju-h1 { font-size: 32px; }
-  .ju-prop img { height: 170px; }
-}
-
-/* Square field corners to match the Carbon auth surfaces (/login, /signup).
-   This page is not inside .cx-auth, so the rule there does not reach it and
-   Bootstrap's .375rem radius would otherwise apply. */
-#main-content .form-control,
-#main-content .form-select,
-#main-content .form-control:focus,
-#main-content .form-control:hover,
-#main-content .form-control:focus,
-#main-content .form-control[readonly],
-#main-content .form-control.is-invalid {
-  border-radius: 0 !important;
-}
-#main-content .form-control:focus {
-  outline: 2px solid var(--cds-focus, #0f62fe);
-  outline-offset: -2px;
-  border-color: #0f62fe;
-}
-#main-content .form-control.is-invalid {
-  border-color: #da1e28;
-}
-#main-content input[type='file'].form-control { padding: 10px 14px; }
-
-@media (prefers-reduced-motion: reduce) {
-  .ju * { animation: none !important; transition: none !important; }
-}
-</style>
+<?= $this->Html->css('/assets/css/join-us.css?v=' . filemtime(WWW_ROOT . 'assets/css/join-us.css')) ?>
 
 <?= $this->element('navbar') ?>
 <div class="ju">
@@ -234,60 +131,7 @@ html, body { height: auto !important; overflow-y: auto !important; }
   </form>
   </div>
 </section>
-<script>
-// Owner KYC submission -> POST /join-us/verify (PagesController::submitOwnerVerification)
-(function () {
-  var form   = document.getElementById('kycForm');
-  var btn    = document.getElementById('kycSubmitBtn');
-  var errBox = document.getElementById('kycError');
-  if (!form || !btn) return;
-
-  var fail = function (msg) {
-    if (errBox) { errBox.textContent = msg; errBox.classList.remove('d-none'); }
-    btn.disabled = false;
-    btn.textContent = 'Submit for review';
-  };
-
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
-    if (errBox) { errBox.classList.add('d-none'); errBox.textContent = ''; }
-
-    btn.disabled = true;
-    btn.textContent = 'Uploading documents...';
-
-    fetch('/join-us/verify', {
-      method: 'POST',
-      body: new FormData(form),
-      headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-      credentials: 'same-origin'
-    })
-      .then(function (r) { return r.json().catch(function () { return {}; }); })
-      .then(function (data) {
-        if (data && data.status === 'success') {
-          btn.textContent = 'Submitted';
-          window.location.reload();
-          return;
-        }
-        fail((data && data.message) || 'Submission failed. Please try again.');
-      })
-      .catch(function () { fail('Could not reach the server. Please try again.'); });
-  });
-})();
-</script>
-<script>
-// KYC submit button loading state: instant feedback + no double submit.
-(function () {
-  var btn = document.getElementById('kycSubmitBtn');
-  if (!btn) return;
-  var form = document.getElementById('kycForm');
-  if (!form) return;
-  form.addEventListener('submit', function () {
-    if (btn.disabled) return;
-    if (window.FastAPI && FastAPI.btnDots) { FastAPI.btnDots(btn, true); return; }
-    btn.disabled = true; btn.textContent = 'Submitting…';
-  });
-})();
-</script>
+<?= $this->Html->script('/assets/js/join-us.js?v=' . filemtime(WWW_ROOT . 'assets/js/join-us.js')) ?>
 <?php endif; ?>
 
 <!-- Owner listings -->
@@ -298,7 +142,7 @@ html, body { height: auto !important; overflow-y: auto !important; }
     <a href="<?= $this->Url->build('/host/listings') ?>" class="btn-ju btn-ju-light" style="border:1px solid #8d8d8d">Manage listings</a>
   </div>
   <div class="row g-3">
-    <?php foreach (array_slice($myList, 0, 3) as $p): $st = strtolower((string)($p['status'] ?? 'active')); $img = $p['image_url'] ?? $p['primary_image_url'] ?? 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop'; ?>
+    <?php foreach (array_slice($myList, 0, 3) as $p): $st = strtolower((string)($p['status'] ?? 'active')); $img = $p['image_url'] ?? $p['primary_image_url'] ?? $this->Url->build('/assets/img/hotel/hotel-1.jpg'); ?>
     <div class="col-md-4"><div class="ju-prop">
       <img src="<?= h($img) ?>" alt="">
       <div class="p-3">

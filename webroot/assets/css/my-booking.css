@@ -1,0 +1,51 @@
+/* Extracted for the 300-line cap. */
+.cds-bk-hero{padding:28px 0 4px}
+.cds-eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--cds-blue-60)}
+.cds-h1{font-size:30px;font-weight:300;color:#161616;margin:8px 0 6px}
+.cds-lede{font-size:14px;color:#525252;margin:0;max-width:640px}
+.cds-bk-body{max-width:960px;margin:0 auto;padding:20px 16px 56px;display:flex;flex-direction:column;gap:20px}
+.cds-sec-label{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#525252;margin:0 0 4px}
+.cds-sec-title{font-size:20px;font-weight:400;color:#161616;margin:0 0 10px}
+.cds-card{background:#fff;border:1px solid #e0e0e0}
+.cds-pend{border-left:4px solid #f1c21b}
+.cds-bk-row{display:flex;gap:16px;align-items:center;padding:16px;border-top:1px solid #e0e0e0;flex-wrap:wrap}
+.cds-bk-row:first-child{border-top:none}
+.cds-bk-main{flex:1 1 260px;min-width:0}
+.cds-bk-prop{font-size:15px;font-weight:600;color:#161616;margin:6px 0 2px}
+.cds-bk-meta{font-size:12.5px;color:#6f6f6f}
+.cds-bk-meta strong{color:#393939}
+.cds-bk-side{text-align:right;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.cds-bk-amt{font-size:17px;font-weight:600;color:#161616;white-space:nowrap}
+.cds-bk-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.cds-tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:3px 8px}
+.cds-t-confirmed{background:#defbe6;color:#0e6027}
+.cds-t-pending{background:#fcf4d6;color:#8e6a00}
+.cds-t-cancelled{background:#fff1f1;color:#b81922}
+.cds-t-completed{background:#d0e2ff;color:#0043ce}
+.cds-t-checkin{background:#e8daff;color:#491d8b}
+.cds-t-paid{background:#defbe6;color:#0e6027}
+.cds-btn{display:inline-block;background:var(--cds-blue-60);color:#fff;border:1px solid transparent;padding:9px 18px;font-size:13.5px;border-radius:0;text-decoration:none!important;cursor:pointer;min-height:40px}
+.cds-btn:hover{background:#0353e9;color:#fff}
+.cds-btn-ghost{display:inline-block;background:transparent;color:var(--cds-blue-60);border:1px solid var(--cds-blue-60);padding:9px 18px;font-size:13.5px;border-radius:0;text-decoration:none!important;cursor:pointer;min-height:40px}
+.cds-btn-ghost:hover{background:var(--cds-blue-60);color:#fff}
+.cds-btn-danger{display:inline-block;background:transparent;color:#da1e28;border:1px solid #e0e0e0;padding:9px 18px;font-size:13.5px;border-radius:0;cursor:pointer;min-height:40px}
+.cds-btn-danger:hover{background:#fff1f1;border-color:#da1e28}
+.cds-btn-pay{background:#8e6a00;border-color:transparent;color:#fff}
+.cds-btn-pay:hover{background:#6f5200;color:#fff}
+.cds-empty{background:#fff;border:1px solid #e0e0e0;padding:40px 20px;text-align:center}
+.cds-empty i{font-size:28px;color:#8d8d8d;display:block;margin-bottom:12px}
+.cds-empty b{display:block;font-size:15px;color:#161616;margin-bottom:4px}
+.cds-empty span{font-size:13.5px;color:#525252}
+.cds-find{background:#fff;border:1px solid #e0e0e0;padding:20px}
+.cds-find h2{font-size:18px;font-weight:400;color:#161616;margin:0 0 4px}
+.cds-find p.sub{font-size:13px;color:#525252;margin:0 0 14px}
+.cds-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.cds-field label{display:block;font-size:12px;color:#525252;margin-bottom:8px}
+#findBookingForm.cds-form input{width:100%!important;background:#f4f4f4!important;border:none!important;border-bottom:1px solid #8d8d8d!important;border-radius:0!important;height:44px!important;padding:0 12px!important;font-size:14px!important;color:#161616!important}
+#findBookingForm.cds-form input:focus{outline:2px solid var(--cds-focus)!important;outline-offset:-2px!important}
+.cds-note{display:flex;gap:12px;background:#fff;border:1px solid #e0e0e0;border-left:4px solid #24a148;padding:12px 16px;font-size:13.5px;color:#161616;margin-bottom:4px}
+.cds-note.info{border-left-color:var(--cds-blue-60)}
+.cds-dl{display:grid;grid-template-columns:130px 1fr;gap:8px 12px;font-size:13.5px;padding:4px 0}
+.cds-dl dt{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:#6f6f6f}
+.cds-dl dd{margin:0;color:#161616;font-weight:600}
+@media(max-width:640px){.cds-grid2{grid-template-columns:1fr}.cds-bk-side{text-align:left;align-items:flex-start}.cds-bk-actions{justify-content:flex-start}}

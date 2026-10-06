@@ -50,7 +50,7 @@ $this->assign('page_actions', '<a href="' . $this->Url->build('/host/onboarding'
   <div class="hp-list">
     <?php foreach ($properties as $p):
       $pid = $p['id'] ?? '';
-      $img = $p['image_url'] ?? $p['primary_image_url'] ?? 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop';
+      $img = $p['image_url'] ?? $p['primary_image_url'] ?? $this->Url->build('/assets/img/hotel/hotel-1.jpg');
       $name = $p['name'] ?? 'Property';
       $loc = trim(trim((string)($p['area'] ?? '')) . ', ' . trim((string)($p['city'] ?? '')), ', ');
       $price = (float)($p['customer_price_per_night'] ?? $p['price_per_night'] ?? 0);

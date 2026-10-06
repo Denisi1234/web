@@ -1,0 +1,44 @@
+/* Split for the 300-line cap — order matters, keep sequence. */
+@media (max-width: 767px) {
+    .trivago-checkout-body > .container { padding-left: 16px; padding-right: 16px; }
+    .trivago-checkout-stepper-row { align-items: stretch; display: grid; grid-template-columns: auto 1fr; padding: 12px 0 16px; }
+    .trivago-stepper-track { min-width: 0; }
+    .trivago-step-item { min-width: 0; }
+    .trivago-step-item span { overflow: hidden; text-overflow: ellipsis; }
+    .trivago-mobile-summary .trivago-card { padding: 14px; }
+    .trivago-mobile-summary-thumb { height: 64px; width: 64px; }
+    .trivago-card { margin-bottom: 12px; }
+    .trivago-card .row { --bs-gutter-y: 10px; }
+    .trivago-label { margin-bottom: 6px; }
+    .momo-strip { margin-top: 10px; margin-bottom: 14px; }
+    .trivago-confirm-pay-btn { position: relative; z-index: 1; }
+    .trivago-checkout-navbar .container { padding-left: 16px; padding-right: 16px; width: 100%; }
+    .trivago-checkout-brand { max-width: 100%; min-width: 0; }
+    .trivago-checkout-logo-main, .trivago-checkout-bookgo { white-space: nowrap; }
+    .trivago-checkout-stepper-row { column-gap: 8px; }
+    .trivago-stepper-back-btn { align-self: center; min-height: 38px; }
+    .trivago-stepper-track { justify-content: space-between; width: 100%; }
+    .trivago-step-line { min-width: 10px; }
+    .trivago-card, .trivago-summary-card, .trivago-trust-banner { box-sizing: border-box; width: 100%; }
+    .trivago-card-title { line-height: 1.3; }
+    .trivago-card-subtitle { line-height: 1.45; }
+    .trivago-card .input-group { display: flex; flex-wrap: nowrap; width: 100%; }
+    .trivago-card .input-group .trivago-select { flex: 0 0 92px; min-width: 92px; padding-left: 7px; padding-right: 7px; }
+    .trivago-card .input-group .trivago-input { flex: 1 1 auto; min-width: 0; }
+    .momo-phone-prefix { flex: 0 0 auto; }
+    #mobile_payment_phone { min-width: 0; }
+    .trivago-mobile-details { overflow-wrap: anywhere; }
+    .trivago-confirm-pay-btn { padding-left: 12px; padding-right: 12px; }
+}
+
+@media (max-width: 375px) {
+    .trivago-checkout-body > .container { padding-left: 12px; padding-right: 12px; }
+    .trivago-checkout-stepper-row { grid-template-columns: 1fr; row-gap: 10px; }
+    .trivago-stepper-back-btn { justify-self: start; }
+    .trivago-stepper-track { min-height: 24px; }
+    .trivago-step-item { font-size: 10.5px; }
+    .trivago-step-line { min-width: 6px; }
+    .trivago-card { padding-left: 12px; padding-right: 12px; }
+    .momo-strip-item { gap: 5px; padding-left: 6px; padding-right: 6px; }
+    .momo-strip-logo { max-width: 32px; }
+}

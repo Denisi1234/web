@@ -69,7 +69,7 @@ $this->assign('page_actions', '<a href="' . $this->Url->build('/host/rooms/add')
           $amenities = is_array($r['amenities'] ?? null) ? $r['amenities'] : (is_string($r['amenities'] ?? '') ? array_filter(array_map('trim', explode(',', $r['amenities']))) : []);
           $thumb = $r['primary_image_url'] ?? ($r['photos'][0] ?? $r['image_url'] ?? null);
           if (is_array($thumb)) $thumb = $thumb['url'] ?? null;
-          if (empty($thumb)) $thumb = 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=200&h=150&fit=crop';
+          if (empty($thumb)) $thumb = $this->Url->build('/assets/img/hotel/hotel-1.jpg');
           $pname = '';
           $pid = $r['property_id'] ?? $r['property']['id'] ?? null;
           if ($pid) foreach (($properties ?? []) as $p) if ((int)$p['id'] === (int)$pid) { $pname = $p['name'] ?? ''; break; }
