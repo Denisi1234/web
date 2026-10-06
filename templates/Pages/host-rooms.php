@@ -2,6 +2,18 @@
 $this->assign('title', 'My Rooms');
 $this->assign('portal_title', 'Rooms');
 $this->assign('page_actions', '<a href="' . $this->Url->build('/host/rooms/add') . '" class="p-btn">Add room</a>');
+
+$backendUrl = rtrim((string)\Cake\Core\Configure::read('App.backendApiUrl', 'http://127.0.0.1:8000/api'), '/');
+$backendHost = rtrim((string)preg_replace('#/api/?$#', '', $backendUrl), '/');
+$normRoomImg = function (?string $url) use ($backendHost): string {
+    $url = trim((string)$url);
+    if ($url === '') return '';
+    if (str_starts_with($url, '/storage/') || str_contains($url, '127.0.0.1:8000/storage') || str_contains($url, 'localhost/storage')) {
+        $pos = strpos($url, '/storage/');
+        if ($pos !== false) return $backendHost . substr($url, $pos);
+    }
+    return $url;
+};
 ?>
 <?php if (!empty($properties)): ?>
 <div class="p-card mb-3">
@@ -68,7 +80,8 @@ $this->assign('page_actions', '<a href="' . $this->Url->build('/host/rooms/add')
           $bed = h($r['bed_configuration'] ?? $r['bed_type'] ?? '—');
           $amenities = is_array($r['amenities'] ?? null) ? $r['amenities'] : (is_string($r['amenities'] ?? '') ? array_filter(array_map('trim', explode(',', $r['amenities']))) : []);
           $thumb = $r['primary_image_url'] ?? ($r['photos'][0] ?? $r['image_url'] ?? null);
-          if (is_array($thumb)) $thumb = $thumb['url'] ?? null;
+          if (is_array($thumb)) $thumb = $thumb['url'] ?? ($thumb['image_url'] ?? null);
+          $thumb = $normRoomImg($thumb);
           if (empty($thumb)) $thumb = $this->Url->build('/assets/img/hotel/hotel-1.jpg');
           $pname = '';
           $pid = $r['property_id'] ?? $r['property']['id'] ?? null;

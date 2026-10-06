@@ -156,6 +156,13 @@ trait HostOnboardingTrait
 
             $multiRequests = [];
             foreach ((array)($draft['rooms'] ?? []) as $i => $rm) {
+                if (is_array($rm)) {
+                    $rm['property_id'] = $pid;
+                    $rmPrice = (float)($rm['price'] ?? $rm['price_per_night'] ?? $rm['customer_price'] ?? 0);
+                    $rm['price'] = $rmPrice;
+                    $rm['price_per_night'] = $rmPrice;
+                    $rm['customer_price'] = $rmPrice;
+                }
                 $multiRequests[$i] = ['endpoint' => '/properties/' . $pid . '/rooms', 'data' => $rm];
             }
             if (!empty($multiRequests)) {

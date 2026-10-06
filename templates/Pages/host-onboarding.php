@@ -233,7 +233,16 @@ $draftCats = (isset($d['roomCats']) && is_array($d['roomCats']) && !empty($d['ro
         var chain = Promise.resolve();
         rooms.forEach(function (rm) {
           chain = chain.then(function () {
+            if (rm && typeof rm === 'object') {
+              rm.property_id = pid;
+              var p = Number(rm.price || rm.price_per_night || rm.customer_price || 0);
+              rm.price = p;
+              rm.price_per_night = p;
+              rm.customer_price = p;
+            }
             return window.FastAPI.req('POST', '/properties/' + pid + '/rooms', rm).catch(function () {
+              return window.FastAPI.req('POST', '/rooms', rm);
+            }).catch(function () {
               fails.push(String((rm && rm.room_number) || '?'));
             });
           });

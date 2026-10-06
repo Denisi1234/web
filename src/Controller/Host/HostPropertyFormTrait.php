@@ -174,23 +174,33 @@ trait HostPropertyFormTrait
                 continue;
             }
 
+            $rPrice = (float)($room['price'] ?? $room['price_per_night'] ?? $room['customer_price'] ?? 0);
             $payload = array_filter([
-                'room_number'       => $room['room_number'],
-                'room_type'         => $room['room_type'],
-                'price'             => $room['price'],
-                'capacity'          => $room['capacity'],
-                'max_adults'        => $room['max_adults'],
-                'max_children'      => $room['max_children'],
-                'number_of_beds'    => $room['number_of_beds'],
-                'bed_configuration' => $room['bed_configuration'],
-                'room_size'         => $room['room_size'],
-                'floor'             => $room['floor'],
-                'status'            => $room['status'],
-                'description'       => $room['description'],
-                'amenities'         => $room['amenities'],
+                'property_id'       => $propertyId,
+                'room_number'       => $room['room_number'] ?? '',
+                'room_type'         => $room['room_type'] ?? 'Standard',
+                'price'             => $rPrice,
+                'price_per_night'   => $rPrice,
+                'customer_price'    => $rPrice,
+                'capacity'          => (int)($room['capacity'] ?? 1),
+                'max_adults'        => (int)($room['max_adults'] ?? $room['capacity'] ?? 1),
+                'max_children'      => (int)($room['max_children'] ?? 0),
+                'number_of_beds'    => (int)($room['number_of_beds'] ?? 1),
+                'bed_configuration' => $room['bed_configuration'] ?? '',
+                'room_size'         => $room['room_size'] ?? '',
+                'floor'             => $room['floor'] ?? '',
+                'status'            => $room['status'] ?? 'available',
+                'description'       => $room['description'] ?? '',
+                'amenities'         => $room['amenities'] ?? [],
             ], static fn($v) => $v !== null && $v !== '');
 
             $res = $this->apiClient->post('/properties/' . $propertyId . '/rooms', $payload, $headers);
+            if (empty($res) || (!empty($res['_status']) && (int)$res['_status'] >= 400 && (int)$res['_status'] !== 401)) {
+                $altRes = $this->apiClient->post('/rooms', $payload, $headers);
+                if (!empty($altRes) && (empty($altRes['_status']) || (int)$altRes['_status'] < 400)) {
+                    $res = $altRes;
+                }
+            }
 
             // A dead session would otherwise surface as N identical per-room
             // errors. Flag it so the caller can bounce to sign-in instead.
