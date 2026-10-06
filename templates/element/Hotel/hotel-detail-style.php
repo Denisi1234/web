@@ -40,51 +40,49 @@
 }
 /* ========== Mobile responsiveness — keep PC 10/10 intact ========== */
 @media(max-width:992px){
-  .agoda-gallery{grid-template-columns:1fr 1fr;grid-template-rows:240px 140px 140px}
-  .agoda-gallery-hero{grid-column:1 / span 2;grid-row:1}
+  .agoda-gallery{grid-template-columns:1fr 1fr;grid-template-rows:auto;grid-auto-rows:130px;gap:8px;padding:0 12px;margin:12px auto 0}
+  .agoda-gallery-hero{grid-column:1 / span 2;grid-row:auto;height:260px;border-radius:10px}
+  .agoda-gallery-item{border-radius:10px;height:100%}
   .agoda-detail-grid{grid-template-columns:1fr}
   .agoda-deal-cta{flex-shrink:0}
   .agoda-bc-inner{flex-direction:column!important;align-items:flex-start!important;gap:6px!important}
 }
 @media(max-width:768px){
-  /* Breadcrumb — hotel-detail mobile: reduced 2× */
-  .agoda-breadcrumb{position:relative !important;top:auto !important;z-index:1 !important;display:block !important;visibility:visible !important;padding:0 !important;background:#fff !important;border-bottom:1px solid #e8eaed !important;overflow:visible !important;min-height:0 !important;margin:24px 0 !important}
-  .agoda-bc-inner{flex-direction:column!important;align-items:stretch!important;gap:0!important;padding:16px 16px !important;padding-left:calc(20px + env(safe-area-inset-left,0px)) !important}
+  /* Breadcrumb — hotel-detail mobile */
+  .agoda-breadcrumb{position:relative !important;top:auto !important;z-index:1 !important;display:block !important;visibility:visible !important;padding:0 !important;background:#fff !important;border-bottom:1px solid #e8eaed !important;overflow:visible !important;min-height:0 !important;margin:8px 0 !important}
+  .agoda-bc-inner{flex-direction:column!important;align-items:stretch!important;gap:0!important;padding:12px 16px !important;padding-left:calc(16px + env(safe-area-inset-left,0px)) !important}
   .agoda-bc-trail{flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden !important;white-space:nowrap!important;max-width:100%!important;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:4px 0 !important;gap:12px !important;scroll-snap-type:x proximity;font-size:12px !important}
-  .agoda-gallery{padding:0 16px !important;gap:16px !important;margin:20px auto !important}
-  .agoda-detail-grid{padding:0 16px !important;gap:20px !important;margin:20px auto !important}
-  .agoda-tabs-wrap{margin:20px auto !important;padding:0 16px !important}
   .agoda-bc-trail::-webkit-scrollbar{display:none}
   .agoda-bc-trail a,.agoda-bc-trail span{scroll-snap-align:start}
   .agoda-bc-seeall{display:none !important}
-  /* Gallery: hero full width + 2-col thumbs below */
-  .agoda-gallery{grid-template-columns:1fr 1fr;grid-template-rows:260px 130px 130px;gap:6px;padding:0 8px;margin:8px auto}
-  .agoda-gallery-hero{grid-column:1 / span 2;grid-row:1;border-radius:10px}
-  .agoda-gallery-item{border-radius:10px}
-  .agoda-gallery-item:not(.agoda-gallery-map):nth-child(n+5){display:none} /* show only hero + 3 thumbs on tablet */
-  .agoda-gallery-map{grid-column:1 / span 2 !important;display:flex !important;min-height:130px}
+  /* Gallery: hero full width + 2-col thumbs below with zero ghost rows */
+  .agoda-gallery{grid-template-columns:1fr 1fr;grid-template-rows:auto;grid-auto-rows:120px;gap:6px;padding:0 8px;margin:8px auto 0}
+  .agoda-gallery-hero{grid-column:1 / span 2;grid-row:auto;height:240px;border-radius:10px}
+  .agoda-gallery-item{border-radius:10px;height:100%}
+  .agoda-gallery-item:not(.agoda-gallery-map):nth-child(n+5){display:none}
+  .agoda-gallery-map{grid-column:1 / span 2 !important;display:flex !important;min-height:110px}
   /* Tabs: horizontal scroll, sticky under navbar */
-  .agoda-tabs-wrap{position:sticky;top:0;z-index:90;border-radius:0;border-left:none;border-right:none;margin:0 auto;height:48px;padding:0 0 0 8px;gap:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .agoda-tabs-wrap{position:sticky;top:0;z-index:90;border-radius:0;border-left:none;border-right:none;margin:8px auto 0;height:48px;padding:0 0 0 8px;gap:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none}
   .agoda-tabs-wrap::-webkit-scrollbar{display:none}
   .agoda-tab{height:46px;font-size:13px;padding:0 12px;flex:0 0 auto;border-bottom-width:2px}
-  .agoda-deal-cta{display:none} /* avoid crowding; price CTA moves to bottom bar on mobile if needed */
-  /* Grid stacking with comfortable gaps — rebalanced more breathing */
-  .agoda-detail-grid{padding:0 16px;gap:20px;margin:20px auto}
-  .agoda-card{padding:18px;border-radius:12px}
+  .agoda-deal-cta{display:none}
+  /* Grid stacking with comfortable gaps */
+  .agoda-detail-grid{padding:0 12px;gap:16px;margin:12px auto}
+  .agoda-card{padding:16px;border-radius:12px}
   .agoda-title{font-size:20px}
   .agoda-address{font-size:12.5px}
   .agoda-rating-card{padding:14px}
   .agoda-rooms-header h2{font-size:19px}
 }
 @media(max-width:600px){
-  .agoda-gallery{grid-template-columns:1fr 1fr;grid-template-rows:220px 110px 110px;gap:6px;padding:0 8px}
-  .agoda-gallery-hero{grid-column:1 / span 2;border-radius:10px}
-  .agoda-gallery-item{border-radius:10px}
-  .agoda-gallery-item:not(.agoda-gallery-map):nth-child(n+4){display:none} /* mobile: hero + 2 thumbs only = clean */
-  .agoda-gallery-map{grid-column:1 / span 2 !important;display:flex !important;min-height:110px}
+  .agoda-gallery{grid-template-columns:1fr 1fr;grid-template-rows:auto;grid-auto-rows:100px;gap:6px;padding:0 8px;margin:6px auto 0}
+  .agoda-gallery-hero{grid-column:1 / span 2;height:210px;border-radius:10px}
+  .agoda-gallery-item{border-radius:10px;height:100%}
+  .agoda-gallery-item:not(.agoda-gallery-map):nth-child(n+4){display:none}
+  .agoda-gallery-map{grid-column:1 / span 2 !important;display:flex !important;min-height:100px}
   .agoda-see-all{font-size:12px;padding:6px 12px;bottom:10px}
-  .agoda-detail-grid{padding:0 12px}
-  .agoda-tabs-wrap{height:46px;padding:0 0 0 8px}
+  .agoda-detail-grid{padding:0 10px}
+  .agoda-tabs-wrap{height:46px;padding:0 0 0 8px;margin:6px auto 0}
   .agoda-tab{font-size:12.5px;padding:0 10px;height:44px}
   .agoda-card{padding:12px}
   .agoda-rating-big{gap:8px}
@@ -99,14 +97,14 @@
   .agoda-rooms-header h2{font-size:18px}
 }
 @media(max-width:480px){
-  .agoda-gallery{grid-template-columns:1fr;grid-template-rows:200px 100px 100px;gap:6px}
-  .agoda-gallery-hero{grid-column:1;grid-row:1}
-  .agoda-gallery-item{grid-column:1}
-  .agoda-gallery-item:not(.agoda-gallery-map):nth-child(2){display:block} /* hero + 2 stacked thumbs */
+  .agoda-gallery{grid-template-columns:1fr 1fr;grid-template-rows:auto;grid-auto-rows:90px;gap:6px;margin:4px auto 0}
+  .agoda-gallery-hero{grid-column:1 / span 2;grid-row:auto;height:190px}
+  .agoda-gallery-item{grid-column:auto;height:100%}
+  .agoda-gallery-item:not(.agoda-gallery-map):nth-child(2){display:block}
   .agoda-gallery-item:not(.agoda-gallery-map):nth-child(3){display:block}
   .agoda-gallery-item:not(.agoda-gallery-map):nth-child(n+4){display:none}
-  .agoda-gallery-map{grid-column:1 !important;display:flex !important;min-height:100px}
-  .agoda-tabs-wrap{height:44px}
+  .agoda-gallery-map{grid-column:1 / span 2 !important;display:flex !important;min-height:90px}
+  .agoda-tabs-wrap{height:44px;margin:4px auto 0}
   .agoda-tab{font-size:12px;padding:0 8px;height:42px}
   .agoda-title{font-size:18px;line-height:1.3}
   .agoda-breadcrumb{font-size:12px}
@@ -115,7 +113,8 @@
   .agoda-card{border-radius:10px}
 }
 @media(max-width:375px){
-  .agoda-gallery{grid-template-rows:190px 90px 90px}
+  .agoda-gallery{grid-auto-rows:80px}
+  .agoda-gallery-hero{height:175px}
   .agoda-tabs-wrap{padding-left:2px}
   .agoda-tab{padding:0 7px;font-size:11.5px}
   .agoda-title{font-size:17px}

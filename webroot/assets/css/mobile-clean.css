@@ -231,9 +231,9 @@
 @media (max-width: 768px) {
   .agoda-breadcrumb { margin: 0 !important; padding: 0 !important; }
   .agoda-breadcrumb .agoda-bc-inner { padding: 10px 16px !important; }
-  .agoda-gallery { margin: 12px auto !important; gap: 6px !important; }
+  .agoda-gallery { margin: 8px auto 0 !important; gap: 6px !important; }
   .agoda-detail-grid { margin: 12px auto !important; gap: 12px !important; }
-  .agoda-tabs-wrap { margin: 0 auto !important; }
+  .agoda-tabs-wrap { margin: 8px auto 0 !important; }
   .agoda-card { padding: 14px !important; }
   .agoda-rooms-header { margin: 8px 0 !important; }
 }
