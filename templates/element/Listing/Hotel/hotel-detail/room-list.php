@@ -170,17 +170,12 @@
           <div style="font-size:13px;font-weight:700;color:#1a1d25"><?= h($adultsCount) ?> adult<?= $adultsCount>1?'s':'' ?></div>
           <div class="room-price-main" style="font-size:22px;font-weight:800;color:#C2410C;margin-top:4px">TSh <?= number_format($priceBase) ?></div>
           <div style="font-size:10.5px;color:#5f6368">Per night, incl. fees</div>
-          <div style="font-size:11px;color:#202124;margin-top:2px;font-weight:500;"><span id="room_qty_label_<?= $roomId ?>"><?= (int)$roomsCount ?> room<?= (int)$roomsCount>1?'s':'' ?></span> · <?= $nights ?> night<?= $nights > 1 ? 's' : '' ?></div>
-          <select id="room_qty_<?= $roomId ?>" aria-label="Rooms" onchange="roomQtySelect(<?= $roomId ?>,this.value)" style="margin-top:10px;width:100%;min-height:44px;border:1px solid #dadce0;border-radius:24px;background:#fff;font-size:14px;font-weight:700;color:#0f62fe;text-align:center;cursor:pointer">
-            <?php for ($rq = 1; $rq <= 5; $rq++): ?>
-            <option value="<?= $rq ?>"<?= (int)$roomsCount === $rq ? ' selected' : '' ?>><?= $rq ?> room<?= $rq > 1 ? 's' : '' ?></option>
-            <?php endfor; ?>
-          </select>
+          <div style="font-size:11px;color:#202124;margin-top:2px;font-weight:500;"><?= (int)$roomsCount ?> room<?= (int)$roomsCount>1?'s':'' ?> · <?= $nights ?> night<?= $nights > 1 ? 's' : '' ?></div>
           <div style="display:flex;gap:10px;margin-top:12px;align-items:center;width:100%">
             <button type="button" onclick="toggleWishlist(<?= (int)$propertyId ?>,this)" aria-label="Save room" style="flex:none;width:48px;height:48px;border-radius:50%;background:#fff;border:1px solid #dadce0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer"><i class="fa-regular fa-heart" style="font-size:18px;color:#1a1d25"></i></button>
             <?php if ($isAvail): ?>
             <?php // Url->build above returns separators as &amp; already, so no h() on the href — it would double-encode and params would land in amp;room_id. ?>
-            <a href="<?= $bookUrl ?>" data-room-book="<?= $roomId ?>" data-base-rooms="<?= (int)$roomsCount ?>" onclick="selectRoomCard(<?= $roomId ?>)" style="flex:1;background:#2563EB;color:#fff;border:none;border-radius:24px;padding:12px 16px;text-align:center;text-decoration:none;box-shadow:0 1px 3px rgba(37,99,235,0.3);transition:background 0.15s ease;">
+            <a href="<?= $bookUrl ?>" data-room-book="<?= $roomId ?>" onclick="selectRoomCard(<?= $roomId ?>)" style="flex:1;background:#2563EB;color:#fff;border:none;border-radius:24px;padding:12px 16px;text-align:center;text-decoration:none;box-shadow:0 1px 3px rgba(37,99,235,0.3);transition:background 0.15s ease;">
               <span style="display:block;font-size:16px;font-weight:800;line-height:1.2">Book</span>
               <span style="display:block;font-size:11px;font-weight:500;opacity:.9">You won't be charged yet</span>
             </a>

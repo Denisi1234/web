@@ -42,18 +42,4 @@ function cycleRoomPhoto(roomId, photos, dir) {
 })();
 
 
-/* Per-card rooms dropdown: updates the count label and rewrites the card's
-   Book link rooms param. */
-function roomQtySelect(roomId, value) {
-    var next = Math.max(1, Math.min(5, parseInt(value, 10) || 1));
-    var countLabel = document.getElementById('room_qty_label_' + roomId);
-    if (countLabel) countLabel.textContent = next + (next > 1 ? ' rooms' : ' room');
-    document.querySelectorAll('a[data-room-book="' + roomId + '"]').forEach(function (a) {
-        try {
-            var url = new URL(a.getAttribute('href'), window.location.origin);
-            url.searchParams.set('rooms', String(next));
-            a.setAttribute('href', url.pathname + url.search + url.hash);
-        } catch (e) {}
-    });
-    selectRoomCard(roomId);
-}
+

@@ -37,7 +37,6 @@
   #rooms-section{padding:0 8px !important}
   #rooms-section + .agoda-card{padding-left:16px !important;padding-right:16px !important}
   .agoda-room-card{margin-left:0 !important;margin-right:0 !important}
-  #facilities-section{padding-left:0 !important;padding-right:0 !important}
 }
 /* ========== Mobile responsiveness — keep PC 10/10 intact ========== */
 @media(max-width:992px){
@@ -74,7 +73,6 @@
   .agoda-card{padding:18px;border-radius:12px}
   .agoda-title{font-size:20px}
   .agoda-address{font-size:12.5px}
-  .agoda-facilities-grid{grid-template-columns:1fr 1fr;gap:10px 12px}
   .agoda-rating-card{padding:14px}
   .agoda-rooms-header h2{font-size:19px}
 }
@@ -89,15 +87,6 @@
   .agoda-tabs-wrap{height:46px;padding:0 0 0 8px}
   .agoda-tab{font-size:12.5px;padding:0 10px;height:44px}
   .agoda-card{padding:12px}
-  .agoda-highlights-title{font-size:16px}
-  .agoda-highlight{padding:8px 0}
-  .agoda-highlight-thumb{width:46px;height:42px;flex:0 0 46px}
-  .agoda-highlight-text b{font-size:13px}
-  .agoda-highlight-text span{font-size:12px}
-  .agoda-facilities-grid{grid-template-columns:1fr 1fr;gap:8px 10px}
-  .agoda-fac-item{font-size:12.5px}
-  .agoda-high-demand{padding:12px 14px}
-  .agoda-high-demand b{font-size:14px}
   .agoda-rating-big{gap:8px}
   .agoda-rating-score{font-size:21px;padding:8px 10px}
   .agoda-bar-row{font-size:12px}
@@ -121,7 +110,6 @@
   .agoda-tab{font-size:12px;padding:0 8px;height:42px}
   .agoda-title{font-size:18px;line-height:1.3}
   .agoda-breadcrumb{font-size:12px}
-  .agoda-facilities-grid{grid-template-columns:1fr;gap:8px} /* single column for tiny phones */
   .agoda-rating-card div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important;gap:2px!important}
   .agoda-review-snippet{min-width:240px;max-width:240px}
   .agoda-card{border-radius:10px}
@@ -139,25 +127,11 @@
 .agoda-stars{color:#b7791f;font-size:13px;letter-spacing:2px;vertical-align:middle;margin-left:6px}
 .agoda-address{font-size:13px;color:#5f6368;margin-top:4px;line-height:1.4}
 .agoda-address a{color:#0f62fe;text-decoration:none;font-weight:700}
-.agoda-highlights-title{font-size:18px;font-weight:800;color:#1a1d25;margin:2px 0 12px}
-.agoda-highlight{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #f1f3f4;align-items:flex-start}
-.agoda-highlight:last-child{border:none}
-.agoda-highlight-thumb{width:52px;height:48px;border-radius:8px;overflow:hidden;flex:0 0 52px;background:#f1f3f4;position:relative}
-.agoda-highlight-thumb img{width:100%;height:100%;object-fit:cover}
-.agoda-thumb-check{position:absolute;right:-2px;bottom:-2px;background:#0ab21b;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;border:2px solid #fff}
-.agoda-highlight-text b{font-size:14px;color:#202124;display:block;line-height:1.2}
-.agoda-highlight-text span{font-size:13px;color:#5f6368;display:block;margin-top:3px;line-height:1.35}
 /* Facilities - PC 4 cols, responsive handled in breakpoints above */
-.agoda-facilities-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px 16px;margin-top:12px}
-.agoda-fac-item{display:flex;align-items:center;gap:8px;font-size:13px;color:#202124}
-.agoda-fac-item i{font-size:12px}
 .agoda-free-badge{background:#e6f4ea;color:#137333;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;margin-left:4px}
 .agoda-see-all-link{color:#0f62fe;font-size:14px;font-weight:700;text-decoration:none}
 .agoda-see-all-link:hover{text-decoration:underline}
 /* High demand */
-.agoda-high-demand{background:#fef2f2;border:1px solid #fee2e2;border-radius:10px;padding:16px 18px;margin-top:12px}
-.agoda-high-demand b{color:#e53935;font-size:15px}
-.agoda-high-demand span{color:#202124;font-size:13px;display:block;margin-top:4px}
 /* Right column cards */
 .agoda-rating-card{background:#fff;border:1px solid #e0e6ef;border-radius:12px;padding:16px}
 .agoda-rating-big{display:flex;align-items:center;gap:10px;margin-bottom:12px}
@@ -194,6 +168,8 @@
 .agoda-price-match{font-size:13px;color:#0f62fe;font-weight:700;display:flex;align-items:center;gap:6px;white-space:nowrap}
 /* Anchor sections land below the sticky tabs bar, never under it */
 #rooms-section,#overview-section{scroll-margin-top:60px}
+/* Title card: zero wasted top space */
+#overview-section{padding-top:12px !important}
 /* Sparse gallery (<5 photos): full-width hero + thumb strip, no empty cells */
 .agoda-gallery-sparse{max-width:1180px;margin:12px auto;padding:0 12px}
 .agoda-gallery-sparse .agoda-gallery-hero{position:relative;overflow:hidden;border-radius:12px;background:#e8ecef;height:340px;cursor:pointer}
@@ -222,7 +198,6 @@
   /* Simplify gallery to hero only on mobile */
   .agoda-gallery .agoda-gallery-map { display:none !important; }
   /* Facilities: show 4, hide rest */
-  #facilities-section .agoda-fac-item:nth-child(n+5) { display:none !important; }
   /* Hide trip recommendations tab on mobile */
   .agoda-tab[data-tab="trip"] { display:none !important; }
   /* Right column is empty on mobile (rating + map cards hidden) — drop it */
@@ -250,7 +225,6 @@
   .agoda-rooms-header{margin:8px 0 10px !important}
   .agoda-rooms-header h2{font-size:18px !important}
   /* Facilities heading + rows breathe less */
-  #facilities-section > div:first-child > div:first-child{font-size:16px !important}
   /* Room rows: collapse side padding so cards use the full width */
   .agoda-card .room-card-title{font-size:16px !important}
   /* Offer price block is full-width now: left-align on mobile */

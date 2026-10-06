@@ -72,7 +72,27 @@ $getAmenityIcon = function(string $name): string {
     if (str_contains($l, 'laundry')) return 'fa-shirt text-info';
     return 'fa-circle-check text-success';
 };
-?>
+
+// Full-list mode for the Details modal: every amenity, grouped, no preview,
+// no nested modal (Bootstrap modals must never stack).
+if (!empty($fullList)):
+    if (empty($allAmenities)): ?>
+<div style="font-size:13.5px;color:#5f6368;">Amenities are not available for this property.</div>
+    <?php return; endif; ?>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 12px;">
+    <?php foreach ($categorized as $categoryName => $items): ?>
+    <?php if (empty($items)) continue; ?>
+    <div style="min-width:0">
+        <div style="font-size:12px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e8eaed;"><?= h($categoryName) ?></div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+            <?php foreach ($items as $itm): ?>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13.5px;color:#3c4043;"><i class="fa-solid <?= $getAmenityIcon($itm) ?>" style="font-size:14px;width:20px;text-align:center;"></i><span><?= h($itm) ?></span></div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php endforeach; ?>
+</div>
+<?php return; endif; ?>
 
 <?php if (!empty($allAmenities)): ?><div style="margin-top:16px;padding-top:16px;border-top:1px solid #e8eaed;">
     <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">

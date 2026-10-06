@@ -145,7 +145,6 @@ $this->assign('description', mb_strimwidth(strip_tags($propDesc),0,155,'...') . 
   <button class="agoda-tab active" data-tab="overview">Overview</button>
   <button class="agoda-tab" data-tab="rooms">Rooms</button>
   <button class="agoda-tab" data-tab="trip">Trip recommendations</button>
-  <button class="agoda-tab" data-tab="facilities">Facilities</button>
 
   <div class="agoda-deal-cta">
     <span class="agoda-deal-price"><?php if ($propPrice > 0): ?>from <b>TSh <?= number_format($propPrice) ?></b><?php else: ?><b>Price on request</b><?php endif; ?></span>
@@ -158,46 +157,26 @@ $this->assign('description', mb_strimwidth(strip_tags($propDesc),0,155,'...') . 
   <!-- LEFT COLUMN -->
   <div style="display:flex;flex-direction:column;gap:14px">
     <!-- Title card -->
-    <div class="agoda-card" id="overview-section">
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <?php /* Rendered unconditionally before, so every property claimed to
-                 be a best seller. Only shown when the record actually says so. */ ?>
-        <?php if (!empty($property['is_best_seller'])): ?>
-        <span class="agoda-badge-bestseller">Best seller</span>
-        <?php endif; ?>
-        <button style="margin-left:auto;background:none;border:1px solid #e8eaed;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="toggleWishlist(<?= $detailPropertyId ?>,this)" aria-label="Save"><i class="fa-regular fa-heart" style="color:#5f6368;font-size:16px"></i></button>
-      </div>
-      <div class="agoda-title"><?= h($propTitle) ?> <span class="agoda-stars"><?= str_repeat('★', $propStars) ?><?= $propStars<5 ? str_repeat('☆',5-$propStars) : '' ?></span></div>
+    <div class="agoda-card" id="overview-section" style="position:relative;padding-top:14px;">
+      <?php /* Best-seller badge only when the record says so (never unconditional). */ ?>
+      <?php if (!empty($property['is_best_seller'])): ?>
+      <div style="margin-bottom:6px"><span class="agoda-badge-bestseller">Best seller</span></div>
+      <?php endif; ?>
+      <button style="position:absolute;top:12px;right:12px;background:none;border:1px solid #e8eaed;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="toggleWishlist(<?= $detailPropertyId ?>,this)" aria-label="Save"><i class="fa-regular fa-heart" style="color:#5f6368;font-size:15px"></i></button>
+      <div class="agoda-title" style="padding-right:48px;"><?= h($propTitle) ?> <span class="agoda-stars"><?= str_repeat('★', $propStars) ?><?= $propStars<5 ? str_repeat('☆',5-$propStars) : '' ?></span></div>
       <div class="agoda-address"><?= h($propAddress) ?></div>
-      <?php
-        $topPolicyBits = [];
-        if (!empty($property['check_in_time'])) $topPolicyBits[] = ['fa-clock', 'Check-in from ' . $property['check_in_time']];
-        if (!empty($property['check_out_time'])) $topPolicyBits[] = ['fa-right-from-bracket', 'Check-out until ' . $property['check_out_time']];
-        if (!empty($property['cancellation_policy'])) $topPolicyBits[] = ['fa-shield-check', (string)$property['cancellation_policy']];
-      ?>
-      <div style="display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:13px;align-items:center">
+      <div style="display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:6px;font-size:13px;align-items:center">
         <?php if ($reviewsCount > 0): ?>
         <span style="display:inline-flex;align-items:center;gap:6px;font-weight:700;color:#1a1d25"><i class="fa-solid fa-star" style="color:#f59e0b;font-size:13px"></i> <?= h($score10Fmt) ?> <?= h($ratingLabel) ?> <span style="font-weight:500;color:#5f6368">· <?= number_format($reviewsCount) ?> verified review<?= $reviewsCount !== 1 ? 's' : '' ?></span></span>
         <?php else: ?>
         <span style="display:inline-flex;align-items:center;gap:6px;font-weight:700;color:#1a1d25"><span style="background:#f1f5f9;color:#475569;font-size:11px;font-weight:700;border-radius:6px;padding:3px 8px">New</span> <span style="font-weight:500;color:#5f6368">No reviews yet</span></span>
         <?php endif; ?>
-        <?php foreach ($topPolicyBits as [$pIcon, $pText]): ?>
-        <span style="display:inline-flex;align-items:center;gap:6px;color:#3c4043"><i class="fa-solid <?= $pIcon ?>" style="font-size:12px;color:#5f6368"></i> <?= h($pText) ?></span>
-        <?php endforeach; ?>
       </div>
-      <?= $this->element('Hotel/hotel-description', ['text' => $propDesc ?? '']) ?>
-      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
         <button type="button" onclick="openHotelMapModal()" style="background:#fff;border:1px solid #dadce0;border-radius:9999px;padding:7px 14px;font-size:13px;font-weight:600;color:#0f62fe;display:inline-flex;align-items:center;gap:6px;cursor:pointer"><i class="fa-solid fa-location-dot"></i> SEE MAP</button>
         <button type="button" class="agoda-view-deal agoda-title-rooms-cta" onclick="document.getElementById('rooms-section')?.scrollIntoView({behavior:'smooth'})" style="padding:7px 16px;font-size:13px">View Rooms</button>
+        <button type="button" data-bs-toggle="modal" data-bs-target="#propertyDetailsModal" style="background:#fff;border:1px solid #dadce0;border-radius:9999px;padding:7px 14px;font-size:13px;font-weight:600;color:#1a1d25;display:inline-flex;align-items:center;gap:6px;cursor:pointer"><i class="fa-solid fa-circle-info"></i> Details</button>
       </div>
-    </div>
-
-    <!-- Facilities — Real dynamic property amenities -->
-    <div class="agoda-card" id="facilities-section">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div style="font-size:18px;font-weight:800;color:#1a1d25">Facilities &amp; Amenities</div>
-      </div>
-      <?= $this->element('Listing/Hotel/hotel-detail/amenities'); ?>
     </div>
 
     <!-- Select your room header -->
@@ -279,7 +258,7 @@ $this->assign('description', mb_strimwidth(strip_tags($propDesc),0,155,'...') . 
 
   </div>
 </div>
-<?= $this->element('Hotel/hotel-detail-modals', ['galleryImages' => $galleryImages ?? [], 'propTitle' => $propTitle ?? '', 'propArea' => $propArea ?? '', 'propCity' => $propCity ?? '', 'propPrice' => $propPrice ?? 0, 'ratingLabel' => $ratingLabel ?? '', 'reviewsCount' => $reviewsCount ?? 0, 'score10' => $score10 ?? 0, 'detailPropertyId' => $detailPropertyId ?? 0]) ?>
+<?= $this->element('Hotel/hotel-detail-modals', ['galleryImages' => $galleryImages ?? [], 'propTitle' => $propTitle ?? '', 'propArea' => $propArea ?? '', 'propCity' => $propCity ?? '', 'propPrice' => $propPrice ?? 0, 'ratingLabel' => $ratingLabel ?? '', 'reviewsCount' => $reviewsCount ?? 0, 'score10' => $score10 ?? 0, 'detailPropertyId' => $detailPropertyId ?? 0, 'propDesc' => $propDesc ?? '', 'score10Fmt' => $score10Fmt ?? '']) ?>
 <div class="d-none d-lg-block">
 <?= $this->element('footer', ['skin' => 'skin-light-footer']) ?>
 </div>

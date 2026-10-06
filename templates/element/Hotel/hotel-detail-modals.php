@@ -29,6 +29,51 @@
 })();
 </script>
 
+<!-- Property Details Modal — full about, policies, and rating in one dedicated place -->
+<div class="modal fade" id="propertyDetailsModal" tabindex="-1" aria-labelledby="propertyDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" style="border:1px solid #dadce0;">
+      <div class="modal-header px-4 py-3 bg-white" style="border-bottom:1px solid #e8eaed;">
+        <h5 class="modal-title fw-bold" id="propertyDetailsModalLabel" style="color:#1a1d25;font-size:17px;"><?= h($propTitle ?? 'Stay details') ?></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body px-4 py-3" style="background:#fff;">
+        <?php $modalDesc = trim((string)($propDesc ?? '')); ?>
+        <?php if ($modalDesc !== ''): ?>
+        <h6 class="fw-bold mb-2" style="color:#1a1d25;font-size:14px;">About this stay</h6>
+        <div style="font-size:13.5px;color:#3c4043;line-height:1.65;"><?= nl2br(h($modalDesc)) ?></div>
+        <?php endif; ?>
+        <?php
+          $modalPolicyLines = array_filter([
+              !empty($property['check_in_time']) ? ['fa-clock', 'Check-in from ' . $property['check_in_time']] : null,
+              !empty($property['check_out_time']) ? ['fa-right-from-bracket', 'Check-out until ' . $property['check_out_time']] : null,
+              !empty($property['cancellation_policy']) ? ['fa-shield-check', (string)$property['cancellation_policy']] : null,
+          ]);
+        ?>
+        <?php if (!empty($modalPolicyLines)): ?>
+        <h6 class="fw-bold mt-4 mb-2" style="color:#1a1d25;font-size:14px;">Good to know</h6>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13.5px;color:#3c4043;">
+          <?php foreach ($modalPolicyLines as [$modalIcon, $modalText]): ?>
+          <div style="display:flex;align-items:flex-start;gap:10px;"><i class="fa-solid <?= $modalIcon ?>" style="font-size:13px;color:#0f62fe;margin-top:3px;"></i><span><?= h($modalText) ?></span></div>
+          <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+        <h6 class="fw-bold mt-4 mb-2" style="color:#1a1d25;font-size:14px;">Facilities &amp; Amenities</h6>
+        <?= $this->element('Listing/Hotel/hotel-detail/amenities', ['fullList' => true]) ?>
+        <h6 class="fw-bold mt-4 mb-2" style="color:#1a1d25;font-size:14px;">Rating</h6>
+        <?php if (($reviewsCount ?? 0) > 0): ?>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:#1a1d25;font-weight:700;"><i class="fa-solid fa-star" style="color:#f59e0b;"></i> <?= h($score10Fmt ?? '') ?> <?= h($ratingLabel ?? '') ?> <span style="font-weight:500;color:#5f6368;">· <?= number_format((int)$reviewsCount) ?> verified reviews</span></div>
+        <?php else: ?>
+        <div style="font-size:13.5px;color:#5f6368;">No reviews yet — be the first verified guest to stay here.</div>
+        <?php endif; ?>
+      </div>
+      <div class="modal-footer px-4 py-3" style="background:#f8f9fa;border-top:1px solid #e8eaed;">
+        <button type="button" class="btn fw-bold px-4 py-2 rounded-pill" data-bs-dismiss="modal" style="background:#0f62fe;color:#fff;border:none;">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Lightbox & Map Modals -->
 <div id="photo_lightbox_modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:4000;align-items:center;justify-content:center;padding:20px" onclick="closePhotoLightbox()">
   <div onclick="event.stopPropagation()" style="max-width:900px;width:100%;text-align:center">
@@ -67,14 +112,18 @@ document.addEventListener('keydown',function(e){
     if(dx<0)nextLightboxPhoto();else prevLightboxPhoto();
   },{passive:true});
 })();
-// Mosaic map tile: real Mapbox static image once the token is known.
+// Mosaic map tile: real Mapbox static image once a genuine token is known.
+// Otherwise the cell stays a clean neutral placeholder (pin + SEE MAP) —
+// never a broken tile or a foreign street-map look.
 (function(){
   var img=document.getElementById('gallery_map_img');if(!img)return;
   var lat=parseFloat(img.getAttribute('data-lat')),lng=parseFloat(img.getAttribute('data-lng'));
   if(!isFinite(lat)||!isFinite(lng))return;
+  function tokenOk(t){return t&&t.indexOf('pk.')===0&&t.indexOf('your_real')===-1&&t.slice(-5)!=='.demo';}
   function paint(){
     var tok=window.MAPBOX_TOKEN||window.DEFAULT_MAPBOX_TOKEN||'';
-    if(!tok||tok.indexOf('pk.')!==0)return;
+    if(!tokenOk(tok))return;
+    img.onerror=function(){img.style.display='none';};
     img.src='https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-l+e53935('+lng+','+lat+')/'+lng+','+lat+',13,0/600x360@2x?access_token='+encodeURIComponent(tok);
     img.style.display='block';
   }
@@ -89,7 +138,7 @@ document.querySelectorAll('.agoda-tab').forEach(btn=>{
     document.querySelectorAll('.agoda-tab').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     const id=btn.dataset.tab;
-    const map={overview:'overview-section',rooms:'rooms-section',trip:'rooms-section',facilities:'facilities-section'};
+    const map={overview:'overview-section',rooms:'rooms-section',trip:'rooms-section'};
     const target=document.getElementById(map[id]);
     if(target) target.scrollIntoView({behavior:'smooth',block:'start'});
   });
