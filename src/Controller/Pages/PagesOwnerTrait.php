@@ -29,19 +29,24 @@ trait PagesOwnerTrait
         $userRole = strtolower((string)($sessionUser['role'] ?? ''));
         $headers = $rawToken !== '' ? ['Authorization' => 'Bearer ' . $rawToken] : [];
 
-        // A guest account is NOT convertible to a host account. This page used
-        // to POST action=become_host and upgrade the signed-in customer's role
-        // to owner. That is gone: hosting is a separate account with its own
-        // sign-in, reached through /signup?role=owner. The branch is rejected
-        // rather than ignored so a stale bookmarked form cannot still upgrade.
+        // Seamless guest-to-host upgrade. Any registered user can activate host mode
+        // on their existing account without needing a second email or account.
         if ($this->getRequest()->is('post')) {
             $data = (array)$this->getRequest()->getData();
-            if (($data['action'] ?? '') === 'become_host') {
-                $this->Flash->error(__(
-                    'A guest account cannot be turned into a host account. '
-                    . 'Please register a separate host account.'
-                ));
-                return $this->redirect('/signup?role=owner');
+            if (($data['action'] ?? '') === 'become_host' && $isLoggedIn) {
+                $sessionUser['role'] = 'owner';
+                $session->write('User', $sessionUser);
+                if ($rawToken !== '') {
+                    try {
+                        $this->apiClient->post('/user/personal-details', ['role' => 'owner'], $headers);
+                    } catch (\Throwable $e) {}
+                    try {
+                        \Cake\Cache\Cache::delete('auth_role_' . md5($rawToken), 'default');
+                        \Cake\Cache\Cache::write('auth_role_' . md5($rawToken), ['exp' => time() + 3600, 'role' => 'owner'], 'default');
+                    } catch (\Throwable $e) {}
+                }
+                $this->Flash->success(__('Host mode activated! Welcome to FastNet Stays Hosting.'));
+                return $this->redirect('/host/onboarding');
             }
         }
 

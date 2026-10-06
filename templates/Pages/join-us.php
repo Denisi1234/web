@@ -26,25 +26,23 @@ $juNeedsVerification = $juLoggedIn && $juRole === 'owner'
     <div class="ju-actions mt-4">
       <?php if (!$juLoggedIn): ?>
         <a href="<?= $this->Url->build('/signup?role=owner') ?>" class="btn-ju btn-ju-primary">Register as a host</a>
-        <a href="<?= $this->Url->build('/login') ?>" class="btn-ju btn-ju-outline">Sign in</a>
+        <a href="<?= $this->Url->build('/login?role=owner') ?>" class="btn-ju btn-ju-outline">Sign in</a>
       <?php elseif ($isHost): ?>
         <a href="<?= $this->Url->build('/host/onboarding') ?>" class="btn-ju btn-ju-primary">Add a new property</a>
         <a href="<?= $this->Url->build('/host/dashboard') ?>" class="btn-ju btn-ju-outline">Open host dashboard</a>
       <?php else: ?>
-        <a href="<?= $this->Url->build('/signup?role=owner') ?>" class="btn-ju btn-ju-primary">Register as a host</a>
-        <a href="<?= $this->Url->build('/login?redirect=/join-us') ?>" class="btn-ju btn-ju-outline">Sign in</a>
+        <form method="POST" action="<?= $this->Url->build('/join-us') ?>" style="display:inline-block">
+          <input type="hidden" name="_csrfToken" value="<?= $this->request->getAttribute('csrfToken') ?>">
+          <input type="hidden" name="action" value="become_host">
+          <button type="submit" class="btn-ju btn-ju-primary">Activate host mode & list property</button>
+        </form>
       <?php endif; ?>
       <a href="#how-it-works" class="btn-ju btn-ju-outline">How listing works</a>
     </div>
 
     <?php if ($juLoggedIn && !$isHost): ?>
-      <!-- A guest account books and stays. It is deliberately NOT an owner
-           account, and this page must not offer to convert it into one:
-           hosting needs its own account with its own sign-in. -->
-      <div class="ju-note mt-3" role="note">
-        You are signed in with a <strong>guest account</strong>. That account is for booking
-        and staying — it is <strong>not</strong> a host account, so it cannot list a property.
-        To host, register a separate host account, or sign in to the host account you already use.
+      <div class="ju-note mt-3" role="note" style="background:#eff6ff;border-color:#bfdbfe;color:#1e40af">
+        You are signed in as <strong><?= h($sessionUser['name'] ?? $sessionUser['email'] ?? 'User') ?></strong>. Click <strong>Activate host mode</strong> above to start listing properties with your current account — no need to create a second email!
       </div>
     <?php endif; ?>
     <div class="ju-meta mt-4">
@@ -190,7 +188,7 @@ $juNeedsVerification = $juLoggedIn && $juRole === 'owner'
   <details open><summary>What does it cost to list?</summary><p style="font-size:14px;color:#525252" class="mt-2">Nothing upfront. Listing, photos and support are free — FastNet retains 10% only when a guest completes a paid stay.</p></details>
   <details><summary>When and how do I get paid?</summary><p style="font-size:14px;color:#525252" class="mt-2">After check-in, the guest's payment settles to your M-Pesa, Tigo Pesa or bank account. Completed and pending balances are visible any time under Host → Earnings.</p></details>
   <details><summary>How long does verification take?</summary><p style="font-size:14px;color:#525252" class="mt-2">Most properties are reviewed within 24 hours. Your listing shows as Pending until approved, then flips to Active automatically.</p></details>
-  <details><summary>I already have a guest account — must I register again?</summary><p style="font-size:14px;color:#525252" class="mt-2">Yes. A guest account is for booking and staying only, and it is never turned into a host account. Register a separate host account with its own email and password, then sign in to it to list your property. Your guest bookings stay on your guest account.</p></details>
+  <details><summary>I already have a guest account — must I register again?</summary><p style="font-size:14px;color:#525252" class="mt-2">No! You can use your existing FastNet Stays account. Simply click <b>Activate host mode</b> above to start listing properties with your current email — one account manages both your bookings and your properties seamlessly.</p></details>
 </div></section>
 
 <!-- Final CTA -->

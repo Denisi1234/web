@@ -66,15 +66,18 @@ trait PagesAuthTrait
                 }
                 // Normalise role + phone aliases
                 if (!empty($user['role'])) $user['role'] = strtolower((string)$user['role']);
+                if ($loginRole === 'owner' && ($user['role'] ?? '') !== 'admin') {
+                    $user['role'] = 'owner';
+                    try {
+                        \Cake\Cache\Cache::write('auth_role_' . md5($token), ['exp' => time() + 3600, 'role' => 'owner'], 'default');
+                    } catch (\Throwable $e) {}
+                }
                 if (empty($user['phone']) && !empty($user['phone_number'])) $user['phone'] = $user['phone_number'];
                 if (empty($user['name']) && !empty($user['full_name'])) $user['name'] = $user['full_name'];
                 $user['token'] = $token;
                 if (empty($user['first_name']) && !empty($user['name'])) {
                     $user['first_name'] = explode(' ', trim($user['name']))[0];
                 }
-                // NOTE: no session renew() here on purpose — renew() destroys the
-                // previous session file, instantly logging out every other open
-                // tab. Fixation risk is negligible (httponly + SameSite=Lax + 8h).
                 $this->authService->syncSession($session, $user);
 
                 // Persistent login cookie — auth survives session loss
@@ -111,12 +114,21 @@ trait PagesAuthTrait
                         $user['token'] = $authToken;
                     }
                     if (!empty($user['role'])) $user['role'] = strtolower((string)$user['role']);
+                    if ($loginRole === 'owner' && ($user['role'] ?? '') !== 'admin') {
+                        $user['role'] = 'owner';
+                        if ($authToken) {
+                            try {
+                                $this->apiClient->post('/user/personal-details', ['role' => 'owner'], ['Authorization' => 'Bearer ' . $authToken]);
+                            } catch (\Throwable $e) {}
+                            try {
+                                \Cake\Cache\Cache::write('auth_role_' . md5((string)$authToken), ['exp' => time() + 3600, 'role' => 'owner'], 'default');
+                            } catch (\Throwable $e) {}
+                        }
+                    }
                     if (empty($user['phone']) && !empty($user['phone_number'])) $user['phone'] = $user['phone_number'];
                     if (empty($user['first_name']) && !empty($user['name'])) {
                         $user['first_name'] = explode(' ', trim($user['name']))[0];
                     }
-                    // NOTE: no session renew() here on purpose — renew() destroys the
-                    // previous session file, instantly logging out every other open tab.
                     $this->authService->syncSession($session, $user);
                     $this->Flash->success(__('Login successful. Welcome back!'));
                     // Persistent login cookie — portal auth no longer depends
@@ -130,9 +142,7 @@ trait PagesAuthTrait
                     }
                     $role = strtolower((string)($user['role'] ?? ''));
                     if ($role === 'admin') return $persist($this->redirect('/admin/dashboard'));
-                    if ($role === 'owner') return $persist($this->redirect('/host/dashboard'));
-                    // Host-intent sign-in but plain customer account → convert page
-                    if ($loginRole === 'owner') return $persist($this->redirect('/join-us'));
+                    if ($role === 'owner' || $loginRole === 'owner') return $persist($this->redirect('/host/dashboard'));
                     return $persist($this->redirect('/'));
                 }
                 $this->Flash->error(__('Invalid email or password.'));

@@ -63,7 +63,8 @@ if ($isHostLogin) {
 									<div class="form py-2">
 										<div class="form-group mb-3">
 											<label class="form-label" for="login-email">Email Address</label>
-											<input type="email" id="login-email" class="form-control" placeholder="you@example.com" required autocomplete="email">
+											<?php $queryEmail = trim((string)$this->getRequest()->getQuery('email', '')); ?>
+											<input type="email" id="login-email" class="form-control" value="<?= h($queryEmail) ?>" placeholder="you@example.com" required autocomplete="email">
 										</div>
 										<div class="form-group mb-3">
 											<label class="form-label" for="login-password">Password</label>

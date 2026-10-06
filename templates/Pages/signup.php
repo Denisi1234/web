@@ -191,7 +191,20 @@ if ($isOwnerSignup) {
 											}, 400);
 											} else {
 												const errMsg = data.message || (data.errors ? Object.values(data.errors).flat().join('<br>') : 'Registration failed.');
-												alertBox.innerHTML = '<div class="alert alert-danger">' + errMsg + '</div>';
+												const errLower = errMsg.toLowerCase();
+												if (errLower.includes('already been taken') || errLower.includes('already taken') || errLower.includes('already exists')) {
+													alertBox.innerHTML = `
+														<div class="alert alert-primary p-3" style="border-radius:8px">
+															<div class="fw-bold mb-1"><i class="fa-solid fa-circle-info me-1"></i> You already have an account!</div>
+															<div style="font-size:13.5px;line-height:1.4">An account with <b>${email}</b> is already registered. Simply sign in to activate Host mode on your existing account.</div>
+															<div class="mt-2">
+																<a href="<?= $this->Url->build('/login?role=owner') ?>&email=${encodeURIComponent(email)}" class="btn btn-sm btn-primary" style="font-weight:600">Sign in to activate host mode →</a>
+															</div>
+														</div>
+													`;
+												} else {
+													alertBox.innerHTML = '<div class="alert alert-danger">' + errMsg + '</div>';
+												}
 											}
 										} catch(err) {
 											console.error("Signup error:", err);
