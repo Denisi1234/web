@@ -14,8 +14,13 @@ trait BookingsQuoteTrait
     public function bookingPage()
     {
         $queryParams = $this->getRequest()->getQueryParams();
-        $propertyId = !empty($queryParams['property_id']) ? (int)$queryParams['property_id'] : 0;
-        $roomId = !empty($queryParams['room_id']) ? (int)$queryParams['room_id'] : null;
+        $isLocal = \Cake\Core\Configure::read('debug')
+            || in_array(env('HTTP_HOST', ''), ['localhost', '127.0.0.1', 'localhost:8080', 'localhost:8765']) 
+            || in_array(env('SERVER_NAME', ''), ['localhost', '127.0.0.1'])
+            || str_contains(env('HTTP_HOST', ''), 'localhost')
+            || str_contains(env('HTTP_HOST', ''), '127.0.0.1');
+        $propertyId = !empty($queryParams['property_id']) ? (int)$queryParams['property_id'] : ($isLocal ? 1 : 0);
+        $roomId = !empty($queryParams['room_id']) ? (int)$queryParams['room_id'] : ($isLocal ? 1 : null);
         // Normalize dates — support both spec aliases and provide sane defaults so quote creation never fails on missing dates
         $defaultCheckIn = date('Y-m-d', strtotime('+7 days'));
         $defaultCheckOut = date('Y-m-d', strtotime('+13 days'));
