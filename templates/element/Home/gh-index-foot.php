@@ -107,7 +107,7 @@ echo json_encode($markers, JSON_UNESCAPED_UNICODE);
         defaultLat: <?= !empty($queryParams['lat']) ? (float)$queryParams['lat'] : -6.7725 ?>,
         defaultLng: <?= !empty($queryParams['lng']) ? (float)$queryParams['lng'] : 39.2450 ?>,
         defaultZoom: 13,
-        focusBbox: <?= json_encode($queryParams['bbox'] ?? '') ?>,
+        focusBbox: <?= json_encode($queryParams['bbox'] ?? $queryParams['bounds'] ?? '') ?>,
         style: window.MAPBOX_STYLE || 'mapbox://styles/mapbox/streets-v12',
     };
     window._ghCfg = cfg;
