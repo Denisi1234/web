@@ -1,4 +1,25 @@
 <style>
+/* Hotel Detail Back Navigation Header */
+.hotel-detail-back-nav{background:#fff;border-bottom:1px solid #e8eaed;padding:8px 0;width:100%}
+.hotel-detail-back-inner{max-width:1180px;margin:0 auto;padding:0 12px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.hotel-back-btn{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:#0f62fe;text-decoration:none;padding:6px 14px;border-radius:20px;background:#f0f4f9;transition:all .15s ease}
+.hotel-back-btn:hover{background:#e2ebf6;color:#0043ce;text-decoration:none}
+.hotel-back-btn i{font-size:13px;transition:transform .15s ease}
+.hotel-back-btn:hover i{transform:translateX(-2px)}
+.hotel-back-trail{display:flex;align-items:center;gap:6px;font-size:13px;color:#5f6368;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hotel-back-trail a{color:#5f6368;text-decoration:none}
+.hotel-back-trail a:hover{color:#0f62fe;text-decoration:underline}
+.hotel-back-sep{color:#9aa0a6;margin:0 2px}
+.hotel-back-current{font-weight:600;color:#202124;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(min-width:993px){
+  .hotel-detail-back-inner{max-width:1280px !important}
+}
+@media(max-width:768px){
+  .hotel-detail-back-nav{padding:6px 0}
+  .hotel-detail-back-inner{padding:0 8px}
+  .hotel-back-trail{display:none}
+}
+
 /* Agoda exact detail — matches screenshot */
 .agoda-breadcrumb{background:#fff !important;border-bottom:1px solid #e8eaed !important;padding:10px 0 !important;font-size:13px !important;color:#5f6368 !important;display:block !important;width:100% !important;margin:0 !important}
 .agoda-breadcrumb a{color:#0f62fe !important;text-decoration:none !important;font-weight:500 !important}

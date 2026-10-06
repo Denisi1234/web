@@ -98,6 +98,23 @@ $this->assign('description', mb_strimwidth(strip_tags($propDesc),0,155,'...') . 
 <!-- Detail loading feedback: thin top bar only (floating pill removed) -->
 <?= $this->element('Home/home-loader') ?>
 
+<!-- Back to Stays Navigation Bar -->
+<div class="hotel-detail-back-nav">
+  <div class="hotel-detail-back-inner">
+    <a href="/" class="hotel-back-btn" id="hotel_back_link" onclick="if(window.history.length > 1 && document.referrer && document.referrer.indexOf(window.location.host) !== -1){ event.preventDefault(); window.history.back(); }">
+      <i class="fa-solid fa-arrow-left"></i>
+      <span>Back to stays</span>
+    </a>
+    <div class="hotel-back-trail">
+      <a href="/">Home</a>
+      <span class="hotel-back-sep">/</span>
+      <a href="/?city=<?= urlencode($propCity) ?>"><?= h($propCity) ?></a>
+      <span class="hotel-back-sep">/</span>
+      <span class="hotel-back-current"><?= h($propTitle) ?></span>
+    </div>
+  </div>
+</div>
+
 <?= $this->element('breadcrumb-schema', ['label' => $propTitle]) ?>
 <!-- Gallery — full mosaic when 5+ photos, clean hero + thumb strip when sparse (never empty grey cells) -->
 <?php $galleryThumbs = array_slice($galleryImages, 1); ?>
