@@ -1,0 +1,35 @@
+/* Verify-booking — public receipt-QR proof page. Same Carbon/CDS voice as
+   help-center.css (dark band, eyebrow, panels, list rows, buttons). */
+.cds-verify-band{background:#161616;color:#fff;padding:32px 0 56px}
+.cds-verify-eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#c6c6c6}
+.cds-verify-h1{font-size:42px;font-weight:300;letter-spacing:0;color:#fff;margin:12px 0 8px;line-height:1.15}
+.cds-verify-lede{font-size:16px;font-weight:400;color:#c6c6c6;margin:0;max-width:640px}
+.cds-verify-body{max-width:960px;margin:-28px auto 0;padding:0 16px 48px;display:flex;flex-direction:column;gap:16px;position:relative;z-index:2}
+.cds-verify-card{background:#fff;border:1px solid #e0e0e0;padding:24px}
+.cds-verify-verdict{display:flex;gap:14px;align-items:flex-start;border:1px solid #e0e0e0;border-left:6px solid #6f6f6f;background:#fff;padding:18px 20px}
+.cds-verify-verdict.ok{border-left-color:#24a148}
+.cds-verify-verdict.bad{border-left-color:#da1e28}
+.cds-verify-verdict>i{font-size:26px;margin-top:2px;flex:0 0 auto}
+.cds-verify-verdict.ok>i{color:#24a148}
+.cds-verify-verdict.bad>i{color:#da1e28}
+.cds-verify-verdict h2{font-size:20px;font-weight:600;color:#161616;margin:0 0 4px}
+.cds-verify-verdict p{font-size:14px;color:#525252;margin:0}
+.cds-verify-verdict code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;background:#f4f4f4;padding:2px 6px;color:#161616}
+.cds-verify-pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:999px}
+.cds-verify-pill.green{background:#defbe6;color:#0e6027}
+.cds-verify-pill.red{background:#fde7e9;color:#a2191f}
+.cds-verify-pill.grey{background:#e8e8e8;color:#525252}
+.cds-verify-pill.blue{background:#d0e2ff;color:#0043ce}
+.cds-verify-sec{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#525252;margin:0 0 8px}
+.cds-verify-next{background:#edf5ff;border:1px solid #d0e2ff;padding:18px 20px;font-size:14px;color:#161616}
+.cds-verify-next strong{display:block;margin-bottom:4px}
+.cds-verify-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:4px}
+@media(max-width:640px){
+  .cds-verify-h1{font-size:32px}
+  .cds-verify-card{padding:16px}
+  .cds-verify-verdict h2{font-size:17px}
+}
+@media print{
+  .cds-verify-band{padding:20px 0}
+  .cds-verify-actions{display:none}
+}

@@ -119,6 +119,8 @@ return function (RouteBuilder $routes): void {
         // Preference persistence (GET/POST travel/preferences)
         // E-receipt generation (POST /receipts/generate)
         $builder->connect('/booking-receipt', ['controller' => 'Bookings', 'action' => 'downloadReceipt']);
+        // Public receipt-QR verification page (any camera can open it).
+        $builder->connect('/verify-booking/{code}', ['controller' => 'Bookings', 'action' => 'verifyReceipt'], ['pass' => ['code']]);
         // Release the checkout room hold when the guest abandons
         $builder->connect('/booking-release-lock', ['controller' => 'Bookings', 'action' => 'releaseRoomLock']);
         $builder->connect('/travel/preferences', ['controller' => 'Account', 'action' => 'travelPreferences']);

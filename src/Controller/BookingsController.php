@@ -10,6 +10,7 @@ use App\Controller\Bookings\BookingsCheckoutTrait;
 use App\Controller\Bookings\BookingsFinishTrait;
 use App\Controller\Bookings\BookingsPayStatusTrait;
 use App\Controller\Bookings\BookingsQuoteTrait;
+use App\Controller\Bookings\BookingsVerifyTrait;
 
 /**
  * BookingsController
@@ -25,6 +26,7 @@ class BookingsController extends AppController
     use BookingsFinishTrait;
     use BookingsPayStatusTrait;
     use BookingsQuoteTrait;
+    use BookingsVerifyTrait;
 
     public function initialize(): void
     {
