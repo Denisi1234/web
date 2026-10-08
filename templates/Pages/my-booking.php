@@ -136,7 +136,7 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
           </div>
           <div class="cds-bk-prop"><?= h($propName) ?></div>
           <?php if ($place !== ''): ?><div class="cds-bk-meta"><?= h($place) ?></div><?php endif; ?>
-          <div class="cds-bk-meta"><i class="fa-regular fa-calendar" aria-hidden="true"></i> <?= h($datesLine) ?></div>
+          <div class="cds-bk-meta cds-bk-dates"><i class="fa-regular fa-calendar" aria-hidden="true"></i> <?= h($datesLine) ?></div>
           <?php if ($price !== ''): ?><div class="cds-bk-amt"><?= h($price) ?></div><?php endif; ?>
         </div>
         <div class="cds-bk-foot">
