@@ -54,8 +54,7 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
   <?php endif; ?>
 
   <section aria-label="Your stays">
-    <p class="cds-sec-label">Reservations</p>
-    <h2 class="cds-sec-title">Active &amp; past stays</h2>
+    <h2 class="visually-hidden">Active &amp; past stays</h2>
     <?php if (!empty($userBookings)):
       // Tab bucket per booking (mirrors the mobile app).
       $bkTabOf = function (array $b): string {
@@ -143,8 +142,8 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
             <?php if ($tab === 'cancelled'): ?>
             <a href="<?= $this->Url->build('/hotel-list-01') ?>" class="cds-btn">Book again</a>
             <?php else: ?>
-            <button type="button" class="cds-btn" onclick="downloadBookingReceipt('<?= h($bCode) ?>')">Receipt</button>
             <?php if ($canCancel): ?><button type="button" class="cds-btn-danger" onclick="cancelBookingAction('<?= h($bCode) ?>')">Cancel stay</button><?php endif; ?>
+            <button type="button" class="cds-btn" onclick="downloadBookingReceipt('<?= h($bCode) ?>')">Receipt</button>
             <?php endif; ?>
           </div>
           <a class="cds-bk-viewstrip" href="<?= $detailsUrl ?>">View stay details <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>

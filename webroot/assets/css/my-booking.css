@@ -1,5 +1,6 @@
 /* Extracted for the 300-line cap. */
-.cds-bk-hero{padding:28px 0 4px}
+.cds-bk-hero{padding:20px 0 0}
+.cds-bk-hero .cds-h1{margin-bottom:0}
 .cds-eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--cds-blue-60)}
 .cds-h1{font-size:30px;font-weight:300;color:#161616;margin:8px 0 6px}
 .cds-lede{font-size:14px;color:#525252;margin:0;max-width:640px}
