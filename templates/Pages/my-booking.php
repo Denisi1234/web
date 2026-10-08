@@ -57,15 +57,56 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
   <section aria-label="Your stays">
     <p class="cds-sec-label">Reservations</p>
     <h2 class="cds-sec-title">Active &amp; past stays</h2>
-    <?php if (!empty($userBookings)): ?>
-    <div class="cds-card">
+    <?php if (!empty($userBookings)):
+      // Tab bucket per booking (mirrors the mobile app).
+      $bkTabOf = function (array $b): string {
+        $s = strtolower(trim((string)($b['status'] ?? ($b['booking_status'] ?? 'confirmed'))));
+        if (in_array($s, ['cancelled', 'canceled'], true)) return 'cancelled';
+        if ($s === 'completed') return 'completed';
+        return 'upcoming';
+      };
+      $bkCounts = ['upcoming' => 0, 'completed' => 0, 'cancelled' => 0];
+      foreach ($userBookings as $cb) { $bkCounts[$bkTabOf((array)$cb)]++; }
+    ?>
+    <div class="cds-bk-tabs" role="tablist" aria-label="Filter stays">
+      <?php foreach (['upcoming' => 'Upcoming', 'completed' => 'Completed', 'cancelled' => 'Cancelled'] as $tk => $tl): ?>
+      <button type="button" role="tab" class="cds-bk-tab<?= $tk === 'upcoming' ? ' is-active' : '' ?>" data-bk-tab="<?= $tk ?>" aria-selected="<?= $tk === 'upcoming' ? 'true' : 'false' ?>"><?= h($tl) ?> (<?= (int)$bkCounts[$tk] ?>)</button>
+      <?php endforeach; ?>
+    </div>
+    <div class="cds-bk-tools">
+      <div class="cds-bk-search">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input id="bkSearch" type="search" placeholder="Search by code, lodge, or city" aria-label="Search bookings">
+      </div>
+      <select id="bkSort" aria-label="Sort bookings">
+        <option value="soon">Soonest first</option>
+        <option value="late">Latest first</option>
+      </select>
+    </div>
+    <p class="cds-bk-hint"><i class="fa-regular fa-hand-pointer" aria-hidden="true"></i> Open a stay for full details, check-in &amp; receipt.</p>
+    <div id="bkCards">
       <?php foreach ($userBookings as $b):
+        $b = (array)$b;
         $bCode = $b['booking_code'] ?? ($b['booking_number'] ?? ('BK' . ($b['id'] ?? '')));
-        $propName = $b['room']['property']['name'] ?? ($b['property']['name'] ?? ($b['property_name'] ?? 'FastNet Stay'));
-        $cityName = $b['room']['property']['city'] ?? ($b['property']['city'] ?? ($b['property']['address'] ?? 'Tanzania'));
-        $roomTitle = $b['room']['room_number'] ?? ($b['room']['title'] ?? ($b['room_title'] ?? 'Standard room'));
-        $checkIn = !empty($b['check_in']) ? date('d M Y', strtotime($b['check_in'])) : 'Flexible';
-        $checkOut = !empty($b['check_out']) ? date('d M Y', strtotime($b['check_out'])) : 'Flexible';
+        $bCode = (string)$bCode;
+        $shortCode = str_contains($bCode, '-') ? (explode('-', $bCode)[1] ?? $bCode) : substr($bCode, 0, 12);
+        $prop = is_array($b['room']['property'] ?? null) ? $b['room']['property'] : (is_array($b['property'] ?? null) ? $b['property'] : []);
+        $propName = $prop['name'] ?? ($b['property_name'] ?? 'FastNet Stay');
+        $cityName = $prop['city'] ?? ($b['property']['city'] ?? 'Tanzania');
+        $areaName = $prop['area'] ?? '';
+        $place = trim(trim((string)$areaName, " \t\n\r\0\x0B,") . ', ' . trim((string)$cityName, " \t\n\r\0\x0B,"), " \t\n\r\0\x0B,");
+        $img = $prop['image_url'] ?? ($prop['primary_image_url'] ?? '');
+        if (!is_string($img) || trim($img) === '') $img = '/assets/img/hotel/hotel-1.jpg';
+        $checkInIso = (string)($b['check_in'] ?? '');
+        $checkOutIso = (string)($b['check_out'] ?? '');
+        $checkIn = $checkInIso !== '' ? date('d M Y', strtotime($checkInIso)) : 'Flexible';
+        $checkOut = $checkOutIso !== '' ? date('d M Y', strtotime($checkOutIso)) : 'Flexible';
+        $nights = null;
+        if ($checkInIso !== '' && $checkOutIso !== '') {
+          $diff = strtotime($checkOutIso) - strtotime($checkInIso);
+          if ($diff > 0) $nights = (int)round($diff / 86400);
+        }
+        $datesLine = $checkIn . ' → ' . $checkOut . ($nights !== null ? ' · ' . $nights . ' night' . ($nights === 1 ? '' : 's') : '');
         $price = isset($b['total_price']) ? 'TSh ' . number_format((float)$b['total_price']) : '';
         $rawStatus = strtolower($b['status'] ?? ($b['booking_status'] ?? 'confirmed'));
                                 $tagCls = match(true) {
@@ -76,30 +117,45 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
                                   in_array($rawStatus, ['cancelled', 'canceled']) => 'cds-t-cancelled',
                                   default => 'cds-t-confirmed',
                                 };
-        $canCancel = !in_array($rawStatus, ['cancelled', 'canceled', 'completed'], true) && !empty($bCode);
+        $tab = $bkTabOf($b);
+        $canCancel = !in_array($rawStatus, ['cancelled', 'canceled', 'completed'], true) && $bCode !== '';
         $cardGuestEmail = (string)(is_array($b['guest'] ?? null) ? ($b['guest']['email'] ?? '') : ($b['guest_email'] ?? ''));
         $detailsParams = ['booking_code' => $bCode];
         if ($cardGuestEmail !== '') $detailsParams['email'] = $cardGuestEmail;
+        $detailsUrl = $this->Url->build('/bookingpage-success', ['?' => $detailsParams]);
+        $searchHay = strtolower($bCode . ' ' . $propName . ' ' . $cityName . ' ' . $areaName);
       ?>
-      <div class="cds-bk-row" id="bk_card_<?= h($bCode) ?>">
-        <div class="cds-bk-main">
-          <span class="cds-tag <?= $tagCls ?> bk-status-badge"><?= h(ucfirst($rawStatus)) ?></span>
+      <article class="cds-bk-card" id="bk_card_<?= h($bCode) ?>" data-tab="<?= h($tab) ?>" data-search="<?= h($searchHay) ?>" data-checkin="<?= h($checkInIso) ?>"<?= $tab !== 'upcoming' ? ' style="display:none"' : '' ?>>
+        <a class="cds-bk-photo" href="<?= $detailsUrl ?>" aria-label="Open stay details for <?= h($propName) ?>">
+          <img src="<?= h($img) ?>" alt="<?= h($propName) ?>" loading="lazy" onerror="this.onerror=null;this.src='/assets/img/hotel/hotel-1.jpg'">
+        </a>
+        <div class="cds-bk-info">
+          <div class="cds-bk-top">
+            <span class="cds-tag <?= $tagCls ?> bk-status-badge"><?= h(ucfirst($rawStatus)) ?></span>
+            <span class="cds-bk-code"><?= h($shortCode) ?></span>
+          </div>
           <div class="cds-bk-prop"><?= h($propName) ?></div>
-          <div class="cds-bk-meta"><?= h($roomTitle) ?> · <?= h($cityName) ?></div>
-          <div class="cds-bk-meta"><?= h($checkIn) ?> → <?= h($checkOut) ?> · Ref <strong>#<?= h($bCode) ?></strong></div>
-        </div>
-        <div class="cds-bk-side">
+          <?php if ($place !== ''): ?><div class="cds-bk-meta"><?= h($place) ?></div><?php endif; ?>
+          <div class="cds-bk-meta"><i class="fa-regular fa-calendar" aria-hidden="true"></i> <?= h($datesLine) ?></div>
           <?php if ($price !== ''): ?><div class="cds-bk-amt"><?= h($price) ?></div><?php endif; ?>
+        </div>
+        <div class="cds-bk-foot">
           <div class="cds-bk-actions">
             <?php if ($bCode !== ''): ?>
-            <a href="<?= $this->Url->build('/bookingpage-success', ['?' => $detailsParams]) ?>" class="cds-btn-ghost">View details</a>
+            <a href="<?= $detailsUrl ?>" class="cds-btn-ghost">View details</a>
             <?php endif; ?>
             <button type="button" class="cds-btn" onclick="downloadBookingReceipt('<?= h($bCode) ?>')">Receipt PDF</button>
             <?php if ($canCancel): ?><button type="button" class="cds-btn-danger" onclick="cancelBookingAction('<?= h($bCode) ?>')">Cancel stay</button><?php endif; ?>
           </div>
+          <a class="cds-bk-viewstrip" href="<?= $detailsUrl ?>">View stay details <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
         </div>
-      </div>
+      </article>
       <?php endforeach; ?>
+    </div>
+    <div class="cds-empty" id="bkEmpty" style="display:none">
+      <i class="fa-solid fa-suitcase" aria-hidden="true"></i>
+      <b id="bkEmptyTitle">No stays here yet</b>
+      <span id="bkEmptySub">Bookings in this tab will appear here.</span>
     </div>
     <?php else: ?>
     <div class="cds-empty">

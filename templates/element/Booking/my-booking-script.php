@@ -1,4 +1,68 @@
 <script>
+/* Card tabs + search + sort (mirrors the mobile app). */
+let bkTab = 'upcoming';
+function bkTabOf(card) { return card.getAttribute('data-tab') || 'upcoming'; }
+function applyBkFilters() {
+  const q = (document.getElementById('bkSearch')?.value || '').trim().toLowerCase();
+  const sort = document.getElementById('bkSort')?.value || 'soon';
+  const wrap = document.getElementById('bkCards');
+  if (!wrap) return;
+  const cards = Array.from(wrap.querySelectorAll('.cds-bk-card'));
+  const visible = [];
+  cards.forEach(card => {
+    const okTab = bkTabOf(card) === bkTab;
+    const hay = (card.getAttribute('data-search') || '');
+    const okSearch = q === '' || hay.indexOf(q) !== -1;
+    const show = okTab && okSearch;
+    card.style.display = show ? '' : 'none';
+    if (show) visible.push(card);
+  });
+  visible.sort((a, b) => {
+    const da = a.getAttribute('data-checkin') || '';
+    const db = b.getAttribute('data-checkin') || '';
+    if (!da && !db) return 0;
+    if (!da) return 1;
+    if (!db) return -1;
+    return sort === 'soon' ? (da < db ? -1 : (da > db ? 1 : 0)) : (da > db ? -1 : (da < db ? 1 : 0));
+  });
+  visible.forEach(card => wrap.appendChild(card));
+  const empty = document.getElementById('bkEmpty');
+  const title = document.getElementById('bkEmptyTitle');
+  const sub = document.getElementById('bkEmptySub');
+  if (empty) {
+    const showEmpty = visible.length === 0;
+    empty.style.display = showEmpty ? '' : 'none';
+    if (showEmpty && title && sub) {
+      if (q !== '') {
+        title.innerText = 'No matches for "' + q + '"';
+        sub.innerText = 'Try a booking code, lodge name, or city.';
+      } else if (bkTab === 'upcoming') {
+        title.innerText = 'No upcoming stays';
+        sub.innerText = 'Your confirmed reservations will appear here.';
+      } else if (bkTab === 'completed') {
+        title.innerText = 'No completed stays yet';
+        sub.innerText = 'Finished stays will appear here.';
+      } else {
+        title.innerText = 'No cancelled stays';
+        sub.innerText = 'Cancelled reservations will appear here.';
+      }
+    }
+  }
+}
+document.querySelectorAll('.cds-bk-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    bkTab = btn.getAttribute('data-bk-tab') || 'upcoming';
+    document.querySelectorAll('.cds-bk-tab').forEach(b => {
+      const on = b === btn;
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    applyBkFilters();
+  });
+});
+document.getElementById('bkSearch')?.addEventListener('input', applyBkFilters);
+document.getElementById('bkSort')?.addEventListener('change', applyBkFilters);
+document.addEventListener('DOMContentLoaded', applyBkFilters);
 async function confirmAction(msg) {
   if (typeof window.fnsConfirm === 'function') {
     try { return await window.fnsConfirm(msg); } catch (e) { return false; }
