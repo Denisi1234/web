@@ -14,8 +14,7 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
 <div class="container" style="max-width:960px">
   <div class="cds-bk-hero">
     <div class="cds-eyebrow">Account / Bookings</div>
-    <h1 class="cds-h1">My bookings</h1>
-    <p class="cds-lede">Upcoming and past stays, receipts, payments and cancellations.</p>
+    <h1 class="cds-h1">My bookings<?php if (!empty($userBookings)): ?> <span class="cds-bk-count"><?= count($userBookings) ?></span><?php endif; ?></h1>
   </div>
 </div>
 
@@ -141,11 +140,12 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
         </div>
         <div class="cds-bk-foot">
           <div class="cds-bk-actions">
-            <?php if ($bCode !== ''): ?>
-            <a href="<?= $detailsUrl ?>" class="cds-btn-ghost">View details</a>
-            <?php endif; ?>
-            <button type="button" class="cds-btn" onclick="downloadBookingReceipt('<?= h($bCode) ?>')">Receipt PDF</button>
+            <?php if ($tab === 'cancelled'): ?>
+            <a href="<?= $this->Url->build('/hotel-list-01') ?>" class="cds-btn">Book again</a>
+            <?php else: ?>
+            <button type="button" class="cds-btn" onclick="downloadBookingReceipt('<?= h($bCode) ?>')">Receipt</button>
             <?php if ($canCancel): ?><button type="button" class="cds-btn-danger" onclick="cancelBookingAction('<?= h($bCode) ?>')">Cancel stay</button><?php endif; ?>
+            <?php endif; ?>
           </div>
           <a class="cds-bk-viewstrip" href="<?= $detailsUrl ?>">View stay details <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
         </div>
