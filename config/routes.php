@@ -89,6 +89,8 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/about-us', ['controller' => 'Pages', 'action' => 'aboutUs']);
         $builder->connect('/how-we-work', ['controller' => 'Pages', 'action' => 'howWeWork']);
         $builder->connect('/help-center', ['controller' => 'Pages', 'action' => 'helpCenter']);
+        // Alias for printed booking confirmations (older PDFs link here).
+        $builder->redirect('/support', '/help-center', ['status' => 301]);
         $builder->connect('/faq', ['controller' => 'Pages', 'action' => 'faq']);
         $builder->connect('/404', ['controller' => 'Pages', 'action' => 'notFound']);
         $builder->connect('/privacy-policy', ['controller' => 'Pages', 'action' => 'privacyPolicy']);
