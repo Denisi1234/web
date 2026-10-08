@@ -25,17 +25,38 @@ $paymentPhone = $queryParams['payment_phone'] ?? '';
 
 $propName = $queryParams['property_name'] ?: ($property['name'] ?? '');
 $propCity = $queryParams['property_city'] ?: ($property['city'] ?? '');
+$propImg = '';
+if (is_array($property ?? null)) {
+    $propImg = (string)($property['image_url'] ?? ($property['main_image'] ?? ($property['primary_image_url'] ?? '')));
+}
+if (trim($propImg) === '') $propImg = '/assets/img/hotel/hotel-1.jpg';
+$bkStatusRaw = strtolower((string)($bookingStatus ?? ($verifiedBooking['status'] ?? ($isPaid ? 'confirmed' : $paymentStatus))));
+$bkPillCls = match(true) {
+    $bkStatusRaw === 'confirmed' => 'cds-t-confirmed',
+    $bkStatusRaw === 'pending' => 'cds-t-pending',
+    $bkStatusRaw === 'completed' => 'cds-t-completed',
+    in_array($bkStatusRaw, ['checked in', 'checked-in']) => 'cds-t-checkin',
+    in_array($bkStatusRaw, ['cancelled', 'canceled']) => 'cds-t-cancelled',
+    default => 'cds-t-confirmed',
+};
+$bkPillLabel = $bkStatusRaw !== '' ? ucfirst($bkStatusRaw) : ($isPaid ? 'Confirmed' : 'Pending');
 ?>
 
 <!-- Include Navbar -->
 <?= $this->Html->css('/assets/css/google-travel-layout.css') ?>
 <?= $this->Html->css('/assets/css/google-travel-home.css') ?>
 <style>
-/* Phase 4 — receipt parity with mobile receipt_screen.dart + tokens r16 shadow F8FAFC */
-.booking-success-card{border:1px solid #e8eaed !important;border-radius:16px !important;box-shadow:0 6px 16px rgba(0,0,0,0.05) !important;overflow:hidden}
-.booking-success-watermark{background:#9ca3af;color:#fff;font-size:9px;font-weight:700;letter-spacing:0.08em;padding:4px 8px;text-align:center}
-.booking-success-qr{width:96px;height:96px;background:#fff;border:1px solid #e8eaed;border-radius:10px;display:flex;align-items:center;justify-content:center}
-@media(max-width:768px){.booking-success-card{border-radius:22px !important} .booking-success-watermark{font-size:8px}}
+/* Booking details mirror the mobile Carbon details screen: sharp, hairline, flat. */
+.booking-success-card{border:1px solid #e0e0e0 !important;border-radius:0 !important;box-shadow:none !important;overflow:hidden;background:#fff}
+.booking-success-emblem{width:72px;height:72px;background:#fff;border:1px solid #e0e0e0;display:flex;align-items:center;justify-content:center}
+.booking-success-photo{position:relative;display:block;background:#f4f4f4}
+.booking-success-photo img{width:100%;height:220px;object-fit:cover;display:block}
+.booking-success-pill{position:absolute;top:12px;left:12px}
+.booking-success-facts{border:1px solid #e0e0e0;background:#fff;padding:20px}
+.booking-success-actions .btn{min-height:48px;border-radius:0 !important;font-size:14px}
+.booking-success-actions .btn-primary{background:#0f62fe;border-color:#0f62fe;box-shadow:none !important}
+.booking-success-actions .btn-outline{background:#fff;border:1px solid #e0e0e0;color:#161616;box-shadow:none !important}
+@media(max-width:768px){.booking-success-photo img{height:180px}}
 </style>
 <?= $this->element('navbar') ?>
 <?= $this->element('breadcrumb-schema', ['label' => $isPaid ? 'Booking confirmed' : 'Booking details']) ?>
@@ -51,22 +72,26 @@ $propCity = $queryParams['property_city'] ?: ($property['city'] ?? '');
 					<div class="card-body px-xl-5 px-lg-4 py-lg-5 py-4 px-3">
 
 						<div class="d-flex align-items-center justify-content-center mb-3">
-							<div style="width:72px;height:72px;border-radius:50%;background:<?= $isPaid ? '#EBF5FF' : '#FEF3C7' ?>;border:1px solid <?= $isPaid ? '#dbeafe' : '#fde68a' ?>;display:flex;align-items:center;justify-content:center">
-								<i class="fa-solid <?= $isPaid ? 'fa-check' : 'fa-hourglass-half' ?> fs-2" style="color:<?= $isPaid ? '#0f62fe' : '#b45309' ?>"></i>
+							<div class="booking-success-emblem">
+								<i class="fa-solid <?= $isPaid ? 'fa-check' : 'fa-hourglass-half' ?> fs-2" style="color:<?= $isPaid ? '#0f62fe' : '#8e6a00' ?>"></i>
 							</div>
 						</div>
 						<div class="d-flex align-items-center justify-content-center flex-column text-center mb-4">
-							<h2 class="mb-1 fw-bold" style="color:#1a1d25;font-size:22px"><?= $isPaid ? 'Your Booking Was Confirmed Successfully!' : 'Booking Details' ?></h2>
-							<p class="mb-0" style="color:#5f6368;font-size:14px">Booking Reference: <span style="color:#C2410C;font-weight:800;font-size:18px"><?= h($reference) ?></span></p>
+							<h2 class="mb-1 fw-bold" style="color:#161616;font-size:22px"><?= $isPaid ? 'Your Booking Was Confirmed Successfully!' : 'Booking Details' ?></h2>
+							<p class="mb-0" style="color:#525252;font-size:14px">Booking Reference: <span style="color:#161616;font-weight:800;font-size:18px"><?= h($reference) ?></span></p>
 							<?php if ($isPaid): ?>
-							<p style="color:#9aa0a6;font-size:12px" class="mb-0">A confirmation receipt has been generated for your stay.</p>
+							<p style="color:#6f6f6f;font-size:12px" class="mb-0">A confirmation receipt has been generated for your stay.</p>
 							<?php else: ?>
-							<p style="color:#b45309;font-size:13px;font-weight:600" class="mb-0">Payment <?= h($paymentStatus !== '' ? $paymentStatus : 'pending') ?> — this stay is not confirmed yet.</p>
-							<p style="color:#9aa0a6;font-size:12px" class="mb-0">Complete the payment from <a href="<?= $this->Url->build('/my-booking') ?>" style="color:#0f62fe;font-weight:700">My bookings</a> to confirm it.</p>
+							<p style="color:#8e6a00;font-size:13px;font-weight:600" class="mb-0">Payment <?= h($paymentStatus !== '' ? $paymentStatus : 'pending') ?> — this stay is not confirmed yet.</p>
+							<p style="color:#6f6f6f;font-size:12px" class="mb-0">Complete the payment from <a href="<?= $this->Url->build('/my-booking') ?>" style="color:#0f62fe;font-weight:700">My bookings</a> to confirm it.</p>
 							<?php endif; ?>
 						</div>
+						<div class="booking-success-photo mb-4">
+							<img src="<?= h($propImg) ?>" alt="<?= h($propName !== '' ? $propName : 'Property photo') ?>" loading="lazy" onerror="this.onerror=null;this.src='/assets/img/hotel/hotel-1.jpg'">
+							<span class="cds-tag <?= $bkPillCls ?> booking-success-pill"><?= h($bkPillLabel) ?></span>
+						</div>
 						<div class="d-flex align-items-center justify-content-center flex-column mb-4">
-							<div class="border br-dashed full-width rounded-3 p-4 bg-slate-50">
+							<div class="booking-success-facts full-width">
 								<ul class="row align-items-center justify-content-start g-3 m-0 p-0 list-unstyled">
 									<li class="col-xl-3 col-lg-3 col-md-6 col-sm-6 col-6">
 										<div class="d-block">
@@ -93,7 +118,7 @@ $propCity = $queryParams['property_city'] ?: ($property['city'] ?? '');
 									<li class="col-xl-3 col-lg-3 col-md-6 col-sm-6 col-6">
 										<div class="d-block">
 											<p class="text-slate-500 text-xs text-uppercase fw-bold mb-0">Total Amount</p>
-											<p class="text-orange-600 fw-bold mb-0">TZS <?= number_format($totalAmount) ?></p>
+											<p class="fw-bold mb-0" style="color:#161616;font-size:18px">TZS <?= number_format($totalAmount) ?></p>
 										</div>
 									</li>
 									<li class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
@@ -141,18 +166,18 @@ $propCity = $queryParams['property_city'] ?: ($property['city'] ?? '');
 							</div>
 						</div>
 
-						<div class="text-center d-flex align-items-center justify-content-center flex-wrap gap-2">
-							<a href="<?= $this->Url->build('/'); ?>" class="btn fw-bold rounded-full px-4" style="background:#fff;border:1px solid #e8eaed;border-radius:30px;padding:10px 20px;color:#1a1d25">Browse More Stays</a>
-							<a href="<?= $this->Url->build('/my-booking'); ?>" class="btn fw-bold rounded-full px-4" style="background:#0f62fe;color:#fff;border-radius:30px;padding:10px 20px;box-shadow:0 4px 12px rgba(15,98,254,0.18)">View My Bookings</a>
+						<div class="booking-success-actions text-center d-flex align-items-center justify-content-center flex-wrap gap-2">
+							<a href="<?= $this->Url->build('/'); ?>" class="btn fw-bold px-4 btn-outline" style="padding:12px 20px;color:#161616">Browse More Stays</a>
+							<a href="<?= $this->Url->build('/my-booking'); ?>" class="btn fw-bold px-4 btn-primary" style="padding:12px 20px">View My Bookings</a>
 							<?php if ($isPaid && !empty($verifiedBooking) && (float)($verifiedBooking['total_price'] ?? 0) > 0): ?>
-							<button type="button" data-bs-toggle="modal" data-bs-target="#invoice" class="btn fw-bold rounded-full px-4" style="background:#F8FAFC;border:1px solid #e8eaed;border-radius:30px;padding:10px 20px;color:#0f62fe">
+							<button type="button" data-bs-toggle="modal" data-bs-target="#invoice" class="btn fw-bold px-4 btn-outline" style="padding:12px 20px;color:#0f62fe;border-color:#0f62fe">
 								<i class="fa-solid fa-receipt me-1"></i>View Invoice Receipt
 							</button>
 							<?php endif; ?>
 							<?php if (!empty($verifiedBooking) && ($verifiedBooking['payment_status'] ?? '') === 'paid'): ?>
 							<button type="button" id="downloadReceiptBtn"
-							        class="btn fw-bold rounded-full px-4"
-							        style="background:#0f62fe;color:#fff;border-radius:30px;padding:10px 20px;box-shadow:0 4px 12px rgba(15,98,254,.18)"
+							        class="btn fw-bold px-4 btn-primary"
+							        style="padding:12px 20px"
 							        data-booking-id="<?= h((string)($verifiedBooking['id'] ?? '')) ?>">
 								<i class="fa-solid fa-file-arrow-down me-1"></i>Download receipt
 							</button>
