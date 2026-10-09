@@ -1,6 +1,6 @@
 <?php
 /**
- * FastNet Stays - My Bookings (100% mobile app Carbon mirror)
+ * FastNet Stays - My Bookings (100% exact mobile app Carbon mirror)
  */
 $this->assign('title', 'My bookings - FastNet Stays');
 $this->assign('description', 'Review upcoming stays, download receipts and track payments on FastNet Stays.');
@@ -15,12 +15,10 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
 <div class="cds-bk-appbar">
   <div class="container" style="max-width:1180px">
     <div class="cds-bk-appbar-inner">
-      <div class="cds-bk-title-wrap">
-        <h1 class="cds-bk-title">My bookings</h1>
-        <?php if (!empty($userBookings)): ?>
-        <span class="cds-bk-count"><?= count($userBookings) ?></span>
-        <?php endif; ?>
-      </div>
+      <h1 class="cds-bk-title">My bookings</h1>
+      <?php if (!empty($userBookings)): ?>
+      <span class="cds-bk-count"><?= count($userBookings) ?></span>
+      <?php endif; ?>
     </div>
   </div>
 </div>
@@ -73,14 +71,14 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
             foreach ($userBookings as $cb) { $bkCounts[$bkTabOf((array)$cb)]++; }
           ?>
           
-          <!-- Tab Bar -->
+          <!-- 1. Tab Bar -->
           <div class="cds-bk-tabs" role="tablist" aria-label="Filter stays">
             <?php foreach (['upcoming' => 'Upcoming', 'completed' => 'Completed', 'cancelled' => 'Cancelled'] as $tk => $tl): ?>
             <button type="button" role="tab" class="cds-bk-tab<?= $tk === 'upcoming' ? ' is-active' : '' ?>" data-bk-tab="<?= $tk ?>" aria-selected="<?= $tk === 'upcoming' ? 'true' : 'false' ?>"><?= h($tl) ?> (<?= (int)$bkCounts[$tk] ?>)</button>
             <?php endforeach; ?>
           </div>
 
-          <!-- Search & Sort Row -->
+          <!-- 2. Search & Sort Row -->
           <div class="cds-bk-tools">
             <div class="cds-bk-search">
               <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
@@ -94,13 +92,13 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
             </button>
           </div>
 
-          <!-- Hint Row -->
+          <!-- 3. Hint Row -->
           <div class="cds-bk-hint">
             <i class="fa-solid fa-hand-pointer" aria-hidden="true"></i>
             <span>Tap a booking for full details, check-in &amp; receipt</span>
           </div>
 
-          <!-- Cards Stack -->
+          <!-- 4. Cards Stack -->
           <div id="bkCards">
             <?php foreach ($userBookings as $b):
               $b = (array)$b;
@@ -157,13 +155,14 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
               $searchHay = strtolower($bCode . ' ' . $propName . ' ' . $cityName . ' ' . $areaName);
             ?>
             <article class="cds-bk-card" id="bk_card_<?= h($bCode) ?>" data-tab="<?= h($tab) ?>" data-search="<?= h($searchHay) ?>" data-checkin="<?= h($checkInIso) ?>"<?= $tab !== 'upcoming' ? ' style="display:none"' : '' ?>>
-              <!-- Top Row: Thumbnail + Details -->
-              <div class="cds-bk-card-body">
+              
+              <!-- TOP: Photo (Left) + Property Details (Right) -->
+              <div class="cds-bk-top-section">
                 <a class="cds-bk-photo" href="<?= $detailsUrl ?>" aria-label="Open stay details for <?= h($propName) ?>">
                   <img src="<?= h($img) ?>" alt="<?= h($propName) ?>" loading="lazy" onerror="this.onerror=null;this.src='/assets/images/house3.webp'">
                 </a>
                 <div class="cds-bk-info">
-                  <div class="cds-bk-top-row">
+                  <div class="cds-bk-badge-row">
                     <span class="cds-tag <?= $tagCls ?> bk-status-badge"><?= h($statusLabel) ?></span>
                     <span class="cds-bk-code"><?= h($shortCode) ?></span>
                   </div>
@@ -171,8 +170,8 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
                     <span class="cds-bk-prop"><?= h($propName) ?></span>
                     <i class="fa-solid fa-chevron-right cds-bk-prop-arrow" aria-hidden="true"></i>
                   </a>
-                  <div class="cds-bk-meta cds-bk-loc"><?= h($place) ?></div>
-                  <div class="cds-bk-meta cds-bk-dates">
+                  <div class="cds-bk-loc"><?= h($place) ?></div>
+                  <div class="cds-bk-dates">
                     <i class="fa-regular fa-calendar" aria-hidden="true"></i>
                     <span><?= h($datesLine) ?></span>
                   </div>
@@ -180,7 +179,7 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
                 </div>
               </div>
 
-              <!-- Middle: Action Buttons (Per-Tab Exact Mobile Mirror) -->
+              <!-- MIDDLE: Action Buttons Bar (Full Width) -->
               <div class="cds-bk-actions-bar">
                 <div class="cds-bk-actions">
                   <?php if ($tab === 'cancelled'): ?>
@@ -197,11 +196,12 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
                 </div>
               </div>
 
-              <!-- Bottom: View Stay Details Strip -->
+              <!-- BOTTOM: View Stay Details Strip (Full Width) -->
               <a class="cds-bk-viewstrip" href="<?= $detailsUrl ?>">
                 <span>View stay details</span>
                 <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
               </a>
+
             </article>
             <?php endforeach; ?>
           </div>
