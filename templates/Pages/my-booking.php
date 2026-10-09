@@ -103,8 +103,9 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
           <div id="bkCards">
             <?php foreach ($userBookings as $b):
               $b = (array)$b;
-              $bCode = $b['booking_code'] ?? ($b['booking_number'] ?? ('BK' . ($b['id'] ?? '')));
-              $bCode = (string)$bCode;
+              $rawCode = trim((string)($b['booking_code'] ?? ($b['booking_number'] ?? ($b['reference'] ?? ''))));
+              $rawId = trim((string)($b['id'] ?? ($b['booking_id'] ?? '')));
+              $bCode = $rawCode !== '' ? $rawCode : ($rawId !== '' ? 'BK' . $rawId : '');
               $shortCode = str_contains($bCode, '-') ? (explode('-', $bCode)[1] ?? $bCode) : (strlen($bCode) > 12 ? substr($bCode, 0, 12) . '…' : ($bCode !== '' ? $bCode : '—'));
               $prop = is_array($b['room']['property'] ?? null) ? $b['room']['property'] : (is_array($b['property'] ?? null) ? $b['property'] : []);
               $propId = $b['property_id'] ?? ($prop['id'] ?? null);
@@ -165,8 +166,19 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
               $tab = $bkTabOf($b);
               $canCancel = !in_array($rawStatus, ['cancelled', 'canceled', 'completed'], true) && $bCode !== '';
               $cardGuestEmail = (string)(is_array($b['guest'] ?? null) ? ($b['guest']['email'] ?? '') : ($b['guest_email'] ?? ''));
-              $detailsParams = ['booking_code' => $bCode];
-              if ($cardGuestEmail !== '') $detailsParams['email'] = $cardGuestEmail;
+              $detailsParams = [];
+              if ($rawCode !== '') {
+                $detailsParams['booking_code'] = $rawCode;
+              }
+              if ($rawId !== '') {
+                $detailsParams['booking_id'] = $rawId;
+              }
+              if (empty($detailsParams)) {
+                $detailsParams['booking_code'] = $bCode;
+              }
+              if ($cardGuestEmail !== '') {
+                $detailsParams['email'] = $cardGuestEmail;
+              }
               $detailsUrl = $this->Url->build('/bookingpage-success', ['?' => $detailsParams]);
               $searchHay = strtolower($bCode . ' ' . $propName . ' ' . $cityName . ' ' . $areaName);
             ?>

@@ -58,7 +58,7 @@ class PaymentService
         return $this->apiClient->get('/payments/status/' . rawurlencode($paymentId));
     }
 
-    public function booking(string $bookingId, string $email = ''): ?array
+    public function booking(string $bookingId, string $email = '', array $headers = []): ?array
     {
         $bookingId = trim($bookingId);
         if ($bookingId === '') return null;
@@ -74,7 +74,8 @@ class PaymentService
         // Booking verification is booking-centric — separate endpoint, webhook is source of truth
         return $this->apiClient->get(
             '/bookings/' . rawurlencode($bookingId),
-            $query
+            $query,
+            $headers
         );
     }
 

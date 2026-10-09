@@ -190,15 +190,34 @@ trait BookingsFinishTrait
     public function bookingpageSuccess()
     {
         $queryParams = $this->getRequest()->getQueryParams();
-        // Accept either identifier: my-booking links use booking_code, the
-        // payment page uses the numeric booking_id. The backend resolves both.
+        $session = $this->getRequest()->getSession();
+        
+        $token = trim((string)($session->read('auth_token') ?? ''));
+        $headers = $token !== '' ? ['Authorization' => 'Bearer ' . $token] : [];
+
         $bookingId = trim((string)($queryParams['booking_id'] ?? ''));
-        if ($bookingId === '') {
-            $bookingId = trim((string)($queryParams['booking_code'] ?? ''));
+        $bookingCode = trim((string)($queryParams['booking_code'] ?? ($queryParams['reference'] ?? ($queryParams['code'] ?? ''))));
+        
+        $sessionEmail = (string) ($session->read('User.email') ?? ($session->read('userProfile.email') ?? ''));
+        if ($sessionEmail === '') {
+            $sessionEmail = trim((string)($queryParams['email'] ?? ''));
         }
-        if ($bookingId === '') {
-            // No reference at all (bookmark, back button, typed URL) — guide
-            // to the dashboard instead of dead-ending on an error page.
+
+        $sessionBookings = array_merge(
+            (array)($session->read('user_bookings') ?? []),
+            (array)($session->read('bookings') ?? [])
+        );
+
+        // If no identifier provided, check if session has any recent booking before failing
+        if ($bookingId === '' && $bookingCode === '' && !empty($sessionBookings)) {
+            $first = reset($sessionBookings);
+            if (is_array($first)) {
+                $bookingCode = trim((string)($first['booking_code'] ?? ($first['booking_number'] ?? '')));
+                $bookingId = trim((string)($first['id'] ?? ($first['booking_id'] ?? '')));
+            }
+        }
+
+        if ($bookingId === '' && $bookingCode === '') {
             try {
                 \Cake\Log\Log::debug(sprintf(
                     '[bookingpageSuccess] empty reference; query=%s referer=%s',
@@ -211,37 +230,41 @@ trait BookingsFinishTrait
             return $this->redirect(['controller' => 'Account', 'action' => 'myBooking']);
         }
 
-        // A guest booking has no session, so the receipt lookup is authorised
-        // by the email the booking was made with. The payment page appends it;
-        // without it a guest's paid booking 404s here.
-        $sessionEmail = (string) ($this->getRequest()->getSession()->read('User.email') ?? '');
-        if ($sessionEmail === '') {
-            $sessionEmail = trim((string)($queryParams['email'] ?? ''));
-        }
+        // Try lookup by booking_code first, then numeric booking_id
+        $booking = null;
+        $targets = array_values(array_filter([$bookingCode, $bookingId], fn($v) => $v !== ''));
+        
+        foreach ($targets as $target) {
+            $resp = $sessionEmail !== ''
+                ? $this->paymentService->booking($target, $sessionEmail, $headers)
+                : $this->paymentService->booking($target, '', $headers);
 
-        $bookingResponse = $sessionEmail !== ''
-            ? $this->paymentService->booking($bookingId, $sessionEmail)
-            : $this->paymentService->booking($bookingId);
-        $booking = is_array($bookingResponse) ? ($bookingResponse['data'] ?? $bookingResponse) : null;
-        $bookingRef = is_array($booking)
-            ? (string)($booking['booking_code'] ?? $booking['reference'] ?? $booking['id'] ?? $booking['booking_id'] ?? '')
-            : '';
-
-        if (!is_array($booking) || $bookingRef === '') {
-            $sessionBookings = array_merge(
-                (array)($this->getRequest()->getSession()->read('user_bookings') ?? []),
-                (array)($this->getRequest()->getSession()->read('bookings') ?? [])
-            );
-            foreach ($sessionBookings as $sb) {
-                if (!is_array($sb)) continue;
-                $sbCode = (string)($sb['booking_code'] ?? ($sb['booking_number'] ?? ($sb['id'] ?? '')));
-                if ($sbCode === $bookingId || (string)($sb['id'] ?? '') === $bookingId) {
-                    $booking = $sb;
-                    $bookingRef = $sbCode;
+            if (is_array($resp) && (!isset($resp['_status']) || ($resp['_status'] >= 200 && $resp['_status'] < 300))) {
+                $candidate = $resp['data'] ?? $resp;
+                if (is_array($candidate) && (!empty($candidate['id']) || !empty($candidate['booking_code']))) {
+                    $booking = $candidate;
                     break;
                 }
             }
         }
+
+        // If backend lookup was restricted, try searching session storage
+        if (!is_array($booking)) {
+            foreach ($sessionBookings as $sb) {
+                if (!is_array($sb)) continue;
+                $sbCode = (string)($sb['booking_code'] ?? ($sb['booking_number'] ?? ''));
+                $sbId = (string)($sb['id'] ?? ($sb['booking_id'] ?? ''));
+                if (($bookingCode !== '' && ($sbCode === $bookingCode || $sbId === $bookingCode)) ||
+                    ($bookingId !== '' && ($sbId === $bookingId || $sbCode === $bookingId))) {
+                    $booking = $sb;
+                    break;
+                }
+            }
+        }
+
+        $bookingRef = is_array($booking)
+            ? (string)($booking['booking_code'] ?? $booking['reference'] ?? $booking['id'] ?? $booking['booking_id'] ?? '')
+            : '';
 
         if (!is_array($booking) || $bookingRef === '') {
             throw new NotFoundException(__('This booking could not be verified.'));
