@@ -97,53 +97,6 @@ async function cancelBookingAction(bookingId) {
   }
 }
 
-function handleFindBooking(e) {
-  e.preventDefault();
-  const email = document.getElementById('bookingEmail').value.trim();
-  const num = document.getElementById('bookingNumber').value.trim();
-  const resArea = document.getElementById('bookingResultArea');
-  const btn = document.getElementById('btnFindBooking');
-  if (!email || !num) return;
-  btn.disabled = true;
-  const btnHtml = btn.innerHTML;
-  btn.innerHTML = 'Searching…';
-  fetch('<?= $this->Url->build('/my-booking/find') ?>', {
-    method: 'POST',
-    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-Token': document.querySelector('meta[name="csrfToken"]')?.content || '' },
-    body: JSON.stringify({ email: email, booking_number: num })
-  }).then(async response => {
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.message || 'Booking not found.');
-    const b = data.booking || {};
-    const prop = (b.room && b.room.property) || b.property || {};
-    const safe = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
-    const code = b.booking_code || num;
-    const price = b.total_price ? 'TSh ' + Number(b.total_price).toLocaleString() : '';
-        const status = (b.status || b.booking_status || 'Confirmed');
-        const statusCls = /cancel/i.test(status) ? 'cds-t-cancelled' : (/check.?in/i.test(status) ? 'cds-t-checkin' : (/complet/i.test(status) ? 'cds-t-completed' : (/pend/i.test(status) ? 'cds-t-pending' : 'cds-t-confirmed')));
-    const checkIn = b.check_in ? new Date(b.check_in).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Flexible';
-    const checkOut = b.check_out ? new Date(b.check_out).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Flexible';
-    const gEmail = (b.guest && b.guest.email) || b.guest_email || email;
-    resArea.innerHTML = '<div class="cds-card" style="margin-bottom:16px"><div class="cds-bk-row">'
-      + '<div class="cds-bk-main"><span class="cds-tag ' + statusCls + '">' + safe(status) + '</span>'
-      + '<div class="cds-bk-prop">' + safe(prop.name || 'FastNet Stay') + '</div>'
-      + '<div class="cds-bk-meta">Ref <strong>#' + safe(code) + '</strong> · ' + safe(checkIn) + ' → ' + safe(checkOut) + '</div></div>'
-      + '<div class="cds-bk-side">' + (price ? '<div class="cds-bk-amt">' + safe(price) + '</div>' : '')
-      + '<div class="cds-bk-actions"><a class="cds-btn-ghost" href="<?= $this->Url->build('/bookingpage-success') ?>?booking_code=' + encodeURIComponent(code) + '&email=' + encodeURIComponent(gEmail) + '">View details</a></div>'
-      + '</div></div></div>';
-    resArea.style.display = 'block';
-    resArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    showBookingToast('Booking found');
-  }).catch(error => {
-    resArea.innerHTML = '<div class="cds-card" style="margin-bottom:16px;border-left:4px solid #da1e28"><div class="cds-bk-row"><div class="cds-bk-main">' + String(error.message || 'Booking not found.').replace(/[<>&"]/g, '') + '</div></div></div>';
-    resArea.style.display = 'block';
-    showBookingToast('Booking not found');
-  }).finally(() => {
-    btn.disabled = false;
-    btn.innerHTML = btnHtml;
-  });
-}
-
 function showBookingToast(msg) {
   const toast = document.getElementById('trivago-toast');
   if (!toast) return;

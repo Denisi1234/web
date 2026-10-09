@@ -23,7 +23,6 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
     <?= $this->element('profile_sidebar', ['active' => 'bookings']); ?>
     <div class="col-lg-9 ps-lg-4">
 <div class="cds-bk-body" style="max-width:820px;padding-left:0;padding-right:0">
-  <div id="bookingResultArea" style="display:none"></div>
 
   <?php if (!empty($pendingPayments)): ?>
   <section aria-label="Awaiting payment">
@@ -166,28 +165,6 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
     <?php endif; ?>
   </section>
 
-  <section aria-label="Find your booking">
-    <p class="cds-sec-label">Can’t find it</p>
-    <h2 class="cds-sec-title">Find your booking</h2>
-    <div class="cds-find">
-      <p class="sub">Look up any reservation with the guest email and booking reference.</p>
-      <form id="findBookingForm" class="cds-form" onsubmit="handleFindBooking(event)">
-        <div class="cds-grid2">
-          <div class="cds-field">
-            <label for="bookingEmail">Guest email</label>
-            <input type="email" id="bookingEmail" placeholder="name@example.com" value="<?= h($userProfile['email'] ?? '') ?>" required>
-          </div>
-          <div class="cds-field">
-            <label for="bookingNumber">Booking reference</label>
-            <input type="text" id="bookingNumber" placeholder="e.g. BK12345" required>
-          </div>
-        </div>
-        <div style="display:flex;justify-content:flex-end">
-          <button type="submit" id="btnFindBooking" class="cds-btn">Find booking</button>
-        </div>
-      </form>
-    </div>
-  </section>
 </div>
     </div>
   </div>
