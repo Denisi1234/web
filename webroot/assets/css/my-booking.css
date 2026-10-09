@@ -292,7 +292,15 @@
   background: var(--cds-page-bg) !important;
 }
 
-/* Hint */
+/* Sync & Hint */
+.cds-bk-sync {
+  font-size: 11.5px !important;
+  color: var(--cds-faint) !important;
+  margin-top: 4px !important;
+  margin-bottom: 2px !important;
+  padding-left: 4px !important;
+}
+
 .cds-bk-hint {
   display: flex !important;
   align-items: center !important;
@@ -309,7 +317,7 @@
 }
 
 /* ==========================================================================
-   BOOKING CARD (Strict Vertical Stack of 3 rows: Top, Actions, Viewstrip)
+   BOOKING CARD (Strict Vertical Stack: Top Section, Actions Bar, Viewstrip)
    ========================================================================== */
 
 #bkCards {

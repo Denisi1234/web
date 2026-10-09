@@ -1,6 +1,6 @@
 <?php
 /**
- * FastNet Stays - My Bookings (100% exact mobile app Carbon mirror)
+ * FastNet Stays - My Bookings (100% Exact Mobile App Match)
  */
 $this->assign('title', 'My bookings - FastNet Stays');
 $this->assign('description', 'Review upcoming stays, download receipts and track payments on FastNet Stays.');
@@ -11,7 +11,7 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
 <main id="main-content" role="main" class="cds-bk-page">
 <?= $this->Html->css('/assets/css/my-booking.css') ?>
 
-<!-- App Header Bar -->
+<!-- Top App Bar (Exact Mobile Match) -->
 <div class="cds-bk-appbar">
   <div class="container" style="max-width:1180px">
     <div class="cds-bk-appbar-inner">
@@ -71,7 +71,7 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
             foreach ($userBookings as $cb) { $bkCounts[$bkTabOf((array)$cb)]++; }
           ?>
           
-          <!-- 1. Tab Bar -->
+          <!-- 1. Carbon Tab Bar (Upcoming / Completed / Cancelled) -->
           <div class="cds-bk-tabs" role="tablist" aria-label="Filter stays">
             <?php foreach (['upcoming' => 'Upcoming', 'completed' => 'Completed', 'cancelled' => 'Cancelled'] as $tk => $tl): ?>
             <button type="button" role="tab" class="cds-bk-tab<?= $tk === 'upcoming' ? ' is-active' : '' ?>" data-bk-tab="<?= $tk ?>" aria-selected="<?= $tk === 'upcoming' ? 'true' : 'false' ?>"><?= h($tl) ?> (<?= (int)$bkCounts[$tk] ?>)</button>
@@ -92,7 +92,8 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
             </button>
           </div>
 
-          <!-- 3. Hint Row -->
+          <!-- 3. Updated Timestamp & Hint Row (Exact Mobile Match) -->
+          <div class="cds-bk-sync">Updated Just now</div>
           <div class="cds-bk-hint">
             <i class="fa-solid fa-hand-pointer" aria-hidden="true"></i>
             <span>Tap a booking for full details, check-in &amp; receipt</span>
@@ -114,10 +115,9 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
               if ($place === '' || $place === ',') $place = 'Dar es Salaam';
               $img = $prop['image_url'] ?? ($prop['primary_image_url'] ?? ($b['imageUrl'] ?? ''));
               if (!is_string($img) || trim($img) === '') $img = '/assets/images/house3.webp';
+              
               $checkInIso = (string)($b['check_in'] ?? '');
               $checkOutIso = (string)($b['check_out'] ?? '');
-              $checkIn = $checkInIso !== '' ? date('d/m/Y', strtotime($checkInIso)) : '';
-              $checkOut = $checkOutIso !== '' ? date('d/m/Y', strtotime($checkOutIso)) : '';
               $nights = null;
               if ($checkInIso !== '' && $checkOutIso !== '') {
                 $diff = strtotime($checkOutIso) - strtotime($checkInIso);
@@ -126,8 +126,24 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
               if ($nights === null || $nights < 1) {
                 $nights = isset($b['nights']) ? (int)$b['nights'] : 1;
               }
-              $datesFormatted = ($checkIn !== '' && $checkOut !== '') ? ($checkIn . ' - ' . $checkOut) : ($checkIn !== '' ? $checkIn : '');
+
+              // Exact mobile date format (e.g. Oct 13 – 14, 2026 · 1 night)
+              $datesFormatted = '';
+              if ($checkInIso !== '' && $checkOutIso !== '') {
+                $tIn = strtotime($checkInIso);
+                $tOut = strtotime($checkOutIso);
+                if (date('Y', $tIn) === date('Y', $tOut) && date('M', $tIn) === date('M', $tOut)) {
+                  $datesFormatted = date('M j', $tIn) . ' – ' . date('j, Y', $tOut);
+                } elseif (date('Y', $tIn) === date('Y', $tOut)) {
+                  $datesFormatted = date('M j', $tIn) . ' – ' . date('M j, Y', $tOut);
+                } else {
+                  $datesFormatted = date('M j, Y', $tIn) . ' – ' . date('M j, Y', $tOut);
+                }
+              } elseif ($checkInIso !== '') {
+                $datesFormatted = date('M j, Y', strtotime($checkInIso));
+              }
               $datesLine = ($datesFormatted !== '' ? $datesFormatted . ' · ' : '') . $nights . ' night' . ($nights === 1 ? '' : 's');
+
               $rawPrice = $b['total_price'] ?? ($b['price'] ?? 0);
               $price = 'TSh ' . number_format((float)$rawPrice);
               $rawStatus = strtolower(trim((string)($b['status'] ?? ($b['booking_status'] ?? 'confirmed'))));
@@ -156,7 +172,7 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
             ?>
             <article class="cds-bk-card" id="bk_card_<?= h($bCode) ?>" data-tab="<?= h($tab) ?>" data-search="<?= h($searchHay) ?>" data-checkin="<?= h($checkInIso) ?>"<?= $tab !== 'upcoming' ? ' style="display:none"' : '' ?>>
               
-              <!-- TOP: Photo (Left) + Property Details (Right) -->
+              <!-- LAYER 1: Top Photo (Left) + Details (Right) -->
               <div class="cds-bk-top-section">
                 <a class="cds-bk-photo" href="<?= $detailsUrl ?>" aria-label="Open stay details for <?= h($propName) ?>">
                   <img src="<?= h($img) ?>" alt="<?= h($propName) ?>" loading="lazy" onerror="this.onerror=null;this.src='/assets/images/house3.webp'">
@@ -179,7 +195,7 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
                 </div>
               </div>
 
-              <!-- MIDDLE: Action Buttons Bar (Full Width) -->
+              <!-- LAYER 2: Action Buttons Bar (Full Width Row) -->
               <div class="cds-bk-actions-bar">
                 <div class="cds-bk-actions">
                   <?php if ($tab === 'cancelled'): ?>
@@ -196,7 +212,7 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
                 </div>
               </div>
 
-              <!-- BOTTOM: View Stay Details Strip (Full Width) -->
+              <!-- LAYER 3: View Stay Details Strip (Full Width Row) -->
               <a class="cds-bk-viewstrip" href="<?= $detailsUrl ?>">
                 <span>View stay details</span>
                 <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
