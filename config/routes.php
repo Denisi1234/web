@@ -56,6 +56,8 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/bookings', ['controller' => 'Account', 'action' => 'myBooking']);
         $builder->connect('/my-booking/find', ['controller' => 'Account', 'action' => 'findBooking'], ['_method' => 'POST']);
         $builder->connect('/my-booking/cancel', ['controller' => 'Account', 'action' => 'cancelBooking'], ['_method' => 'POST']);
+        $builder->connect('/my-booking/reschedule/quote', ['controller' => 'Account', 'action' => 'rescheduleQuote'], ['_method' => 'POST']);
+        $builder->connect('/my-booking/reschedule/apply', ['controller' => 'Account', 'action' => 'rescheduleApply'], ['_method' => 'POST']);
 
         $builder->connect('/payment-detail', ['controller' => 'Account', 'action' => 'paymentDetail']);
         $builder->connect('/my-wishlists', ['controller' => 'Account', 'action' => 'myWishlists']);

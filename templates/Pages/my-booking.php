@@ -143,6 +143,8 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
             <?php else: ?>
             <?php if ($canCancel): ?><button type="button" class="cds-btn-danger" onclick="cancelBookingAction('<?= h($bCode) ?>')">Cancel stay</button><?php endif; ?>
             <button type="button" class="cds-btn" onclick="downloadBookingReceipt('<?= h($bCode) ?>')">Receipt</button>
+            <?php if ($canCancel): ?><button type="button" class="cds-btn-ghost" onclick="openReschedule('<?= h($bCode) ?>', '<?= h($datesLine) ?>')">Change dates</button><?php endif; ?>
+            <a href="<?= $this->Url->build('/help-center') ?>#helpTicket" class="cds-btn-ghost">Support</a>
             <?php endif; ?>
           </div>
           <a class="cds-bk-viewstrip" href="<?= $detailsUrl ?>">View stay details <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>

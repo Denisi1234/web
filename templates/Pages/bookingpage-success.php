@@ -166,9 +166,55 @@ $bkPillLabel = $bkStatusRaw !== '' ? ucfirst($bkStatusRaw) : ($isPaid ? 'Confirm
 							</div>
 						</div>
 
+						<?php
+						$ciTs = strtotime((string)$checkIn);
+						$coTs = strtotime((string)$checkOut);
+						$todayTs = strtotime('today');
+						$guideDone = in_array(strtolower((string)($bookingStatus ?? '')), ['checked in', 'checked-in', 'completed'], true);
+						$guideOpen = !$guideDone && $ciTs && $ciTs <= $todayTs;
+						$guideDays = (!$guideDone && !$guideOpen && $ciTs && $ciTs > $todayTs) ? (int)round(($ciTs - $todayTs) / 86400) : null;
+						$guideAccent = $guideDone ? '#0e6027' : ($guideOpen ? '#0f62fe' : '#8e6a00');
+						$guideTint = $guideDone ? '#defbe6' : ($guideOpen ? '#edf5ff' : '#fcf4d6');
+						$guideIcon = $guideDone ? 'fa-circle-check' : ($guideOpen ? 'fa-plane-arrival' : 'fa-calendar-clock');
+						$guideTitle = $guideDone ? 'Checked in — enjoy your stay' : ($guideOpen ? 'Check-in is open' : ($guideDays !== null ? 'Check-in opens ' . date('d M Y', $ciTs) : 'Check-in'));
+						$guideSub = $guideDone
+							? 'Your arrival is confirmed. For anything during your stay, contact support below.'
+							: ($guideOpen
+								? 'You can arrive from today. Show your receipt QR code and a photo ID at the front desk.'
+								: ($guideDays !== null
+									? 'Your stay starts ' . ($guideDays <= 1 ? 'tomorrow' : 'in ' . $guideDays . ' days') . '. Come back on the day with your receipt.'
+									: 'Your check-in details will appear here once dates are confirmed.'));
+						?>
+						<div class="mb-4" style="background:#fff;border:1px solid #e0e0e0;padding:20px">
+							<div class="d-flex align-items-start gap-3">
+								<div style="width:44px;height:44px;flex:0 0 44px;border-radius:50%;background:<?= $guideTint ?>;display:flex;align-items:center;justify-content:center">
+									<i class="fa-solid <?= $guideIcon ?>" style="color:<?= $guideAccent ?>;font-size:20px"></i>
+								</div>
+								<div>
+									<h3 style="font-size:16px;font-weight:800;color:#161616;margin:0 0 4px"><?= h($guideTitle) ?></h3>
+									<p style="font-size:13px;color:#525252;margin:0 0 10px;line-height:1.5"><?= h($guideSub) ?></p>
+									<ol style="font-size:13px;color:#161616;margin:0 0 4px;padding-left:20px;line-height:1.7">
+										<li>On arrival day, notify the property through your booking.</li>
+										<li>Show the receipt QR code and a photo ID at the front desk.</li>
+										<li>The host confirms — the stay flips to Checked In.</li>
+									</ol>
+									<a href="<?= $this->Url->build('/help-center') ?>#helpTicket" style="font-size:13px;font-weight:700;color:#0f62fe">Contact support →</a>
+								</div>
+							</div>
+						</div>
+
 						<div class="booking-success-actions text-center d-flex align-items-center justify-content-center flex-wrap gap-2">
 							<a href="<?= $this->Url->build('/'); ?>" class="btn fw-bold px-4 btn-outline" style="padding:12px 20px;color:#161616">Browse More Stays</a>
 							<a href="<?= $this->Url->build('/my-booking'); ?>" class="btn fw-bold px-4 btn-primary" style="padding:12px 20px">View My Bookings</a>
+							<?php
+							$detailsMovable = $reference !== '' && !in_array(strtolower((string)($bookingStatus ?? '')), ['cancelled', 'canceled', 'completed'], true);
+							$detailsDatesLabel = (($ciOk ? date('d M Y', $ciOk) : '') !== '' && ($coOk ? date('d M Y', $coOk) : '') !== '') ? (date('d M Y', $ciOk) . ' → ' . date('d M Y', $coOk)) : '';
+							?>
+							<?php if ($detailsMovable): ?>
+							<button type="button" class="btn fw-bold px-4 btn-outline" style="padding:12px 20px;color:#da1e28;border-color:#f4c7c7" onclick="cancelBookingAction('<?= h($reference) ?>')">Cancel stay</button>
+							<button type="button" class="btn fw-bold px-4 btn-outline" style="padding:12px 20px" onclick="openReschedule('<?= h($reference) ?>', '<?= h($detailsDatesLabel) ?>')">Change dates</button>
+							<?php endif; ?>
+							<a href="<?= $this->Url->build('/help-center') ?>#helpTicket" class="btn fw-bold px-4 btn-outline" style="padding:12px 20px">Support</a>
 							<?php if ($isPaid && !empty($verifiedBooking) && (float)($verifiedBooking['total_price'] ?? 0) > 0): ?>
 							<button type="button" data-bs-toggle="modal" data-bs-target="#invoice" class="btn fw-bold px-4 btn-outline" style="padding:12px 20px;color:#0f62fe;border-color:#0f62fe">
 								<i class="fa-solid fa-receipt me-1"></i>View Invoice Receipt
@@ -201,6 +247,8 @@ $bkPillLabel = $bkStatusRaw !== '' ? ucfirst($bkStatusRaw) : ($isPaid ? 'Confirm
 
 <!-- Include Footer -->
 </main>
+<div id="trivago-toast" style="position:fixed;bottom:24px;right:24px;background:#161616;color:#fff;padding:12px 20px;font-size:13.5px;z-index:9999;display:none;opacity:0;transition:opacity .25s ease"></div>
+<?= $this->element('Booking/my-booking-script') ?>
 <?= $this->element('footer', ['skin' => 'skin-light-footer']) ?>
 
 <script>

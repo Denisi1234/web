@@ -47,6 +47,48 @@ trait AccountBookingsTrait
         return $this->redirect(['action' => 'myBooking']);
     }
 
+    /**
+     * Real date changes (quote → apply), proxied to the backend reschedule
+     * endpoints with the portal token. Responses (including 4xx/5xx bodies)
+     * pass straight through so the UI shows the server's own message.
+     */
+    public function rescheduleQuote(): Response
+    {
+        return $this->forwardReschedule('/reschedule/quote');
+    }
+
+    public function rescheduleApply(): Response
+    {
+        return $this->forwardReschedule('/reschedule');
+    }
+
+    private function forwardReschedule(string $suffix): Response
+    {
+        $data = json_decode((string)$this->getRequest()->getBody(), true) ?: (array)$this->getRequest()->getData();
+        $bookingId = trim((string)($data['booking_id'] ?? ''));
+        $checkIn = trim((string)($data['check_in'] ?? ''));
+        $checkOut = trim((string)($data['check_out'] ?? ''));
+        if ($bookingId === '' || $checkIn === '' || $checkOut === '') {
+            return $this->response->withStatus(422)->withType('application/json')->withStringBody(json_encode(['message' => 'Booking and new dates are required.']));
+        }
+        $token = $this->portalToken();
+        $headers = $token !== '' ? ['Authorization' => 'Bearer ' . $token] : [];
+        $res = $this->apiClient->post(
+            '/bookings/' . rawurlencode($bookingId) . $suffix,
+            ['check_in' => $checkIn, 'check_out' => $checkOut],
+            $headers
+        );
+        $status = 200;
+        if (is_array($res) && isset($res['_status']) && is_int($res['_status'])) {
+            $status = $res['_status'];
+            unset($res['_status']);
+        }
+        if (!is_array($res)) {
+            return $this->response->withStatus(502)->withType('application/json')->withStringBody(json_encode(['message' => 'Service unavailable. Please try again.']));
+        }
+        return $this->response->withStatus($status)->withType('application/json')->withStringBody((string)json_encode($res));
+    }
+
     public function findBooking(): Response
     {
         $data = json_decode((string)$this->getRequest()->getBody(), true) ?: $this->getRequest()->getData();
