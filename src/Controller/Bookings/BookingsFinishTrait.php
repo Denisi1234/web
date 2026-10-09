@@ -193,9 +193,14 @@ trait BookingsFinishTrait
         $session = $this->getRequest()->getSession();
         
         $token = trim((string)($session->read('auth_token') ?? ''));
+        if ($token === '' && isset($this->authService)) {
+            try {
+                $token = $this->authService->readToken($this->getRequest());
+            } catch (\Throwable $e) {}
+        }
         $headers = $token !== '' ? ['Authorization' => 'Bearer ' . $token] : [];
 
-        $bookingId = trim((string)($queryParams['booking_id'] ?? ''));
+        $bookingId = trim((string)($queryParams['booking_id'] ?? ($queryParams['id'] ?? '')));
         $bookingCode = trim((string)($queryParams['booking_code'] ?? ($queryParams['reference'] ?? ($queryParams['code'] ?? ''))));
         
         $sessionEmail = (string) ($session->read('User.email') ?? ($session->read('userProfile.email') ?? ''));
@@ -204,6 +209,7 @@ trait BookingsFinishTrait
         }
 
         $sessionBookings = array_merge(
+            (array)($session->read('user_bookings_cache') ?? []),
             (array)($session->read('user_bookings') ?? []),
             (array)($session->read('bookings') ?? [])
         );
@@ -232,9 +238,10 @@ trait BookingsFinishTrait
 
         // Try lookup by booking_code first, then numeric booking_id
         $booking = null;
-        $targets = array_values(array_filter([$bookingCode, $bookingId], fn($v) => $v !== ''));
+        $targets = array_values(array_unique(array_filter([$bookingCode, $bookingId], fn($v) => $v !== '')));
         
         foreach ($targets as $target) {
+            // 1. Direct show endpoint (/bookings/{id})
             $resp = $sessionEmail !== ''
                 ? $this->paymentService->booking($target, $sessionEmail, $headers)
                 : $this->paymentService->booking($target, '', $headers);
@@ -246,9 +253,22 @@ trait BookingsFinishTrait
                     break;
                 }
             }
+
+            // 2. Query by code via index endpoint (/bookings?booking_code=...)
+            $indexResp = $this->apiClient->get('/bookings', ['booking_code' => $target], $headers);
+            if (!empty($indexResp['data']) && is_array($indexResp['data'])) {
+                $candidate = $indexResp['data'][0] ?? null;
+                if (is_array($candidate)) {
+                    $booking = $candidate;
+                    break;
+                }
+            } elseif (is_array($indexResp) && isset($indexResp[0])) {
+                $booking = $indexResp[0];
+                break;
+            }
         }
 
-        // If backend lookup was restricted, try searching session storage
+        // 3. Search session storage (cached from my-booking or recent checkout)
         if (!is_array($booking)) {
             foreach ($sessionBookings as $sb) {
                 if (!is_array($sb)) continue;
@@ -262,12 +282,29 @@ trait BookingsFinishTrait
             }
         }
 
+        // 4. Remote user bookings list fallback if user is authenticated
+        if (!is_array($booking) && ($token !== '' || $sessionEmail !== '')) {
+            $userBkResp = $this->apiClient->get('/bookings', $sessionEmail !== '' ? ['email' => $sessionEmail] : [], $headers);
+            $rawList = (!empty($userBkResp['data']) && is_array($userBkResp['data'])) ? $userBkResp['data'] : (is_array($userBkResp) ? $userBkResp : []);
+            foreach ($rawList as $rb) {
+                if (!is_array($rb)) continue;
+                $rbCode = (string)($rb['booking_code'] ?? ($rb['booking_number'] ?? ''));
+                $rbId = (string)($rb['id'] ?? ($rb['booking_id'] ?? ''));
+                if (($bookingCode !== '' && ($rbCode === $bookingCode || $rbId === $bookingCode)) ||
+                    ($bookingId !== '' && ($rbId === $bookingId || $rbCode === $bookingId))) {
+                    $booking = $rb;
+                    break;
+                }
+            }
+        }
+
         $bookingRef = is_array($booking)
             ? (string)($booking['booking_code'] ?? $booking['reference'] ?? $booking['id'] ?? $booking['booking_id'] ?? '')
             : '';
 
         if (!is_array($booking) || $bookingRef === '') {
-            throw new NotFoundException(__('This booking could not be verified.'));
+            $this->Flash->error(__('Could not load stay details. Please select your booking from the list.'));
+            return $this->redirect(['controller' => 'Account', 'action' => 'myBooking']);
         }
         $verifiedBooking = $booking;
         $paymentStatus = strtolower((string)($booking['payment_status'] ?? ''));

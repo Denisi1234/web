@@ -210,6 +210,7 @@ trait AccountProfileTrait
                 }
             }
         }
+        $session->write('user_bookings_cache', $bookings);
 
         // In-flight mobile-money payments on this device (younger than 2h):
         // offer "Complete payment" so a closed payment page is resumable.

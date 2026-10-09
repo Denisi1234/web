@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Service\AuthService;
 use App\Service\FastnetApiClient;
 use App\Service\BookingQuoteService;
 use App\Service\PaymentService;
@@ -21,6 +22,7 @@ class BookingsController extends AppController
     protected FastnetApiClient $apiClient;
     protected BookingQuoteService $quoteService;
     protected PaymentService $paymentService;
+    protected AuthService $authService;
 
     use BookingsCheckoutTrait;
     use BookingsFinishTrait;
@@ -32,6 +34,7 @@ class BookingsController extends AppController
     {
         parent::initialize();
         $this->apiClient = new FastnetApiClient();
+        $this->authService = new AuthService($this->apiClient);
         $this->quoteService = new BookingQuoteService($this->apiClient);
         $this->paymentService = new PaymentService($this->apiClient);
     }
