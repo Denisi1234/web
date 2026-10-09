@@ -175,11 +175,13 @@ trait AccountProfileTrait
         $userEmail = $userProfile['email'] ?? $session->read('User.email') ?? '';
         $queryParams = $userEmail !== '' ? ['email' => $userEmail] : [];
 
-        $res = $this->apiClient->get('/bookings', $queryParams, $headers);
-        if (!empty($res['data']) && is_array($res['data'])) {
-            $bookings = $res['data'];
-        } elseif (is_array($res) && isset($res[0])) {
-            $bookings = $res;
+        if ($token !== '' || $userEmail !== '') {
+            $res = $this->apiClient->get('/bookings', $queryParams, $headers);
+            if (!empty($res['data']) && is_array($res['data'])) {
+                $bookings = $res['data'];
+            } elseif (is_array($res) && isset($res[0])) {
+                $bookings = $res;
+            }
         }
 
         // Also check any session-persisted bookings (paid on this device —

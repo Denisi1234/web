@@ -42,14 +42,6 @@ class PagesController extends AppController
     public function beforeRender(\Cake\Event\EventInterface $event): void
     {
         parent::beforeRender($event);
-        $session = $this->getRequest()->getSession();
-        $isLoggedIn = $this->authService->isAuthenticated($session);
-        $userProfile = null;
-        if ($isLoggedIn) {
-            $sessionUser = $session->read('User');
-            $userProfile = !empty($sessionUser) ? $sessionUser : $this->authService->getPersonalDetails();
-        }
-        $this->set(compact('userProfile', 'isLoggedIn'));
     }
 
     /**

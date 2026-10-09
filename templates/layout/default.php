@@ -74,11 +74,12 @@
 
         <!-- CSS Files -->
         <?php
-        // Home (Pages::index) is self-contained (split-view + Carbon) — skip plugin
-        // stylesheets it never uses (dropzone/flatpickr/flickity/lightbox/etc.) to cut render-blocking CSS.
         $isHomePage = $this->getRequest()->getParam('controller') === 'Pages' && in_array($this->getRequest()->getParam('action'), ['index', 'display'], true);
         $globalCss = [
             '/assets/css/bootstrap.min.css',
+            '/assets/css/bootstrap-icons.css',
+            '/assets/css/fontawesome.css',
+            '/assets/css/theme.min.css',
         ];
         if (!$isHomePage) {
             $globalCss = array_merge($globalCss, [
@@ -93,21 +94,10 @@
                 '/assets/css/prism.css',
             ]);
         }
-        // Theme base, split into 300-line parts (order matters — keep sequence).
-        $themeParts = [];
-        for ($i = 1; $i <= 24; $i++) {
-            $themeParts[] = sprintf('/assets/css/style-%02d.css', $i);
-        }
-        $globalCss = array_merge($globalCss, [
-            '/assets/css/bootstrap-icons.css',
-            '/assets/css/fontawesome.css',
-        ], $themeParts);
         echo $this->Html->css($globalCss);
         ?>
 
         <?= $this->Html->css('/assets/css/ui-tokens.css') ?>
-        <!-- Canonical loading system: one set of tokens/motion for every
-             loading state. Loaded after app-loader.css so it wins. -->
         <?= $this->Html->css(['/assets/css/loading-01.css', '/assets/css/loading-02.css']) ?>
         <?= $this->Html->css('/assets/css/app-loader.css') ?>
         <?= $this->Html->css('/assets/css/fastnet-dots.css') ?>
@@ -116,38 +106,34 @@
         <?= $this->element('api_direct') ?>
         <?= $this->fetch('css') ?>
         <?= $this->Html->css('/assets/css/site-spacing.css') ?>
-        <!-- IBM Carbon LAST so components win over page CSS (Baymard layout untouched) -->
-        <?= $this->Html->css('/assets/css/carbon-polish.css?v=' . filemtime(WWW_ROOT . 'assets/css/carbon-polish.css')) ?>
+        <!-- IBM Carbon LAST so components win over page CSS -->
+        <?= $this->Html->css('/assets/css/carbon-polish.css?v=1.0.2') ?>
         <?php if ($isHomePage): ?>
-        <?= $this->Html->css('/assets/css/carbon-home-01.css?v=' . filemtime(WWW_ROOT . 'assets/css/carbon-home-01.css')) ?>
-        <?= $this->Html->css('/assets/css/carbon-home-02.css?v=' . filemtime(WWW_ROOT . 'assets/css/carbon-home-02.css')) ?>
+        <?= $this->Html->css('/assets/css/carbon-home-01.css?v=1.0.2') ?>
+        <?= $this->Html->css('/assets/css/carbon-home-02.css?v=1.0.2') ?>
         <?php else: ?>
-        <?= $this->Html->css('/assets/css/carbon-journey.css?v=' . filemtime(WWW_ROOT . 'assets/css/carbon-journey.css')) ?>
+        <?= $this->Html->css('/assets/css/carbon-journey.css?v=1.0.2') ?>
         <?php endif; ?>
-        <!-- Mobile declutter pass: phone-only overrides, loaded LAST so it wins -->
-        <?= $this->Html->css('/assets/css/mobile-clean.css?v=' . filemtime(WWW_ROOT . 'assets/css/mobile-clean.css')) ?>
+        <!-- Mobile declutter pass -->
+        <?= $this->Html->css('/assets/css/mobile-clean.css?v=1.0.2') ?>
 
-        <!-- Canonical loading controller. Must precede app-loader.js, which
-             delegates its progress bar to it. -->
-        <?= $this->Html->script('/assets/js/loading-core.js?v=' . filemtime(WWW_ROOT . 'assets/js/loading-core.js')) ?>
-        <?= $this->Html->script('/assets/js/loading-ui.js?v=' . filemtime(WWW_ROOT . 'assets/js/loading-ui.js')) ?>
-        <!-- Universal App Loader Engine -->
-        <?= $this->Html->script('/assets/js/app-loader-core.js?v=' . filemtime(WWW_ROOT . 'assets/js/app-loader-core.js')) ?>
-        <?= $this->Html->script('/assets/js/app-loader-dialog.js?v=' . filemtime(WWW_ROOT . 'assets/js/app-loader-dialog.js')) ?>
-        <!-- Direct-to-backend forms (Bearer in JS, CakePHP proxy as fallback) -->
-        <?= $this->Html->script('/assets/js/fastnet-api-core.js?v=' . filemtime(WWW_ROOT . 'assets/js/fastnet-api-core.js')) ?>
-        <?= $this->Html->script('/assets/js/fastnet-api-opt.js?v=' . filemtime(WWW_ROOT . 'assets/js/fastnet-api-opt.js')) ?>
-        <?= $this->Html->script('/assets/js/fastnet-api-submit.js?v=' . filemtime(WWW_ROOT . 'assets/js/fastnet-api-submit.js')) ?>
-        <!-- Display currency (TZS/USD/EUR): deferred so it runs before page-level deferred scripts -->
-        <?= $this->Html->script('/assets/js/fastnet-currency.js?v=' . filemtime(WWW_ROOT . 'assets/js/fastnet-currency.js'), ['defer' => true]) ?>
+        <!-- Scripts with defer to unblock browser initial paint -->
+        <?= $this->Html->script('/assets/js/loading-core.js?v=1.0.2', ['defer' => true]) ?>
+        <?= $this->Html->script('/assets/js/loading-ui.js?v=1.0.2', ['defer' => true]) ?>
+        <?= $this->Html->script('/assets/js/app-loader-core.js?v=1.0.2', ['defer' => true]) ?>
+        <?= $this->Html->script('/assets/js/app-loader-dialog.js?v=1.0.2', ['defer' => true]) ?>
+        <?= $this->Html->script('/assets/js/fastnet-api-core.js?v=1.0.2', ['defer' => true]) ?>
+        <?= $this->Html->script('/assets/js/fastnet-api-opt.js?v=1.0.2', ['defer' => true]) ?>
+        <?= $this->Html->script('/assets/js/fastnet-api-submit.js?v=1.0.2', ['defer' => true]) ?>
+        <?= $this->Html->script('/assets/js/fastnet-currency.js?v=1.0.2', ['defer' => true]) ?>
 
-        <!-- Mapbox GL JS — production CSS & JS -->
+        <!-- Mapbox GL JS -->
         <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css" rel="stylesheet">
         <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js" defer></script>
-        <?= $this->Html->script('/assets/js/fastnet-map-core.js') ?>
+        <?= $this->Html->script('/assets/js/fastnet-map-core.js', ['defer' => true]) ?>
 
         <?= $this->element('Layout/default-bootstrap') ?>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/MaterialDesign-Webfont/7.4.47/css/materialdesignicons.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/MaterialDesign-Webfont/7.4.47/css/materialdesignicons.min.css" media="print" onload="this.media='all'">
     </head>
 
     <body>

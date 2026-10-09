@@ -42,20 +42,36 @@ class AuthService
         return $this->apiClient->post('/register', $userData);
     }
 
+    private static array $profileMemo = [];
+
     /**
      * Fetch user profile / personal details
      */
     public function getPersonalDetails(?string $token = null): array
     {
-        $headers = [];
-        if (!empty($token)) {
-            $raw = trim((string)$token);
-            // Accept both raw token and already-prefixed "Bearer xxx" (controllers historically passed prefixed value)
-            if (stripos($raw, 'Bearer ') === 0) {
-                $headers['Authorization'] = $raw;
-            } else {
-                $headers['Authorization'] = 'Bearer ' . $raw;
+        $raw = trim((string)$token);
+        if ($raw === '') {
+            return $this->getDefaultUserProfile();
+        }
+
+        $memoKey = md5($raw);
+        if (isset(self::$profileMemo[$memoKey])) {
+            return self::$profileMemo[$memoKey];
+        }
+
+        try {
+            $cached = \Cake\Cache\Cache::read('user_profile_' . $memoKey, 'default');
+            if (is_array($cached) && !empty($cached['id'])) {
+                self::$profileMemo[$memoKey] = $cached;
+                return $cached;
             }
+        } catch (\Throwable $e) {}
+
+        $headers = [];
+        if (stripos($raw, 'Bearer ') === 0) {
+            $headers['Authorization'] = $raw;
+        } else {
+            $headers['Authorization'] = 'Bearer ' . $raw;
         }
 
         // Fail-fast: sidebar/topbar must never wait 10s on this ~2.3s endpoint.
@@ -63,6 +79,10 @@ class AuthService
         // this is the last-resort network path only.
         $res = $this->apiClient->get('/user/personal-details', [], $headers, 2);
         if (!empty($res['details']) && is_array($res['details'])) {
+            self::$profileMemo[$memoKey] = $res['details'];
+            try {
+                \Cake\Cache\Cache::write('user_profile_' . $memoKey, $res['details'], 'default');
+            } catch (\Throwable $e) {}
             return $res['details'];
         }
 

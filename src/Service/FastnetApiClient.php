@@ -95,8 +95,12 @@ class FastnetApiClient
         $url = $this->baseUrl . '/' . ltrim($endpoint, '/');
         $isGet = strtoupper($method) === 'GET';
         $cacheKey = null;
-        // Only cache static config — never mutable portal data
-        if ($isGet && str_contains($endpoint, '/map-config')) {
+        // Cache static/public GET endpoints (5-10 min)
+        if ($isGet && (
+            str_contains($endpoint, '/map-config') || 
+            str_contains($endpoint, '/destinations') ||
+            (str_contains($endpoint, '/support/help-centre') && empty($headers['Authorization']))
+        )) {
             $cacheKey = 'fastnet_api_' . md5($method . $endpoint . json_encode($data));
             $cached = \Cake\Cache\Cache::read($cacheKey, 'default');
             if (is_array($cached)) return $cached;
