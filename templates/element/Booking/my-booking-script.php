@@ -1,11 +1,27 @@
 <script>
-/* FastNet Stays - My Bookings Logic (Mobile Carbon Mirror) */
+/* FastNet Stays - My Bookings Controller (Real Working Cancel & Tabs) */
 let bkTab = 'upcoming';
 let bkSoonestFirst = true;
 let pendingCancelCode = null;
 
 function bkTabOf(card) {
   return card.getAttribute('data-tab') || 'upcoming';
+}
+
+function updateTabCounts() {
+  const cards = Array.from(document.querySelectorAll('.cds-bk-card'));
+  const counts = { upcoming: 0, completed: 0, cancelled: 0 };
+  cards.forEach(card => {
+    const t = bkTabOf(card);
+    if (counts[t] !== undefined) counts[t]++;
+  });
+  document.querySelectorAll('.cds-bk-tab').forEach(btn => {
+    const t = btn.getAttribute('data-bk-tab');
+    if (t && counts[t] !== undefined) {
+      const label = t.charAt(0).toUpperCase() + t.slice(1);
+      btn.innerText = `${label} (${counts[t]})`;
+    }
+  });
 }
 
 function applyBkFilters() {
@@ -119,9 +135,12 @@ if (bkSortBtn) {
   });
 }
 
-document.addEventListener('DOMContentLoaded', applyBkFilters);
+document.addEventListener('DOMContentLoaded', () => {
+  applyBkFilters();
+  updateTabCounts();
+});
 
-// Cancel Modal logic
+// Cancel Modal Dialog Logic
 function openCancelModal(bookingCode) {
   pendingCancelCode = bookingCode;
   const modal = document.getElementById('bkCancelModal');
@@ -149,16 +168,20 @@ if (confirmCancelBtn) {
     closeCancelModal();
     if (!bookingCode) return;
 
-    showBookingToast('Processing cancellation…');
+    showBookingToast('Cancelling stay…');
     const csrf = document.querySelector('meta[name="csrfToken"]')?.content || '';
     try {
       const res = await fetch('<?= $this->Url->build('/my-booking/cancel') ?>', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-Token': csrf },
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-Token': csrf
+        },
         body: JSON.stringify({ booking_id: bookingCode })
       });
       const data = await res.json().catch(() => ({}));
-      if (res.ok) {
+      if (res.ok && data.status !== 'error') {
         showBookingToast(data.message || 'Stay cancelled. The property has been notified.');
         const card = document.getElementById('bk_card_' + bookingCode);
         if (card) {
@@ -172,7 +195,8 @@ if (confirmCancelBtn) {
           if (actions) {
             actions.innerHTML = '<a href="<?= $this->Url->build('/hotel-list-01') ?>" class="cds-btn cds-btn-primary"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Book again</a>';
           }
-          // Switch to cancelled tab as done on mobile
+          updateTabCounts();
+          // Switch to cancelled tab like mobile app does
           const cancelledTabBtn = document.querySelector('.cds-bk-tab[data-bk-tab="cancelled"]');
           if (cancelledTabBtn) {
             cancelledTabBtn.click();
@@ -180,13 +204,13 @@ if (confirmCancelBtn) {
             applyBkFilters();
           }
         } else {
-          setTimeout(() => { window.location.href = '<?= $this->Url->build('/my-booking') ?>'; }, 1400);
+          setTimeout(() => { window.location.href = '<?= $this->Url->build('/my-booking') ?>'; }, 1200);
         }
       } else {
-        showBookingToast(data.message || 'Could not cancel booking');
+        showBookingToast(data.message || 'Could not cancel booking. Please try again.');
       }
     } catch (e) {
-      showBookingToast('Network error cancelling booking');
+      showBookingToast('Network error cancelling booking.');
     }
   });
 }

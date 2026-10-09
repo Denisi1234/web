@@ -25,23 +25,50 @@ trait AccountBookingsTrait
             return $this->redirect(['action' => 'myBooking']);
         }
 
-        $result = $this->apiClient->delete('/bookings/' . rawurlencode($bookingId), $headers);
+        $session = $this->getRequest()->getSession();
+        $user = (array)($session->read('User') ?? ($session->read('userProfile') ?? []));
+        $userEmail = strtolower(trim((string)($user['email'] ?? '')));
+        $endpoint = '/bookings/' . rawurlencode($bookingId);
+        if ($userEmail !== '') {
+            $endpoint .= '?email=' . rawurlencode($userEmail);
+        }
+
+        $result = $this->apiClient->delete($endpoint, $headers);
+        $status = 200;
+        if (is_array($result) && isset($result['_status']) && is_int($result['_status'])) {
+            $status = $result['_status'];
+            unset($result['_status']);
+        }
         
         // Also update in session if present
-        $session = $this->getRequest()->getSession();
         $sessionBookings = $session->read('user_bookings') ?? [];
         if (is_array($sessionBookings)) {
             foreach ($sessionBookings as &$sb) {
                 if ((string)($sb['id'] ?? '') === $bookingId || (string)($sb['booking_code'] ?? '') === $bookingId) {
                     $sb['status'] = 'Cancelled';
+                    $sb['booking_status'] = 'Cancelled';
                 }
             }
             $session->write('user_bookings', $sessionBookings);
         }
 
-        $msg = __('Your booking cancellation request was submitted.');
+        $bookingsList = $session->read('bookings') ?? [];
+        if (is_array($bookingsList)) {
+            foreach ($bookingsList as &$sb) {
+                if ((string)($sb['id'] ?? '') === $bookingId || (string)($sb['booking_code'] ?? '') === $bookingId) {
+                    $sb['status'] = 'Cancelled';
+                    $sb['booking_status'] = 'Cancelled';
+                }
+            }
+            $session->write('bookings', $bookingsList);
+        }
+
+        $msg = (is_array($result) && !empty($result['message'])) ? (string)$result['message'] : __('Stay cancelled. The property has been notified.');
         if ($isJson) {
-            return $this->response->withType('application/json')->withStringBody(json_encode(['status' => 'success', 'message' => $msg]));
+            return $this->response->withType('application/json')->withStringBody(json_encode([
+                'status' => ($status >= 200 && $status < 300) ? 'success' : 'error',
+                'message' => $msg,
+            ]));
         }
         $this->Flash->success($msg);
         return $this->redirect(['action' => 'myBooking']);
