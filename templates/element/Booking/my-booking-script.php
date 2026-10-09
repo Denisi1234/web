@@ -152,7 +152,7 @@ function openCancelModal(bookingCode, guestEmail) {
     desc.innerText = 'Booking ' + (bookingCode || '') + ' will be cancelled. This action cannot be undone.';
   }
   if (modal) {
-    modal.style.display = 'flex';
+    modal.classList.add('is-open');
   }
 }
 
@@ -165,8 +165,18 @@ function closeCancelModal() {
   pendingCancelEmail = '';
   const modal = document.getElementById('bkCancelModal');
   if (modal) {
-    modal.style.display = 'none';
+    modal.classList.remove('is-open');
   }
+}
+
+// Close modal when clicking on overlay background
+const cancelModalOverlay = document.getElementById('bkCancelModal');
+if (cancelModalOverlay) {
+  cancelModalOverlay.addEventListener('click', (e) => {
+    if (e.target === cancelModalOverlay) {
+      closeCancelModal();
+    }
+  });
 }
 
 const confirmCancelBtn = document.getElementById('bkConfirmCancelBtn');

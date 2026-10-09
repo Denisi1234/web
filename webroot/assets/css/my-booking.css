@@ -632,10 +632,14 @@
   inset: 0 !important;
   background: rgba(0, 0, 0, 0.5) !important;
   z-index: 10000 !important;
-  display: flex !important;
+  display: none;
   align-items: center !important;
   justify-content: center !important;
   padding: 16px !important;
+}
+
+.cds-modal-overlay.is-open {
+  display: flex !important;
 }
 
 .cds-modal-box {
