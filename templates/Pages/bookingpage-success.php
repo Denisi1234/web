@@ -80,6 +80,13 @@ if ($ciOk && $coOk) {
 
 $roomName = $queryParams['room_title'] ?? ($verifiedBooking['room']['name'] ?? ($verifiedBooking['room']['title'] ?? ($verifiedBooking['roomNumber'] ?? '')));
 $propId = $queryParams['property_id'] ?? ($property['id'] ?? ($verifiedBooking['property_id'] ?? ($verifiedBooking['room']['property']['id'] ?? null)));
+$hostId = $verifiedBooking['room']['property']['host_id'] ?? ($property['host_id'] ?? 1);
+$msgPropertyUrl = $this->Url->build(['controller' => 'Account', 'action' => 'messages', '?' => [
+    'host_id' => $hostId,
+    'lodge_name' => $propName,
+    'booking_code' => $reference,
+    'property_id' => $propId
+]]);
 $canCancel = !in_array($statusLabel, ['CANCELLED', 'COMPLETED'], true) && $reference !== '';
 ?>
 
@@ -228,9 +235,9 @@ $canCancel = !in_array($statusLabel, ['CANCELLED', 'COMPLETED'], true) && $refer
               <span>Review</span>
             </a>
           </div>
-          <a href="<?= $this->Url->build('/help-center') ?>#helpTicket" class="cds-btn cds-btn-ghost" style="width:100%;height:48px;font-size:13px;font-weight:700">
+          <a href="<?= $msgPropertyUrl ?>" class="cds-btn cds-btn-ghost" style="width:100%;height:48px;font-size:13px;font-weight:700">
             <i class="fa-regular fa-comment-dots" aria-hidden="true"></i>
-            <span>Message support</span>
+            <span>Message property</span>
           </a>
         <?php else: ?>
           <!-- Active / Upcoming stays -->
@@ -246,9 +253,9 @@ $canCancel = !in_array($statusLabel, ['CANCELLED', 'COMPLETED'], true) && $refer
             </button>
           </div>
           <div style="display:flex;gap:8px;width:100%">
-            <a href="<?= $this->Url->build('/help-center') ?>#helpTicket" class="cds-btn cds-btn-ghost" style="flex:1;height:48px;font-size:13px;font-weight:700">
+            <a href="<?= $msgPropertyUrl ?>" class="cds-btn cds-btn-ghost" style="flex:1;height:48px;font-size:13px;font-weight:700">
               <i class="fa-regular fa-comment-dots" aria-hidden="true"></i>
-              <span>Contact support</span>
+              <span>Message property</span>
             </a>
             <button type="button" class="cds-btn cds-btn-ghost" style="flex:1;height:48px;font-size:13px;font-weight:700" onclick="openReschedule('<?= h($reference) ?>', '<?= h($datesFormatted) ?>')">
               <i class="fa-regular fa-calendar" aria-hidden="true"></i>

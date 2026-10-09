@@ -71,7 +71,14 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/recently-viewed/clear', ['controller' => 'Account', 'action' => 'recentlyViewedClear'], ['_method' => ['POST', 'DELETE']]);
         $builder->connect('/recently-viewed/remove/{id}', ['controller' => 'Account', 'action' => 'recentlyViewedRemove'], ['pass' => ['id']], ['_method' => ['POST', 'DELETE']]);
         $builder->connect('/search-preferences', ['controller' => 'Account', 'action' => 'searchPreferences']);
-        $builder->connect('/notifications', ['controller' => 'Account', 'action' => 'notifications']);
+        $builder->connect('/messages', ['controller' => 'Account', 'action' => 'messages']);
+        $builder->connect('/inbox', ['controller' => 'Account', 'action' => 'messages']);
+        $builder->connect('/contact-host', ['controller' => 'Account', 'action' => 'messages']);
+        $builder->connect('/contact-property', ['controller' => 'Account', 'action' => 'messages']);
+        $builder->connect('/messages/threads', ['controller' => 'Account', 'action' => 'messageThreads'], ['_method' => 'GET']);
+        $builder->connect('/messages/history/{partnerId}', ['controller' => 'Account', 'action' => 'messageHistory'], ['pass' => ['partnerId'], '_method' => 'GET']);
+        $builder->connect('/messages/send', ['controller' => 'Account', 'action' => 'messageSend'], ['_method' => 'POST']);
+
         $builder->connect('/language-and-currency', ['controller' => 'Account', 'action' => 'languageAndCurrency']);
         $builder->connect('/language-currency', ['controller' => 'Account', 'action' => 'languageAndCurrency']);
         $builder->connect('/settings', ['controller' => 'Account', 'action' => 'settings']);

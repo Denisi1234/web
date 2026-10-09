@@ -6,18 +6,20 @@ namespace App\Controller;
 use App\Service\AuthService;
 use App\Service\FastnetApiClient;
 use App\Controller\Account\AccountBookingsTrait;
+use App\Controller\Account\AccountMessagesTrait;
 use App\Controller\Account\AccountPrefsTrait;
 use App\Controller\Account\AccountProfileTrait;
 
 /**
  * AccountController
- * Modular user dashboard, profile settings, bookings history, and preferences controller.
+ * Modular user dashboard, profile settings, bookings history, messages, and preferences controller.
  */
 class AccountController extends AppController
 {
     protected AuthService $authService;
 
     use AccountBookingsTrait;
+    use AccountMessagesTrait;
     use AccountPrefsTrait;
     use AccountProfileTrait;
     protected FastnetApiClient $apiClient;
