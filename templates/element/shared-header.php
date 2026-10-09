@@ -57,6 +57,12 @@ if (!str_starts_with($navAvatarBg, '#') && !str_starts_with($navAvatarBg, 'rgb')
 
                 <!-- 1. Logged-in Header Controls (Order 2 on mobile ms-auto, Order 3 on desktop) -->
                 <div class="d-flex align-items-center gap-2 gap-md-3 ms-auto flex-shrink-0 order-2 order-lg-3" id="nav_logged_in_wrapper" style="<?= $isUserLoggedIn ? '' : 'display: none !important;'; ?>">
+                    <!-- Host Portal / List Property Header Link -->
+                    <a href="<?= $this->Url->build('/host/dashboard'); ?>" class="d-none d-md-flex align-items-center text-decoration-none text-slate-700 hover:text-primary fw-semibold p-1" style="font-size: 13.5px; gap: 6px;" title="Host & Owner Portal">
+                        <i class="fa-solid fa-house-chimney-user" style="font-size: 15px; color: #800000;"></i>
+                        <span class="d-none d-lg-inline">Host portal</span>
+                    </a>
+
                     <!-- Favourites Link -->
                     <a href="<?= $this->Url->build('/my-wishlists'); ?>" class="d-flex align-items-center text-decoration-none text-slate-700 hover:text-primary fw-semibold p-1 position-relative" style="font-size: 14px; gap: 6px;" aria-label="View saved favourites">
                         <i class="fa-regular fa-heart" style="font-size: 17px;"></i>
@@ -150,10 +156,24 @@ if (!str_starts_with($navAvatarBg, '#') && !str_starts_with($navAvatarBg, 'rgb')
                                     <span>Language and currency</span>
                                 </a>
 
-                                <a href="<?= $this->Url->build('/join-us'); ?>" class="trivago-user-item" style="color:#2563EB;font-weight:700" role="menuitem">
-                                    <i class="fa-solid fa-plus trivago-user-item-icon" style="color:#2563EB"></i>
+                                <div class="trivago-user-sec-title">Host & Admin</div>
+                                <a href="<?= $this->Url->build('/host/dashboard'); ?>" class="trivago-user-item" role="menuitem">
+                                    <i class="fa-solid fa-gauge-high trivago-user-item-icon" style="color:#0f62fe"></i>
+                                    <span>Host dashboard</span>
+                                </a>
+                                <a href="<?= $this->Url->build('/host/listings'); ?>" class="trivago-user-item" role="menuitem">
+                                    <i class="fa-solid fa-hotel trivago-user-item-icon" style="color:#0f62fe"></i>
+                                    <span>My properties</span>
+                                </a>
+                                <a href="<?= $this->Url->build('/admin/dashboard'); ?>" class="trivago-user-item" role="menuitem">
+                                    <i class="fa-solid fa-shield-halved trivago-user-item-icon" style="color:#800000"></i>
+                                    <span>Admin owner portal</span>
+                                </a>
+                                <a href="<?= $this->Url->build('/join-us'); ?>" class="trivago-user-item" style="color:#10b981;font-weight:700" role="menuitem">
+                                    <i class="fa-solid fa-plus trivago-user-item-icon" style="color:#10b981"></i>
                                     <span>List your property</span>
                                 </a>
+
                                 <div class="trivago-user-sec-title">Support</div>
                                 <a href="<?= $this->Url->build('/help-center'); ?>" class="trivago-user-item" role="menuitem">
                                     <i class="fa-regular fa-circle-question trivago-user-item-icon"></i>
@@ -232,6 +252,10 @@ if (!str_starts_with($navAvatarBg, '#') && !str_starts_with($navAvatarBg, 'rgb')
                             <a href="<?= $this->Url->build('/language-and-currency'); ?>" class="trivago-user-item" role="menuitem">
                                 <i class="fa-solid fa-globe trivago-user-item-icon"></i>
                                 <span>Language and currency</span>
+                            </a>
+                            <a href="<?= $this->Url->build('/join-us'); ?>" class="trivago-user-item fw-bold" style="color:#10b981" role="menuitem">
+                                <i class="fa-solid fa-house-chimney-user trivago-user-item-icon" style="color:#10b981"></i>
+                                <span>List your property</span>
                             </a>
                             <a href="<?= $this->Url->build('/help-center'); ?>" class="trivago-user-item" role="menuitem">
                                 <i class="fa-regular fa-circle-question trivago-user-item-icon"></i>

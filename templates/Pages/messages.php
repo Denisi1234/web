@@ -522,7 +522,7 @@ if (!empty($booking) && is_array($booking)) {
           <div class="cds-trip-bar-header" onclick="toggleTripDrawer()">
             <div style="display:flex;align-items:center;gap:8px">
               <i class="fa-regular fa-calendar-check" style="color:#800000"></i>
-              <span>🗓️ <?= h($datesLine) ?>  •  🔑 Room <?= h($roomNum) ?>  •  <?= h($statusText) ?></span>
+              <span><?= h($datesLine) ?>  •  Room <?= h($roomNum) ?>  •  <?= h($statusText) ?></span>
             </div>
             <i class="fa-solid fa-chevron-down" id="tripDrawerChevron" style="transition:transform .2s ease"></i>
           </div>
@@ -551,7 +551,7 @@ if (!empty($booking) && is_array($booking)) {
         <!-- Safety Warning Banner -->
         <div class="cds-safety-banner" id="safetyBanner">
           <i class="fa-solid fa-shield-halved" style="font-size:14px"></i>
-          <span style="flex:1">⚠️ Communicating or paying off-platform bypasses FASTNET safety shields. Never wire money directly.</span>
+          <span style="flex:1">Communicating or paying off-platform bypasses FASTNET safety shields. Never wire money directly.</span>
           <button type="button" onclick="document.getElementById('safetyBanner').style.display='none'" style="background:none;border:none;color:#92400e;cursor:pointer;font-size:13px">
             <i class="fa-solid fa-xmark"></i>
           </button>
@@ -584,11 +584,11 @@ if (!empty($booking) && is_array($booking)) {
 
         <!-- Quick Reply Chips -->
         <div class="cds-quick-replies">
-          <button type="button" class="cds-quick-chip" onclick="sendQuickReply('What is the Wi-Fi passcode?')">📶 Wi-Fi Passcode</button>
-          <button type="button" class="cds-quick-chip" onclick="sendQuickReply('Do you offer early check-in?')">🔑 Early Check-in</button>
-          <button type="button" class="cds-quick-chip" onclick="sendQuickReply('Is breakfast included in the booking?')">🍳 Breakfast Options</button>
-          <button type="button" class="cds-quick-chip" onclick="sendQuickReply('Is secure parking available at the lodge?')">🚗 Parking Info</button>
-          <button type="button" class="cds-quick-chip" onclick="sendQuickReply('Can you provide exact driving directions?')">📍 Directions</button>
+          <button type="button" class="cds-quick-chip" onclick="sendQuickReply('What is the Wi-Fi passcode?')"><i class="fa-solid fa-wifi" style="margin-right:4px"></i> Wi-Fi Passcode</button>
+          <button type="button" class="cds-quick-chip" onclick="sendQuickReply('Do you offer early check-in?')"><i class="fa-solid fa-key" style="margin-right:4px"></i> Early Check-in</button>
+          <button type="button" class="cds-quick-chip" onclick="sendQuickReply('Is breakfast included in the booking?')"><i class="fa-solid fa-utensils" style="margin-right:4px"></i> Breakfast Options</button>
+          <button type="button" class="cds-quick-chip" onclick="sendQuickReply('Is secure parking available at the lodge?')"><i class="fa-solid fa-square-parking" style="margin-right:4px"></i> Parking Info</button>
+          <button type="button" class="cds-quick-chip" onclick="sendQuickReply('Can you provide exact driving directions?')"><i class="fa-solid fa-map-location-dot" style="margin-right:4px"></i> Directions</button>
         </div>
 
         <!-- Input Bar -->

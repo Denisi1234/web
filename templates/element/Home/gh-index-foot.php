@@ -127,7 +127,7 @@ echo json_encode($markers, JSON_UNESCAPED_UNICODE);
             el.style.justifyContent='center';
             el.style.background='#e8ecef';
             el.innerHTML='<div style="text-align:center;padding:24px;font-family:Google Sans,Roboto,sans-serif;color:#5f6368;">'
-              +'<div style="font-size:28px;margin-bottom:8px;">🗺️</div>'
+              +'<div style="font-size:26px;margin-bottom:8px;color:#800000;"><i class="fa-solid fa-map-location-dot"></i></div>'
               +'<div style="font-weight:500;color:#202124;margin-bottom:4px;">Map loading failed</div>'
               +'<div style="font-size:12px;">Check network / Mapbox config</div></div>';
         }

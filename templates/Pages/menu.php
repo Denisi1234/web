@@ -275,6 +275,41 @@ $this->assign('title', 'Menu - FastNet Stays');
             <i class="fa-solid fa-chevron-right trivago-nav-chevron"></i>
         </a>
     </div>
+
+    <!-- Host & Admin Portals Section -->
+    <div class="trivago-section-title">Host & Admin Management</div>
+    <div class="trivago-nav-list">
+        <a href="<?= $this->Url->build('/host/dashboard'); ?>" class="trivago-nav-item">
+            <i class="fa-solid fa-gauge-high trivago-nav-icon" style="color:#0f62fe"></i>
+            <span>Host dashboard</span>
+            <i class="fa-solid fa-chevron-right trivago-nav-chevron"></i>
+        </a>
+        <a href="<?= $this->Url->build('/host/listings'); ?>" class="trivago-nav-item">
+            <i class="fa-solid fa-hotel trivago-nav-icon" style="color:#0f62fe"></i>
+            <span>My properties</span>
+            <i class="fa-solid fa-chevron-right trivago-nav-chevron"></i>
+        </a>
+        <a href="<?= $this->Url->build('/host/bookings'); ?>" class="trivago-nav-item">
+            <i class="fa-solid fa-calendar-check trivago-nav-icon" style="color:#0f62fe"></i>
+            <span>Host bookings</span>
+            <i class="fa-solid fa-chevron-right trivago-nav-chevron"></i>
+        </a>
+        <a href="<?= $this->Url->build('/host/earnings'); ?>" class="trivago-nav-item">
+            <i class="fa-solid fa-wallet trivago-nav-icon" style="color:#0f62fe"></i>
+            <span>Earnings & payouts</span>
+            <i class="fa-solid fa-chevron-right trivago-nav-chevron"></i>
+        </a>
+        <a href="<?= $this->Url->build('/admin/dashboard'); ?>" class="trivago-nav-item">
+            <i class="fa-solid fa-shield-halved trivago-nav-icon" style="color:#800000"></i>
+            <span>Admin owner portal</span>
+            <i class="fa-solid fa-chevron-right trivago-nav-chevron"></i>
+        </a>
+        <a href="<?= $this->Url->build('/join-us'); ?>" class="trivago-nav-item">
+            <i class="fa-solid fa-plus trivago-nav-icon" style="color:#10b981"></i>
+            <span>List your property</span>
+            <i class="fa-solid fa-chevron-right trivago-nav-chevron"></i>
+        </a>
+    </div>
 </div>
 </main>
 <?= $this->element('footer', ['skin' => 'skin-light-footer']) ?>
