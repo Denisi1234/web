@@ -141,8 +141,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Cancel Modal Dialog Logic
-function openCancelModal(bookingCode) {
+let pendingCancelEmail = '';
+
+function openCancelModal(bookingCode, guestEmail) {
   pendingCancelCode = bookingCode;
+  pendingCancelEmail = guestEmail || '';
   const modal = document.getElementById('bkCancelModal');
   const desc = document.getElementById('bkCancelDesc');
   if (desc) {
@@ -153,8 +156,13 @@ function openCancelModal(bookingCode) {
   }
 }
 
+function cancelBookingAction(bookingCode, guestEmail) {
+  openCancelModal(bookingCode, guestEmail);
+}
+
 function closeCancelModal() {
   pendingCancelCode = null;
+  pendingCancelEmail = '';
   const modal = document.getElementById('bkCancelModal');
   if (modal) {
     modal.style.display = 'none';
@@ -165,6 +173,7 @@ const confirmCancelBtn = document.getElementById('bkConfirmCancelBtn');
 if (confirmCancelBtn) {
   confirmCancelBtn.addEventListener('click', async () => {
     const bookingCode = pendingCancelCode;
+    const guestEmail = pendingCancelEmail;
     closeCancelModal();
     if (!bookingCode) return;
 
@@ -178,7 +187,7 @@ if (confirmCancelBtn) {
           'Accept': 'application/json',
           'X-CSRF-Token': csrf
         },
-        body: JSON.stringify({ booking_id: bookingCode })
+        body: JSON.stringify({ booking_id: bookingCode, email: guestEmail })
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.status !== 'error') {

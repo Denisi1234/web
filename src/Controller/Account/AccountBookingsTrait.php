@@ -20,14 +20,45 @@ trait AccountBookingsTrait
 
         if ($bookingId === '') {
             $msg = __('Invalid booking ID.');
-            if ($isJson) return $this->response->withStatus(422)->withType('application/json')->withStringBody(json_encode(['message' => $msg]));
+            if ($isJson) return $this->response->withStatus(422)->withType('application/json')->withStringBody(json_encode(['status' => 'error', 'message' => $msg]));
             $this->Flash->error($msg);
             return $this->redirect(['action' => 'myBooking']);
         }
 
         $session = $this->getRequest()->getSession();
-        $user = (array)($session->read('User') ?? ($session->read('userProfile') ?? []));
-        $userEmail = strtolower(trim((string)($user['email'] ?? '')));
+        $userEmail = strtolower(trim((string)($data['email'] ?? '')));
+
+        if ($userEmail === '') {
+            $user = (array)($session->read('User') ?? ($session->read('userProfile') ?? []));
+            $userEmail = strtolower(trim((string)($user['email'] ?? '')));
+        }
+
+        if ($userEmail === '' && $token !== '') {
+            try {
+                $userProfile = $this->authService->getPersonalDetails($token);
+                $userEmail = strtolower(trim((string)($userProfile['email'] ?? '')));
+            } catch (\Throwable $e) {}
+        }
+
+        // Check stored session bookings if email is still missing
+        if ($userEmail === '') {
+            $allSessionBookings = array_merge(
+                (array)($session->read('user_bookings') ?? []),
+                (array)($session->read('bookings') ?? [])
+            );
+            foreach ($allSessionBookings as $sb) {
+                if (!is_array($sb)) continue;
+                $sbCode = (string)($sb['booking_code'] ?? ($sb['booking_number'] ?? ($sb['id'] ?? '')));
+                if ($sbCode === $bookingId || (string)($sb['id'] ?? '') === $bookingId) {
+                    $foundEmail = (string)(is_array($sb['guest'] ?? null) ? ($sb['guest']['email'] ?? '') : ($sb['guest_email'] ?? ($sb['email'] ?? '')));
+                    if ($foundEmail !== '') {
+                        $userEmail = strtolower(trim($foundEmail));
+                        break;
+                    }
+                }
+            }
+        }
+
         $endpoint = '/bookings/' . rawurlencode($bookingId);
         if ($userEmail !== '') {
             $endpoint .= '?email=' . rawurlencode($userEmail);

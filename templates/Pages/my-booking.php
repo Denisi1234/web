@@ -205,7 +205,7 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
                   <a href="<?= $propId ? $this->Url->build('/hotel-detail-01', ['?' => ['id' => $propId]]) . '#reviews' : $this->Url->build('/hotel-list-01') ?>" class="cds-btn cds-btn-primary"><i class="fa-regular fa-star" aria-hidden="true"></i> Review</a>
                   <?php else: ?>
                   <?php if ($canCancel): ?>
-                  <button type="button" class="cds-btn cds-btn-danger" onclick="openCancelModal('<?= h($bCode) ?>')">Cancel stay</button>
+                  <button type="button" class="cds-btn cds-btn-danger" onclick="openCancelModal('<?= h($bCode) ?>', '<?= h($cardGuestEmail) ?>')">Cancel stay</button>
                   <?php endif; ?>
                   <button type="button" class="cds-btn cds-btn-ghost" onclick="downloadBookingReceipt('<?= h($bCode) ?>')"><i class="fa-solid fa-receipt" aria-hidden="true"></i> Receipt</button>
                   <?php endif; ?>

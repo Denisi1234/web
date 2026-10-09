@@ -211,7 +211,7 @@ $bkPillLabel = $bkStatusRaw !== '' ? ucfirst($bkStatusRaw) : ($isPaid ? 'Confirm
 							$detailsDatesLabel = (($ciOk ? date('d M Y', $ciOk) : '') !== '' && ($coOk ? date('d M Y', $coOk) : '') !== '') ? (date('d M Y', $ciOk) . ' → ' . date('d M Y', $coOk)) : '';
 							?>
 							<?php if ($detailsMovable): ?>
-							<button type="button" class="btn fw-bold px-4 btn-outline" style="padding:12px 20px;color:#da1e28;border-color:#f4c7c7" onclick="cancelBookingAction('<?= h($reference) ?>')">Cancel stay</button>
+							<button type="button" class="btn fw-bold px-4 btn-outline" style="padding:12px 20px;color:#da1e28;border-color:#f4c7c7" onclick="cancelBookingAction('<?= h($reference) ?>', '<?= h($guestEmail ?? ($verifiedBooking['guest']['email'] ?? '')) ?>')">Cancel stay</button>
 							<button type="button" class="btn fw-bold px-4 btn-outline" style="padding:12px 20px" onclick="openReschedule('<?= h($reference) ?>', '<?= h($detailsDatesLabel) ?>')">Change dates</button>
 							<?php endif; ?>
 							<a href="<?= $this->Url->build('/help-center') ?>#helpTicket" class="btn fw-bold px-4 btn-outline" style="padding:12px 20px">Support</a>
@@ -239,6 +239,18 @@ $bkPillLabel = $bkStatusRaw !== '' ? ucfirst($bkStatusRaw) : ($isPaid ? 'Confirm
 	</div>
 </section>
 <!-- Booking End -->
+
+<!-- Mobile-Style Confirmation Dialog -->
+<div id="bkCancelModal" class="cds-modal-overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="bkCancelTitle">
+  <div class="cds-modal-box">
+    <h3 id="bkCancelTitle" class="cds-modal-title">Cancel this stay?</h3>
+    <p id="bkCancelDesc" class="cds-modal-body">Booking will be cancelled. This action cannot be undone.</p>
+    <div class="cds-modal-actions">
+      <button type="button" class="cds-modal-btn-cancel" onclick="closeCancelModal()">Keep stay</button>
+      <button type="button" id="bkConfirmCancelBtn" class="cds-modal-btn-confirm">Cancel stay</button>
+    </div>
+  </div>
+</div>
 
 <?php if ($isPaid): ?>
 <!-- templates/element/Listing/booking-page/invoice.php -->
