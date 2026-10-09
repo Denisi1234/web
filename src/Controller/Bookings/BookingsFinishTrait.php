@@ -223,11 +223,26 @@ trait BookingsFinishTrait
             ? $this->paymentService->booking($bookingId, $sessionEmail)
             : $this->paymentService->booking($bookingId);
         $booking = is_array($bookingResponse) ? ($bookingResponse['data'] ?? $bookingResponse) : null;
-        // A message envelope (e.g. "sign in or supply the email") is an array
-        // too — only a record carrying booking identity counts as verified.
         $bookingRef = is_array($booking)
             ? (string)($booking['booking_code'] ?? $booking['reference'] ?? $booking['id'] ?? $booking['booking_id'] ?? '')
             : '';
+
+        if (!is_array($booking) || $bookingRef === '') {
+            $sessionBookings = array_merge(
+                (array)($this->getRequest()->getSession()->read('user_bookings') ?? []),
+                (array)($this->getRequest()->getSession()->read('bookings') ?? [])
+            );
+            foreach ($sessionBookings as $sb) {
+                if (!is_array($sb)) continue;
+                $sbCode = (string)($sb['booking_code'] ?? ($sb['booking_number'] ?? ($sb['id'] ?? '')));
+                if ($sbCode === $bookingId || (string)($sb['id'] ?? '') === $bookingId) {
+                    $booking = $sb;
+                    $bookingRef = $sbCode;
+                    break;
+                }
+            }
+        }
+
         if (!is_array($booking) || $bookingRef === '') {
             throw new NotFoundException(__('This booking could not be verified.'));
         }
