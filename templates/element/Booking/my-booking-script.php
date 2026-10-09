@@ -1,7 +1,8 @@
 <script>
-/* FastNet Stays - My Bookings Controller (Mobile App Mirror) */
+/* FastNet Stays - My Bookings Logic (Mobile Carbon Mirror) */
 let bkTab = 'upcoming';
 let bkSoonestFirst = true;
+let pendingCancelCode = null;
 
 function bkTabOf(card) {
   return card.getAttribute('data-tab') || 'upcoming';
@@ -120,49 +121,74 @@ if (bkSortBtn) {
 
 document.addEventListener('DOMContentLoaded', applyBkFilters);
 
-// Cancel Booking
-async function confirmAction(msg) {
-  if (typeof window.fnsConfirm === 'function') {
-    try { return await window.fnsConfirm(msg); } catch (e) { return false; }
+// Cancel Modal logic
+function openCancelModal(bookingCode) {
+  pendingCancelCode = bookingCode;
+  const modal = document.getElementById('bkCancelModal');
+  const desc = document.getElementById('bkCancelDesc');
+  if (desc) {
+    desc.innerText = 'Booking ' + (bookingCode || '') + ' will be cancelled. This action cannot be undone.';
   }
-  return window.confirm(msg);
+  if (modal) {
+    modal.style.display = 'flex';
+  }
 }
 
-async function cancelBookingAction(bookingId) {
-  if (!await confirmAction('Cancel this booking? The room is released immediately and refunds follow the property policy.')) return;
-  showBookingToast('Processing cancellation…');
-  const csrf = document.querySelector('meta[name="csrfToken"]')?.content || '';
-  try {
-    const res = await fetch('<?= $this->Url->build('/my-booking/cancel') ?>', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-Token': csrf },
-      body: JSON.stringify({ booking_id: bookingId })
-    });
-    const data = await res.json().catch(() => ({}));
-    if (res.ok) {
-      showBookingToast(data.message || 'Stay cancelled. The property has been notified.');
-      const card = document.getElementById('bk_card_' + bookingId);
-      if (card) {
-        card.setAttribute('data-tab', 'cancelled');
-        const badge = card.querySelector('.bk-status-badge');
-        if (badge) {
-          badge.className = 'cds-tag cds-t-cancelled bk-status-badge';
-          badge.innerText = 'CANCELLED';
-        }
-        const actions = card.querySelector('.cds-bk-actions');
-        if (actions) {
-          actions.innerHTML = '<a href="<?= $this->Url->build('/hotel-list-01') ?>" class="cds-btn cds-btn-primary"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Book again</a>';
-        }
-        applyBkFilters();
-      } else {
-        setTimeout(() => { window.location.href = '<?= $this->Url->build('/my-booking') ?>'; }, 1400);
-      }
-    } else {
-      showBookingToast(data.message || 'Could not cancel booking');
-    }
-  } catch (e) {
-    showBookingToast('Network error cancelling booking');
+function closeCancelModal() {
+  pendingCancelCode = null;
+  const modal = document.getElementById('bkCancelModal');
+  if (modal) {
+    modal.style.display = 'none';
   }
+}
+
+const confirmCancelBtn = document.getElementById('bkConfirmCancelBtn');
+if (confirmCancelBtn) {
+  confirmCancelBtn.addEventListener('click', async () => {
+    const bookingCode = pendingCancelCode;
+    closeCancelModal();
+    if (!bookingCode) return;
+
+    showBookingToast('Processing cancellation…');
+    const csrf = document.querySelector('meta[name="csrfToken"]')?.content || '';
+    try {
+      const res = await fetch('<?= $this->Url->build('/my-booking/cancel') ?>', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-Token': csrf },
+        body: JSON.stringify({ booking_id: bookingCode })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showBookingToast(data.message || 'Stay cancelled. The property has been notified.');
+        const card = document.getElementById('bk_card_' + bookingCode);
+        if (card) {
+          card.setAttribute('data-tab', 'cancelled');
+          const badge = card.querySelector('.bk-status-badge');
+          if (badge) {
+            badge.className = 'cds-tag cds-t-cancelled bk-status-badge';
+            badge.innerText = 'CANCELLED';
+          }
+          const actions = card.querySelector('.cds-bk-actions');
+          if (actions) {
+            actions.innerHTML = '<a href="<?= $this->Url->build('/hotel-list-01') ?>" class="cds-btn cds-btn-primary"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Book again</a>';
+          }
+          // Switch to cancelled tab as done on mobile
+          const cancelledTabBtn = document.querySelector('.cds-bk-tab[data-bk-tab="cancelled"]');
+          if (cancelledTabBtn) {
+            cancelledTabBtn.click();
+          } else {
+            applyBkFilters();
+          }
+        } else {
+          setTimeout(() => { window.location.href = '<?= $this->Url->build('/my-booking') ?>'; }, 1400);
+        }
+      } else {
+        showBookingToast(data.message || 'Could not cancel booking');
+      }
+    } catch (e) {
+      showBookingToast('Network error cancelling booking');
+    }
+  });
 }
 
 function showBookingToast(msg) {
