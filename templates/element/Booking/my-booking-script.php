@@ -250,24 +250,11 @@ function showBookingToast(msg) {
 
 function downloadBookingReceipt(bookingCode) {
   if (!bookingCode) return;
-  showBookingToast('Generating receipt…');
-  const body = new URLSearchParams();
-  body.set('booking_id', bookingCode);
-  fetch('/booking-receipt', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-    body: body.toString(),
-    credentials: 'same-origin'
-  })
-  .then(r => r.json().catch(() => ({})))
-  .then(data => {
-    if (data && data.status === 'success' && data.receipt_url) {
-      window.open(data.receipt_url, '_blank', 'noopener');
-      showBookingToast('Receipt ready');
-    } else {
-      showBookingToast((data && data.message) || 'Could not generate receipt.');
-    }
-  })
-  .catch(() => showBookingToast('Error generating receipt.'));
+  if (typeof openReceiptModal === 'function') {
+    openReceiptModal();
+    return;
+  }
+  window.location.href = '/bookingpage-success?booking_id=' + encodeURIComponent(bookingCode) + '&view=receipt';
 }
 </script>
+
