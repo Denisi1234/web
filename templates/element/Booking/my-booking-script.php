@@ -192,7 +192,9 @@ if (confirmCancelBtn) {
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.status !== 'error') {
         showBookingToast(data.message || 'Stay cancelled. The property has been notified.');
-        const card = document.getElementById('bk_card_' + bookingCode);
+        const card = document.getElementById('bk_card_' + bookingCode) 
+          || document.querySelector('[data-search*="' + bookingCode.toLowerCase() + '"]')
+          || document.querySelector('.cds-bk-card');
         if (card) {
           card.setAttribute('data-tab', 'cancelled');
           const badge = card.querySelector('.bk-status-badge');

@@ -12,8 +12,18 @@ trait AccountBookingsTrait
 {
     public function cancelBooking(): Response
     {
-        $isJson = $this->getRequest()->is('json') || $this->getRequest()->getHeaderLine('Content-Type') === 'application/json';
-        $data = $isJson ? (array)json_decode((string)$this->getRequest()->getBody(), true) : (array)$this->getRequest()->getData();
+        $contentType = $this->getRequest()->getHeaderLine('Content-Type');
+        $accept = $this->getRequest()->getHeaderLine('Accept');
+        $isJson = stripos($contentType, 'application/json') !== false 
+               || stripos($accept, 'application/json') !== false 
+               || $this->getRequest()->is('json') 
+               || $this->getRequest()->is('ajax');
+
+        $rawBody = (string)$this->getRequest()->getBody();
+        $jsonDecoded = !empty($rawBody) ? json_decode($rawBody, true) : null;
+        $postData = (array)$this->getRequest()->getData();
+        $data = is_array($jsonDecoded) ? array_merge($postData, $jsonDecoded) : $postData;
+
         $bookingId = trim((string)($data['booking_id'] ?? ''));
         $token = $this->portalToken();
         $headers = $token !== '' ? ['Authorization' => 'Bearer ' . $token] : [];
