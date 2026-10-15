@@ -192,6 +192,38 @@ class HostController extends AppController
             }
         }
 
+        // Unified identity: same email/password works for guest + host — no
+        // separate host account, no activation step. A signed-in guest opening
+        // host tooling shows host intent, so host-enable in place (best-effort
+        // backend sync + session upgrade) instead of refusing. Backend data
+        // calls remain the source of truth.
+        if ($role === 'customer' && is_array($user) && (!empty($user['email']) || !empty($user['id']))) {
+            $user['role'] = 'owner';
+            try {
+                $session->write('User', $user);
+            } catch (\Throwable $e) {
+            }
+            if ($bearer !== '') {
+                try {
+                    $this->apiClient->post('/user/personal-details', ['role' => 'owner'], ['Authorization' => 'Bearer ' . $bearer]);
+                } catch (\Throwable $e) {
+                }
+                try {
+                    $mkey = md5($bearer);
+                    \Cake\Cache\Cache::delete('auth_role_' . $mkey, 'default');
+                    \Cake\Cache\Cache::write('auth_role_' . $mkey, ['exp' => time() + 3600, 'role' => 'owner'], 'default');
+                    $restore = \Cake\Cache\Cache::read('auth_restore_' . $mkey, 'default');
+                    if (is_array($restore) && isset($restore['user'])) {
+                        $restore['user']['role'] = 'owner';
+                        $restore['exp'] = time() + 300;
+                        \Cake\Cache\Cache::write('auth_restore_' . $mkey, $restore, 'default');
+                    }
+                } catch (\Throwable $e) {
+                }
+            }
+            $role = 'owner';
+        }
+
         if (in_array($role, ['owner', 'admin'], true)) {
             return;
         }
@@ -214,10 +246,10 @@ class HostController extends AppController
             return;
         }
 
-        // Signed in, but as a guest: a customer session can never enter host
-        // tooling, no matter which credentials were used. Render the branded
-        // refusal (HTTP 403) rather than throwing, because the exception
-        // renderer maps every 4xx to the bare error400 page.
+        // Rare fallback: anonymous handled above; authenticated guests are
+        // host-enabled in place, so this only fires when no login exists.
+        // Render the branded refusal (HTTP 403) rather than throwing, because
+        // the exception renderer maps every 4xx to the bare error400 page.
         $event->setResult($this->refusePortalAccess(
             (string)($this->getRequest()->getRequestTarget() ?: '/host/dashboard'),
             __('Only property hosts can access this area.')
