@@ -60,7 +60,7 @@ if ($totalHits !== null && $totalHits > $count) $countLabel = number_format($cou
 
 <div class="gh-results-count-row cds-section-head d-flex align-items-center justify-content-between mb-1 flex-wrap gap-2" style="border-bottom:1px solid #e8eaed; padding-bottom:8px;">
     <div style="font-size:14px; color:#161616; font-family:'IBM Plex Sans','Inter','Google Sans',Roboto,sans-serif;">
-        <span class="gh-near-part" style="color:#161616;"><?php if ($destName !== ''): ?>near <?= h($destName) ?> <span style="color:#525252; margin:0 4px;">·</span><?php endif; ?></span><span id="gh_results_count" data-count="<?= (int)$count ?>" <?= $totalHits !== null && $totalHits > $count ? 'data-total="' . (int)$totalHits . '"' : '' ?> style="color:#161616;"><?= h($countLabel) ?></span>
+        <span class="gh-near-part" style="color:#161616;"><?php if ($destName !== ''): ?>Near <?= h($destName) ?> <span style="color:#525252; margin:0 4px;">·</span><?php endif; ?></span><span id="gh_results_count" data-count="<?= (int)$count ?>" <?= $totalHits !== null && $totalHits > $count ? 'data-total="' . (int)$totalHits . '"' : '' ?> style="color:#161616;"><?= h($countLabel) ?></span>
         <span style="color:#5f6368; margin-left:6px; display:inline-flex; vertical-align:middle;" title="About results"><i class="fa-regular fa-circle-question" style="font-size:12px;"></i></span>
         <?php if (!empty($queryParams['amenities'])): ?>
             <span class="badge ms-2" style="background:#e8f0fe; color:#1967d2; font-size:11px; font-weight:500; border-radius:12px; padding:2px 8px;">Filtered</span>
