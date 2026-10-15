@@ -12,16 +12,8 @@ trait PagesOwnerTrait
     {
         $session = $this->getRequest()->getSession();
         $sessionUser = $session->read('User');
-        $rawToken = trim((string)$session->read('auth_token'));
-        if (stripos($rawToken, 'Bearer ') === 0) {
-            $rawToken = trim(substr($rawToken, 7));
-        }
-        if ($rawToken === '') {
-            $rawToken = $this->authService->readToken($this->getRequest());
-        }
         $isLoggedIn = !$session->read('is_logged_out') && !empty($sessionUser);
         $userRole = strtolower((string)($sessionUser['role'] ?? ''));
-        $headers = $rawToken !== '' ? ['Authorization' => 'Bearer ' . $rawToken] : [];
 
         // Separate accounts: a guest login is never upgraded in place.
         // Hosting needs its own account with its own sign-in (backend
@@ -38,25 +30,11 @@ trait PagesOwnerTrait
             }
         }
 
-        // For owners/admins: fetch my properties for status section (real data).
-        // Owner → ?mine=1 (own only); admin → /admin/properties slice.
-        // Never fall back to other hosts' lodges: empty stays empty.
-        $myProperties = [];
-        if ($isLoggedIn && $rawToken !== '' && in_array($userRole, ['owner', 'admin'], true)) {
-            try {
-                if ($userRole === 'admin') {
-                    $pRes = $this->apiClient->get('/admin/properties', ['per_page' => 6], $headers);
-                } else {
-                    $pRes = $this->apiClient->get('/properties', ['mine' => 1, 'per_page' => 6], $headers);
-                }
-                $all = $pRes['data'] ?? (isset($pRes[0]) ? $pRes : []);
-                if (is_array($all)) $myProperties = array_values(array_slice($all, 0, 6));
-            } catch (\Throwable $e) {
-                $myProperties = [];
-            }
-        }
-
-        $this->set(compact('isLoggedIn', 'userRole', 'myProperties', 'sessionUser'));
+        // join-us is a public marketing page: it never pulls portal data.
+        // Portfolio listings live inside the portals (/host/listings,
+        // /admin/lodges) — showing them here leaked inside content (and for
+        // admins, other hosts' lodges) onto a public URL.
+        $this->set(compact('isLoggedIn', 'userRole', 'sessionUser'));
         return $this->render('/Pages/join-us');
     }
     // ── Bookings Forwarders (Backward Compatibility) ───────────────────────

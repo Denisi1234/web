@@ -4,10 +4,9 @@ $this->assign('description', 'List your hotel, lodge or apartment on FastNet Sta
 $juLoggedIn = !empty($isLoggedIn);
 $juRole = strtolower((string)($userRole ?? ''));
 $isHost = in_array($juRole, ['owner', 'admin'], true);
-$myList = (isset($myProperties) && is_array($myProperties)) ? $myProperties : [];
 
-// A host whose account is still "Pending Verification" has no way forward
-// without submitting documents, so surface the KYC form directly.
+// A pending host gets one pointer to the portal verification page.
+// Portfolio listings never render here: they live inside the portals.
 $juNeedsVerification = $juLoggedIn && $juRole === 'owner'
     && strtolower((string)($sessionUser['status'] ?? '')) === 'pending verification';
 ?>
@@ -50,10 +49,10 @@ $juNeedsVerification = $juLoggedIn && $juRole === 'owner'
   </div>
 </header>
 
-<?php if ($juLoggedIn && $isHost): ?>
+<?php if ($juNeedsVerification): ?>
 
-<!-- Identity verification lives in the owner portal now. Hosts pending
-     verification get a pointer instead of a public form. -->
+<!-- Identity verification lives in the owner portal now. Pending hosts get
+     a pointer instead of a public form. -->
 <section class="ju-section" style="padding-bottom:0"><div class="container" style="max-width:1140px">
   <div class="ju-tile" style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
     <div>
@@ -62,28 +61,6 @@ $juNeedsVerification = $juLoggedIn && $juRole === 'owner'
       <p class="mb-0" style="font-size:14px;color:#525252;max-width:560px">Required before your first property goes live. Submit your documents from your host dashboard — usually reviewed within one business day.</p>
     </div>
     <a href="<?= $this->Url->build('/host/verification') ?>" class="btn-ju btn-ju-primary">Continue verification</a>
-  </div>
-</div></section>
-<?php endif; ?>
-
-<!-- Owner listings -->
-<?php if ($juLoggedIn && $isHost && !empty($myList)): ?>
-<section class="ju-section" style="padding-bottom:0"><div class="container" style="max-width:1140px">
-  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-    <div><div class="ju-label">Your portfolio</div><h2 class="ju-h2 mb-0">Your listings</h2></div>
-    <a href="<?= $this->Url->build('/host/listings') ?>" class="btn-ju btn-ju-light" style="border:1px solid #8d8d8d">Manage listings</a>
-  </div>
-  <div class="row g-3">
-    <?php foreach (array_slice($myList, 0, 3) as $p): $st = strtolower((string)($p['status'] ?? 'active')); $img = $p['image_url'] ?? $p['primary_image_url'] ?? $this->Url->build('/assets/img/hotel/hotel-1.jpg'); ?>
-    <div class="col-md-4"><div class="ju-prop">
-      <img src="<?= h($img) ?>" alt="">
-      <div class="p-3">
-        <div style="font-weight:600"><?= h($p['name'] ?? 'Property') ?></div>
-        <div style="font-size:13px;color:#525252"><?= h($p['city'] ?? '') ?> · TSh <?= number_format((float)($p['price_per_night'] ?? 0)) ?> / night</div>
-        <span class="ju-status mt-2" style="background:<?= $st==='active'?'#defbe6;color:#0e6027':($st==='pending'?'#fcf4d6;color:#8e6a00':'#e5f0ff;color:#0f62fe') ?>"><?= h($p['status'] ?? 'Active') ?></span>
-      </div>
-    </div></div>
-    <?php endforeach; ?>
   </div>
 </div></section>
 <?php endif; ?>
