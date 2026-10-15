@@ -7,6 +7,7 @@ use App\Service\AuthService;
 use App\Service\FastnetApiClient;
 use App\Controller\Host\HostFinanceTrait;
 use App\Controller\Host\HostListingsTrait;
+use App\Controller\Host\HostMessagesTrait;
 use App\Controller\Host\HostOnboardingTrait;
 use App\Controller\Host\HostProfileTrait;
 use App\Controller\Host\HostPropertyFormTrait;
@@ -27,6 +28,7 @@ class HostController extends AppController
 
     use HostFinanceTrait;
     use HostListingsTrait;
+    use HostMessagesTrait;
     use HostOnboardingTrait;
     use HostProfileTrait;
     use HostPropertyFormTrait;

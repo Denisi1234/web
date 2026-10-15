@@ -126,6 +126,10 @@ return function (RouteBuilder $routes): void {
         $builder->redirect('/host/listings/add', '/host/onboarding', ['status' => 301]);
         $builder->connect('/host/bookings', ['controller' => 'Host', 'action' => 'bookings']);
         $builder->connect('/host/reviews', ['controller' => 'Host', 'action' => 'reviews']);
+        $builder->connect('/host/messages', ['controller' => 'Host', 'action' => 'inbox']);
+        $builder->connect('/host/messages/threads', ['controller' => 'Host', 'action' => 'inboxThreads'], ['_method' => 'GET']);
+        $builder->connect('/host/messages/history/{id}', ['controller' => 'Host', 'action' => 'inboxHistory'], ['pass' => ['id']]);
+        $builder->connect('/host/messages/send', ['controller' => 'Host', 'action' => 'inboxSend'], ['_method' => 'POST']);
         $builder->connect('/host/bookings/check-in/{id}', ['controller' => 'Host', 'action' => 'checkIn'], ['pass' => ['id']], ['_method' => 'POST']);
         $builder->connect('/host/bookings/check-out/{id}', ['controller' => 'Host', 'action' => 'checkOut'], ['pass' => ['id']], ['_method' => 'POST']);
         $builder->connect('/host/calendar/{id}', ['controller' => 'Host', 'action' => 'calendar'], ['pass'=>['id'],'id'=>'\d+']);

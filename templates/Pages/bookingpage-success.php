@@ -92,13 +92,13 @@ if (preg_match('/Room\s*(\w+)/i', (string)$roomName, $rmMatches)) {
 }
 
 $propId = $queryParams['property_id'] ?? ($property['id'] ?? ($verifiedBooking['property_id'] ?? ($verifiedBooking['room']['property']['id'] ?? null)));
-$hostId = $verifiedBooking['room']['property']['host_id'] ?? ($property['host_id'] ?? 1);
-$msgPropertyUrl = $this->Url->build(['controller' => 'Account', 'action' => 'messages', '?' => [
+$hostId = $verifiedBooking['room']['property']['host_id'] ?? ($property['host_id'] ?? null);
+$msgPropertyUrl = $this->Url->build(['controller' => 'Account', 'action' => 'messages', '?' => array_filter([
     'host_id' => $hostId,
     'lodge_name' => $propName,
     'booking_code' => $reference,
     'property_id' => $propId
-]]);
+])]);
 $canCancel = !in_array($statusLabel, ['CANCELLED', 'COMPLETED'], true) && $reference !== '';
 
 // Receipt Voucher Details
