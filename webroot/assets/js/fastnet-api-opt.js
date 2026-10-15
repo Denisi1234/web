@@ -5,7 +5,7 @@ window.FastAPIOpt = (function () {
   var BADGE_MAPS = {
     payout:  { def: 'yellow', m: { processing: 'yellow', paid: 'green', failed: 'red' } },
     booking: { def: 'yellow', m: { confirmed: 'blue', completed: 'green', cancelled: 'red', canceled: 'red' } },
-    verify:  { def: 'yellow', m: { approved: 'green', rejected: 'red', suspended: 'red', changes_requested: 'blue' } },
+    verify:  { def: 'yellow', m: { approved: 'green', active: 'green', rejected: 'red', suspended: 'red', changes_requested: 'blue' } },
     lodge:   { def: 'blue',   m: { approved: 'green', rejected: 'red', changes_requested: 'blue', active: 'green', pending: 'yellow' } },
     ticket:  { def: 'blue',   m: { open: 'yellow', resolved: 'green' } },
     request: { def: 'yellow', m: { completed: 'green', cancelled: 'red' } }

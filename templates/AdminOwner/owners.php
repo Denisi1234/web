@@ -40,7 +40,12 @@ if (empty($list)) $list = $users;
           $name = $o['name'] ?? $o['owner_name'] ?? '—';
           $email = $o['email'] ?? $o['owner_email'] ?? '';
           $st = strtolower((string)($o['status'] ?? $o['account_status'] ?? $o['verification_status'] ?? 'pending'));
-          $badge = $st === 'approved' ? 'green' : ($st === 'rejected' ? 'red' : ($st === 'suspended' ? 'red' : 'yellow'));
+          // Account status Active means the owner is approved (backend sets
+          // Active on approval), so it renders the same green Approved badge.
+          $isApproved = in_array($st, ['active', 'approved'], true);
+          $isPending = in_array($st, ['pending', 'pending verification'], true);
+          $badge = $isApproved ? 'green' : ($st === 'rejected' || $st === 'suspended' ? 'red' : 'yellow');
+          $badgeLabel = $isApproved ? 'approved' : ($isPending ? 'pending' : $st);
           // Backend financial-summary keys are gross_booking_value /
           // platform_commission / owner_earnings. The 0.9 fallback invented a
           // split when the backend omitted the row — it never omits it.
@@ -51,7 +56,7 @@ if (empty($list)) $list = $users;
         <tr>
           <td><div style="font-weight:600"><?= h($name) ?> <span style="font-size:11px;font-weight:400;color:var(--p-text-2)">#<?= h($oid) ?></span></div><div style="font-size:12px;color:var(--p-text-2)"><?= h($email) ?></div></td>
           <td style="font-size:13px"><?= h($o['phone'] ?? $o['phone_number'] ?? '') ?></td>
-          <td><span class="p-badge <?= $badge ?>"><?= h($st) ?></span></td>
+          <td><span class="p-badge <?= $badge ?>"><?= h($badgeLabel) ?></span></td>
           <td style="text-align:right"><div style="font-weight:600">TSh <?= number_format((float)$gross) ?></div><div style="font-size:11px;color:var(--p-text-2)">Net TSh <?= number_format((float)$net) ?></div></td>
           <td>
             <?php if (empty($oid)): ?>
