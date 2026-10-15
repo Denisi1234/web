@@ -92,6 +92,24 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
 .cds-bubble.is-guest{background:linear-gradient(135deg,#0f62fe 0%,#0050e6 100%);color:#fff;border-bottom-right-radius:2px;box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .cds-bubble.is-host{background:#fff;color:#161616;border:1px solid #e5e7eb;border-bottom-left-radius:2px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
 .cds-bubble-meta{display:flex;align-items:center;justify-content:flex-end;gap:4px;margin-top:4px;font-size:10px;opacity:.85}
+.cds-sysnotice{align-self:center;background:#e8eaf0;color:#5b6472;padding:6px 14px;border-radius:10px;font-size:11.5px;font-weight:600;margin:6px 0;max-width:85%;text-align:center;line-height:1.5}
+.cds-quote{border-left:3px solid #0f62fe;background:rgba(15,98,254,.08);border-radius:6px;padding:6px 10px;margin-bottom:6px;font-size:12.5px}
+.cds-quote .q-name{font-weight:800;color:#0f62fe;font-size:11.5px;margin-bottom:2px}
+.cds-quote .q-text{color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.cds-bubble.is-guest .cds-quote{background:rgba(255,255,255,.18)}
+.cds-bubble.is-guest .cds-quote .q-name{color:#fff}
+.cds-bubble.is-guest .cds-quote .q-text{color:#e8efff}
+.cds-msg-hoveract{position:absolute;top:50%;transform:translateY(-50%);display:none;gap:4px}
+.cds-msg-row.is-guest .cds-msg-hoveract{left:-38px}
+.cds-msg-row.is-host .cds-msg-hoveract{right:-38px}
+.cds-msg-row{position:relative}
+.cds-msg-row:hover .cds-msg-hoveract{display:flex}
+.cds-hoverbtn{width:28px;height:28px;border-radius:50%;border:1px solid #e5e7eb;background:#fff;color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px}
+.cds-hoverbtn:hover{color:#0f62fe;border-color:#0f62fe}
+.cds-replybar{display:none;align-items:center;gap:10px;background:#f3f4f6;border-top:1px solid #e5e7eb;padding:8px 16px;font-size:12.5px}
+.cds-replybar.open{display:flex}
+.cds-replybar .q-text{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#374151}
+.cds-replybar button{background:none;border:none;color:#6b7280;cursor:pointer;font-size:14px}
 .cds-quick-replies{padding:8px 16px;background:#fff;border-top:1px solid #f0f0f0;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
 .cds-quick-chip{padding:5px 12px;background:#fff;border:1px solid #e5e7eb;border-radius:100px;font-size:12px;font-weight:700;color:#0f62fe;white-space:nowrap;cursor:pointer;transition:all .15s ease}
 .cds-quick-chip:hover{background:#0f62fe;color:#fff;border-color:#0f62fe}
@@ -189,7 +207,7 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
             </a>
             <div class="cds-chat-avatar"><?= h($initial($partnerName)) ?></div>
             <div>
-              <div class="cds-chat-header-title"><?= h($partnerName !== '' ? $partnerName : 'Conversation') ?></div>
+              <div class="cds-chat-header-title" id="chatPartnerName"><?= h($partnerName !== '' ? $partnerName : 'Conversation') ?></div>
               <div class="cds-chat-header-sub"><?= h($lodgeName !== '' ? $lodgeName : ucfirst($partnerRole !== '' ? $partnerRole : 'chat')) ?></div>
             </div>
           </div>
@@ -255,6 +273,13 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
         </div>
 
         <div class="cds-chat-error" id="chatError" role="alert"></div>
+        <div class="cds-replybar" id="replyBar">
+          <div style="border-left:3px solid #0f62fe;padding-left:10px;flex:1;min-width:0">
+            <div class="q-name" id="replyName" style="font-weight:800;color:#0f62fe;font-size:11.5px"></div>
+            <div class="q-text" id="replyText"></div>
+          </div>
+          <button type="button" onclick="cancelReply()" aria-label="Cancel reply"><i class="fa-solid fa-xmark"></i></button>
+        </div>
         <form class="cds-chat-input-bar" id="chatForm">
           <input type="text" id="chatInput" class="cds-chat-input-field" placeholder="Type a message..." autocomplete="off" maxlength="2000">
           <button type="submit" class="cds-chat-send-btn" id="chatSendBtn" title="Send message">
@@ -295,6 +320,19 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
   var initialMessages = <?= json_encode($initialMessages, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
   var seenIds = {};
   var pollTimer = null;
+  var replyTo = null; // {id, text, name} quoted message or null
+  var POLL_MS = 2500;
+
+  function sysNotice() {
+    var who = partnerLabel();
+    return 'This is the start of your conversation with ' + who + '. Messages here are about your stay — keep payments inside FastNet.';
+  }
+
+  function partnerLabel() {
+    var nm = document.getElementById('chatPartnerName');
+    var base = nm ? nm.textContent.trim() : '';
+    return base !== '' ? base : 'your host';
+  }
 
   function escapeHtml(s) {
     var d = document.createElement('div');
@@ -345,6 +383,15 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
     }
   }
 
+  function quoteHtml(msg) {
+    var q = msg && msg.reply_to ? msg.reply_to : null;
+    if (!q || !q.text) return '';
+    var nm = q.sender_name || 'Guest';
+    var tx = String(q.text);
+    if (tx.length > 120) tx = tx.slice(0, 117) + '...';
+    return '<div class="cds-quote"><div class="q-name">' + escapeHtml(nm) + '</div><div class="q-text">' + escapeHtml(tx) + '</div></div>';
+  }
+
   function renderMessage(msg) {
     var feed = document.getElementById('chatFeed');
     if (!feed || !msg || typeof msg !== 'object') return;
@@ -354,10 +401,26 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
     var mine = currentUserId > 0 && Number(msg.sender_id) === currentUserId;
     var row = document.createElement('div');
     row.className = 'cds-msg-row ' + (mine ? 'is-guest' : 'is-host');
+    if (id !== '' && id.indexOf('local-') !== 0) {
+      row.setAttribute('data-mid', id);
+      var act = document.createElement('span');
+      act.className = 'cds-msg-hoveract';
+      var rb = document.createElement('button');
+      rb.type = 'button';
+      rb.className = 'cds-hoverbtn';
+      rb.title = 'Reply';
+      rb.innerHTML = '<i class="fa-solid fa-reply"></i>';
+      rb.setAttribute('data-reply-id', id);
+      act.appendChild(rb);
+      row.appendChild(act);
+    }
     var check = mine ? '<i class="fa-solid fa-check-double" style="font-size:10px;margin-left:4px;color:#93c5fd"></i>' : '';
-    row.innerHTML = '<div class="cds-bubble ' + (mine ? 'is-guest' : 'is-host') + '">' +
-      escapeHtml(msg.text || '') +
-      '<div class="cds-bubble-meta"><span>' + escapeHtml(fmtTime(msg.created_at) || 'Just now') + '</span>' + check + '</div></div>';
+    var bubble = document.createElement('div');
+    bubble.className = 'cds-bubble ' + (mine ? 'is-guest' : 'is-host');
+    bubble.innerHTML = quoteHtml(msg) + '<span></span>' +
+      '<div class="cds-bubble-meta"><span>' + escapeHtml(fmtTime(msg.created_at) || 'Just now') + '</span>' + check + '</div>';
+    bubble.querySelector('span').textContent = msg.text || '';
+    row.appendChild(bubble);
     feed.appendChild(row);
   }
 
@@ -366,8 +429,13 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
     if (!feed) return;
     feed.innerHTML = '';
     seenIds = {};
+    var notice = document.createElement('div');
+    notice.className = 'cds-sysnotice';
+    notice.textContent = sysNotice();
+    feed.appendChild(notice);
     var lastDay = '';
-    (Array.isArray(list) ? list : []).forEach(function (msg) {
+    var rows = Array.isArray(list) ? list : [];
+    rows.forEach(function (msg) {
       var day = fmtDay(msg.created_at);
       if (day !== '' && day !== lastDay) {
         lastDay = day;
@@ -378,11 +446,41 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
       }
       renderMessage(msg);
     });
-    if (!feed.children.length) {
-      feed.innerHTML = '<div class="cds-date-pill">No messages yet — say hello below.</div>';
+    if (!rows.length) {
+      var empty = document.createElement('div');
+      empty.className = 'cds-date-pill';
+      empty.textContent = 'No messages yet — say hello below.';
+      feed.appendChild(empty);
     }
     scrollToBottom();
   }
+
+  function setReply(id) {
+    var feed = document.getElementById('chatFeed');
+    var row = feed ? feed.querySelector('[data-mid="' + String(id).replace(/"/g, '') + '"]') : null;
+    var bubble = row ? row.querySelector('.cds-bubble') : null;
+    var text = '';
+    if (bubble) {
+      var spans = bubble.querySelectorAll(':scope > span');
+      text = spans.length ? spans[0].textContent : bubble.textContent;
+    }
+    replyTo = { id: id, text: text.slice(0, 200) };
+    var bar = document.getElementById('replyBar');
+    var rName = document.getElementById('replyName');
+    var rText = document.getElementById('replyText');
+    var mineRow = row && row.classList.contains('is-guest');
+    if (rName) rName.textContent = mineRow ? 'You' : partnerLabel();
+    if (rText) rText.textContent = text.slice(0, 120);
+    if (bar) bar.classList.add('open');
+    var input = document.getElementById('chatInput');
+    if (input) input.focus();
+  }
+
+  window.cancelReply = function () {
+    replyTo = null;
+    var bar = document.getElementById('replyBar');
+    if (bar) bar.classList.remove('open');
+  };
 
   function scrollToBottom() {
     var feed = document.getElementById('chatFeed');
@@ -478,11 +576,14 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
     hideError();
     if (input) input.value = '';
     if (btn) btn.disabled = true;
+    var payload = { recipient_id: partnerId, lodge_name: lodgeName, text: body.slice(0, 2000) };
+    if (replyTo && replyTo.id) payload.reply_to_id = replyTo.id;
+    window.cancelReply();
     fetch(sendEndpoint, {
       method: 'POST',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ recipient_id: partnerId, lodge_name: lodgeName, text: body.slice(0, 2000) })
+      body: JSON.stringify(payload)
     })
       .then(function (r) {
         return r.json().catch(function () { return {}; }).then(function (data) {
@@ -529,8 +630,24 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
         submitChatMessage();
       });
     }
+    var feed = document.getElementById('chatFeed');
+    if (feed) {
+      feed.addEventListener('click', function (e) {
+        var btn = e.target && e.target.closest ? e.target.closest('[data-reply-id]') : null;
+        if (btn) setReply(btn.getAttribute('data-reply-id'));
+      });
+    }
+    // Live updates: fast while the tab is visible, paused when hidden.
+    // Poll immediately on focus too so a reply sent from another device
+    // appears the moment the user returns.
     pollMessages();
-    pollTimer = setInterval(function () { pollMessages(); }, 5000);
+    pollTimer = setInterval(function () {
+      if (!document.hidden) pollMessages();
+    }, POLL_MS);
+    window.addEventListener('focus', function () { pollMessages(); });
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) pollMessages();
+    });
   });
 })();
 </script>

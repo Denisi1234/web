@@ -284,11 +284,15 @@ trait AccountMessagesTrait
 
         // The backend persists text only (no attachment/type columns) — send
         // exactly what is stored so the UI never implies richer messaging.
+        // reply_to_id carries a WhatsApp-style quote when replying.
         $payload = [
             'recipient_id' => $recipientId,
             'lodge_name' => $lodgeName !== '' ? $lodgeName : 'Property chat',
             'text' => $text,
         ];
+        if (isset($data['reply_to_id']) && (int)$data['reply_to_id'] > 0) {
+            $payload['reply_to_id'] = (int)$data['reply_to_id'];
+        }
 
         try {
             $result = $this->apiClient->post('/messages', $payload, $headers);

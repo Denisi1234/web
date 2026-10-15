@@ -188,11 +188,15 @@ trait HostMessagesTrait
         }
 
         try {
-            $result = $this->apiClient->post('/messages', [
+            $sendPayload = [
                 'recipient_id' => $recipientId,
                 'lodge_name' => $lodgeName !== '' ? $lodgeName : 'Property chat',
                 'text' => $text,
-            ], $this->hostHeaders());
+            ];
+            if (isset($data['reply_to_id']) && (int)$data['reply_to_id'] > 0) {
+                $sendPayload['reply_to_id'] = (int)$data['reply_to_id'];
+            }
+            $result = $this->apiClient->post('/messages', $sendPayload, $this->hostHeaders());
         } catch (\Throwable $e) {
             $result = null;
         }
