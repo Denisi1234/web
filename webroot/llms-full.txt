@@ -1,11 +1,11 @@
 # FastNet Stays — Comprehensive Entity & Knowledge Architecture
 
 ## Overview
-FastNet Stays (https://www.fastnetstays.com) is a digital hospitality platform that connects guests with hotels, luxury lodges, beach resorts, and vacation rentals throughout Tanzania and East Africa.
+FastNet Stays (https://fastnetstays.com) is a digital hospitality platform that connects guests with hotels, luxury lodges, beach resorts, and vacation rentals throughout Tanzania and East Africa.
 
 ## Entity Graph
 - **Entity Name:** FastNet Stays
-- **Domain:** https://www.fastnetstays.com
+- **Domain:** https://fastnetstays.com
 - **Office:** Sky City, First Floor, Opp Mlimani City, Dar es Salaam, Tanzania
 - **Official Phone:** 0624 105 850 (+255624105850)
 - **Support Email:** support@fastnetstays.com
@@ -22,13 +22,13 @@ FastNet Stays (https://www.fastnetstays.com) is a digital hospitality platform t
 4. **Host Management:** Free listing creation with instant photo uploads, pricing control, and reservation monitoring for property owners.
 
 ## Authority & Canonical URLs
-- **Homepage:** https://www.fastnetstays.com
-- **Hotel Search:** https://www.fastnetstays.com/
-- **Destination Guides:** https://www.fastnetstays.com/destinations
-- **Zanzibar Stays:** https://www.fastnetstays.com/?city=Zanzibar
-- **Dar es Salaam Stays:** https://www.fastnetstays.com/?city=Dar%20es%20Salaam
-- **Arusha / Safari Stays:** https://www.fastnetstays.com/?city=Arusha
-- **Host Registration:** https://www.fastnetstays.com/join-us
-- **Support & FAQ:** https://www.fastnetstays.com/faq
-- **Terms of Service:** https://www.fastnetstays.com/terms-of-service
-- **Privacy Policy:** https://www.fastnetstays.com/privacy-policy
+- **Homepage:** https://fastnetstays.com
+- **Hotel Search:** https://fastnetstays.com/
+- **Destination Guides:** https://fastnetstays.com/destinations
+- **Zanzibar Stays:** https://fastnetstays.com/?city=Zanzibar
+- **Dar es Salaam Stays:** https://fastnetstays.com/?city=Dar%20es%20Salaam
+- **Arusha / Safari Stays:** https://fastnetstays.com/?city=Arusha
+- **Host Registration:** https://fastnetstays.com/join-us
+- **Support & FAQ:** https://fastnetstays.com/faq
+- **Terms of Service:** https://fastnetstays.com/terms-of-service
+- **Privacy Policy:** https://fastnetstays.com/privacy-policy

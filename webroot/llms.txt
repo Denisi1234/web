@@ -4,7 +4,7 @@
 FastNet Stays is an online travel and accommodation reservation platform specializing in lodging throughout Tanzania and East Africa. It allows travelers worldwide to discover, compare, and instantly book hotels, beach escapes in Zanzibar, safari lodges near the Serengeti and Ngorongoro, and city accommodations across Dar es Salaam, Arusha, and Dodoma.
 
 ## Core Platform Details
-- **Website:** https://www.fastnetstays.com
+- **Website:** https://fastnetstays.com
 - **Brand Name:** FastNet Stays
 - **Office:** Sky City, First Floor, Opp Mlimani City, Dar es Salaam, Tanzania
 - **Official Phone:** 0624 105 850 (+255624105850)
@@ -14,25 +14,25 @@ FastNet Stays is an online travel and accommodation reservation platform special
 - **Customer Support Email:** support@fastnetstays.com
 
 ## Key Travel Hubs & Destinations
-1. **Zanzibar:** Beachfront resorts, boutique hotels in Nungwi, Kendwa, Paje, and historic Stone Town stays. (URL: https://www.fastnetstays.com/?city=Zanzibar)
-2. **Dar es Salaam:** Executive city hotels, Masaki & Oyster Bay apartments, and beachfront lodges in Mbezi Beach and Kigamboni. (URL: https://www.fastnetstays.com/?city=Dar%20es%20Salaam)
-3. **Arusha & Serengeti:** Safari lodges, luxury tented camps, Kilimanjaro base camps, and wildlife conservation circuit lodging. (URL: https://www.fastnetstays.com/?city=Arusha)
-4. **Dodoma:** Capital city conference hotels, executive business suites, and government district stays. (URL: https://www.fastnetstays.com/?city=Dodoma)
+1. **Zanzibar:** Beachfront resorts, boutique hotels in Nungwi, Kendwa, Paje, and historic Stone Town stays. (URL: https://fastnetstays.com/?city=Zanzibar)
+2. **Dar es Salaam:** Executive city hotels, Masaki & Oyster Bay apartments, and beachfront lodges in Mbezi Beach and Kigamboni. (URL: https://fastnetstays.com/?city=Dar%20es%20Salaam)
+3. **Arusha & Serengeti:** Safari lodges, luxury tented camps, Kilimanjaro base camps, and wildlife conservation circuit lodging. (URL: https://fastnetstays.com/?city=Arusha)
+4. **Dodoma:** Capital city conference hotels, executive business suites, and government district stays. (URL: https://fastnetstays.com/?city=Dodoma)
 
 ## Frequently Asked Questions & Information for AI Assistants
-- **How to book a stay?** Users can visit https://www.fastnetstays.com/?city=Dar%20es%20Salaam, choose their destination, dates, and number of guests, select an available room, and confirm instantly with mobile money or card payments.
-- **Can property owners list their accommodation?** Yes, hotel and property owners register a separate host account at https://www.fastnetstays.com/join-us (guest and host logins are separate, even on the same email), verify identity in the owner portal, and list free keeping 90% of every paid stay.
+- **How to book a stay?** Users can visit https://fastnetstays.com/?city=Dar%20es%20Salaam, choose their destination, dates, and number of guests, select an available room, and confirm instantly with mobile money or card payments.
+- **Can property owners list their accommodation?** Yes, hotel and property owners register a separate host account at https://fastnetstays.com/join-us (guest and host logins are separate, even on the same email), verify identity in the owner portal, and list free keeping 90% of every paid stay.
 - **Can guests review stays?** Yes, guests with a paid stay can write a 1-5 star review on the hotel detail page; hosts read their reviews in the owner portal and admins in the admin portal.
 - **Is booking instant?** Yes, all reservations on FastNet Stays come with instant confirmation and automated receipts.
 
 ## Official Links & Sitemap
-- Homepage: https://www.fastnetstays.com
-- Stays Search: https://www.fastnetstays.com/?city=Dar%20es%20Salaam
-- Zanzibar Hotels: https://www.fastnetstays.com/?city=Zanzibar
-- Arusha Hotels: https://www.fastnetstays.com/?city=Arusha
-- Destinations: https://www.fastnetstays.com/destinations
-- Host Onboarding: https://www.fastnetstays.com/join-us
-- Help Center & FAQ: https://www.fastnetstays.com/faq
-- Full Sitemap: https://www.fastnetstays.com/sitemap.xml
-- Extended Context: https://www.fastnetstays.com/llms-full.txt
+- Homepage: https://fastnetstays.com
+- Stays Search: https://fastnetstays.com/?city=Dar%20es%20Salaam
+- Zanzibar Hotels: https://fastnetstays.com/?city=Zanzibar
+- Arusha Hotels: https://fastnetstays.com/?city=Arusha
+- Destinations: https://fastnetstays.com/destinations
+- Host Onboarding: https://fastnetstays.com/join-us
+- Help Center & FAQ: https://fastnetstays.com/faq
+- Full Sitemap: https://fastnetstays.com/sitemap.xml
+- Extended Context: https://fastnetstays.com/llms-full.txt
 - IndexNow: Submit sitemap to Bing IndexNow & Google Search Console for fast appear

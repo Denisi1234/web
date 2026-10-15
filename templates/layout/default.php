@@ -6,7 +6,7 @@
         <title><?= $this->fetch('title') ? h($this->fetch('title')) . ' | fastnetstays.com' : 'FastNet Stays — Online Hotel Booking & Best Prices Guaranteed' ?></title>
         <meta name="description" content="<?= $this->fetch('description') ? h($this->fetch('description')) : 'Online Hotel Booking — FastNet Stays - Best Prices Guaranteed with Deals, Special Member Prices. Book Hotels, Lodges & Beach Resorts Across Tanzania! Mobile Friendly & Instant Confirmation.' ?>" />
 	    <meta name="author" content="FastNet Stays" />
-	    <meta name="website" content="https://www.fastnetstays.com" />
+	    <meta name="website" content="https://fastnetstays.com" />
 	    <meta name="email" content="support@fastnetstays.com" />
         <meta name="csrfToken" content="<?= $this->request->getAttribute('csrfToken'); ?>">
 	    <meta name="version" content="1.0.0" />
@@ -19,13 +19,13 @@
         if (in_array($canonPath, ['/', '/hotel-list-01', '/hotels', '/stays'], true) && $canonCity !== '') {
             $canonQs = '?city=' . rawurlencode(trim((string)$canonCity));
         }
-        $canonUrl = 'https://www.fastnetstays.com' . $canonPath . $canonQs;
+        $canonUrl = 'https://fastnetstays.com' . $canonPath . $canonQs;
         ?>
         <link rel="canonical" href="<?= h($canonUrl) ?>" />
         <link rel="alternate" hreflang="en-TZ" href="<?= h($canonUrl) ?>" />
         <!-- sw-TZ omitted: no Swahili content ships yet — claiming it would mislead crawlers -->
         <link rel="alternate" hreflang="x-default" href="<?= h($canonUrl) ?>" />
-        <link rel="alternate" type="text/plain" href="https://www.fastnetstays.com/llms.txt" title="LLM Knowledge Graph" />
+        <link rel="alternate" type="text/plain" href="https://fastnetstays.com/llms.txt" title="LLM Knowledge Graph" />
         <!-- Production: resource hints — fast LCP + CLS -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -47,7 +47,7 @@
         <!-- Open Graph / Facebook / WhatsApp -->
         <?php
         $ogDesc = $this->fetch('og_description') ?: 'Online Hotel Booking — FastNet Stays - Best Prices Guaranteed with Deals, Special Member Prices. Book Hotels, Lodges & Beach Resorts Across Tanzania!';
-        $ogImg = $this->fetch('og_image') ?: 'https://www.fastnetstays.com/favicon-512.png';
+        $ogImg = $this->fetch('og_image') ?: 'https://fastnetstays.com/favicon-512.png';
         $ogTitle = $this->fetch('title') ? h($this->fetch('title')) . ' | fastnetstays.com' : 'FastNet Stays — Online Hotel Booking & Best Prices Guaranteed';
         $gVerify = trim((string)\Cake\Core\env('GOOGLE_SITE_VERIFICATION', ''));
         $bVerify = trim((string)\Cake\Core\env('BING_SITE_VERIFICATION', ''));
@@ -165,12 +165,12 @@
 
             <!-- SEO: crawlable sitelinks anchors (matches JSON-LD SiteNavigationElement) - helps Google generate expanded sitelinks like screenshot) -->
             <nav aria-label="Sitelinks" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">
-                <a href="https://www.fastnetstays.com/?city=Dar%20es%20Salaam">FastNet Hotels</a>
-                <a href="https://www.fastnetstays.com/?city=Dar%20es%20Salaam#track-prices">Track and Compare Hotel Prices</a>
-                <a href="https://www.fastnetstays.com/">Hotel Deals</a>
-                <a href="https://www.fastnetstays.com/?city=Zanzibar">Hotels to Zanzibar</a>
-                <a href="https://www.fastnetstays.com/?city=Arusha">Hotels to Arusha</a>
-                <a href="https://www.fastnetstays.com/">Stays</a>
+                <a href="https://fastnetstays.com/?city=Dar%20es%20Salaam">FastNet Hotels</a>
+                <a href="https://fastnetstays.com/?city=Dar%20es%20Salaam#track-prices">Track and Compare Hotel Prices</a>
+                <a href="https://fastnetstays.com/">Hotel Deals</a>
+                <a href="https://fastnetstays.com/?city=Zanzibar">Hotels to Zanzibar</a>
+                <a href="https://fastnetstays.com/?city=Arusha">Hotels to Arusha</a>
+                <a href="https://fastnetstays.com/">Stays</a>
             </nav>
 
             <a id="back2Top" class="top-scroll" title="Back to top" href="#"><i class="fa-solid fa-sort-up"></i></a>

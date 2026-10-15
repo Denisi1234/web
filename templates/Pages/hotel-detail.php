@@ -102,7 +102,7 @@ $ogImg = '';
 foreach (($galleryImages ?? []) as $g) {
     $g = trim((string)$g);
     if (str_starts_with($g, 'http://') || str_starts_with($g, 'https://')) { $ogImg = $g; break; }
-    if (str_starts_with($g, '/')) { $ogImg = 'https://www.fastnetstays.com' . $g; break; }
+    if (str_starts_with($g, '/')) { $ogImg = 'https://fastnetstays.com' . $g; break; }
 }
 if ($ogImg !== '') $this->assign('og_image', $ogImg);
 // Hotel structured data for Google rich results + AI answer engines.
@@ -110,7 +110,7 @@ $hdHotel = [
     '@context' => 'https://schema.org',
     '@type' => 'Hotel',
     'name' => $propTitle,
-    'url' => 'https://www.fastnetstays.com/hotel-detail/' . $detailPropertyId,
+    'url' => 'https://fastnetstays.com/hotel-detail/' . $detailPropertyId,
     'address' => [
         '@type' => 'PostalAddress',
         'streetAddress' => $propAddress,

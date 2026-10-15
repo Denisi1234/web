@@ -1,4 +1,4 @@
-# Robots.txt for https://www.fastnetstays.com
+# Robots.txt for https://fastnetstays.com
 # Optimized for Web Search Engines and AI Search Engines (ChatGPT, Perplexity, Claude, Gemini)
 
 User-agent: *
@@ -76,5 +76,5 @@ Disallow: /travel/preferences
 Disallow: /notifications/preferences
 
 # Sitemaps & LLM Context Discovery
-Sitemap: https://www.fastnetstays.com/sitemap.xml
-# LLM Knowledge Graph: https://www.fastnetstays.com/llms.txt
+Sitemap: https://fastnetstays.com/sitemap.xml
+# LLM Knowledge Graph: https://fastnetstays.com/llms.txt
