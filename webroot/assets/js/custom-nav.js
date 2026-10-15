@@ -252,7 +252,9 @@
 			}
 	})();
 
-	// Range Slider Script
+	// Range Slider Script (guarded: the ionRangeSlider plugin is not bundled;
+	// without the guard this throws on every page and kills subsequent scripts)
+	if (typeof $ !== 'undefined' && $.fn && typeof $.fn.ionRangeSlider === 'function' && $(".js-range-slider").length) {
 	$(".js-range-slider").ionRangeSlider({
 		type: "single",
 		min: 0,
@@ -261,6 +263,7 @@
 		to: 900,
 		grid: true
 	});
+	}
 
 	// Custom Dropdown
 	const dropdowns = document.querySelectorAll('.dropdowns');

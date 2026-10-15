@@ -651,7 +651,7 @@ $qrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=130x130&margin=0&
           <!-- 1. Top Header Row -->
           <div class="receipt-header-row">
             <div class="receipt-logo-brand">
-              <img src="/assets/images/fastnet_logo_icon.png" alt="FastNet" onerror="this.onerror=null;this.src='/assets/images/favicon.ico'">
+              <img src="/assets/img/favicon-48x48.png" alt="FastNet" onerror="this.onerror=null;this.style.display='none'">
               <span class="receipt-brand-text">fastnetstays.com</span>
             </div>
             <div class="receipt-title-box">
@@ -939,7 +939,7 @@ if (confirmRescheduleBtn) {
     confirmRescheduleBtn.disabled = true;
     try {
       const csrf = document.querySelector('meta[name="csrfToken"]')?.content || '';
-      const res = await fetch('/account/reschedule-apply', {
+      const res = await fetch('/my-booking/reschedule/apply', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
