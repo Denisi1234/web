@@ -181,4 +181,4 @@
   FL.skeletonBlock = skeletonBlock;
   FL.region = region;
   global.FastnetLoading = FL;
-})();
+})(window);

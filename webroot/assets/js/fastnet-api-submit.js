@@ -3,7 +3,9 @@
   var FastAPI = window.FastAPI || {};
   var Opt = window.FastAPIOpt || {};
   function setBusy(form, on) {
-    (FastAPI.btnDots || function () {})(form.querySelector('button[type="submit"], input[type="submit"]'), on);
+    try {
+      (FastAPI.btnDots || function () {})(form.querySelector('button[type="submit"], input[type="submit"]'), on);
+    } catch (e) {}
   }
   async function submitDirect(form) {
     var spec = (form.getAttribute('data-api') || '').trim().split(/\s+/);
@@ -91,14 +93,17 @@
         else window.location.reload();
       }
     } catch (e) {
-      if ((opt === 'patch' || opt === 'remove') && scope && snap) Opt.restore(scope, snap);
-      setBusy(form, false);
       if (e instanceof TypeError) {
-        // Network/CORS/offline → fall back to native CakePHP submit (proxy path).
-        form.dataset.fapi = '1';
-        form.submit();
+        // Network/CORS/offline/mixed-content → native CakePHP submit while
+        // the form is still connected. restore() below replaces the row and
+        // detaches this form, after which submit() is canceled by the
+        // browser as "form is not connected".
+        setBusy(form, false);
+        nativeFallback(form);
         return;
       }
+      if ((opt === 'patch' || opt === 'remove') && scope && snap) Opt.restore(scope, snap);
+      setBusy(form, false);
       if (e && e.message === 'unauthorized') return; // FastAPI.req() already redirected to login
       var msg = (e && e.message) || 'Request failed. Please try again.';
       if (e && e.status >= 500) {
@@ -113,13 +118,22 @@
   // Last-resort fallback: if the fast path throws synchronously (or the
   // async run rejects outside its own try/catch), a click must NEVER die
   // silently with no request. Fall back to the native CakePHP submit,
-  // which posts to the same server action and always answers.
+  // which posts to the same server action and always answers. A form that
+  // was already detached (row restored) cannot submit — reload instead so
+  // the user gets fresh server truth rather than a dead page.
   function nativeFallback(form) {
     try {
       form.dataset.fapi = '1';
+      if (form.isConnected === false) {
+        window.location.reload();
+        return;
+      }
       form.submit();
     } catch (e2) {
-      FastAPI.toast('Request failed. Please try again.', 'err');
+      try {
+        if (form.isConnected === false) window.location.reload();
+        else FastAPI.toast('Request failed. Please try again.', 'err');
+      } catch (e3) {}
     }
   }
   function runDirect(form) {
