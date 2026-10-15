@@ -110,6 +110,35 @@
     }
   }
 
+  // Last-resort fallback: if the fast path throws synchronously (or the
+  // async run rejects outside its own try/catch), a click must NEVER die
+  // silently with no request. Fall back to the native CakePHP submit,
+  // which posts to the same server action and always answers.
+  function nativeFallback(form) {
+    try {
+      form.dataset.fapi = '1';
+      form.submit();
+    } catch (e2) {
+      FastAPI.toast('Request failed. Please try again.', 'err');
+    }
+  }
+  function runDirect(form) {
+    var p = null;
+    try {
+      p = submitDirect(form);
+    } catch (syncErr) {
+      nativeFallback(form);
+      return;
+    }
+    if (p && typeof p.catch === 'function') {
+      p.catch(function (asyncErr) {
+        // submitDirect handles its own errors with toasts/restore — this
+        // only fires for unexpected throws outside its try/catch.
+        if (asyncErr && !asyncErr._handled) nativeFallback(form);
+      });
+    }
+  }
+
   document.addEventListener('submit', function (e) {
     var form = e.target && e.target.tagName === 'FORM' ? e.target : null;
     if (!form || !form.getAttribute('data-api')) return;
@@ -122,9 +151,9 @@
       var confirmFn = (typeof window.fnsConfirm === 'function') ? window.fnsConfirm : function (msg) {
         return Promise.resolve(window.confirm(msg));
       };
-      confirmFn(c).then(function (ok) { if (ok) submitDirect(form); });
+      confirmFn(c).then(function (ok) { if (ok) runDirect(form); }, function () { runDirect(form); });
       return;
     }
-    submitDirect(form);
+    runDirect(form);
   }, true);
 })();
