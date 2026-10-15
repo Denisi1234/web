@@ -13,6 +13,7 @@ use App\Controller\Host\HostPropertyFormTrait;
 use App\Controller\Host\HostReviewsTrait;
 use App\Controller\Host\HostRoomsTrait;
 use App\Controller\Host\HostStaysTrait;
+use App\Controller\Host\HostVerificationTrait;
 
 /**
  * HostController — Owner portal adapted to web + mobile.
@@ -32,6 +33,7 @@ class HostController extends AppController
     use HostReviewsTrait;
     use HostRoomsTrait;
     use HostStaysTrait;
+    use HostVerificationTrait;
 
     public function initialize(): void
     {

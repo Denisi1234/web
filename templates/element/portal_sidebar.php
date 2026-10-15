@@ -45,6 +45,7 @@ $menu = $isAdmin ? [
   ]],
   ['WORKSPACE', [
     ['url' => '/host/onboarding', 'label' => 'Add property', 'icon' => 'fa-plus', 'match' => ['/host/onboarding']],
+    ['url' => '/host/verification', 'label' => 'Verification', 'icon' => 'fa-id-card', 'match' => ['/host/verification']],
     ['url' => '/host/profile', 'label' => 'Profile', 'icon' => 'fa-circle-user', 'match' => ['/host/profile']],
   ]],
 ];

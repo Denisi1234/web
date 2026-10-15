@@ -51,82 +51,19 @@ $juNeedsVerification = $juLoggedIn && $juRole === 'owner'
 </header>
 
 <?php if ($juLoggedIn && $isHost): ?>
-<!-- Owner verification (KYC). Shown only to a signed-in owner, and only while
-     the account is still "Pending Verification". Without this there is no path
-     for a host to submit the identity documents the admin queue reviews, so the
-     account would stay stuck. -->
-<section class="ju-section" id="verify-identity" style="scroll-margin-top:80px">
-  <div class="container" style="max-width:1140px">
-    <div class="ju-label">Verification</div>
-    <h2 class="ju-h2">Verify your identity</h2>
-    <p class="ju-lead mt-2" style="max-width:640px">
-      Required before your first property goes live. Our team reviews documents
-      manually — usually within one business day.
-    </p>
 
-    <form id="kycForm" enctype="multipart/form-data" novalidate style="max-width:860px">
-    <div class="d-grid gap-3 mt-2">
-     <div class="row g-3">
-      <div class="col-md-6">
-        <label class="form-label" for="kyc_full_name">Full legal name</label>
-        <input class="form-control" id="kyc_full_name" name="full_name" required maxlength="255" autocomplete="name">
-      </div>
-      <div class="col-md-6">
-        <label class="form-label" for="kyc_phone">Mobile money number</label>
-        <input class="form-control" id="kyc_phone" name="phone_number" required maxlength="255" autocomplete="tel" placeholder="0714 000 000">
-      </div>
-     </div>
-
-     <div>
-      <label class="form-label" for="kyc_id_number">National ID number</label>
-      <input class="form-control" id="kyc_id_number" name="id_number" required maxlength="255">
-     </div>
-
-     <div>
-      <label class="form-label" for="kyc_id_doc">Photo of your National ID</label>
-      <input class="form-control" type="file" id="kyc_id_doc" name="id_document" accept="image/png,image/jpeg,image/webp" required>
-      <div class="form-text">JPG, PNG or WebP. Max 10 MB.</div>
-     </div>
-
-     <fieldset style="border:1px solid #e8eaed;border-radius:8px;padding:14px">
-      <legend style="font-size:13px;font-weight:600;padding:0 6px">Business registration <span class="text-muted" style="font-weight:400">(if registered)</span></legend>
-      <div class="row g-3">
-        <div class="col-md-6">
-          <label class="form-label" for="kyc_brn">Registration number</label>
-          <input class="form-control" id="kyc_brn" name="business_registration_number" maxlength="255">
-        </div>
-        <div class="col-md-6">
-          <label class="form-label" for="kyc_bdoc">Business licence photo</label>
-          <input class="form-control" type="file" id="kyc_bdoc" name="business_document" accept="image/png,image/jpeg,image/webp">
-        </div>
-      </div>
-    </fieldset>
-
-    <fieldset style="border:1px solid #e8eaed;border-radius:8px;padding:14px">
-      <legend style="font-size:13px;font-weight:600;padding:0 6px">Payout account <span class="text-muted" style="font-weight:400">(optional now, needed to withdraw)</span></legend>
-      <div class="row g-3">
-        <div class="col-md-4">
-          <label class="form-label" for="kyc_bank">Bank name</label>
-          <input class="form-control" id="kyc_bank" name="payout_bank_name" maxlength="255">
-        </div>
-        <div class="col-md-4">
-          <label class="form-label" for="kyc_acct">Account number</label>
-          <input class="form-control" id="kyc_acct" name="payout_account_number" maxlength="255">
-        </div>
-        <div class="col-md-4">
-          <label class="form-label" for="kyc_acctname">Account holder</label>
-          <input class="form-control" id="kyc_acctname" name="payout_account_name" maxlength="255">
-        </div>
-      </div>
-    </fieldset>
-
-    <div id="kycError" class="d-none" style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:10px 12px;border-radius:8px;font-size:13px"></div>
-   </div>
-   <button type="submit" class="btn-ju btn-ju-primary mt-3" id="kycSubmitBtn" style="width:auto;padding:0 28px">Submit for review</button>
-  </form>
+<!-- Identity verification lives in the owner portal now. Hosts pending
+     verification get a pointer instead of a public form. -->
+<section class="ju-section" style="padding-bottom:0"><div class="container" style="max-width:1140px">
+  <div class="ju-tile" style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
+    <div>
+      <div class="ju-label">Verification</div>
+      <h3 class="mt-1 mb-1" style="font-size:18px">Verify your identity</h3>
+      <p class="mb-0" style="font-size:14px;color:#525252;max-width:560px">Required before your first property goes live. Submit your documents from your host dashboard — usually reviewed within one business day.</p>
+    </div>
+    <a href="<?= $this->Url->build('/host/verification') ?>" class="btn-ju btn-ju-primary">Continue verification</a>
   </div>
-</section>
-<?= $this->Html->script('/assets/js/join-us.js?v=' . filemtime(WWW_ROOT . 'assets/js/join-us.js')) ?>
+</div></section>
 <?php endif; ?>
 
 <!-- Owner listings -->
@@ -157,7 +94,7 @@ $juNeedsVerification = $juLoggedIn && $juRole === 'owner'
   <h2 class="ju-h2">From sign-up to first payout in three steps</h2>
   <div class="row g-3 mt-3">
     <div class="col-md-4"><div class="ju-tile"><div class="num">Step 01</div><h3 class="mt-2">Create your host account</h3><p>Register a separate host account with its own sign-in. A guest login cannot list properties.</p>
-      <?php if ($isHost): ?><?php if ($juNeedsVerification): ?><a href="#verify-identity">Submit verification documents</a><?php else: ?><strong>Done — you're a host.</strong><?php endif; ?><?php else: ?><a href="<?= $this->Url->build('/signup?role=owner') ?>">Register as a host</a><?php endif; ?>
+      <?php if ($isHost): ?><?php if ($juNeedsVerification): ?><a href="<?= $this->Url->build('/host/verification') ?>">Submit verification documents</a><?php else: ?><strong>Done — you're a host.</strong><?php endif; ?><?php else: ?><a href="<?= $this->Url->build('/signup?role=owner') ?>">Register as a host</a><?php endif; ?>
     </div></div>
     <div class="col-md-4"><div class="ju-tile"><div class="num">Step 02</div><h3 class="mt-2">Describe your property and rooms</h3><p>Add photos, amenities, nightly rates and room inventory. Most hosts finish in under 20 minutes.</p><?php if ($isHost): ?><a href="<?= $this->Url->build('/host/onboarding') ?>">Start a listing</a><?php else: ?><a href="<?= $this->Url->build('/signup?role=owner') ?>">Sign up free to start</a><?php endif; ?></div></div>
     <div class="col-md-4"><div class="ju-tile"><div class="num">Step 03</div><h3 class="mt-2">Pass review and receive bookings</h3><p>Our team verifies quality and location, usually within 24 hours. Then you go live and payouts begin.</p><?php if ($isHost): ?><a href="<?= $this->Url->build('/host/dashboard') ?>">Open host dashboard</a><?php elseif (!$juLoggedIn): ?><a href="<?= $this->Url->build('/login?role=owner') ?>">Sign in to continue</a><?php else: ?><a href="<?= $this->Url->build('/signup?role=owner') ?>">Register as a host</a><?php endif; ?></div></div>

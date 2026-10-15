@@ -31,6 +31,7 @@ $hostLinks = [
     ['/host/reviews', 'Reviews', 'fa-star'],
     ['/host/earnings', 'Earnings', 'fa-wallet'],
     ['/host/onboarding', 'Onboard', 'fa-plus'],
+    ['/host/verification', 'Verification', 'fa-id-card'],
     ['/host/profile', 'Profile', 'fa-circle-user'],
 ];
 $links = $isAdminSection ? $adminLinks : $hostLinks;

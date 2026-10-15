@@ -132,7 +132,11 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/host/earnings', ['controller' => 'Host', 'action' => 'earnings']);
         $builder->connect('/host/earnings/request-payout', ['controller' => 'Host', 'action' => 'requestPayout']);
         // Owner KYC submission (POST /verification/owner + document uploads)
-        $builder->connect('/join-us/verify', ['controller' => 'Pages', 'action' => 'submitOwnerVerification']);
+        // lives in the owner portal now; the legacy public endpoint keeps
+        // working via 307 (method + body preserved).
+        $builder->redirect('/join-us/verify', '/host/verification', ['status' => 307]);
+        $builder->connect('/host/verification', ['controller' => 'Host', 'action' => 'verification'], ['_method' => 'GET']);
+        $builder->connect('/host/verification', ['controller' => 'Host', 'action' => 'submitVerification'], ['_method' => 'POST']);
         // Preference persistence (GET/POST travel/preferences)
         // E-receipt generation (POST /receipts/generate)
         $builder->connect('/booking-receipt', ['controller' => 'Bookings', 'action' => 'downloadReceipt']);
