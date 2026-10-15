@@ -34,12 +34,9 @@
         <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
         <link rel="preconnect" href="https://api.mapbox.com" crossorigin>
         <link rel="preconnect" href="https://api.fastnetstays.com" crossorigin>
-        <?php if (!in_array($this->getRequest()->getParam('controller'), ['Account'], true)): ?>
-        <link rel="preload" href="/assets/css/google-travel-layout.css?v=<?= filemtime(WWW_ROOT . 'assets/css/google-travel-layout.css') ?>" as="style">
-        <link rel="preload" href="/assets/css/google-travel-cards.css?v=<?= filemtime(WWW_ROOT . 'assets/css/google-travel-cards.css') ?>" as="style">
-        <?php else: ?>
-        <link rel="preload" href="/assets/css/google-travel-layout.css?v=<?= filemtime(WWW_ROOT . 'assets/css/google-travel-layout.css') ?>" as="style">
-        <?php endif; ?>
+        <?php $preloadV = filemtime(WWW_ROOT . 'assets/css/bootstrap.min.css'); $preloadFa = filemtime(WWW_ROOT . 'assets/css/fontawesome.css'); ?>
+        <link rel="preload" href="/assets/css/bootstrap.min.css?v=<?= $preloadV ?>" as="style">
+        <link rel="preload" href="/assets/css/fontawesome.css?v=<?= $preloadFa ?>" as="style">
         <meta http-equiv="x-dns-prefetch-control" content="on">
         <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
         <meta name="bingbot" content="index, follow, max-media-preview:large" />
