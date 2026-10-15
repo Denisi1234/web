@@ -24,8 +24,8 @@
 
     <div>
       <label class="form-label" for="kyc_id_doc">Photo of your National ID</label>
-      <input class="form-control" type="file" id="kyc_id_doc" name="id_document" accept="image/png,image/jpeg,image/webp" required>
-      <div class="form-text">JPG, PNG or WebP. Max 10 MB.</div>
+      <input class="form-control" type="file" id="kyc_id_doc" name="id_document" accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf" required>
+      <div class="form-text">JPG, PNG, WebP or PDF. Max 10 MB.</div>
     </div>
 
     <fieldset style="border:1px solid #e8eaed;border-radius:8px;padding:14px">
@@ -37,7 +37,7 @@
         </div>
         <div class="col-md-6">
           <label class="form-label" for="kyc_bdoc">Business licence photo</label>
-          <input class="form-control" type="file" id="kyc_bdoc" name="business_document" accept="image/png,image/jpeg,image/webp">
+          <input class="form-control" type="file" id="kyc_bdoc" name="business_document" accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf">
         </div>
       </div>
     </fieldset>

@@ -15,14 +15,14 @@
   // required=false allows an empty optional input.
   var checkFile = function (input, required, label) {
     if (!input || !input.files || input.files.length === 0) {
-      return required ? ('Please choose your ' + label + ' (JPG, PNG or WebP).') : '';
+      return required ? ('Please choose your ' + label + ' (JPG, PNG, WebP or PDF).') : '';
     }
     var f = input.files[0];
-    var okTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    var okTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
     var name = (f.name || '').toLowerCase();
-    var okExt = /\.(jpe?g|png|webp)$/.test(name);
+    var okExt = /\.(jpe?g|png|webp|pdf)$/.test(name);
     if (okTypes.indexOf(f.type) === -1 && !okExt) {
-      return label + ' must be a JPG, PNG or WebP photo. iPhone HEIC photos are not accepted — please retake or convert it first.';
+      return label + ' must be a JPG, PNG, WebP or PDF file. iPhone HEIC photos are not accepted — please retake or convert it first.';
     }
     if (f.size > 10 * 1024 * 1024) {
       return label + ' is too large. Please choose a file under 10 MB.';

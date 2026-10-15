@@ -127,6 +127,9 @@ function openOwnerDocs(ownerId) {
       var img = function (url, alt) {
         if (!url) return '';
         var u = String(url).replace(/"/g, '%22');
+        if (/\.pdf($|\?)/i.test(u)) {
+          return '<div style="margin:8px 0"><div style="font-size:12px;color:#6f6f6f;margin-bottom:4px">' + alt + ' (PDF)</div><a class="p-btn ghost" style="min-height:32px;font-size:12px" href="' + u + '" target="_blank" rel="noopener">Open PDF →</a></div>';
+        }
         return '<div style="margin:8px 0"><div style="font-size:12px;color:#6f6f6f;margin-bottom:4px">' + alt + '</div><a href="' + u + '" target="_blank" rel="noopener"><img src="' + u + '" alt="' + alt + '" style="max-width:100%;max-height:320px;border:1px solid #e0e0e0" loading="lazy"></a></div>';
       };
       var hist = '';
