@@ -66,6 +66,7 @@
         <?php else: ?>
         <div style="font-size:13.5px;color:#5f6368;">No reviews yet — be the first verified guest to stay here.</div>
         <?php endif; ?>
+        <button type="button" onclick="openWriteReviewFromDetails()" style="margin-top:12px;background:#0f62fe;border:1px solid #0f62fe;border-radius:9999px;padding:8px 18px;font-size:13px;font-weight:600;color:#fff;display:inline-flex;align-items:center;gap:6px;cursor:pointer"><i class="fa-regular fa-pen-to-square"></i> Write a Review</button>
       </div>
       <div class="modal-footer px-4 py-3" style="background:#f8f9fa;border-top:1px solid #e8eaed;">
         <button type="button" class="btn fw-bold px-4 py-2 rounded-pill" data-bs-dismiss="modal" style="background:#0f62fe;color:#fff;border:none;">Done</button>
@@ -88,6 +89,24 @@
   </div>
 </div>
 
+<script>
+window.openWriteReviewFromDetails = function () {
+  var propId = <?= (int)($detailPropertyId ?? 0) ?>;
+  var loggedIn = <?= !empty($isLoggedIn) ? 'true' : 'false' ?>;
+  var details = document.getElementById('propertyDetailsModal');
+  if (window.bootstrap && bootstrap.Modal && details) {
+    var inst = bootstrap.Modal.getInstance(details);
+    if (inst) inst.hide();
+  }
+  setTimeout(function () {
+    if (typeof window.openWriteReview === 'function') {
+      window.openWriteReview(propId, loggedIn);
+    } else {
+      window.location.href = loggedIn ? '#reviews' : '/login?redirect=' + encodeURIComponent('/hotel-detail/' + propId + '#reviews');
+    }
+  }, 150);
+};
+</script>
 <script>
 let currentLightboxIdx=0; const galleryImagesList=<?= json_encode($galleryImages) ?>; let detailMapInstance=null;
 function openPhotoLightbox(i){currentLightboxIdx=i;updateLightboxImg();document.getElementById('photo_lightbox_modal').style.display='flex'}

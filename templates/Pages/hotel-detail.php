@@ -314,7 +314,7 @@ $this->assign('hotel_jsonld', json_encode($hdHotel, JSON_UNESCAPED_SLASHES | JSO
 
   </div>
 </div>
-<?= $this->element('Hotel/hotel-detail-modals', ['galleryImages' => $galleryImages ?? [], 'propTitle' => $propTitle ?? '', 'propArea' => $propArea ?? '', 'propCity' => $propCity ?? '', 'propPrice' => $propPrice ?? 0, 'ratingLabel' => $ratingLabel ?? '', 'reviewsCount' => $reviewsCount ?? 0, 'score10' => $score10 ?? 0, 'detailPropertyId' => $detailPropertyId ?? 0, 'propDesc' => $propDesc ?? '', 'score10Fmt' => $score10Fmt ?? '']) ?>
+<?= $this->element('Hotel/hotel-detail-modals', ['galleryImages' => $galleryImages ?? [], 'propTitle' => $propTitle ?? '', 'propArea' => $propArea ?? '', 'propCity' => $propCity ?? '', 'propPrice' => $propPrice ?? 0, 'ratingLabel' => $ratingLabel ?? '', 'reviewsCount' => $reviewsCount ?? 0, 'score10' => $score10 ?? 0, 'detailPropertyId' => $detailPropertyId ?? 0, 'propDesc' => $propDesc ?? '', 'score10Fmt' => $score10Fmt ?? '', 'isLoggedIn' => $isLoggedIn ?? false]) ?>
 <?= $this->element('Hotel/write-review-modal', ['detailPropertyId' => $detailPropertyId ?? 0, 'propTitle' => $propTitle ?? '', 'isLoggedIn' => $isLoggedIn ?? false]) ?>
 <?= $this->Html->script('/assets/js/write-review.js?v=' . filemtime(WWW_ROOT . 'assets/js/write-review.js')) ?>
 <?php $hdJsonLd = $this->fetch('hotel_jsonld'); if ($hdJsonLd !== ''): ?>
