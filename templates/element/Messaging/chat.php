@@ -459,16 +459,16 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
     var feed = document.getElementById('chatFeed');
     var row = feed ? feed.querySelector('[data-mid="' + String(id).replace(/"/g, '') + '"]') : null;
     var bubble = row ? row.querySelector('.cds-bubble') : null;
+    var mineRow = !!(row && row.classList.contains('is-guest'));
     var text = '';
     if (bubble) {
       var spans = bubble.querySelectorAll(':scope > span');
       text = spans.length ? spans[0].textContent : bubble.textContent;
     }
-    replyTo = { id: id, text: text.slice(0, 200) };
+    replyTo = { id: id, text: text.slice(0, 200), name: mineRow ? 'You' : partnerLabel() };
     var bar = document.getElementById('replyBar');
     var rName = document.getElementById('replyName');
     var rText = document.getElementById('replyText');
-    var mineRow = row && row.classList.contains('is-guest');
     if (rName) rName.textContent = mineRow ? 'You' : partnerLabel();
     if (rText) rText.textContent = text.slice(0, 120);
     if (bar) bar.classList.add('open');
@@ -485,6 +485,16 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
   function scrollToBottom() {
     var feed = document.getElementById('chatFeed');
     if (feed) feed.scrollTop = feed.scrollHeight;
+  }
+
+  function isNearBottom() {
+    var feed = document.getElementById('chatFeed');
+    if (!feed) return true;
+    return feed.scrollHeight - feed.scrollTop - feed.clientHeight < 140;
+  }
+
+  function scrollIfNearBottom(force) {
+    if (force || isNearBottom()) scrollToBottom();
   }
 
   function bumpSidebar(text) {
@@ -534,6 +544,7 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
 
   window.pollMessages = function (manual) {
     if (!partnerId) return Promise.resolve();
+    var stick = manual === true || isNearBottom();
     return fetch(historyEndpoint + partnerId, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
       .then(function (r) { return r.json().catch(function () { return {}; }); })
       .then(function (data) {
@@ -549,7 +560,7 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
             var last = data.messages[data.messages.length - 1];
             if (last && last.text) bumpSidebar(String(last.text).slice(0, 80));
           }
-          scrollToBottom();
+          scrollIfNearBottom(stick);
         }
       })
       .catch(function () {});
@@ -574,11 +585,15 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
       return;
     }
     hideError();
-    if (input) input.value = '';
-    if (btn) btn.disabled = true;
     var payload = { recipient_id: partnerId, lodge_name: lodgeName, text: body.slice(0, 2000) };
-    if (replyTo && replyTo.id) payload.reply_to_id = replyTo.id;
-    window.cancelReply();
+    var quoteSent = null;
+    if (replyTo && replyTo.id) {
+      payload.reply_to_id = replyTo.id;
+      quoteSent = replyTo;
+    }
+    // Clear the composer only AFTER the server confirms — a failed send
+    // restores both text and quote so nothing is ever lost.
+    if (btn) btn.disabled = true;
     fetch(sendEndpoint, {
       method: 'POST',
       credentials: 'same-origin',
@@ -594,12 +609,15 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
         if (btn) btn.disabled = false;
         var data = res.data || {};
         if ((res.status === 200 || res.status === 201) && (data.status === 'success' || data.data)) {
+          if (input) input.value = '';
+          window.cancelReply();
           var echo = (data.data && typeof data.data === 'object') ? data.data : {};
           renderMessage({
             id: echo.id !== undefined ? echo.id : 'local-' + Date.now(),
             sender_id: currentUserId,
             text: echo.text || body,
-            created_at: echo.created_at || new Date().toISOString()
+            created_at: echo.created_at || new Date().toISOString(),
+            reply_to: echo.reply_to || (quoteSent ? { id: quoteSent.id, text: quoteSent.text, sender_name: quoteSent.name || '' } : null)
           });
           bumpSidebar(body.slice(0, 80));
           scrollToBottom();
@@ -610,10 +628,27 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
           window.location.href = data.loginUrl;
           return;
         }
+        // Failure: put the text (and quote) back so the user can retry.
+        if (input && input.value.trim() === '') input.value = body;
+        if (quoteSent) {
+          replyTo = quoteSent;
+          var bar = document.getElementById('replyBar');
+          var rText = document.getElementById('replyText');
+          if (rText) rText.textContent = String(quoteSent.text || '').slice(0, 120);
+          if (bar) bar.classList.add('open');
+        }
         showError(data.message || data.error || 'Could not send your message. Please try again.', data.loginUrl);
       })
       .catch(function () {
         if (btn) btn.disabled = false;
+        if (input && input.value.trim() === '') input.value = body;
+        if (quoteSent) {
+          replyTo = quoteSent;
+          var bar2 = document.getElementById('replyBar');
+          var rText2 = document.getElementById('replyText');
+          if (rText2) rText2.textContent = String(quoteSent.text || '').slice(0, 120);
+          if (bar2) bar2.classList.add('open');
+        }
         showError('Could not reach the server. Please try again.');
       });
   }
