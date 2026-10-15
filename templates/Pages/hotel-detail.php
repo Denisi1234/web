@@ -85,6 +85,11 @@ if (!empty($rooms) && is_array($rooms)) {
 // the gallery section keeps its shape (never a stranger's photo).
 if (empty($galleryImages)) $galleryImages = [$this->Url->build('/assets/img/hotel/hotel-1.jpg')];
 $qp = $queryParams ?? [];
+// Write-a-review entry state: the modal handles anonymous users with a
+// sign-in prompt, and the button passes the flag to openWriteReview().
+$hdSession = $this->getRequest()->getSession();
+$hdSessionUser = $hdSession->read('User');
+$isLoggedIn = !$hdSession->read('is_logged_out') && !empty($hdSessionUser);
 // Real dates only — hardcoded demo defaults rotted within weeks.
 $checkInVal = $qp['checkin'] ?? $qp['checkIn'] ?? date('Y-m-d', strtotime('+7 days'));
 $checkOutVal = $qp['checkout'] ?? $qp['checkOut'] ?? date('Y-m-d', strtotime('+13 days'));
@@ -193,6 +198,7 @@ $this->assign('description', mb_strimwidth(strip_tags($propDesc),0,155,'...') . 
         <button type="button" onclick="openHotelMapModal()" style="background:#fff;border:1px solid #dadce0;border-radius:9999px;padding:7px 14px;font-size:13px;font-weight:600;color:#0f62fe;display:inline-flex;align-items:center;gap:6px;cursor:pointer"><i class="fa-solid fa-location-dot"></i> SEE MAP</button>
         <button type="button" class="agoda-view-deal agoda-title-rooms-cta" onclick="document.getElementById('rooms-section')?.scrollIntoView({behavior:'smooth'})" style="padding:7px 16px;font-size:13px">View Rooms</button>
         <button type="button" data-bs-toggle="modal" data-bs-target="#propertyDetailsModal" style="background:#fff;border:1px solid #dadce0;border-radius:9999px;padding:7px 14px;font-size:13px;font-weight:600;color:#1a1d25;display:inline-flex;align-items:center;gap:6px;cursor:pointer"><i class="fa-solid fa-circle-info"></i> Details</button>
+        <button type="button" onclick="openWriteReview(<?= (int)$detailPropertyId ?>, <?= $isLoggedIn ? 'true' : 'false' ?>)" style="background:#0f62fe;border:1px solid #0f62fe;border-radius:9999px;padding:7px 16px;font-size:13px;font-weight:600;color:#fff;display:inline-flex;align-items:center;gap:6px;cursor:pointer"><i class="fa-regular fa-pen-to-square"></i> Write a Review</button>
       </div>
     </div>
 
@@ -214,7 +220,7 @@ $this->assign('description', mb_strimwidth(strip_tags($propDesc),0,155,'...') . 
   <!-- RIGHT COLUMN — rating + map + landmarks as screenshot -->
   <div style="display:flex;flex-direction:column;gap:14px">
     <!-- Rating card -->
-    <div class="agoda-rating-card">
+    <div class="agoda-rating-card" id="reviews" style="scroll-margin-top:90px">
       <?php if ($reviewsCount > 0): ?>
       <div class="agoda-rating-big">
         <div class="agoda-rating-score"><?= h($score10Fmt) ?></div>
@@ -276,6 +282,8 @@ $this->assign('description', mb_strimwidth(strip_tags($propDesc),0,155,'...') . 
   </div>
 </div>
 <?= $this->element('Hotel/hotel-detail-modals', ['galleryImages' => $galleryImages ?? [], 'propTitle' => $propTitle ?? '', 'propArea' => $propArea ?? '', 'propCity' => $propCity ?? '', 'propPrice' => $propPrice ?? 0, 'ratingLabel' => $ratingLabel ?? '', 'reviewsCount' => $reviewsCount ?? 0, 'score10' => $score10 ?? 0, 'detailPropertyId' => $detailPropertyId ?? 0, 'propDesc' => $propDesc ?? '', 'score10Fmt' => $score10Fmt ?? '']) ?>
+<?= $this->element('Hotel/write-review-modal', ['detailPropertyId' => $detailPropertyId ?? 0, 'propTitle' => $propTitle ?? '', 'isLoggedIn' => $isLoggedIn ?? false]) ?>
+<?= $this->Html->script('/assets/js/write-review.js?v=' . filemtime(WWW_ROOT . 'assets/js/write-review.js')) ?>
 <div class="d-none d-lg-block">
 <?= $this->element('footer', ['skin' => 'skin-light-footer']) ?>
 </div>

@@ -38,6 +38,7 @@ $menu = $isAdmin ? [
     ['url' => '/host/listings', 'label' => 'My properties', 'icon' => 'fa-list', 'match' => ['/host/listings', '/host/lodge']],
     ['url' => '/host/rooms', 'label' => 'Rooms', 'icon' => 'fa-bed', 'match' => ['/host/rooms']],
     ['url' => '/host/bookings', 'label' => 'Bookings', 'icon' => 'fa-calendar-check', 'match' => ['/host/bookings']],
+    ['url' => '/host/reviews', 'label' => 'Reviews', 'icon' => 'fa-star', 'match' => ['/host/reviews']],
   ]],
   ['FINANCE', [
     ['url' => '/host/earnings', 'label' => 'Earnings', 'icon' => 'fa-wallet', 'match' => ['/host/earnings']],

@@ -7,6 +7,7 @@ use App\Service\FastnetApiClient;
 use App\Service\StaysService;
 use App\Controller\Stays\StaysDetailTrait;
 use App\Controller\Stays\StaysSearchTrait;
+use App\Controller\Stays\SubmitReviewTrait;
 
 /**
  * StaysController
@@ -19,6 +20,7 @@ class StaysController extends AppController
 
     use StaysDetailTrait;
     use StaysSearchTrait;
+    use SubmitReviewTrait;
     protected FastnetApiClient $apiClient;
 
     public function initialize(): void

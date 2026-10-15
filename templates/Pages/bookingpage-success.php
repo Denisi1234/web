@@ -580,7 +580,7 @@ $qrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=130x130&margin=0&
               <i class="fa-solid fa-receipt" aria-hidden="true"></i>
               <span>Receipt</span>
             </button>
-            <a href="<?= $propId ? $this->Url->build('/hotel-detail-01', ['?' => ['id' => $propId]]) . '#reviews' : $this->Url->build('/hotel-list-01') ?>" class="cds-btn cds-btn-primary" style="flex:1;height:48px;font-size:13px;font-weight:700">
+            <a href="<?= $propId ? $this->Url->build('/hotel-detail/' . (int)$propId) . '#reviews' : $this->Url->build('/hotel-list-01') ?>" class="cds-btn cds-btn-primary" style="flex:1;height:48px;font-size:13px;font-weight:700">
               <i class="fa-regular fa-star" aria-hidden="true"></i>
               <span>Review</span>
             </a>

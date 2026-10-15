@@ -10,6 +10,7 @@ use App\Controller\Host\HostListingsTrait;
 use App\Controller\Host\HostOnboardingTrait;
 use App\Controller\Host\HostProfileTrait;
 use App\Controller\Host\HostPropertyFormTrait;
+use App\Controller\Host\HostReviewsTrait;
 use App\Controller\Host\HostRoomsTrait;
 use App\Controller\Host\HostStaysTrait;
 
@@ -28,6 +29,7 @@ class HostController extends AppController
     use HostOnboardingTrait;
     use HostProfileTrait;
     use HostPropertyFormTrait;
+    use HostReviewsTrait;
     use HostRoomsTrait;
     use HostStaysTrait;
 

@@ -28,6 +28,7 @@ $hostLinks = [
     ['/host/listings', 'My Properties', 'fa-list'],
     ['/host/rooms', 'Rooms', 'fa-bed'],
     ['/host/bookings', 'Bookings', 'fa-calendar-check'],
+    ['/host/reviews', 'Reviews', 'fa-star'],
     ['/host/earnings', 'Earnings', 'fa-wallet'],
     ['/host/onboarding', 'Onboard', 'fa-plus'],
     ['/host/profile', 'Profile', 'fa-circle-user'],

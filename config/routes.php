@@ -24,6 +24,8 @@ return function (RouteBuilder $routes): void {
             ['controller' => 'Stays', 'action' => 'detail'], 
             ['pass' => ['id'], 'id' => '\d+']
         );
+        // Guest write-a-review submission (JSON) for the hotel detail page.
+        $builder->connect('/hotel-detail/review', ['controller' => 'Stays', 'action' => 'submitReview'], ['_method' => 'POST']);
 
         // Destinations
         $builder->connect('/destination-01', ['controller' => 'Stays', 'action' => 'destination01']);
@@ -123,6 +125,7 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/host/listings', ['controller' => 'Host', 'action' => 'listings']);
         $builder->redirect('/host/listings/add', '/host/onboarding', ['status' => 301]);
         $builder->connect('/host/bookings', ['controller' => 'Host', 'action' => 'bookings']);
+        $builder->connect('/host/reviews', ['controller' => 'Host', 'action' => 'reviews']);
         $builder->connect('/host/bookings/check-in/{id}', ['controller' => 'Host', 'action' => 'checkIn'], ['pass' => ['id']], ['_method' => 'POST']);
         $builder->connect('/host/bookings/check-out/{id}', ['controller' => 'Host', 'action' => 'checkOut'], ['pass' => ['id']], ['_method' => 'POST']);
         $builder->connect('/host/calendar/{id}', ['controller' => 'Host', 'action' => 'calendar'], ['pass'=>['id'],'id'=>'\d+']);
