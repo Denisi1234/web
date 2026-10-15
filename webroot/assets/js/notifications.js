@@ -60,7 +60,10 @@ window.FastNotif = (function () {
     if (type.indexOf('booking_complet') === 0) return 'fa-circle-check';
     if (type.indexOf('booking_resched') === 0) return 'fa-calendar-days';
     if (type.indexOf('payment') === 0 || type.indexOf('receipt') === 0) return 'fa-receipt';
-    if (type.indexOf('message') === 0) return 'fa-comment-dots';
+    if (type.indexOf('message') === 0 || type.indexOf('new_message') === 0) return 'fa-comment-dots';
+    if (type.indexOf('review') === 0 || type.indexOf('new_review') === 0) return 'fa-star';
+    if (type.indexOf('verif') === 0) return 'fa-id-card';
+    if (type.indexOf('payout') === 0) return 'fa-wallet';
     if (type.indexOf('welcome') === 0) return 'fa-hand-sparkles';
     return 'fa-bell';
   }
