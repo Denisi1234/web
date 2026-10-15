@@ -96,6 +96,11 @@ return function (RouteBuilder $routes): void {
 
         // Support & Info Pages
         $builder->connect('/about-us', ['controller' => 'Pages', 'action' => 'aboutUs']);
+        // Legacy / nested variants seen in the wild (e.g. '/about/about-us') — 301 to canonical.
+        $builder->redirect('/about', '/about-us', ['status' => 301]);
+        $builder->redirect('/about/', '/about-us', ['status' => 301]);
+        $builder->redirect('/about/about-us', '/about-us', ['status' => 301]);
+        $builder->redirect('/about/about-us/', '/about-us', ['status' => 301]);
         $builder->connect('/how-we-work', ['controller' => 'Pages', 'action' => 'howWeWork']);
         $builder->connect('/help-center', ['controller' => 'Pages', 'action' => 'helpCenter']);
         // Alias for printed booking confirmations (older PDFs link here).
