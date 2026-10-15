@@ -70,8 +70,9 @@ $isCompact = !empty($compact) && $compact === true;
                     <div class="footer-widget">
                         <h4 class="widget-title">Contact</h4>
                         <ul class="footer-menu">
+                            <li><a href="tel:+255624105850">0624 105 850</a></li>
+                            <li style="font-size:13px">Sky City, First Floor,<br>Opp Mlimani City, Dar es Salaam</li>
                             <li><a href="<?= $this->Url->build('/contact'); ?>">Get Help 24/7</a></li>
-                            <li><a href="<?= $this->Url->build('/contact'); ?>">Support Center</a></li>
                             <li><a href="mailto:support@fastnetstays.com">Email Us</a></li>
                         </ul>
                     </div>

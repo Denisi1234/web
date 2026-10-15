@@ -91,6 +91,8 @@ $sessionUser = $userProfile ?? [];
       <?php endif; ?>
     </div>
     <div class="cds-list" aria-label="Other ways to reach us">
+      <div class="cds-list-row"><span class="k">Phone</span><a href="tel:+255624105850">0624 105 850</a></div>
+      <div class="cds-list-row"><span class="k">Office</span><span style="font-size:14px;color:#161616">Sky City, First Floor, Opp Mlimani City, Dar es Salaam</span></div>
       <?php if ($supportEmail !== ''): ?>
       <div class="cds-list-row"><span class="k">Email</span><a href="mailto:<?= h($supportEmail) ?>"><?= h($supportEmail) ?></a></div>
       <?php endif; ?>
