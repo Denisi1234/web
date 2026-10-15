@@ -43,6 +43,9 @@ if ($propPrice <= 0) $propPrice = $propBase;
 $propPrice = $propPrice > 0 ? $propPrice : 0.0;
 $firstRoomId = !empty($rooms[0]['id']) ? $rooms[0]['id'] : null;
 $detailPropertyId = (int)($propertyId ?? 0);
+// Official star classification only — never render empty placeholder stars
+// for an unrated property (undefined $propStars used to print ☆☆☆☆☆).
+$propStars = !empty($property['star_rating']) ? max(1, min(5, (int)$property['star_rating'])) : 0;
 $rawAddr = trim((string)($property['address'] ?? ''));
 $propAddress = $rawAddr !== '' ? \App\Utility\TextFormatter::formatTitle($rawAddr) : \App\Utility\TextFormatter::formatLocation($propArea, $propCity);
 if ($propAddress && $propCity && !str_contains(strtolower($propAddress), strtolower($propCity))) {
@@ -218,7 +221,7 @@ $this->assign('hotel_jsonld', json_encode($hdHotel, JSON_UNESCAPED_SLASHES | JSO
       <div style="margin-bottom:6px"><span class="agoda-badge-bestseller">Best seller</span></div>
       <?php endif; ?>
       <button style="position:absolute;top:12px;right:12px;background:none;border:1px solid #e8eaed;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="toggleWishlist(<?= $detailPropertyId ?>,this)" aria-label="Save"><i class="fa-regular fa-heart" style="color:#5f6368;font-size:15px"></i></button>
-      <div class="agoda-title" style="padding-right:48px;"><?= h($propTitle) ?> <span class="agoda-stars"><?= str_repeat('★', $propStars) ?><?= $propStars<5 ? str_repeat('☆',5-$propStars) : '' ?></span></div>
+      <div class="agoda-title" style="padding-right:48px;"><?= h($propTitle) ?><?php if ($propStars > 0): ?> <span class="agoda-stars"><?= str_repeat('★', $propStars) ?></span><?php endif; ?></div>
       <div class="agoda-address"><?= h($propAddress) ?></div>
       <div style="display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:6px;font-size:13px;align-items:center">
         <?php if ($reviewsCount > 0): ?>

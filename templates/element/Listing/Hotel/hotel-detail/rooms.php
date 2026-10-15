@@ -146,7 +146,7 @@ $normImgUrl = function(string $url): string {
 .room-price-main{color:#C2410C !important}
 @media (min-width:993px){
   .agoda-room-card{box-shadow:0 4px 12px rgba(0,0,0,0.04) !important}
-  .agoda-room-card > div:first-child{background:#fafafa}
+  .agoda-room-card > div.room-photo-col{background:#fafafa}
   /* Desktop: full-bleed photo column + roomier type */
   .room-photo-col{padding:0 !important}
   .room-photo-col .room-hero-wrap{border-radius:0 !important;height:100% !important;min-height:280px !important}
@@ -161,7 +161,7 @@ $normImgUrl = function(string $url): string {
     border-radius:22px !important;
     box-shadow:0 6px 16px rgba(0,0,0,0.05) !important;
   }
-  .agoda-room-card > div:first-child {
+  .agoda-room-card > div.room-photo-col {
     border-right: none !important;
     border-bottom: 1px solid #e8eaed !important;
     padding:14px !important;
