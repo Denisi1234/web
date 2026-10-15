@@ -231,7 +231,8 @@ $this->assign('hotel_jsonld', json_encode($hdHotel, JSON_UNESCAPED_SLASHES | JSO
         <button type="button" onclick="openHotelMapModal()" style="background:#fff;border:1px solid #dadce0;border-radius:9999px;padding:7px 14px;font-size:13px;font-weight:600;color:#0f62fe;display:inline-flex;align-items:center;gap:6px;cursor:pointer"><i class="fa-solid fa-location-dot"></i> SEE MAP</button>
         <button type="button" class="agoda-view-deal agoda-title-rooms-cta" onclick="document.getElementById('rooms-section')?.scrollIntoView({behavior:'smooth'})" style="padding:7px 16px;font-size:13px">View Rooms</button>
         <button type="button" data-bs-toggle="modal" data-bs-target="#propertyDetailsModal" style="background:#fff;border:1px solid #dadce0;border-radius:9999px;padding:7px 14px;font-size:13px;font-weight:600;color:#1a1d25;display:inline-flex;align-items:center;gap:6px;cursor:pointer"><i class="fa-solid fa-circle-info"></i> Details</button>
-        <button type="button" onclick="openWriteReview(<?= (int)$detailPropertyId ?>, <?= $isLoggedIn ? 'true' : 'false' ?>)" style="background:#0f62fe;border:1px solid #0f62fe;border-radius:9999px;padding:7px 16px;font-size:13px;font-weight:600;color:#fff;display:inline-flex;align-items:center;gap:6px;cursor:pointer"><i class="fa-regular fa-pen-to-square"></i> Write a Review</button>
+        <button type="button" onclick="openWriteReview(<?= (int)$detailPropertyId ?>, <?= $isLoggedIn ? 'true' : 'false' ?>)" class="agoda-write-review-cta" style="background:#0f62fe;border:1px solid #0f62fe;border-radius:9999px;padding:7px 16px;font-size:13px;font-weight:600;color:#fff;display:inline-flex;align-items:center;gap:6px;cursor:pointer"><i class="fa-regular fa-pen-to-square"></i> Write a Review</button>
+        <style>@media (max-width:768px){.agoda-write-review-cta{display:none!important}}</style>
       </div>
     </div>
 
