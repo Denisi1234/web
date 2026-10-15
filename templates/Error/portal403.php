@@ -81,15 +81,18 @@ $loginTarget = '/login?redirect=' . urlencode($attempted !== '' ? $attempted : '
     <?php if ($signedIn && $role === 'customer' && $isHostArea): ?>
       <div class="e403-note">
         You are signed in<?= $firstName !== '' ? ' as <strong>' . h($firstName) . '</strong>' : '' ?>
-        — your <strong>same login works for hosting</strong>. No second account
-        or separate sign-in needed; continue with this account.
+        with a <strong>guest account</strong> — for booking and staying. It is
+        <strong>not</strong> a host account, so it cannot open host tooling.
+        Hosting needs its own account with its own sign-in.
       </div>
       <div class="e403-actions">
-        <a class="e403-btn e403-primary" href="<?= $this->Url->build('/join-us') ?>">Continue as host</a>
+        <a class="e403-btn e403-primary" href="<?= $this->Url->build('/signup?role=owner') ?>">Register as a host</a>
         <a class="e403-btn e403-outline" href="<?= $this->Url->build('/') ?>">Back to browsing</a>
       </div>
       <div class="e403-meta">
-        Your guest bookings stay on the same account.
+        Already have a host account?
+        <a href="<?= $this->Url->build('/logout') ?>">Sign out</a>
+        and sign back in with it. Your guest bookings stay untouched.
       </div>
     <?php elseif ($signedIn && $isAdminArea): ?>
       <div class="e403-note">

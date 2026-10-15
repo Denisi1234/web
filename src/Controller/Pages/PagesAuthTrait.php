@@ -64,14 +64,11 @@ trait PagesAuthTrait
                 foreach ($allow as $k) {
                     if (array_key_exists($k, $verifiedUser)) $user[$k] = $verifiedUser[$k];
                 }
-                // Normalise role + phone aliases
+                // Normalise role + phone aliases. The role always comes from
+                // the backend-verified /me user — never from the ?role=
+                // display param. A guest login stays a guest; hosting needs
+                // its own account with its own sign-in.
                 if (!empty($user['role'])) $user['role'] = strtolower((string)$user['role']);
-                if ($loginRole === 'owner' && ($user['role'] ?? '') !== 'admin') {
-                    $user['role'] = 'owner';
-                    try {
-                        \Cake\Cache\Cache::write('auth_role_' . md5($token), ['exp' => time() + 3600, 'role' => 'owner'], 'default');
-                    } catch (\Throwable $e) {}
-                }
                 if (empty($user['phone']) && !empty($user['phone_number'])) $user['phone'] = $user['phone_number'];
                 if (empty($user['name']) && !empty($user['full_name'])) $user['name'] = $user['full_name'];
                 $user['token'] = $token;
@@ -114,17 +111,6 @@ trait PagesAuthTrait
                         $user['token'] = $authToken;
                     }
                     if (!empty($user['role'])) $user['role'] = strtolower((string)$user['role']);
-                    if ($loginRole === 'owner' && ($user['role'] ?? '') !== 'admin') {
-                        $user['role'] = 'owner';
-                        if ($authToken) {
-                            try {
-                                $this->apiClient->post('/user/personal-details', ['role' => 'owner'], ['Authorization' => 'Bearer ' . $authToken]);
-                            } catch (\Throwable $e) {}
-                            try {
-                                \Cake\Cache\Cache::write('auth_role_' . md5((string)$authToken), ['exp' => time() + 3600, 'role' => 'owner'], 'default');
-                            } catch (\Throwable $e) {}
-                        }
-                    }
                     if (empty($user['phone']) && !empty($user['phone_number'])) $user['phone'] = $user['phone_number'];
                     if (empty($user['first_name']) && !empty($user['name'])) {
                         $user['first_name'] = explode(' ', trim($user['name']))[0];
@@ -142,7 +128,11 @@ trait PagesAuthTrait
                     }
                     $role = strtolower((string)($user['role'] ?? ''));
                     if ($role === 'admin') return $persist($this->redirect('/admin/dashboard'));
-                    if ($role === 'owner' || $loginRole === 'owner') return $persist($this->redirect('/host/dashboard'));
+                    if ($role === 'owner') return $persist($this->redirect('/host/dashboard'));
+                    // A guest signing in via the host page still lands as a
+                    // guest — hosting needs its own account. Send them to
+                    // /join-us to register/sign in as a host.
+                    if ($loginRole === 'owner') return $persist($this->redirect('/join-us'));
                     return $persist($this->redirect('/'));
                 }
                 $this->Flash->error(__('Invalid email or password.'));

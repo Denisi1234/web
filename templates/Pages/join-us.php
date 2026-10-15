@@ -31,15 +31,15 @@ $juNeedsVerification = $juLoggedIn && $juRole === 'owner'
         <a href="<?= $this->Url->build('/host/onboarding') ?>" class="btn-ju btn-ju-primary">Add a new property</a>
         <a href="<?= $this->Url->build('/host/dashboard') ?>" class="btn-ju btn-ju-outline">Open host dashboard</a>
       <?php else: ?>
-        <a href="<?= $this->Url->build('/host/onboarding') ?>" class="btn-ju btn-ju-primary">Continue as host & list property</a>
-        <a href="<?= $this->Url->build('/host/dashboard') ?>" class="btn-ju btn-ju-outline">Open host dashboard</a>
+        <a href="<?= $this->Url->build('/signup?role=owner') ?>" class="btn-ju btn-ju-primary">Register as a host</a>
+        <a href="<?= $this->Url->build('/login?role=owner') ?>" class="btn-ju btn-ju-outline">Sign in with host account</a>
       <?php endif; ?>
       <a href="#how-it-works" class="btn-ju btn-ju-outline">How listing works</a>
     </div>
 
     <?php if ($juLoggedIn && !$isHost): ?>
-      <div class="ju-note mt-3" role="note" style="background:#eff6ff;border-color:#bfdbfe;color:#1e40af">
-        You are signed in as <strong><?= h($sessionUser['name'] ?? $sessionUser['email'] ?? 'User') ?></strong>. Your same login works for hosting — no second account needed!
+      <div class="ju-note mt-3" role="note" style="background:#fffbeb;border-color:#fcd34d;color:#92400e">
+        You are signed in as <strong><?= h($sessionUser['name'] ?? $sessionUser['email'] ?? 'User') ?></strong> with a <strong>guest account</strong>. Hosting needs its own account with its own sign-in — register a host account above, or sign out and sign back in with it. Your guest bookings stay untouched.
       </div>
     <?php endif; ?>
     <div class="ju-meta mt-4">
@@ -156,8 +156,8 @@ $juNeedsVerification = $juLoggedIn && $juRole === 'owner'
   <div class="ju-label">How it works</div>
   <h2 class="ju-h2">From sign-up to first payout in three steps</h2>
   <div class="row g-3 mt-3">
-    <div class="col-md-4"><div class="ju-tile"><div class="num">Step 01</div><h3 class="mt-2">Create your host account</h3><p>Register as an owner, or just continue with your guest account — the same email works for hosting. No paperwork to start.</p>
-      <?php if (!$juLoggedIn): ?><a href="<?= $this->Url->build('/signup?role=owner') ?>">Register as a host</a><?php elseif (!$isHost): ?><a href="<?= $this->Url->build('/host/onboarding') ?>">Continue as host</a><?php elseif ($juNeedsVerification): ?><a href="#verify-identity">Submit verification documents</a><?php else: ?><strong>Done — you're a host.</strong><?php endif; ?>
+    <div class="col-md-4"><div class="ju-tile"><div class="num">Step 01</div><h3 class="mt-2">Create your host account</h3><p>Register a separate host account with its own sign-in. A guest login cannot list properties.</p>
+      <?php if (!$juLoggedIn): ?><a href="<?= $this->Url->build('/signup?role=owner') ?>">Register as a host</a><?php elseif (!$isHost): ?><a href="<?= $this->Url->build('/signup?role=owner') ?>">Register as a host</a><?php elseif ($juNeedsVerification): ?><a href="#verify-identity">Submit verification documents</a><?php else: ?><strong>Done — you're a host.</strong><?php endif; ?>
     </div></div>
     <div class="col-md-4"><div class="ju-tile"><div class="num">Step 02</div><h3 class="mt-2">Describe your property and rooms</h3><p>Add photos, amenities, nightly rates and room inventory. Most hosts finish in under 20 minutes.</p><?php if (!$juLoggedIn): ?><a href="<?= $this->Url->build('/signup?role=owner') ?>">Sign up free to start</a><?php else: ?><a href="<?= $this->Url->build('/host/onboarding') ?>">Start a listing</a><?php endif; ?></div></div>
     <div class="col-md-4"><div class="ju-tile"><div class="num">Step 03</div><h3 class="mt-2">Pass review and receive bookings</h3><p>Our team verifies quality and location, usually within 24 hours. Then you go live and payouts begin.</p><?php if (!$juLoggedIn): ?><a href="<?= $this->Url->build('/login') ?>">Sign in to continue</a><?php else: ?><a href="<?= $this->Url->build('/host/dashboard') ?>">Open host dashboard</a><?php endif; ?></div></div>
@@ -185,7 +185,7 @@ $juNeedsVerification = $juLoggedIn && $juRole === 'owner'
   <details open><summary>What does it cost to list?</summary><p style="font-size:14px;color:#525252" class="mt-2">Nothing upfront. Listing, photos and support are free — FastNet retains 10% only when a guest completes a paid stay.</p></details>
   <details><summary>When and how do I get paid?</summary><p style="font-size:14px;color:#525252" class="mt-2">After check-in, the guest's payment settles to your M-Pesa, Tigo Pesa or bank account. Completed and pending balances are visible any time under Host → Earnings.</p></details>
   <details><summary>How long does verification take?</summary><p style="font-size:14px;color:#525252" class="mt-2">Most properties are reviewed within 24 hours. Your listing shows as Pending until approved, then flips to Active automatically.</p></details>
-  <details><summary>I already have a guest account — must I register again?</summary><p style="font-size:14px;color:#525252" class="mt-2">No! Just sign in with your existing email — the same account handles both bookings and properties. Continue straight to your host dashboard or a new listing.</p></details>
+  <details><summary>I already have a guest account — must I register again?</summary><p style="font-size:14px;color:#525252" class="mt-2">Yes — hosting needs its own account with its own sign-in. Register as a host, then sign in with the host credentials. Your guest bookings stay on the guest account.</p></details>
 </div></section>
 
 <!-- Final CTA -->
@@ -196,8 +196,8 @@ $juNeedsVerification = $juLoggedIn && $juRole === 'owner'
       <a href="<?= $this->Url->build('/host/onboarding') ?>" class="btn-ju btn-ju-light">Add a property</a>
     <?php elseif ($juLoggedIn): ?>
       <div class="d-flex flex-column gap-2 align-items-stretch">
-        <a href="<?= $this->Url->build('/host/onboarding') ?>" class="btn-ju btn-ju-light">Continue as host</a>
-        <span style="color:#fff;font-size:13px;text-align:center">Same login — no second account needed</span>
+        <a href="<?= $this->Url->build('/signup?role=owner') ?>" class="btn-ju btn-ju-light">Register as a host</a>
+        <span style="color:#fff;font-size:13px;text-align:center">Already have a host account? <a href="<?= $this->Url->build('/logout') ?>" style="color:#fff;text-decoration:underline">Sign out</a>, then sign in with it</span>
       </div>
     <?php else: ?>
       <div class="d-flex flex-column gap-2 align-items-stretch">

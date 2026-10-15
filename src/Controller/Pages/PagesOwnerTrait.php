@@ -29,20 +29,17 @@ trait PagesOwnerTrait
         $userRole = strtolower((string)($sessionUser['role'] ?? ''));
         $headers = $rawToken !== '' ? ['Authorization' => 'Bearer ' . $rawToken] : [];
 
-        // Unified identity: one email = one account for guest + host.
-        // There is no separate "activate host mode" step. Any signed-in user
-        // who shows host intent (visiting /join-us) is host-enabled on their
-        // existing login — same email, same password, no second account.
-        if ($isLoggedIn && !in_array($userRole, ['owner', 'admin'], true)) {
-            $this->ensureHostEnabled($sessionUser, $rawToken, $headers);
-            $userRole = strtolower((string)($sessionUser['role'] ?? ''));
-        }
-
-        // Backward compatibility: old "become_host" forms just continue —
-        // the account is already host-enabled above. No activation needed.
+        // Separate accounts: a guest login is never upgraded in place.
+        // Hosting needs its own account with its own sign-in (backend
+        // POST /become-host is retired 410, and POST /user/personal-details
+        // ignores role). Old "become_host" forms just send guests to
+        // register a host account instead of faking ownership.
         if ($this->getRequest()->is('post')) {
             $data = (array)$this->getRequest()->getData();
             if (($data['action'] ?? '') === 'become_host' && $isLoggedIn) {
+                if (!in_array($userRole, ['owner', 'admin'], true)) {
+                    return $this->redirect('/signup?role=owner');
+                }
                 return $this->redirect('/host/onboarding');
             }
         }
@@ -177,38 +174,6 @@ trait PagesOwnerTrait
         }
 
         return $this->redirect('/host/onboarding');
-    }
-
-    /**
-     * Host-enable the current login in place (unified account).
-     * Same email/password works for guest + host — no second account, no
-     * activation email/button. Best-effort backend sync; the session is
-     * always upgraded so host entry points just work and backend data calls
-     * remain the source of truth.
-     */
-    private function ensureHostEnabled(array &$sessionUser, string $rawToken, array $headers): void
-    {
-        $sessionUser['role'] = 'owner';
-        try {
-            $this->getRequest()->getSession()->write('User', $sessionUser);
-        } catch (\Throwable $e) {}
-        if ($rawToken === '') {
-            return;
-        }
-        try {
-            $this->apiClient->post('/user/personal-details', ['role' => 'owner'], $headers);
-        } catch (\Throwable $e) {}
-        try {
-            $mkey = md5($rawToken);
-            \Cake\Cache\Cache::delete('auth_role_' . $mkey, 'default');
-            \Cake\Cache\Cache::write('auth_role_' . $mkey, ['exp' => time() + 3600, 'role' => 'owner'], 'default');
-            $restore = \Cake\Cache\Cache::read('auth_restore_' . $mkey, 'default');
-            if (is_array($restore) && isset($restore['user'])) {
-                $restore['user']['role'] = 'owner';
-                $restore['exp'] = time() + 300;
-                \Cake\Cache\Cache::write('auth_restore_' . $mkey, $restore, 'default');
-            }
-        } catch (\Throwable $e) {}
     }
 
     /** Current bearer token from session or persistent cookie. */
