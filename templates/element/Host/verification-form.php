@@ -4,7 +4,7 @@
  * Submits via host-verification.js to POST /host/verification.
  */
 ?>
-<form id="kycForm" enctype="multipart/form-data" novalidate>
+<form id="kycForm" action="/host/verification/submit" method="post" enctype="multipart/form-data" novalidate>
   <div class="d-grid gap-3 mt-2">
     <div class="row g-3">
       <div class="col-md-6">
