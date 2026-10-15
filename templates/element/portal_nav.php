@@ -42,12 +42,12 @@ $showCrossHost = ($role === 'admin' || $role === 'owner') && $isAdminSection;
 $name = $profile['name'] ?? $profile['full_name'] ?? 'Portal user';
 $email = $profile['email'] ?? '';
 ?>
-<style>.portal-nav{position:sticky;top:64px;z-index:50;background:#fff;border-bottom:1px solid #e8eaed}.portal-nav-scroll{display:flex;gap:8px;overflow-x:auto;padding:10px 0;scrollbar-width:none}.portal-nav-scroll::-webkit-scrollbar{display:none}.portal-pill{white-space:nowrap;border-radius:9999px;padding:8px 14px;font-size:12px;font-weight:700;border:1px solid #e8eaed;background:#fff;color:#5f6368;text-decoration:none}.portal-pill.active{background:#2563EB;border-color:#2563EB;color:#fff}.portal-pill:hover{border-color:#2563EB;color:#2563EB}.portal-pill.active:hover{color:#fff}</style>
+<style>.portal-nav{position:sticky;top:64px;z-index:50;background:#fff;border-bottom:1px solid #e8eaed}.portal-nav-scroll{display:flex;gap:8px;overflow-x:auto;padding:10px 0;scrollbar-width:none}.portal-nav-scroll::-webkit-scrollbar{display:none}.portal-pill{white-space:nowrap;border-radius:9999px;padding:8px 14px;font-size:12px;font-weight:700;border:1px solid #e8eaed;background:#fff;color:#5f6368;text-decoration:none}.portal-pill.active{background:#0f62fe;border-color:#0f62fe;color:#fff}.portal-pill:hover{border-color:#0f62fe;color:#0f62fe}.portal-pill.active:hover{color:#fff}</style>
 <div class="portal-nav">
   <div class="container" style="max-width:1280px">
     <div class="d-flex align-items-center gap-3 flex-wrap py-2">
       <div class="d-flex align-items-center gap-2">
-        <span style="width:32px;height:32px;border-radius:10px;background:#2563EB;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px"><?= h(strtoupper(substr(trim((string)$name), 0, 1) ?: 'P')) ?></span>
+        <span style="width:32px;height:32px;border-radius:10px;background:#0f62fe;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px"><?= h(strtoupper(substr(trim((string)$name), 0, 1) ?: 'P')) ?></span>
         <div>
           <div style="font-size:13px;font-weight:800;color:#1a1d25;line-height:1.1"><?= h($name) ?></div>
           <div style="font-size:11px;color:#5f6368"><?= h($role !== '' ? ucfirst($role) : 'Portal') ?><?= $email !== '' ? ' · ' . h($email) : '' ?></div>

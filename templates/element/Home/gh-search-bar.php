@@ -4,7 +4,7 @@ $apiCount = $totalCount;
 /**
  * FastNet Stays — Enterprise Search Bar (Spec Authoritative)
  * - Desktop >=992px: Unified pill with vertical dividers, #E5E7EB border, 0 4px 20px rgba(0,0,0,.08) -> hover 0 8px 30px rgba(0,0,0,.12)
- * - Palette: #1A73E8 primary / #2563EB active border / #FFFFFF bg / #1F2937 text / #6B7280 secondary
+ * - Palette: #1A73E8 primary / #0f62fe active border / #FFFFFF bg / #1F2937 text / #6B7280 secondary
  * - Typography: Inter / Google Sans 400/500/600
  * - Segments: Where to? | Check-in | Check-out (badge nights) | Guests & Rooms | Search CTA
  * - Mobile <992px: floating chip + bottom-sheet stepped modal

@@ -151,8 +151,8 @@ if (!str_starts_with($navAvatarBg, '#') && !str_starts_with($navAvatarBg, 'rgb')
                                     <span>Language and currency</span>
                                 </a>
 
-                                <a href="<?= $this->Url->build('/join-us'); ?>" class="trivago-user-item" style="color:#2563EB;font-weight:700" role="menuitem">
-                                    <i class="fa-solid fa-plus trivago-user-item-icon" style="color:#2563EB"></i>
+                                <a href="<?= $this->Url->build('/join-us'); ?>" class="trivago-user-item" style="color:#0f62fe;font-weight:700" role="menuitem">
+                                    <i class="fa-solid fa-plus trivago-user-item-icon" style="color:#0f62fe"></i>
                                     <span>List your property</span>
                                 </a>
 

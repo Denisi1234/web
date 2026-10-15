@@ -137,7 +137,7 @@ $normImgUrl = function(string $url): string {
 
 <style>
 /* Phase 1 — mobile card parity tokens + Phase 2 desktop refinement */
-.agoda-room-card.selected{border-color:#2563EB !important;border-width:1.6px !important;box-shadow:0 6px 16px rgba(0,0,0,0.08) !important}
+.agoda-room-card.selected{border-color:#0f62fe !important;border-width:1.6px !important;box-shadow:0 6px 16px rgba(0,0,0,0.08) !important}
 .agoda-room-card{transition:border-color 180ms ease,box-shadow 180ms ease;border-radius:22px !important}
 .agoda-room-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.06) !important}
 .room-hero-wrap{aspect-ratio:auto;border-radius:16px !important}

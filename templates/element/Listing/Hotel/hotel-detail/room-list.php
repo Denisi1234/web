@@ -175,7 +175,7 @@
             <button type="button" onclick="toggleWishlist(<?= (int)$propertyId ?>,this)" aria-label="Save room" style="flex:none;width:48px;height:48px;border-radius:50%;background:#fff;border:1px solid #dadce0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer"><i class="fa-regular fa-heart" style="font-size:18px;color:#1a1d25"></i></button>
             <?php if ($isAvail): ?>
             <?php // Url->build above returns separators as &amp; already, so no h() on the href — it would double-encode and params would land in amp;room_id. ?>
-            <a href="<?= $bookUrl ?>" data-room-book="<?= $roomId ?>" onclick="selectRoomCard(<?= $roomId ?>)" style="flex:1;background:#2563EB;color:#fff;border:none;border-radius:24px;padding:12px 16px;text-align:center;text-decoration:none;box-shadow:0 1px 3px rgba(37,99,235,0.3);transition:background 0.15s ease;">
+            <a href="<?= $bookUrl ?>" data-room-book="<?= $roomId ?>" onclick="selectRoomCard(<?= $roomId ?>)" style="flex:1;background:#0f62fe;color:#fff;border:none;border-radius:24px;padding:12px 16px;text-align:center;text-decoration:none;box-shadow:0 1px 3px rgba(15,98,254,0.3);transition:background 0.15s ease;">
               <span style="display:block;font-size:16px;font-weight:800;line-height:1.2">Book</span>
               <span style="display:block;font-size:11px;font-weight:500;opacity:.9">You won't be charged yet</span>
             </a>
