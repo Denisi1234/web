@@ -39,7 +39,7 @@ $juNeedsVerification = $juLoggedIn && $juRole === 'owner'
 
     <?php if ($juLoggedIn && !$isHost): ?>
       <div class="ju-note mt-3" role="note" style="background:#fffbeb;border-color:#fcd34d;color:#92400e">
-        You are signed in as <strong><?= h($sessionUser['name'] ?? $sessionUser['email'] ?? 'User') ?></strong> with a <strong>guest account</strong>. Hosting needs its own account with its own sign-in — register a host account above, or sign out and sign back in with it. Your guest bookings stay untouched.
+        You are signed in as <strong><?= h($sessionUser['name'] ?? $sessionUser['email'] ?? 'User') ?></strong> with a <strong>guest account</strong>. Hosting needs its own account with its own sign-in — register a host account above (you may reuse the same email; guest and host stay separate logins), or sign out and sign back in with it. Your guest bookings stay untouched.
       </div>
     <?php endif; ?>
     <div class="ju-meta mt-4">
@@ -185,7 +185,7 @@ $juNeedsVerification = $juLoggedIn && $juRole === 'owner'
   <details open><summary>What does it cost to list?</summary><p style="font-size:14px;color:#525252" class="mt-2">Nothing upfront. Listing, photos and support are free — FastNet retains 10% only when a guest completes a paid stay.</p></details>
   <details><summary>When and how do I get paid?</summary><p style="font-size:14px;color:#525252" class="mt-2">After check-in, the guest's payment settles to your M-Pesa, Tigo Pesa or bank account. Completed and pending balances are visible any time under Host → Earnings.</p></details>
   <details><summary>How long does verification take?</summary><p style="font-size:14px;color:#525252" class="mt-2">Most properties are reviewed within 24 hours. Your listing shows as Pending until approved, then flips to Active automatically.</p></details>
-  <details><summary>I already have a guest account — must I register again?</summary><p style="font-size:14px;color:#525252" class="mt-2">Yes — hosting needs its own account with its own sign-in. Register as a host, then sign in with the host credentials. Your guest bookings stay on the guest account.</p></details>
+  <details><summary>I already have a guest account — must I register again?</summary><p style="font-size:14px;color:#525252" class="mt-2">Yes — hosting needs its own account with its own sign-in. You may reuse the same email address; guest and host stay two separate logins. Your guest bookings stay on the guest account.</p></details>
 </div></section>
 
 <!-- Final CTA -->

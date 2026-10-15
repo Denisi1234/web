@@ -101,7 +101,13 @@ trait PagesAuthTrait
                     $this->set(compact('loginRole'));
                     return $this->render('/Pages/login');
                 }
-                $res = $this->authService->login($email, $password);
+                // Host sign-in sends role=owner so the backend picks the host
+                // row when one email owns both a guest and a host account.
+                $res = $this->authService->login(
+                    $email,
+                    $password,
+                    $loginRole === 'owner' ? 'owner' : null
+                );
                 $authToken = $res['access_token'] ?? ($res['token'] ?? null);
                 $userData = $res['user'] ?? null;
 

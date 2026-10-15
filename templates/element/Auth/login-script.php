@@ -67,10 +67,16 @@
 											submitBtn.innerHTML = '<span class="p-dots" aria-hidden="true"><span class="p-dot"></span><span class="p-dot"></span><span class="p-dot"></span></span>Logging in...';
 
 											try {
-												const res = await window.FastAuth.postJson('/api/login', {
+												// Host sign-in sends role=owner: one email may own both a
+												// guest and a host account (separate rows), and the
+												// backend must pick the host row.
+												const _params = new URLSearchParams(window.location.search);
+												const _loginPayload = {
 													email: document.getElementById("login-email").value.trim(),
 													password: document.getElementById("login-password").value
-												});
+												};
+												if (_params.get('role') === 'owner') { _loginPayload.role = 'owner'; }
+												const res = await window.FastAuth.postJson('/api/login', _loginPayload);
 												const data = res.data || {};
 
 												if (res.ok && (data.access_token || data.token)) {

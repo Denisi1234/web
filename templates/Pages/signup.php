@@ -196,7 +196,7 @@ if ($isOwnerSignup) {
 													alertBox.innerHTML = `
 														<div class="alert alert-primary p-3" style="border-radius:8px">
 															<div class="fw-bold mb-1"><i class="fa-solid fa-circle-info me-1"></i> You already have an account!</div>
-															<div style="font-size:13.5px;line-height:1.4">An account with <b>${email}</b> is already registered. Hosting needs its own sign-in — sign in to that account, or register your host account with a different email.</div>
+															<div style="font-size:13.5px;line-height:1.4">An account with <b>${email}</b> is already registered. Guest and host are separate logins — sign in to continue, making sure you use the right account's password.</div>
 															<div class="mt-2">
 																<a href="<?= $this->Url->build('/login?role=owner') ?>&email=${encodeURIComponent(email)}" class="btn btn-sm btn-primary" style="font-weight:600">Sign in →</a>
 															</div>

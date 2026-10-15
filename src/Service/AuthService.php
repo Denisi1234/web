@@ -24,14 +24,22 @@ class AuthService
     }
 
     /**
-     * Authenticate user against fastnet_backed API
+     * Authenticate user against fastnet_backed API.
+     * $role disambiguates when one email owns both a guest and a host
+     * account (separate rows): the host sign-in sends role=owner so the
+     * host row is picked, otherwise a guest password can never mint a
+     * host session and vice versa.
      */
-    public function login(string $email, string $password): ?array
+    public function login(string $email, string $password, ?string $role = null): ?array
     {
-        return $this->apiClient->post('/login', [
+        $payload = [
             'email' => trim($email),
             'password' => $password,
-        ]);
+        ];
+        if (in_array($role, ['customer', 'owner'], true)) {
+            $payload['role'] = $role;
+        }
+        return $this->apiClient->post('/login', $payload);
     }
 
     /**
