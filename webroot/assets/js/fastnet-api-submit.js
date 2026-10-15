@@ -78,11 +78,11 @@
         // but the list must re-render from the server (which just cleared its
         // cache via quietBust). Without this a failed write looks successful
         // until reload — the "trash" feel. Failure path below restores anyway.
-        Opt.quietBust(bust).then(silentRefresh);
+        Opt.quietBust(bust).then(function(){ Opt.silentRefresh(); });
       } else if (opt === 'refresh') {
         setBusy(form, false);
         FastAPI.toast(okMsg, 'ok');
-        Opt.quietBust(bust).then(silentRefresh);
+        Opt.quietBust(bust).then(function(){ Opt.silentRefresh(); });
       } else if (opt === 'go') {
         Opt.pendingNotice(okMsg);
         window.location.href = go || window.location.href;
