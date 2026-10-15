@@ -71,9 +71,22 @@ trait HostVerificationTrait
                 return null;
             }
             if ($file->getError() !== UPLOAD_ERR_OK) {
-                $msg = $file->getError() === UPLOAD_ERR_INI_SIZE || $file->getError() === UPLOAD_ERR_FORM_SIZE
-                    ? __('That photo is too large. Please choose a file under 10 MB.')
-                    : __('Could not read the uploaded file. Please try again.');
+                // Name the real cause: PARTIAL (interrupted mobile upload) is
+                // the common one and retrying on a stable connection fixes it.
+                $code = $file->getError();
+                try {
+                    \Cake\Log\Log::warning(sprintf('[host-verify] upload error field=%s code=%d size=%s', $field, $code, (string)$file->getSize()));
+                } catch (\Throwable $e) {
+                }
+                if ($code === UPLOAD_ERR_INI_SIZE || $code === UPLOAD_ERR_FORM_SIZE) {
+                    $msg = __('That file is too large. Please choose a file under 10 MB.');
+                } elseif ($code === UPLOAD_ERR_PARTIAL) {
+                    $msg = __('The upload was interrupted. Please check your connection and try again.');
+                } elseif ($code === UPLOAD_ERR_NO_FILE) {
+                    return null;
+                } else {
+                    $msg = __('Could not receive the uploaded file (error %d). Please try again.', $code);
+                }
                 $resp = $fail($msg, 422);
                 throw new VerificationHaltException($resp);
             }
@@ -82,20 +95,48 @@ trait HostVerificationTrait
                 throw new VerificationHaltException($resp);
             }
 
+            // Small uploads may live in a php://temp stream rather than a
+            // real file — reading that path back gives empty bytes. Copy the
+            // stream to a real temp file first so the upload always works.
             $tmp = $file->getStream()->getMetadata('uri');
-            if (!is_string($tmp) || !is_readable($tmp)) {
-                $resp = $fail(__('Could not read the uploaded file. Please try again.'), 422);
-                throw new VerificationHaltException($resp);
+            $staged = null;
+            if (!is_string($tmp) || !is_file($tmp) || !is_readable($tmp)) {
+                try {
+                    $contents = (string)$file->getStream();
+                } catch (\Throwable $e) {
+                    $contents = '';
+                }
+                if ($contents === '') {
+                    try {
+                        \Cake\Log\Log::warning(sprintf('[host-verify] unreadable stream field=%s uri=%s', $field, (string)$tmp));
+                    } catch (\Throwable $e) {
+                    }
+                    $resp = $fail(__('Could not read the uploaded file. Please try again.'), 422);
+                    throw new VerificationHaltException($resp);
+                }
+                $staged = tempnam(sys_get_temp_dir(), 'kyc');
+                if ($staged === false || @file_put_contents($staged, $contents) === false) {
+                    $resp = $fail(__('Could not read the uploaded file. Please try again.'), 422);
+                    throw new VerificationHaltException($resp);
+                }
+                unset($contents);
+                $tmp = $staged;
             }
 
-            $res = $this->apiClient->uploadFile(
-                '/upload',
-                'file',
-                $tmp,
-                $file->getClientFilename(),
-                $file->getClientMediaType() ?? 'application/octet-stream',
-                $headers
-            );
+            try {
+                $res = $this->apiClient->uploadFile(
+                    '/upload',
+                    'file',
+                    $tmp,
+                    $file->getClientFilename(),
+                    $file->getClientMediaType() ?? 'application/octet-stream',
+                    $headers
+                );
+            } finally {
+                if ($staged !== null) {
+                    @unlink($staged);
+                }
+            }
 
             if (empty($res) || !empty($res['_status']) || empty($res['url'])) {
                 // Forward the backend's own reason (e.g. "must be an image")
