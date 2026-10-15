@@ -8,6 +8,37 @@ namespace App\Controller\Admin;
  */
 trait AdminVerifyTrait
 {
+    /**
+     * Owner KYC dossier for the admin documents modal: submitted identity
+     * fields, document URLs and the audit history. Read-only.
+     */
+    public function ownerDocs(string $id = '')
+    {
+        if ($r = $this->requireAdmin()) return $r;
+        $id = trim($id);
+        if ($id === '' || !preg_match('/^[A-Za-z0-9:_-]{1,64}$/', $id)) {
+            return $this->jsonErr('Invalid record id.', 400);
+        }
+        $headers = $this->hostHeaders();
+        $this->releaseSession();
+        $res = $this->apiClient->get('/verification/owner/' . $id, [], $headers);
+        if ($bounce = $this->bounceOnUnauth($res, '/admin/owners')) return $bounce;
+        if (!is_array($res) || !empty($res['_status'])) {
+            $code = is_array($res) && !empty($res['_status']) ? (int)$res['_status'] : 502;
+            return $this->jsonErr(
+                is_array($res) ? (string)($res['message'] ?? 'Could not load documents.') : 'Service unavailable. Please try again.',
+                $code >= 400 ? $code : 502
+            );
+        }
+        return $this->response
+            ->withType('application/json')
+            ->withStringBody((string)json_encode([
+                'status' => 'success',
+                'verification' => $res['verification'] ?? null,
+                'audit_history' => $res['audit_history'] ?? [],
+            ]));
+    }
+
     public function verify(string $type = '', string $id = '')
     {
         if ($r = $this->requireAdmin()) return $r;

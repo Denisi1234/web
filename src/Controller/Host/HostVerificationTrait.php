@@ -37,31 +37,55 @@ trait HostVerificationTrait
      */
     public function submitVerification(): Response
     {
+        // The portal form posts via fetch expecting JSON — validation and
+        // upload failures must come back as JSON with the REAL reason, never
+        // as an HTML error page (which the form can only show as a generic
+        // "Submission failed").
+        $fail = function (string $message, int $status = 422): Response {
+            if ($this->getRequest()->is('json')
+                || strtolower((string)$this->getRequest()->getHeaderLine('X-Requested-With')) === 'xmlhttprequest') {
+                return $this->response
+                    ->withStatus($status)
+                    ->withType('application/json')
+                    ->withStringBody((string)json_encode(['status' => 'error', 'message' => $message]));
+            }
+            if ($status === 401) {
+                throw new UnauthorizedException(__($message));
+            }
+            throw new BadRequestException(__($message));
+        };
+
         if (!$this->getRequest()->is('post')) {
-            throw new BadRequestException(__('Method not allowed.'));
+            return $fail('Method not allowed.', 405);
         }
 
         $token = $this->rawToken();
         if ($token === '') {
-            throw new UnauthorizedException(__('Sign in to submit verification.'));
+            return $fail('Sign in to submit verification.', 401);
         }
         $headers = ['Authorization' => 'Bearer ' . $token];
 
-        $uploadOne = function (?string $field) use ($headers): ?string {
+        $uploadOne = function (?string $field) use ($headers, $fail): ?string {
             $file = $this->getRequest()->getUploadedFile($field);
             if ($file === null) {
                 return null;
             }
             if ($file->getError() !== UPLOAD_ERR_OK) {
-                throw new BadRequestException(__('Could not read the uploaded file. Please try again.'));
+                $msg = $file->getError() === UPLOAD_ERR_INI_SIZE || $file->getError() === UPLOAD_ERR_FORM_SIZE
+                    ? __('That photo is too large. Please choose a file under 10 MB.')
+                    : __('Could not read the uploaded file. Please try again.');
+                $resp = $fail($msg, 422);
+                throw new VerificationHaltException($resp);
             }
             if ($file->getSize() > 10 * 1024 * 1024) {
-                throw new BadRequestException(__('Documents must be 10 MB or smaller.'));
+                $resp = $fail(__('Documents must be 10 MB or smaller.'), 422);
+                throw new VerificationHaltException($resp);
             }
 
             $tmp = $file->getStream()->getMetadata('uri');
             if (!is_string($tmp) || !is_readable($tmp)) {
-                throw new BadRequestException(__('Could not read the uploaded file. Please try again.'));
+                $resp = $fail(__('Could not read the uploaded file. Please try again.'), 422);
+                throw new VerificationHaltException($resp);
             }
 
             $res = $this->apiClient->uploadFile(
@@ -74,15 +98,23 @@ trait HostVerificationTrait
             );
 
             if (empty($res) || !empty($res['_status']) || empty($res['url'])) {
-                throw new BadRequestException(__('Document upload failed. Please try again.'));
+                // Forward the backend's own reason (e.g. "must be an image")
+                // instead of swallowing it behind a generic message.
+                $msg = (string)($res['message'] ?? $res['errors']['file'][0] ?? __('Document upload failed. Please try again.'));
+                $resp = $fail($msg, 422);
+                throw new VerificationHaltException($resp);
             }
 
             return (string)$res['url'];
         };
 
-        $idDocUrl = $uploadOne('id_document');
+        try {
+            $idDocUrl = $uploadOne('id_document');
+        } catch (VerificationHaltException $e) {
+            return $e->response;
+        }
         if ($idDocUrl === null) {
-            throw new BadRequestException(__('A photo of your National ID is required.'));
+            return $fail(__('A photo of your National ID is required.'), 422);
         }
 
         $payload = [
@@ -99,7 +131,11 @@ trait HostVerificationTrait
             }
         }
 
-        $businessDocUrl = $uploadOne('business_document');
+        try {
+            $businessDocUrl = $uploadOne('business_document');
+        } catch (VerificationHaltException $e) {
+            return $e->response;
+        }
         if ($businessDocUrl !== null) {
             $payload['business_document_url'] = $businessDocUrl;
         }
@@ -107,7 +143,24 @@ trait HostVerificationTrait
         $res = $this->apiClient->post('/verification/owner', $payload, $headers);
 
         if (empty($res) || !empty($res['_status'])) {
+            // Forward backend validation detail (e.g. which field failed)
+            // when present instead of a generic message.
+            $errs = $res['errors'] ?? [];
+            $detail = '';
+            if (is_array($errs)) {
+                foreach ($errs as $msgs) {
+                    foreach ((array)$msgs as $m) {
+                        if (is_string($m) && $m !== '') {
+                            $detail = $m;
+                            break 2;
+                        }
+                    }
+                }
+            }
             $msg = (string)($res['message'] ?? __('Could not submit verification. Please try again.'));
+            if ($detail !== '' && $detail !== $msg) {
+                $msg .= ' ' . $detail;
+            }
             if ($this->getRequest()->is('json')) {
                 return $this->response
                     ->withStatus(!empty($res['_status']) ? (int)$res['_status'] : 502)

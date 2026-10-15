@@ -133,10 +133,11 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/host/earnings/request-payout', ['controller' => 'Host', 'action' => 'requestPayout']);
         // Owner KYC submission (POST /verification/owner + document uploads)
         // lives in the owner portal now; the legacy public endpoint keeps
-        // working via 307 (method + body preserved).
-        $builder->redirect('/join-us/verify', '/host/verification', ['status' => 307]);
-        $builder->connect('/host/verification', ['controller' => 'Host', 'action' => 'verification'], ['_method' => 'GET']);
-        $builder->connect('/host/verification', ['controller' => 'Host', 'action' => 'submitVerification'], ['_method' => 'POST']);
+        // working via 307 (method + body preserved). The submit URL is
+        // distinct from the form page so posting can never render the form.
+        $builder->redirect('/join-us/verify', '/host/verification/submit', ['status' => 307]);
+        $builder->connect('/host/verification', ['controller' => 'Host', 'action' => 'verification']);
+        $builder->connect('/host/verification/submit', ['controller' => 'Host', 'action' => 'submitVerification']);
         // Preference persistence (GET/POST travel/preferences)
         // E-receipt generation (POST /receipts/generate)
         $builder->connect('/booking-receipt', ['controller' => 'Bookings', 'action' => 'downloadReceipt']);
@@ -171,6 +172,7 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/admin/cache-bust', ['controller' => 'AdminOwner', 'action' => 'cacheBust']);
         $builder->connect('/admin/reviews', ['controller' => 'AdminOwner', 'action' => 'reviews']);
         $builder->connect('/admin/verification/{type}/{id}', ['controller' => 'AdminOwner', 'action' => 'verify'], ['pass'=>['type','id'],'type'=>'owner|lodge|property']);
+        $builder->connect('/admin/owner-docs/{id}', ['controller' => 'AdminOwner', 'action' => 'ownerDocs'], ['pass'=>['id'],'id'=>'[A-Za-z0-9:_-]{1,64}'], ['_method' => 'GET']);
         $builder->connect('/admin_owner', ['controller' => 'AdminOwner', 'action' => 'dashboard']);
 
         // Universal API Proxy Route (bridges frontend /api/* to backend microservice)
