@@ -24,6 +24,14 @@
   min-height: 85vh;
 }
 
+/* The global theme gives every <section> 80px vertical padding — correct
+   for marketing pages, wrong for this dense account page (it opened a dead
+   gap above "Awaiting payment"). Neutralize inside booking scope. */
+.cds-bk-page section {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
 /* Hide floating mobile sidebar back button on my booking page */
 .cds-bk-page .trivago-mobile-back-container {
   display: none !important;
@@ -542,7 +550,7 @@
 }
 
 .cds-btn-pay {
-  background: var(--cds-amber-fg) !important;
+  background: var(--cds-blue) !important;
   color: #ffffff !important;
   border: 1px solid transparent !important;
   padding: 9px 18px !important;
@@ -553,7 +561,7 @@
 }
 
 .cds-btn-pay:hover {
-  background: #6f5200 !important;
+  background: #0050e6 !important;
   color: #ffffff !important;
 }
 

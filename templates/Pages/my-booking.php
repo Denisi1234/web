@@ -9,7 +9,7 @@ $pendingPayments = is_array($pendingPayments ?? null) ? $pendingPayments : [];
 ?>
 <?= $this->element('navbar'); ?>
 <main id="main-content" role="main" class="cds-bk-page">
-<?= $this->Html->css('/assets/css/my-booking.css') ?>
+<?= $this->Html->css('/assets/css/my-booking.css?v=' . filemtime(WWW_ROOT . 'assets/css/my-booking.css')) ?>
 
 <!-- Top App Bar (Exact Mobile Match) -->
 <div class="cds-bk-appbar">
