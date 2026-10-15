@@ -57,6 +57,7 @@ if (!str_starts_with($navAvatarBg, '#') && !str_starts_with($navAvatarBg, 'rgb')
 
                 <!-- 1. Logged-in Header Controls (Order 2 on mobile ms-auto, Order 3 on desktop) -->
                 <div class="d-flex align-items-center gap-2 gap-md-3 ms-auto flex-shrink-0 order-2 order-lg-3" id="nav_logged_in_wrapper" style="<?= $isUserLoggedIn ? '' : 'display: none !important;'; ?>">
+                    <?= $this->element('notifications-bell') ?>
                     <!-- Favourites Link -->
                     <a href="<?= $this->Url->build('/my-wishlists'); ?>" class="d-flex align-items-center text-decoration-none text-slate-700 hover:text-primary fw-semibold p-1 position-relative" style="font-size: 14px; gap: 6px;" aria-label="View saved favourites">
                         <i class="fa-regular fa-heart" style="font-size: 17px;"></i>
@@ -141,7 +142,7 @@ if (!str_starts_with($navAvatarBg, '#') && !str_starts_with($navAvatarBg, 'rgb')
                                     <i class="fa-solid fa-magnifying-glass trivago-user-item-icon"></i>
                                     <span>Search preferences</span>
                                 </a>
-                                <a href="<?= $this->Url->build('/notifications'); ?>" class="trivago-user-item" role="menuitem">
+                                <a href="javascript:void(0);" onclick="event.stopPropagation();if(window.FastNotif)FastNotif.open();return false;" class="trivago-user-item" role="menuitem">
                                     <i class="fa-regular fa-bell trivago-user-item-icon"></i>
                                     <span>Notifications</span>
                                 </a>
@@ -254,3 +255,4 @@ if (!str_starts_with($navAvatarBg, '#') && !str_starts_with($navAvatarBg, 'rgb')
 <?= $this->Html->script('/assets/js/shared-header.js?v=' . filemtime(WWW_ROOT . 'assets/js/shared-header.js')) ?>
 
 <?= $this->Html->script('/assets/js/navbar.js?v=' . filemtime(WWW_ROOT . 'assets/js/navbar.js')); ?>
+<?= $this->Html->script('/assets/js/notifications.js?v=' . filemtime(WWW_ROOT . 'assets/js/notifications.js')); ?>
