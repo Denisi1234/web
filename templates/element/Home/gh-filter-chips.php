@@ -69,7 +69,7 @@ $toggleAmen = function(string $key) use ($buildUrl, $amenList): string {
         <!-- Price Range -->
         <div style="position:relative;flex-shrink:0;" id="fns_price_anchor">
           <button type="button" class="fns-chip <?= ($priceMin!==''||$priceMax!=='')?'active':'' ?>" id="fns_price_chip" aria-haspopup="dialog" aria-expanded="false" aria-controls="fns_price_pop" onclick="fnsTogglePrice(event)">
-            <i class="fa-solid fa-money-bill-wave"></i>
+            <i class="fa-solid fa-tag"></i>
             <?php if($priceMin!==''||$priceMax!==''): ?>
               <?= 'TZS '.($priceMin!==''?number_format((int)$priceMin):'0').' – '.($priceMax!==''?number_format((int)$priceMax):'Any') ?>
             <?php else: ?>
@@ -108,7 +108,7 @@ $toggleAmen = function(string $key) use ($buildUrl, $amenList): string {
 
         <!-- Offers — mobile parity (opens All filters); desktop hidden via CSS -->
         <button type="button" class="fns-chip" data-filter="offers" data-bs-toggle="modal" data-bs-target="#fnsFiltersModal" aria-haspopup="dialog">
-          <i class="fa-solid fa-tag"></i> Offers <i class="fa-solid fa-caret-down fns-caret"></i>
+          <i class="fa-solid fa-percent"></i> Offers <i class="fa-solid fa-caret-down fns-caret"></i>
         </button>
 
         <!-- Guest Rating — one popular threshold; rest in All filters -->
