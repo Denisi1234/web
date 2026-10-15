@@ -6,6 +6,9 @@ FastNet Stays (https://www.fastnetstays.com) is a digital hospitality platform t
 ## Entity Graph
 - **Entity Name:** FastNet Stays
 - **Domain:** https://www.fastnetstays.com
+- **Office:** Sky City, First Floor, Opp Mlimani City, Dar es Salaam, Tanzania
+- **Official Phone:** 0624 105 850 (+255624105850)
+- **Support Email:** support@fastnetstays.com
 - **Industry Classification:** Travel Technology, Hospitality, Accommodation Booking Platform
 - **Founding Team & Software Engineers:**
   - Founder & Visionary: Omary Rashid

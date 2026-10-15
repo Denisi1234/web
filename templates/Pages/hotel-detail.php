@@ -96,6 +96,39 @@ $checkOutVal = $qp['checkout'] ?? $qp['checkOut'] ?? date('Y-m-d', strtotime('+1
 
 $this->assign('title', $propTitle);
 $this->assign('description', mb_strimwidth(strip_tags($propDesc),0,155,'...') . ' — Book on FastNet Stays');
+$this->assign('og_description', mb_strimwidth(strip_tags($propDesc),0,197,'...') . ' — Book ' . $propTitle . ' in ' . $propCity . ' on FastNet Stays');
+// Social share image: first real photo, absolute URL only.
+$ogImg = '';
+foreach (($galleryImages ?? []) as $g) {
+    $g = trim((string)$g);
+    if (str_starts_with($g, 'http://') || str_starts_with($g, 'https://')) { $ogImg = $g; break; }
+    if (str_starts_with($g, '/')) { $ogImg = 'https://www.fastnetstays.com' . $g; break; }
+}
+if ($ogImg !== '') $this->assign('og_image', $ogImg);
+// Hotel structured data for Google rich results + AI answer engines.
+$hdHotel = [
+    '@context' => 'https://schema.org',
+    '@type' => 'Hotel',
+    'name' => $propTitle,
+    'url' => 'https://www.fastnetstays.com/hotel-detail/' . $detailPropertyId,
+    'address' => [
+        '@type' => 'PostalAddress',
+        'streetAddress' => $propAddress,
+        'addressLocality' => $propCity,
+        'addressCountry' => 'TZ',
+    ],
+];
+if ($ogImg !== '') $hdHotel['image'] = $ogImg;
+if ($reviewsCount > 0 && $propRating > 0) {
+    $hdHotel['aggregateRating'] = [
+        '@type' => 'AggregateRating',
+        'ratingValue' => round(min(5.0, (float)$propRating), 1),
+        'bestRating' => 5,
+        'reviewCount' => (int)$reviewsCount,
+    ];
+}
+if ($propPrice > 0) $hdHotel['priceRange'] = 'TSh ' . number_format((float)$propPrice);
+$this->assign('hotel_jsonld', json_encode($hdHotel, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 ?>
 <?= $this->element('Hotel/hotel-detail-style') ?>
 <?= $this->element('navbar') ?>
@@ -284,6 +317,9 @@ $this->assign('description', mb_strimwidth(strip_tags($propDesc),0,155,'...') . 
 <?= $this->element('Hotel/hotel-detail-modals', ['galleryImages' => $galleryImages ?? [], 'propTitle' => $propTitle ?? '', 'propArea' => $propArea ?? '', 'propCity' => $propCity ?? '', 'propPrice' => $propPrice ?? 0, 'ratingLabel' => $ratingLabel ?? '', 'reviewsCount' => $reviewsCount ?? 0, 'score10' => $score10 ?? 0, 'detailPropertyId' => $detailPropertyId ?? 0, 'propDesc' => $propDesc ?? '', 'score10Fmt' => $score10Fmt ?? '']) ?>
 <?= $this->element('Hotel/write-review-modal', ['detailPropertyId' => $detailPropertyId ?? 0, 'propTitle' => $propTitle ?? '', 'isLoggedIn' => $isLoggedIn ?? false]) ?>
 <?= $this->Html->script('/assets/js/write-review.js?v=' . filemtime(WWW_ROOT . 'assets/js/write-review.js')) ?>
+<?php $hdJsonLd = $this->fetch('hotel_jsonld'); if ($hdJsonLd !== ''): ?>
+<script type="application/ld+json"><?= $hdJsonLd ?></script>
+<?php endif; ?>
 <div class="d-none d-lg-block">
 <?= $this->element('footer', ['skin' => 'skin-light-footer']) ?>
 </div>

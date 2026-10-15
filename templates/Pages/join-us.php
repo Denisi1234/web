@@ -101,6 +101,12 @@ $juNeedsVerification = $juLoggedIn && $juRole === 'owner'
   <details><summary>How long does verification take?</summary><p style="font-size:14px;color:#525252" class="mt-2">Most properties are reviewed within 24 hours. Your listing shows as Pending until approved, then flips to Active automatically.</p></details>
   <details><summary>I already have a guest account — must I register again?</summary><p style="font-size:14px;color:#525252" class="mt-2">Yes — hosting needs its own account with its own sign-in. You may reuse the same email address; guest and host stay two separate logins. Your guest bookings stay on the guest account.</p></details>
 </div></section>
+<script type="application/ld+json"><?= json_encode(['@context' => 'https://schema.org', '@type' => 'FAQPage', 'mainEntity' => [
+  ['@type' => 'Question', 'name' => 'What does it cost to list?', 'acceptedAnswer' => ['@type' => 'Answer', 'text' => 'Nothing upfront. Listing, photos and support are free — FastNet retains 10% only when a guest completes a paid stay.']],
+  ['@type' => 'Question', 'name' => 'When and how do I get paid?', 'acceptedAnswer' => ['@type' => 'Answer', 'text' => 'After check-in, the payment settles to your M-Pesa, Tigo Pesa or bank account. Balances are visible any time under Host → Earnings.']],
+  ['@type' => 'Question', 'name' => 'How long does verification take?', 'acceptedAnswer' => ['@type' => 'Answer', 'text' => 'Most properties are reviewed within 24 hours. Listings show as Pending until approved, then flip to Active automatically.']],
+  ['@type' => 'Question', 'name' => 'I already have a guest account — must I register again?', 'acceptedAnswer' => ['@type' => 'Answer', 'text' => 'Yes — hosting needs its own account with its own sign-in. You may reuse the same email address; guest and host stay two separate logins.']],
+]], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script>
 
 <!-- Final CTA -->
 <section class="ju-section" style="padding-top:0"><div class="container" style="max-width:1140px">

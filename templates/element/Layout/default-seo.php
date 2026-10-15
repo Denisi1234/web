@@ -35,9 +35,23 @@
                 "width": "512",
                 "height": "512"
               },
+              "telephone": "+255624105850",
+              "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Sky City, First Floor, Opp Mlimani City",
+                "addressLocality": "Dar es Salaam",
+                "addressCountry": "TZ"
+              },
+              "openingHoursSpecification": {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+                "opens": "00:00",
+                "closes": "23:59"
+              },
               "contactPoint": {
                 "@type": "ContactPoint",
                 "contactType": "customer service",
+                "telephone": "+255624105850",
                 "email": "support@fastnetstays.com",
                 "availableLanguage": ["English"]
               },
@@ -91,15 +105,6 @@
                   "description": "Hotel suggestions are based on a route's cheapest nightly fares ...",
                   "url": "https://www.fastnetstays.com/"
                 }
-              ]
-            },
-            {
-              "@type": "BreadcrumbList",
-              "@id": "https://www.fastnetstays.com/#breadcrumb",
-              "itemListElement": [
-                {"@type": "ListItem","position": 1,"name": "Home","item": "https://www.fastnetstays.com/"},
-                {"@type": "ListItem","position": 2,"name": "Hotels","item": "https://www.fastnetstays.com/?city=Dar%20es%20Salaam"},
-                {"@type": "ListItem","position": 3,"name": "Zanzibar Hotels","item": "https://www.fastnetstays.com/?city=Zanzibar"}
               ]
             }
           ]

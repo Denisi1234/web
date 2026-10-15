@@ -84,6 +84,7 @@ $faq = [
     <a href="<?= $this->Url->build('/contact-v1') ?>">Contact us →</a>
   </div>
 </div>
+<script type="application/ld+json"><?= json_encode(['@context' => 'https://schema.org', '@type' => 'FAQPage', 'mainEntity' => array_map(fn($f) => ['@type' => 'Question', 'name' => $f['q'], 'acceptedAnswer' => ['@type' => 'Answer', 'text' => $f['a']]], $faq)], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script>
 </main>
 <?= $this->element('footer', ['skin' => 'skin-light-footer']) ?>
 <script>

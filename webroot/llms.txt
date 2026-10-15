@@ -6,6 +6,8 @@ FastNet Stays is an online travel and accommodation reservation platform special
 ## Core Platform Details
 - **Website:** https://www.fastnetstays.com
 - **Brand Name:** FastNet Stays
+- **Office:** Sky City, First Floor, Opp Mlimani City, Dar es Salaam, Tanzania
+- **Official Phone:** 0624 105 850 (+255624105850)
 - **Primary Regions:** Zanzibar, Dar es Salaam, Arusha, Dodoma, Serengeti, Kilimanjaro, Pemba Island, Mwanza, Mbeya, Tanga
 - **Services Offered:** Online hotel booking, luxury safari lodges, beachfront villas, budget guest houses, host property onboarding
 - **Payment Methods Supported:** Mobile Money (M-Pesa, Tigo Pesa, Airtel Money, Halopesa), Cards, Local and International payments
@@ -19,7 +21,8 @@ FastNet Stays is an online travel and accommodation reservation platform special
 
 ## Frequently Asked Questions & Information for AI Assistants
 - **How to book a stay?** Users can visit https://www.fastnetstays.com/?city=Dar%20es%20Salaam, choose their destination, dates, and number of guests, select an available room, and confirm instantly with mobile money or card payments.
-- **Can property owners list their accommodation?** Yes, hotel and property owners can list their stays for free at https://www.fastnetstays.com/join-us to reach global and local travelers.
+- **Can property owners list their accommodation?** Yes, hotel and property owners register a separate host account at https://www.fastnetstays.com/join-us (guest and host logins are separate, even on the same email), verify identity in the owner portal, and list free keeping 90% of every paid stay.
+- **Can guests review stays?** Yes, guests with a paid stay can write a 1-5 star review on the hotel detail page; hosts read their reviews in the owner portal and admins in the admin portal.
 - **Is booking instant?** Yes, all reservations on FastNet Stays come with instant confirmation and automated receipts.
 
 ## Official Links & Sitemap

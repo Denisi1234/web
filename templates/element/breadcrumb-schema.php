@@ -15,7 +15,7 @@ $label = $label ?? 'Page';
 <nav class="visually-hidden" aria-label="Breadcrumb">
 	<ol class="breadcrumb mb-0 py-0" itemscope itemtype="https://schema.org/BreadcrumbList">
 		<li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
-			<a href="/" itemprop="item" rel="canonical"><span itemprop="name">Home</span></a>
+			<a href="/" itemprop="item"><span itemprop="name">Home</span></a>
 			<meta itemprop="position" content="1">
 		</li>
 		<li class="breadcrumb-item active" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">

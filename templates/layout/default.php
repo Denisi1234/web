@@ -45,19 +45,29 @@
         <meta name="bingbot" content="index, follow, max-media-preview:large" />
 
         <!-- Open Graph / Facebook / WhatsApp -->
+        <?php
+        $ogDesc = $this->fetch('og_description') ?: 'Online Hotel Booking — FastNet Stays - Best Prices Guaranteed with Deals, Special Member Prices. Book Hotels, Lodges & Beach Resorts Across Tanzania!';
+        $ogImg = $this->fetch('og_image') ?: 'https://www.fastnetstays.com/favicon-512.png';
+        $ogTitle = $this->fetch('title') ? h($this->fetch('title')) . ' | fastnetstays.com' : 'FastNet Stays — Online Hotel Booking & Best Prices Guaranteed';
+        $gVerify = trim((string)\Cake\Core\env('GOOGLE_SITE_VERIFICATION', ''));
+        $bVerify = trim((string)\Cake\Core\env('BING_SITE_VERIFICATION', ''));
+        ?>
+        <?php if ($gVerify !== ''): ?><meta name="google-site-verification" content="<?= h($gVerify) ?>" /><?php endif; ?>
+        <?php if ($bVerify !== ''): ?><meta name="msvalidate.01" content="<?= h($bVerify) ?>" /><?php endif; ?>
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="FastNet Stays" />
+        <meta property="og:locale" content="en_TZ" />
         <meta property="og:url" content="<?= h($canonUrl) ?>" />
-        <meta property="og:title" content="<?= $this->fetch('title') ? h($this->fetch('title')) . ' | fastnetstays.com' : 'FastNet Stays — Online Hotel Booking & Best Prices Guaranteed' ?>" />
-        <meta property="og:description" content="Online Hotel Booking — FastNet Stays - Best Prices Guaranteed with Deals, Special Member Prices. Book Hotels, Lodges & Beach Resorts Across Tanzania!" />
-        <meta property="og:image" content="https://www.fastnetstays.com/favicon-512.png" />
+        <meta property="og:title" content="<?= $ogTitle ?>" />
+        <meta property="og:description" content="<?= h($ogDesc) ?>" />
+        <meta property="og:image" content="<?= h($ogImg) ?>" />
 
         <!-- Twitter Card -->
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:site" content="@fastnetstays" />
-        <meta name="twitter:title" content="FastNet Stays — Online Hotel Booking & Best Prices Guaranteed" />
-        <meta name="twitter:description" content="Book hotel rooms, luxury resorts, and beach escapes across Tanzania with fastnetstays.com." />
-        <meta name="twitter:image" content="https://www.fastnetstays.com/favicon-512.png" />
+        <meta name="twitter:title" content="<?= $ogTitle ?>" />
+        <meta name="twitter:description" content="<?= h($ogDesc) ?>" />
+        <meta name="twitter:image" content="<?= h($ogImg) ?>" />
 
         <!-- Favicon & Touch Icons for Google Search Snippet Logo -->
         <link rel="icon" type="image/png" sizes="16x16" href="<?= $this->Url->build('/assets/img/favicon-16x16.png'); ?>">

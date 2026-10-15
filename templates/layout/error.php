@@ -24,7 +24,8 @@ endif;
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Error</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <title><?= $this->fetch('title') ? h($this->fetch('title')) . ' | fastnetstays.com' : 'Error' ?></title>
 </head>
 <body>
     <div class="container">

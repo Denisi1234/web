@@ -37,10 +37,43 @@ Allow: /
 
 # Exclude sensitive session & private routes
 Disallow: /api/
+Disallow: /host/
+Disallow: /owner
+Disallow: /admin
+Disallow: /admin_owner
+Disallow: /login
+Disallow: /signup
+Disallow: /logout
+Disallow: /forgot-password
+Disallow: /two-factor-auth
+Disallow: /reset-password
+Disallow: /booking-page
+Disallow: /bookingpage-02
+Disallow: /bookingpage-03
+Disallow: /bookingpage-success
+Disallow: /booking-payment
+Disallow: /booking-release-lock
+Disallow: /booking-receipt
 Disallow: /my-booking/
 Disallow: /my-profile
+Disallow: /menu
+Disallow: /profile-menu
 Disallow: /security
 Disallow: /payment-detail
+Disallow: /messages
+Disallow: /inbox
+Disallow: /contact-host
+Disallow: /contact-property
+Disallow: /my-wishlists
+Disallow: /favourites
+Disallow: /favorites
+Disallow: /wishlist
+Disallow: /recently-viewed
+Disallow: /settings
+Disallow: /delete-account
+Disallow: /language-and-currency
+Disallow: /travel/preferences
+Disallow: /notifications/preferences
 
 # Sitemaps & LLM Context Discovery
 Sitemap: https://www.fastnetstays.com/sitemap.xml
