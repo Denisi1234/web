@@ -123,10 +123,9 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
 .cds-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:40px 20px;text-align:center;color:#6b7280;font-size:14px}
 @media (max-width:768px){
   .cds-msg-sidebar{display:none}
-  .cds-msg-layout{height:auto;min-height:0;margin:0;border-radius:0}
-  .cds-msg-chat-pane{border-radius:0;border:none;overflow:visible}
-  .cds-chat-messages{overflow:visible}
-  .cds-chat-input-bar{position:sticky;bottom:0;z-index:5}
+  .cds-msg-layout{height:calc(100vh - 70px);height:calc(100dvh - 70px);min-height:0;margin:0;border-radius:0;overflow:hidden}
+  .cds-msg-chat-pane{border-radius:0;border:none}
+  .cds-msg-page{padding:0;min-height:0}
 }
 </style>
 
@@ -473,30 +472,16 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
     if (bar) bar.classList.remove('open');
   };
 
-  // Mobile web scrolls the whole page (feed is not a scroll box there),
-  // desktop scrolls the feed — helpers follow whichever scrolls.
-  function feedScrolls() {
-    var feed = document.getElementById('chatFeed');
-    return !!feed && feed.scrollHeight > feed.clientHeight + 2;
-  }
-
+  // Only the feed scrolls — the page itself is locked, so arriving
+  // messages never shake the layout.
   function scrollToBottom() {
     var feed = document.getElementById('chatFeed');
-    if (!feed) return;
-    if (feedScrolls()) {
-      feed.scrollTop = feed.scrollHeight;
-      return;
-    }
-    window.scrollTo(0, document.documentElement.scrollHeight || document.body.scrollHeight);
+    if (feed) feed.scrollTop = feed.scrollHeight;
   }
 
   function isNearBottom() {
     var feed = document.getElementById('chatFeed');
     if (!feed) return true;
-    if (!feedScrolls()) {
-      var limit = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
-      return window.innerHeight + window.scrollY > limit - 140;
-    }
     return feed.scrollHeight - feed.scrollTop - feed.clientHeight < 140;
   }
 
