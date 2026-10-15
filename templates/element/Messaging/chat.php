@@ -642,7 +642,19 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
   }
   window.submitChatMessage = submitChatMessage;
 
-  document.addEventListener('DOMContentLoaded', function () {
+  // Boot is idempotent and runs immediately (not only on
+  // DOMContentLoaded): portal PJAX swaps #main-content without refiring
+  // load events, so a load-only boot would leave an empty feed and a dead
+  // composer after sidebar navigation. Re-runs on swapped content boot
+  // exactly once per feed node; any previous poll timer is cleared first.
+  function bootChat() {
+    var feed = document.getElementById('chatFeed');
+    if (!feed || feed.dataset.chatBooted === '1') return;
+    feed.dataset.chatBooted = '1';
+    if (window.__chatTimer) {
+      try { clearInterval(window.__chatTimer); } catch (e) {}
+      window.__chatTimer = null;
+    }
     renderAll(initialMessages);
     var search = document.getElementById('threadSearch');
     if (search) search.addEventListener('input', function () { applyThreadFilter(search.value.toLowerCase()); });
@@ -653,24 +665,25 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
         submitChatMessage();
       });
     }
-    var feed = document.getElementById('chatFeed');
-    if (feed) {
-      feed.addEventListener('click', function (e) {
-        var btn = e.target && e.target.closest ? e.target.closest('[data-reply-id]') : null;
-        if (btn) setReply(btn.getAttribute('data-reply-id'));
-      });
-    }
+    feed.addEventListener('click', function (e) {
+      var btn = e.target && e.target.closest ? e.target.closest('[data-reply-id]') : null;
+      if (btn) setReply(btn.getAttribute('data-reply-id'));
+    });
     // Live updates: fast while the tab is visible, paused when hidden.
     // Poll immediately on focus too so a reply sent from another device
     // appears the moment the user returns.
     pollMessages();
-    pollTimer = setInterval(function () {
+    window.__chatTimer = setInterval(function () {
       if (!document.hidden) pollMessages();
     }, POLL_MS);
+    pollTimer = window.__chatTimer;
     window.addEventListener('focus', function () { pollMessages(); });
     document.addEventListener('visibilitychange', function () {
       if (!document.hidden) pollMessages();
     });
-  });
+  }
+
+  bootChat();
+  document.addEventListener('DOMContentLoaded', function () { bootChat(); });
 })();
 </script>
