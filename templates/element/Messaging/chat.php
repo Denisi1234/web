@@ -110,9 +110,6 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
 .cds-replybar.open{display:flex}
 .cds-replybar .q-text{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#374151}
 .cds-replybar button{background:none;border:none;color:#6b7280;cursor:pointer;font-size:14px}
-.cds-quick-replies{padding:8px 16px;background:#fff;border-top:1px solid #f0f0f0;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
-.cds-quick-chip{padding:5px 12px;background:#fff;border:1px solid #e5e7eb;border-radius:100px;font-size:12px;font-weight:700;color:#0f62fe;white-space:nowrap;cursor:pointer;transition:all .15s ease}
-.cds-quick-chip:hover{background:#0f62fe;color:#fff;border-color:#0f62fe}
 .cds-chat-input-bar{padding:12px 16px;background:#fff;border-top:1px solid #e5e7eb;display:flex;align-items:center;gap:10px}
 .cds-chat-input-field{flex:1;background:#f3f4f6;border:1px solid transparent;border-radius:24px;padding:10px 16px;font-size:13.5px;outline:none;transition:border-color .15s ease}
 .cds-chat-input-field:focus{border-color:#0f62fe;background:#fff}
@@ -263,14 +260,6 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
         </div>
 
         <div class="cds-chat-messages" id="chatFeed"></div>
-
-        <div class="cds-quick-replies">
-          <button type="button" class="cds-quick-chip" onclick="sendQuickReply('What is the Wi-Fi passcode?')"><i class="fa-solid fa-wifi" style="margin-right:4px"></i> Wi-Fi Passcode</button>
-          <button type="button" class="cds-quick-chip" onclick="sendQuickReply('Do you offer early check-in?')"><i class="fa-solid fa-key" style="margin-right:4px"></i> Early Check-in</button>
-          <button type="button" class="cds-quick-chip" onclick="sendQuickReply('Is breakfast included in the booking?')"><i class="fa-solid fa-utensils" style="margin-right:4px"></i> Breakfast Options</button>
-          <button type="button" class="cds-quick-chip" onclick="sendQuickReply('Is secure parking available?')"><i class="fa-solid fa-square-parking" style="margin-right:4px"></i> Parking Info</button>
-          <button type="button" class="cds-quick-chip" onclick="sendQuickReply('Can you provide exact driving directions?')"><i class="fa-solid fa-map-location-dot" style="margin-right:4px"></i> Directions</button>
-        </div>
 
         <div class="cds-chat-error" id="chatError" role="alert"></div>
         <div class="cds-replybar" id="replyBar">
@@ -564,10 +553,6 @@ $threadUrl = fn($pid) => $this->Url->build($threadBase . '?' . $threadParam . '=
         }
       })
       .catch(function () {});
-  };
-
-  window.sendQuickReply = function (text) {
-    submitChatMessage(text);
   };
 
   window.shareVoucher = function (code) {
